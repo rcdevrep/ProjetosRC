@@ -1,0 +1,8 @@
+Rotinas
+RCTEC02 - Tela para mostrar somente as notas não recebidas para Confirmar o Recebimento.
+
+Pontos de Entrada
+MT103CLAS - Ponto que permite manipular informações do item e das duplicatas da NFE a classificar
+MT100CLA - Classificação de Notas
+MT103LEG - Incluir novas cores na legenda
+MT103COR - Ponto de entrada para tratar as cores do browse

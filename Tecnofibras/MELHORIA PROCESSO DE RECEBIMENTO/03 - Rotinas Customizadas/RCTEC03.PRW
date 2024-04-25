@@ -9,19 +9,15 @@
 
 // RC CONSULTORIA
 // EVANDRO BURLIN
-// ROTINA RCTEC02 - CLASSIFICAR NOTAS PENDENTES 
+// ROTINA RCTEC03 - CLASSIFICAR NOTAS PENDENTES 
 // PROJETO - MELHORIA PROCESSO DE RECEBIMENTO
 // DATA - 24/04/2024
 
 
-User Function RCTEC02()
+User Function RCTEC03()
 	Local aSeek   := {}
 	Private bFiltro	:= {|| REFRESH(.T.) } // Variavel para tecla F12
 	Private oTela
-	//Public cMsgPerm := "Usuário sem Permissão" // MSG PADRAO USUARIO SEM PERMISSAO
-	//Private oTempMRK
-	Private MV_PAR01,MV_PAR02,MV_PAR03,MV_PAR04,MV_PAR05,MV_PAR06,MV_PAR07,MV_PAR08,MV_PAR09,MV_PAR10,MV_PAR11
-	Private _Mv_par01,_Mv_par02,_Mv_par03,_Mv_par04,_Mv_par05,_Mv_par06,_Mv_par07,_Mv_par08,_Mv_par09,_Mv_par10,_Mv_par11
 
 	// INICIO GERACAO DE TELA
 	// Array da Estrutura a ser criada
@@ -167,7 +163,7 @@ RETURN
 
 STATIC FUNCTION Recebimento()
 
-U_RCTEC03()
+U_TESTANDO()
 	
 RETURN 
 

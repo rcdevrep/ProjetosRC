@@ -1,0 +1,14 @@
+#include "rwmake.ch"
+#include "topconn.ch"
+#include "tbiconn.ch"
+
+
+USER FUNCTION MT103CLAS()
+
+    // MUDA O STATUS DA NOTA PARA - AGUARDANDO RECEBIMENTO E LIMPA A DATA DE RECEBIMENTO
+RECLOCK("SF1", .F.)
+SF1->F1_STATUS = "Z"
+SF1->F1_RECBMTO = STOD("")
+MSUNLOCK()
+
+RETURN
