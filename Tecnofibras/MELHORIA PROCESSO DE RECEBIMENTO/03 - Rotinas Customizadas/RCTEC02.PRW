@@ -167,7 +167,7 @@ RETURN
 
 STATIC FUNCTION Recebimento()
 
-U_RCTEC03()
+U_CMVC_07()
 	
 RETURN 
 

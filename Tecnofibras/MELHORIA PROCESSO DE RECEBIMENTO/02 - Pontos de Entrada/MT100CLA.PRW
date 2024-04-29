@@ -9,7 +9,9 @@
 
 USER FUNCTION MT100CLA()
 
+//aadd(aButtons,{'Enviar P/ Recebimento',{|| U_RCTEC04()},'Enviar Recebimento','Receb.'})
 MSGSTOP("CANCELADO!")
-RETURN .F.
+//RETURN .F.
 
-RETURN
+
+RETURN 

@@ -24,7 +24,7 @@ RETURN NIL
 STATIC FUNCTION MenuDef()
     Local aRot := {}
 
-    ADD OPTION aRot TITLE 'Visualizar' ACTION 'Visuu' OPERATION MODEL_OPERATION_VIEW ACCESS 0
+    ADD OPTION aRot TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC01' OPERATION MODEL_OPERATION_VIEW ACCESS 0
 RETURN aRot
 
 STATIC FUNCTION ModelDef()
@@ -35,7 +35,7 @@ STATIC FUNCTION ModelDef()
     Local aRelFilho1 := {}
     Local aRelFilho2 := {}
 
-    oModel := MPFormModel():New('RCTEC01M')
+    oModel := MPFormModel():New('RCTEC01')
     oModel:AddFields('SBM_MASTER', ,oStPai)
 
     oModel:AddGrid('SB1_FILHO1', 'SBM_MASTER', oStFilho1)
@@ -62,7 +62,7 @@ STATIC FUNCTION ModelDef()
     oModel:GetModel('SB1_FILHO2'):SetDescription('MODEL FILHO 2')
 RETURN oModel
 
-STATIC FUNCTION Visuu()
+STATIC FUNCTION ViewDef()
     Local oView := NIL
     Local oModel := FWLoadModel('RCTEC01')
     Local oStPai := FWFormStruct(2,'SBM')
