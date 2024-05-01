@@ -9,9 +9,8 @@
 
 USER FUNCTION MT100CLA()
 
-//aadd(aButtons,{'Enviar P/ Recebimento',{|| U_RCTEC04()},'Enviar Recebimento','Receb.'})
-MSGSTOP("CANCELADO!")
-//RETURN .F.
+MSGALERT("Para Salvar a Nota sem Classificar, use a Opção: Outras Ações - Enviar P/ Recebimento")
+
 
 
 RETURN 

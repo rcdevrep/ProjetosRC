@@ -153,11 +153,6 @@ User Function MT100LOK()
 			EndIf
 		EndIf
 	EndIf
-
-    //RC
-    IF (_lPassou)
-        
-    ENDIF
 	
 Return(_lPassou)
 

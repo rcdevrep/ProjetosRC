@@ -19,6 +19,8 @@ USER FUNCTION RCTEC04(l103Class)
 	Local cItPCNew	:= ""
 	Local nQtdPCNew	:= 0
 	Local lMT103CLAS := .T.
+    Local lVerif := .F.
+    Local lTit := .F.
 
     //PEGO DO PADRAO A103GrvCla
 	If l103Class
@@ -124,15 +126,23 @@ USER FUNCTION RCTEC04(l103Class)
 
 		Next nX
 
-        //MUDA O STATUS PARA Z E LIMPA O RECEBIMENTO
+        lVerif := U_MT100LOK()
+        lTit := U_MT100TOK()
+
+        IF (lVerif .AND. lTit) 
+
+         //MUDA O STATUS PARA Z (PENDENTE DE RECEBIMENTO) E LIMPA O RECEBIMENTO
 		RECLOCK("SF1", .F.)
 		SF1->F1_STATUS = "Z"
-		SF1->F1_RECBMTO = STOD("")
+		SF1->F1_XRECEB = STOD("")
 		MSUNLOCK()
 
 		MsgAlert("Salvo com Sucesso")
 		//FECHA A TELA
 		oGetDados:oBrowse:oParent:End()
+        ELSE
+            MSGSTOP ("Verificar as Inconsistencias")
+        ENDIF
 
 	EndIf
 
