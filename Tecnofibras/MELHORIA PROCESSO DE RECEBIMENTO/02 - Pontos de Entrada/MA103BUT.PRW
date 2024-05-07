@@ -8,7 +8,7 @@
 USER FUNCTION MA103BUT()
 	Local aButtons := {}
 
-	aadd(aButtons, {'Enviar P/ Recebimento', {||U_RCTEC04(l103Class)}, 'Enviar P/ Recebimento'})
+	//aadd(aButtons, {'Enviar P/ Recebimento', {||U_RCTEC04(l103Class)}, 'Enviar P/ Recebimento'})
 
 
 Return (aButtons)

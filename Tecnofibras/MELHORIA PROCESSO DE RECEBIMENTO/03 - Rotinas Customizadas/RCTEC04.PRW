@@ -19,10 +19,10 @@ USER FUNCTION RCTEC04(l103Class)
 	Local cItPCNew	:= ""
 	Local nQtdPCNew	:= 0
 	Local lMT103CLAS := .T.
-    Local lVerif := .F.
-    Local lTit := .F.
+	Local lVerif := .F.
+	Local lTit := .F.
 
-    //PEGO DO PADRAO A103GrvCla
+	//PEGO DO PADRAO A103GrvCla
 	If l103Class
 
 		aCamposAd := {	{"D1_BASIMP6","IT_BASEPS2"},{"D1_ALQIMP6","IT_ALIQPS2"},{"D1_VALIMP6","IT_VALPS2"},;
@@ -125,24 +125,16 @@ USER FUNCTION RCTEC04(l103Class)
 			lGFGrvD1 := .T.
 
 		Next nX
+	
+			//MUDA O STATUS PARA Z (PENDENTE DE RECEBIMENTO) E LIMPA O RECEBIMENTO
+			RECLOCK("SF1", .F.)
+			SF1->F1_STATUS = "Z"
+			SF1->F1_XRECEB = STOD("")
+			MSUNLOCK()
 
-        lVerif := U_MT100LOK()
-        lTit := U_MT100TOK()
-
-        IF (lVerif .AND. lTit) 
-
-         //MUDA O STATUS PARA Z (PENDENTE DE RECEBIMENTO) E LIMPA O RECEBIMENTO
-		RECLOCK("SF1", .F.)
-		SF1->F1_STATUS = "Z"
-		SF1->F1_XRECEB = STOD("")
-		MSUNLOCK()
-
-		MsgAlert("Salvo com Sucesso")
-		//FECHA A TELA
-		oGetDados:oBrowse:oParent:End()
-        ELSE
-            MSGSTOP ("Verificar as Inconsistencias")
-        ENDIF
+			MsgAlert("Salvo com Sucesso")
+			//FECHA A TELA
+			oGetDados:oBrowse:oParent:End()
 
 	EndIf
 

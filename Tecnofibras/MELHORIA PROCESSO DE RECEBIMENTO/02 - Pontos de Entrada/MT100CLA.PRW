@@ -9,7 +9,7 @@
 
 USER FUNCTION MT100CLA()
 
-MSGALERT("Para Salvar a Nota sem Classificar, use a Opção: Outras Ações - Enviar P/ Recebimento")
+//MSGALERT("Para Salvar a Nota sem Classificar, use a Opção: Outras Ações - Enviar P/ Recebimento")
 
 
 

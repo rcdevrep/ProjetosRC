@@ -10,6 +10,7 @@
 // ROTINA RCTEC02 - CLASSIFICAR NOTAS PENDENTES 
 // PROJETO - MELHORIA PROCESSO DE RECEBIMENTO
 // DATA - 24/04/2024
+
 User Function RCTEC05()
 
 	Local   oBrowse
@@ -33,7 +34,6 @@ Static Function MenuDef()
 	Local aRotina := {}
 
 	ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC05' OPERATION 2 ACCESS 0
-	//ADD OPTION aRotina TITLE 'Incluir'    ACTION 'VIEWDEF.KHR05A07' OPERATION 3 ACCESS 0
 	ADD OPTION aRotina TITLE 'Receber'    ACTION 'VIEWDEF.RCTEC05' OPERATION 4 ACCESS 0
 
 Return(aRotina)
@@ -48,7 +48,7 @@ Static Function ModelDef()
 	Private oStrSD1  := FWFormStruct(1,'SD1')
 
 	// Cria o Model com noe MD_VERBA e guarda no objeto
-	
+
 	oModel := MPFormModel():New('PETEC05'        ,{|oModel| BeforeCMdl(oModel)},{|oModel|sfTudoOk(oModel)})
 
 	// Associa os objetos visuais criados com as estruturas criadas, desta forma ira criar os campos conforme as estrutura.
@@ -62,20 +62,12 @@ Static Function ModelDef()
 	oModel:SetDescription('Recebimento de Notas')
 	oModel:getModel('SF1MASTER' ):SetDescription('Cabeçalho')
 	oModel:getModel('SD1DETAIL' ):SetDescription('Itens')
-	//oModel:getModel('RODAPE'):SetDescription('Rodape')
-
-	//oModel:GetModel('SD1DETAIL'):SetUniqueLine({"D1_FILIAL","D1_DOC","D1_SERIE"})  //Não repetir informações ou combinações {"CAMPO1","CAMPO2","CAMPOX"}
 
 	// Faz o relacionamento entre as estruturas, o fonte ira realizar as validações necessarias por este relacionamento.
 
 	oModel:SetRelation( 'SD1DETAIL'	 , { { 'D1_FILIAL', 'F1_FILIAL' } ,{ 'D1_EMISSAO', 'F1_EMISSAO' }, { 'D1_DOC', 'F1_DOC' }, { 'D1_SERIE', 'F1_SERIE' },{ 'D1_FORNECE', 'F1_FORNECE' },{ 'D1_LOJA', 'F1_LOJA' }    } , SD1->( IndexKey( 3 ) ) )
-	//oStrSD1:SetProperty("F1_STATUS",MODEL_FIELD_VALID, .T.)
-	//oStrSF1:SetProperty("D1_COD"  ,MODEL_FIELD_VALID, .T.)
-	//oStrSZD:SetProperty("F1_STATUS",MODEL_FIELD_VALID, {|oModel|sfVldCpo(oModel,"F1_STATUS")})
-	//oStrSZC:SetProperty("D1_DOC"  ,MODEL_FIELD_VALID, {|oModel|sfVldCpo(oModel,"D1_DOC"  )})
 
 	oModel:SetVldActivate( { |oModel| sfValAtiva( oModel ) } )
-	//oModel:Activate()
 
 Return oModel
 
@@ -84,7 +76,6 @@ Static Function ViewDef()
 	Private oView	 := FWFormView():New()
 	Private oStrSF1  := FWFormStruct(2,'SF1',{ |cCampo| STRUMASTER(cCampo)   })
 	Private oStrSD1  := FWFormStruct(2,'SD1',{ |cCampo| STRUDETAIL(cCampo,1) })
-	//Private oStrROD   := FWFormStruct(2,'SD1',{ |cCampo| STRUDETAIL(cCampo,2) })
 
 	oView:SetModel(oModel)
 	// Seta a view com o model criado anteriormente
@@ -92,7 +83,6 @@ Static Function ViewDef()
 	// Cria os objetos com os campos existentes nas esturturas
 	oView:AddField('VIEW_SF1' , oStrSF1	,'SF1MASTER'	) // objeto filds, ( Grids e Says )
 	oView:AddGrid('VIEW_SD1'  , oStrSD1	,'SD1DETAIL'	) // objeto grid
-	//oView:AddField( 'VIEW_RODAPE', oStrROD, 'RODAPE' )
 
 	oView:AddOtherObject('VIEW_RODAPE',{|oPanel|fRodape(oPanel)})
 
@@ -139,9 +129,7 @@ Return(_lRet)
 
 //Validação da linha
 Static Function sfLinPre(oModel)
-
 	Local lRet       := .T.
-
 Return(lRet)
 
 Static Function sfVldCpo(oModel,cCpo)
@@ -154,102 +142,24 @@ Static Function sfVldCpo(oModel,cCpo)
 
 Return(lRet)
 
-Static Function sfIncluiHi()
-	Local lRet := .T.
-	Private cGetHist := space(2000)
-
-	oDlgHist := MSDialog():New(1,1,250,400,'Inclusão Historico',,,,,CLR_BLACK,CLR_WHITE,,,.t.)
-
-	oSay     :=TSay():New(001,001,{|| 'Historico:'},oDlgHist,,oFont,,,,.T.,CLR_BLACK,CLR_WHITE,200,20)
-	oGetHist :=TMultiget():New(01,01,{|u|if(Pcount()>0,cGetHist:=u,cGetHist)},oDlgHist,200,100,,,,,,.T.,,,,,,,,,,,.T.,,,,)
-
-	oBtnESC := SButton():New(110, 145, 2,{||lRet := IncluiSZK("1")}, oDlgHist, .T.,,)
-	oBtnOk  := SButton():New(110, 175, 1,{||lRet := IncluiSZK("2")}, oDlgHist, .T.,,)
-
-	oDlgHist:Activate()
-
-Return(lRet)
-
 Static Function sfLinPos(oModel)
-
 	Local lRet	     := .T.
-
-Return(lRet)
-
-Static Function IncluiSZK(mvTipo)
-	Local lRet     := .T.
-	Default mvTipo := ""
-
-	If mvTipo == "1"
-		lRet     := .F.
-		Close(oDlgHist)
-		If Empty(cGetHist)
-			lRet := .F.
-		EndIf
-	ElseIf mvTipo == "2"
-		If Empty(cGetHist)
-			lRet := .F.
-		Else
-			cHora := TIME()
-			RecLock("SZK",.T.)
-			SZK->ZK_TABORI  := "SA1"
-			SZK->ZK_RECORI	:= SA1->(recno())
-			SZK->ZK_KEY     := "01"+SF1->ZC_CLIENTE + SF1->ZC_LOJA
-			SZK->ZK_USER    := cUserName
-			SZK->ZK_DATA    := dDatabase
-			SZK->ZK_HORA    := SubStr(cHora,1,5)
-			SZK->ZK_HIST    := cGetHist
-			SZK->ZK_ORIGEM  := "Protheus"
-			SZK->ZK_CONTRAT  := SF1->ZC_NUM
-			If SZK->(FieldPos("ZK_ZCARCRM")) > 0
-				SZK->ZK_ZCARCRM := dToc(dDataBase) + " - " + Time()
-			EndIf
-			SZK->ZK_CLIENTE := SF1->ZC_CLIENTE
-			SZK->ZK_LOJA    := SF1->ZC_LOJA
-			SZK->(MsUnlock())
-		EndIf
-		Close(oDlgHist)
-	Else
-
-	EndIf
-
 Return(lRet)
 
 //Retorno de campos que serao usados
 
 Static Function STRUMASTER(cCampo)
-
 	Local lRet	  := .T.
-
-
 Return(lRet)
 
 //Campos usados no browse
 
 Static Function STRUDETAIL(cCampo)
-
 	Local lRet	:= .T.
-
-	//	If ((Alltrim(cCampo) == "ZD_QTDE") .Or. (Alltrim(cCampo) == "ZD_VLRUNIT") .Or. (Alltrim(cCampo) == "ZD_TOTAL") .Or. (Alltrim(cCampo) == "ZD_DATAADT")) //.And. (SF1->ZC_TIPO <> "R")
-	//		lRet	:= .F.
-	//		Conout(cCampo)
-	//	EndIf
-
 Return(lRet)
 
 Static Function BeforeCMdl(oModel)
 	Local lRet	:= .T.
-	/*
-	Local oModel     := FWModelActive()
-	Local oModelSF1  := oModel:GetModel("SF1MASTER")
-	Local oModelSC7	 := oModel:GetModel('SC7DETAIL')
-	//If oModel:GetOperation() == MODEL_OPERATION_UPDATE
-	oModel:LMODIFY := .T.
-	//EndIf
-
-	oModelSC7:RemoveField( 'ZD_VLRUNIT' )
-	//Alert("Teste")
-	*/
 Return(lRet)
 
 STATIC FUNCTION fRodape(oPanel)
@@ -266,29 +176,43 @@ STATIC FUNCTION fRodape(oPanel)
 RETURN
 
 USER FUNCTION ConfReceb()
+	//PARAMETRO COM OS USUARIOS DA PORTARIA
+	Local cUsrPor := SuperGetMV("MV_PORTARI", .F., " ")
 
- //MUDA O STATUS PARA X (Recebimento OK) E PREENCHE O RECEBIMENTO DO ALMOX
-		
-	IF SF1->F1_STATUS <> 'X'
-		RECLOCK("SF1", .F.)
-		SF1->F1_STATUS = "X"
-		SF1->F1_XRECEB = Date()
-		MSUNLOCK()
+	IF !(__cUserId $ cUsrPor)
+
+		//MUDA O STATUS PARA X (Recebimento OK) E PREENCHE O RECEBIMENTO DO ALMOX
+
+		IF SF1->F1_STATUS <> 'X'
+			RECLOCK("SF1", .F.)
+			SF1->F1_STATUS = "X"
+			SF1->F1_XRECEB = Date()
+			MSUNLOCK()
+			MSGALERT("REGISTRO ALTERADO COM SUCESSO")
+		ELSE
+			MSGSTOP("NOTA JA RECEBIDA")
+		ENDIF
 	ELSE
-		MSGSTOP("NOTA JA RECEBIDA")
+		MSGSTOP("USUÁRIO SEM PERMISSÃO - RCTEC05")
 	ENDIF
-
 RETURN
 
 USER FUNCTION CancReceb()
+	//PARAMETRO COM OS USUARIOS DA PORTARIA
+	Local cUsrPor := SuperGetMV("MV_PORTARI", .F., " ")
 
-	IF SF1->F1_STATUS <> 'Y'
-		RECLOCK("SF1", .F.)
-		SF1->F1_STATUS = "Y"
-		SF1->F1_XRECEB = STOD("")
-		MSUNLOCK()
+	IF !(__cUserId $ cUsrPor)
+
+		IF SF1->F1_STATUS <> 'Y'
+			RECLOCK("SF1", .F.)
+			SF1->F1_STATUS = "Y"
+			SF1->F1_XRECEB = Date()
+			MSUNLOCK()
+			MSGALERT("REGISTRO ALTERADO COM SUCESSO")
+		ELSE
+			MSGSTOP("NOTA JA ESTA NO STATUS DE NAO CONFORMIDADE")
+		ENDIF
 	ELSE
-		MSGSTOP("NOTA JA ESTA NO STATUS DE NAO CONFORMIDADE")
+		MSGSTOP("USUÁRIO SEM PERMISSÃO - RCTEC05")
 	ENDIF
-
 RETURN
