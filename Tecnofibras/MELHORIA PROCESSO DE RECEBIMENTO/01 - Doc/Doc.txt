@@ -1,10 +1,9 @@
 Rotinas
 RCTEC05 - Tela para mostrar somente as notas não recebidas para Confirmar o Recebimento.
-RCTEC04 - Rotina para executar a função do Botão - Enviar para Recebimento
+RCTEC04 - Rotina para executar a função  - Enviar para Recebimento
 
 Pontos de Entrada
 MT103CLAS - Ponto que permite manipular informações do item e das duplicatas da NFE a classificar
-MT100CLA - Classificação de Notas - Aviso para utilização do botão Custom
 MT103LEG - Incluir novas cores na legenda
 MT103COR - Ponto de entrada para tratar as cores do browse
-MA103BUT - Adiciona o Botão de Enviar para Recebimento
+MT100TOK - Adicionado regras para enviar nota para recebimento sem classificar.
