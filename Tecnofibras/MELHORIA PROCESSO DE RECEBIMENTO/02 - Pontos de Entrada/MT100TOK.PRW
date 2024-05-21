@@ -240,20 +240,24 @@ User Function MT100TOK()
 		IF SF1->F1_STATUS == ' '
 			IF MsgYesNo("Deseja Enviar para Recebimento?", "Confirma", .T.)
 				U_RCTEC04(l103Class)
+				FWAlertSuccess("Enviado com sucesso! ", "RCTEC05")
 				RETURN .F.
 			ELSE
-				RETURN .F.
+				IF MsgYesNo("Deseja Classificar a Nota?", "Confirma", .T.)
+					RETURN .T.
+				ELSE
+					RETURN .F.
+				ENDIF
 			ENDIF
+		ELSEIF SF1->F1_STATUS = 'Z'
+			FWAlertSuccess("Classificado com Sucesso! ", "RCTEC05")
+			ELSE
+
 		ENDIF
-        IF SF1->F1_STATUS == 'Y'
-            MSGSTOP("APONTADA NAO CONFORMIDADE NO RECEBIMENTO")
-            RETURN .F.
-        ENDIF
-        IF SF1->F1_STATUS == 'Z'
-            MSGSTOP("NOTA JA ENVIADA PARA RECEBIMENTO")
-            RETURN .F.
-        ENDIF
+    
     ENDIF
+
+
 
 Return lRet
 

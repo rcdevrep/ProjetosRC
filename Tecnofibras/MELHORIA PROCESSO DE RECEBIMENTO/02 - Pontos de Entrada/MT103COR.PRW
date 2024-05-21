@@ -17,14 +17,14 @@ Local aCoresUsr :={	{'Empty(F1_STATUS).And.F1_GF<>"GF"'	,'ENABLE'			},;	// NF Na
 					{'F1_STATUS=="D"'					,'BR_BRANCO'	    },;	// Evento desacordo aguardando SEFAZ
 					{'F1_STATUS=="E"'					,'BR_AZUL_CLARO'  	},;	// Evento desacordo vinculado
 					{'F1_STATUS=="F"'					,'BR_VERDE_ESCURO' 	},;	// Evento desacordo com problemas
-                    {'F1_STATUS == "Z" ', 'BR_PRETO_1'},;
-                    {'F1_STATUS == "X" ', 'BR_PRETO_2'},;
-                    {'F1_STATUS == "Y" ', 'BR_PRETO_3'},;
-					{'F1_TIPO=="N"'						,'DISABLE'   		},;	// NF Normal
+					{'F1_TIPO=="N" .AND. F1_STATUS <> "Z"','DISABLE'   		},;	// NF Normal
 					{'F1_TIPO=="P"'						,'BR_AZUL'   		},;	// NF de Compl. IPI
 					{'F1_TIPO=="I"'						,'BR_MARROM' 		},;	// NF de Compl. ICMS
 					{'F1_TIPO=="C"'						,'BR_PINK'   		},;	// NF de Compl. Preco/Frete
 					{'F1_TIPO=="B"'						,'BR_CINZA'  		},;	// NF de Beneficiamento
-					{'F1_TIPO=="D"'						,'BR_AMARELO'		} }	// NF de Devolucao
+					{'F1_TIPO=="D"'						,'BR_AMARELO'		},;	// NF de Devolucao
+					{'F1_STATUS == "Z" ', 'BR_PRETO_1'} } // pré classificação/pendente recebimento
+                    //{'F1_STATUS == "X" ', 'BR_PRETO_2'},;
+                    //{'F1_STATUS == "Y" ', 'BR_PRETO_3'} 
 
 RETURN aCoresUsr

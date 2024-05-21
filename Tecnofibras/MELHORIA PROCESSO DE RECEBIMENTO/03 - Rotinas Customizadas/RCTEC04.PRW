@@ -132,7 +132,7 @@ USER FUNCTION RCTEC04(l103Class)
 			SF1->F1_XRECEB = STOD("")
 			MSUNLOCK()
 
-			MsgAlert("Salvo com Sucesso")
+			
 			//FECHA A TELA
 			oGetDados:oBrowse:oParent:End()
 

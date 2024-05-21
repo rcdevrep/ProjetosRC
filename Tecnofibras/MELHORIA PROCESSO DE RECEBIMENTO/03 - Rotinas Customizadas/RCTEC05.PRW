@@ -19,12 +19,10 @@ User Function RCTEC05()
 	oBrowse:SetAlias('SF1')
 	oBrowse:SetDescription( "Notas Pendentes Recebimento" )
 	oBrowse:SetMenuDef("RCTEC05")
+	oBrowse:AddFilter('Status',"SF1->F1_STATUS = 'Z'",.T.,.T.)
 
 	//Adiciona Leganda
-	oBrowse:addLegend({|| SF1->F1_STATUS = 'A'}        ,'GREEN'  ,'Finalizada')
-	oBrowse:addLegend({|| SF1->F1_STATUS = 'Z'}        ,'BR_CINZA'  ,'Pendente de Recebimento')
-	//oBrowse:addLegend({|| SF1->F1_STATUS = 'X'}        ,'BLACK'  ,'Recebimento OK')
-	oBrowse:addLegend({|| SF1->F1_STATUS = 'Y'}        ,'RED'  ,'Não Conformidade no Recebimento')
+	oBrowse:addLegend({|| SF1->F1_STATUS = 'Z'}        ,'BR_CINZA'  ,'pre classificacao/pendente recebimento')
 	oBrowse:Activate()
 
 Return()
@@ -32,6 +30,10 @@ Return()
 Static Function MenuDef()
 
 	Local aRotina := {}
+
+	IF EMPTY(SF1->F1_SOLICIT)
+		U_nSolicit()
+	ENDIF
 
 	ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC05' OPERATION 2 ACCESS 0
 	ADD OPTION aRotina TITLE 'Receber'    ACTION 'VIEWDEF.RCTEC05' OPERATION 4 ACCESS 0
@@ -73,6 +75,7 @@ Return oModel
 
 Static Function ViewDef()
 	Local oModel     := FWLoadModel('RCTEC05')
+	Local cSolicit := ""
 	Private oView	 := FWFormView():New()
 	Private oStrSF1  := FWFormStruct(2,'SF1',{ |cCampo| STRUMASTER(cCampo)   })
 	Private oStrSD1  := FWFormStruct(2,'SD1',{ |cCampo| STRUDETAIL(cCampo,1) })
@@ -156,10 +159,12 @@ Static Function STRUMASTER(cCampo)
 	CASE cCampo = "F1_SERIE" ; RETURN .T.
 	CASE cCampo = "F1_FORNECE" ; RETURN .T.
 	CASE cCampo = "F1_LOJA" ; RETURN .T.
+	CASE cCampo = "F1_SOLICIT" ; RETURN .T.
 	CASE cCampo = "F1_EMISSAO" ; RETURN .T.
 	CASE cCampo = "F1_EST" ; RETURN .T.
 	CASE cCampo = "F1_XRECEB" ; RETURN .T.
 	CASE cCampo = "F1_NOMEFOR" ; RETURN .T.
+	CASE cCampo = "F1_STATUS"  ; RETURN .T.
 	ENDCASE
 Return(lRet)
 
@@ -171,6 +176,7 @@ Static Function STRUDETAIL(cCampo)
 	CASE cCampo = "D1_ITEM" ; RETURN .T.
 	CASE cCampo = "D1_COD" ; RETURN .T.
 	CASE cCampo = "D1_UM" ; RETURN .T.
+	CASE cCampo = "D1_SEGUM" ; RETURN .T.
 	CASE cCampo = "D1_QUANT" ; RETURN .T.
 	CASE cCampo = "D1_VUNIT" ; RETURN .T.
 	CASE cCampo = "D1_TOTAL" ; RETURN .T.
@@ -199,20 +205,15 @@ USER FUNCTION ConfReceb()
 	//PARAMETRO COM OS USUARIOS DA PORTARIA
 	Local cUsrPor := SuperGetMV("MV_PORTARI", .F., " ")
 
+
 	IF !(__cUserId $ cUsrPor)
 
-		U_EXEC103()
-		//MUDA O STATUS PARA X (Recebimento OK) E PREENCHE O RECEBIMENTO DO ALMOX
+		U_CLAS103()
 
-		/*IF SF1->F1_STATUS <> 'X'
-			RECLOCK("SF1", .F.)
-			SF1->F1_STATUS = "X"
-			SF1->F1_XRECEB = Date()
-			MSUNLOCK()
-			MSGALERT("REGISTRO ALTERADO COM SUCESSO")
-		ELSE
-			MSGSTOP("NOTA JA RECEBIDA")
-		ENDIF*/
+		oViewActive := FWViewActive()
+
+		oViewActive:oOwner:End()
+
 	ELSE
 		MSGSTOP("USUÁRIO SEM PERMISSÃO - RCTEC05")
 	ENDIF
@@ -224,32 +225,33 @@ USER FUNCTION CancReceb()
 
 	IF !(__cUserId $ cUsrPor)
 
-		IF SF1->F1_STATUS <> 'Y'
-			RECLOCK("SF1", .F.)
-			SF1->F1_STATUS = "Y"
-			SF1->F1_XRECEB = Date()
-			MSUNLOCK()
-			MSGALERT("REGISTRO ALTERADO COM SUCESSO")
-		ELSE
-			MSGSTOP("NOTA JA ESTA NO STATUS DE NAO CONFORMIDADE")
-		ENDIF
+		U_DEL103()
+
+		oViewActive := FWViewActive()
+
+		oViewActive:oOwner:End()
+
 	ELSE
 		MSGSTOP("USUÁRIO SEM PERMISSÃO - RCTEC05")
 	ENDIF
 RETURN
 
-USER FUNCTION EXEC103()
+USER FUNCTION CLAS103()
 
 	Local aCab := {}
 	Local aItem := {}
 	Local aItens := {}
 	Local aItensRat := {}
 	Local aCodRet := {}
-	Local nOpc := 4 
-	Local cNum := ""
+	Local nOpc := 4
 	Local nI := 0
 	Local nX := 0
 	Local nReg := 1
+
+	IF SF1->F1_STATUS == 'A'
+		MSGSTOP("NOTA JA CLASSIFICADA")
+		RETURN .F.
+	ENDIF
 
 	Conout("Inicio Classificacao RCTEC05: " + Time())
 
@@ -263,18 +265,131 @@ USER FUNCTION EXEC103()
 	DBGOTOP()
 	DBSEEK(xFilial("SF1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
 
-	cNum := SF1->F1_DOC
-	//cNum := GetSxeNum("SF1","F1_DOC") 
-	//SF1->(dbSetOrder(1)) 
-	//While SF1->(dbSeek(xFilial("SF1")+cNum)) 
-	//ConfirmSX8() 
-	//cNum := GetSxeNum("SF1","F1_DOC") 
-	//EndDo
+	//Cabeçalho
+	aadd(aCab,{"F1_TIPO" , SF1->F1_TIPO ,NIL})
+	aadd(aCab,{"F1_FORMUL" ,SF1->F1_FORMUL ,NIL})
+	aadd(aCab,{"F1_DOC" ,SF1->F1_DOC ,NIL})
+	aadd(aCab,{"F1_SERIE" ,SF1->F1_SERIE ,NIL})
+	aadd(aCab,{"F1_EMISSAO" ,DDATABASE ,NIL})
+	aadd(aCab,{"F1_DTDIGIT" ,DDATABASE ,NIL})
+	aadd(aCab,{"F1_XRECEB" ,SF1->F1_XRECEB ,NIL})
+	aadd(aCab,{"F1_FORNECE" ,SF1->F1_FORNECE ,NIL})
+	aadd(aCab,{"F1_LOJA" ,SF1->F1_LOJA ,NIL})
+	aadd(aCab,{"F1_ESPECIE" ,SF1->F1_ESPECIE ,NIL})
+	aadd(aCab,{"F1_COND" ,SF1->F1_COND ,NIL})
+	aadd(aCab,{"F1_DESPESA" ,SF1->F1_DESPESA,NIL})
+	aadd(aCab,{"F1_DESCONT" ,SF1->F1_DESCONT,Nil})
+	aadd(aCab,{"F1_SEGURO" ,SF1->F1_SEGURO,Nil})
+	aadd(aCab,{"F1_FRETE" ,SF1->F1_FRETE,Nil})
+	aadd(aCab,{"F1_MOEDA" ,SF1->F1_MOEDA,Nil})
+	aadd(aCab,{"F1_TXMOEDA" ,SF1->F1_TXMOEDA,Nil})
+	aadd(aCab,{"F1_STATUS" ,SF1->F1_STATUS,Nil})
+	aadd(aCab,{"E2_NATUREZ" ,"010456",Nil})
+
+	//Itens
+	aItem := {}
+	WHILE !SD1->(Eof()) .AND. SF1->F1_DOC = SD1->D1_DOC .AND. SF1->F1_SERIE = SD1->D1_SERIE .AND. SF1->F1_FORNECE = SD1->D1_FORNECE .AND. SF1->F1_LOJA = SD1->D1_LOJA
+		aadd(aItem,{"D1_ITEM" ,SD1->D1_ITEM,NIL})
+		aadd(aItem,{"D1_COD" ,SD1->D1_COD,NIL})
+		aadd(aItem,{"D1_UM" ,SD1->D1_UM,NIL})
+		aadd(aItem,{"D1_QUANT" ,SD1->D1_QUANT,NIL})
+		aadd(aItem,{"D1_VUNIT" ,SD1->D1_VUNIT,NIL})
+		aadd(aItem,{"D1_TOTAL" ,SD1->D1_TOTAL,NIL})
+		aadd(aItem,{"D1_CONTA" ,SD1->D1_CONTA,NIL})
+		aadd(aItem,{"D1_TES" ,SD1->D1_TESACLAS,NIL})
+		aadd(aItem,{"D1_CF" ,SD1->D1_CF,NIL})
+		aadd(aItem,{"D1_LOTEFOR" ,SD1->D1_LOTEFOR,NIL})
+		aadd(aItem,{"D1_VLDLOTE" ,SD1->D1_VLDLOTE,NIL})
+		aadd(aItem,{"D1_LOTECTL" ,SD1->D1_LOTECTL,NIL})
+		aadd(aItem,{"D1_IPI" ,SD1->D1_IPI,NIL})
+		aadd(aItem,{"D1_PICM" ,SD1->D1_PICM,NIL})
+		aadd(aItem,{"D1_FORNECE" ,SD1->D1_FORNECE,NIL})
+		aadd(aItem,{"D1_LOJA" ,SD1->D1_LOJA,NIL})
+		aadd(aItem,{"D1_DOC" ,SD1->D1_DOC,NIL})
+		aadd(aItem,{"D1_EMISSAO" ,SD1->D1_EMISSAO,NIL})
+		aadd(aItem,{"D1_DTDIGIT" ,SD1->D1_DTDIGIT,NIL})
+		aadd(aItem,{"D1_VALICM" ,SD1->D1_VALICM,NIL})
+		aadd(aItem,{"D1_ITEMCTA" ,SD1->D1_ITEMCTA,NIL})
+		aadd(aItem,{"D1_SERIE" ,SD1->D1_SERIE,NIL})
+		aadd(aItem,{"D1_CC" ,SD1->D1_CC,NIL})
+		aadd(aItem,{"D1_PEDIDO" ,SD1->D1_PEDIDO,NIL})
+		aadd(aItem,{"D1_ITEMPC" ,SD1->D1_ITEMPC,NIL})
+		aadd(aItem,{"D1_LOCAL" ,SD1->D1_LOCAL,NIL})
+		aadd(aItem,{"D1_GRUPO" ,SD1->D1_GRUPO,NIL})
+		aadd(aItem,{"D1_TIPO" ,SD1->D1_TIPO,NIL})
+		aadd(aItem,{"D1_NUMSEQ" ,SD1->D1_NUMSEQ,NIL})
+		aadd(aItem,{"D1_TP" ,SD1->D1_TP,NIL})
+		aadd(aItem,{"D1_QTSEGUM" ,SD1->D1_QTSEGUM,NIL})
+		aadd(aItem,{"D1_SEQCALC" ,SD1->D1_SEQCALC,NIL})
+		aadd(aItem,{"D1_BASEICM" ,SD1->D1_BASEICM,NIL})
+		aadd(aItem,{"D1_DTVALID" ,SD1->D1_DTVALID,NIL})
+		aadd(aItem,{"D1_CLASFIS" ,SD1->D1_CLASFIS,NIL})
+		aadd(aItem,{"D1_CUSTO" ,SD1->D1_CUSTO,NIL})
+		aadd(aItem,{"D1_RATEIO" ,SD1->D1_RATEIO,NIL})
+		aadd(aItem,{"D1_BASEINS" ,SD1->D1_BASEINS,NIL})
+		aadd(aItem,{"D1_RGESPST" ,SD1->D1_RGESPST,NIL})
+		aadd(aItem,{"D1_ALIQSOL" ,SD1->D1_ALIQSOL,NIL})
+		aadd(aItem,{"D1_BASEPIS" ,SD1->D1_BASEPIS,NIL})
+		aadd(aItem,{"D1_BASECOF" ,SD1->D1_BASECOF,NIL})
+		aadd(aItem,{"D1_BASECSL" ,SD1->D1_BASECSL,NIL})
+		aadd(aItem,{"D1_VALPIS" ,SD1->D1_VALPIS,NIL})
+		aadd(aItem,{"D1_VALCOF" ,SD1->D1_VALCOF,NIL})
+		aadd(aItem,{"D1_VALCSL" ,SD1->D1_VALCSL,NIL})
+		aadd(aItem,{"D1_ALQPIS" ,SD1->D1_ALQPIS,NIL})
+		aadd(aItem,{"D1_ALQCOF" ,SD1->D1_ALQCOF,NIL})
+		aadd(aItem,{"D1_ALQCSL" ,SD1->D1_ALQCSL,NIL})
+		aadd(aItem,{"D1_ALIQCMP" ,SD1->D1_ALIQCMP,NIL})
+		aAdd(aItens,aItem)
+		SD1->(dbskip())
+	ENDDO
+
+	//3-Inclusão / 4-Classificação / 5-Exclusão
+	MSExecAuto({|x,y,z,a,b| MATA103(x,y,z,,,,,a,,,b)},aCab,aItens,nOpc,/*aItensRat*/,/*aCodRet*/)
+
+	If !lMsErroAuto
+		ConOut(" NF Classificada RCTEC05: " + cNum)
+	Else
+		MostraErro()
+		ConOut("Erro na Classificação RCTEC05")
+	EndIf
+
+	ConOut("Fim Classificacao RCTEC05: " + Time())
+
+Return
+
+USER FUNCTION DEL103()
+
+	Local aCab := {}
+	Local aItem := {}
+	Local aItens := {}
+	Local aItensRat := {}
+	Local aCodRet := {}
+	Local nOpc := 5
+	Local nI := 0
+	Local nX := 0
+	Local nReg := 1
+
+	IF SF1->F1_STATUS == 'A'
+		MSGSTOP("NOTA JA CLASSIFICADA")
+		RETURN .F.
+	ENDIF
+
+	Conout("Inicio Exclusao RCTEC05: " + Time())
+
+	Private lMsErroAuto := .F.
+	Private lMsHelpAuto := .T.
+
+	PREPARE ENVIRONMENT EMPRESA cEmpAnt FILIAL cFilAnt MODULO "COM"
+
+	DBSELECTAREA("SD1")
+	DBSETORDER(1)
+	DBGOTOP()
+	DBSEEK(xFilial("SF1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
 
 	//Cabeçalho
 	aadd(aCab,{"F1_TIPO" , SF1->F1_TIPO ,NIL})
 	aadd(aCab,{"F1_FORMUL" ,SF1->F1_FORMUL ,NIL})
-	aadd(aCab,{"F1_DOC" ,cNum ,NIL})
+	aadd(aCab,{"F1_DOC" ,SF1->F1_DOC ,NIL})
 	aadd(aCab,{"F1_SERIE" ,SF1->F1_SERIE ,NIL})
 	aadd(aCab,{"F1_EMISSAO" ,DDATABASE ,NIL})
 	aadd(aCab,{"F1_DTDIGIT" ,DDATABASE ,NIL})
@@ -289,16 +404,16 @@ USER FUNCTION EXEC103()
 	aadd(aCab,{"F1_MOEDA" ,SF1->F1_MOEDA,Nil})
 	aadd(aCab,{"F1_TXMOEDA" ,SF1->F1_TXMOEDA,Nil})
 	aadd(aCab,{"F1_STATUS" ,SF1->F1_STATUS,Nil})
+	aadd(aCab,{"E2_NATUREZ" ,"010456",Nil})
 
 	//Itens
-	//For nX := 1 To 1
 	aItem := {}
 	WHILE !SD1->(Eof()) .AND. SF1->F1_DOC = SD1->D1_DOC .AND. SF1->F1_SERIE = SD1->D1_SERIE .AND. SF1->F1_FORNECE = SD1->D1_FORNECE .AND. SF1->F1_LOJA = SD1->D1_LOJA
 		aadd(aItem,{"D1_ITEM" ,SD1->D1_ITEM,NIL})
 		aadd(aItem,{"D1_COD" ,SD1->D1_COD,NIL})
 		aadd(aItem,{"D1_UM" ,SD1->D1_UM,NIL})
-		aadd(aItem,{"D1_QUANT" ,SD1->D1_QUANT,NIL}) 
-		aadd(aItem,{"D1_VUNIT" ,SD1->D1_VUNIT,NIL}) 
+		aadd(aItem,{"D1_QUANT" ,SD1->D1_QUANT,NIL})
+		aadd(aItem,{"D1_VUNIT" ,SD1->D1_VUNIT,NIL})
 		aadd(aItem,{"D1_TOTAL" ,SD1->D1_TOTAL,NIL})
 		aadd(aItem,{"D1_CONTA" ,SD1->D1_CONTA,NIL})
 		aadd(aItem,{"D1_TES" ,SD1->D1_TES,NIL})
@@ -322,48 +437,69 @@ USER FUNCTION EXEC103()
 		aadd(aItem,{"D1_LOCAL" ,SD1->D1_LOCAL,NIL})
 		aadd(aItem,{"D1_GRUPO" ,SD1->D1_GRUPO,NIL})
 		aadd(aItem,{"D1_TIPO" ,SD1->D1_TIPO,NIL})
+		aadd(aItem,{"D1_NUMSEQ" ,SD1->D1_NUMSEQ,NIL})
+		aadd(aItem,{"D1_TP" ,SD1->D1_TP,NIL})
+		aadd(aItem,{"D1_QTSEGUM" ,SD1->D1_QTSEGUM,NIL})
+		aadd(aItem,{"D1_SEQCALC" ,SD1->D1_SEQCALC,NIL})
+		aadd(aItem,{"D1_BASEICM" ,SD1->D1_BASEICM,NIL})
+		aadd(aItem,{"D1_DTVALID" ,SD1->D1_DTVALID,NIL})
+		aadd(aItem,{"D1_CLASFIS" ,SD1->D1_CLASFIS,NIL})
+		aadd(aItem,{"D1_CUSTO" ,SD1->D1_CUSTO,NIL})
+		aadd(aItem,{"D1_RATEIO" ,SD1->D1_RATEIO,NIL})
+		aadd(aItem,{"D1_BASEINS" ,SD1->D1_BASEINS,NIL})
+		aadd(aItem,{"D1_RGESPST" ,SD1->D1_RGESPST,NIL})
+		aadd(aItem,{"D1_ALIQSOL" ,SD1->D1_ALIQSOL,NIL})
+		aadd(aItem,{"D1_BASEPIS" ,SD1->D1_BASEPIS,NIL})
+		aadd(aItem,{"D1_BASECOF" ,SD1->D1_BASECOF,NIL})
+		aadd(aItem,{"D1_BASECSL" ,SD1->D1_BASECSL,NIL})
+		aadd(aItem,{"D1_VALPIS" ,SD1->D1_VALPIS,NIL})
+		aadd(aItem,{"D1_VALCOF" ,SD1->D1_VALCOF,NIL})
+		aadd(aItem,{"D1_VALCSL" ,SD1->D1_VALCSL,NIL})
+		aadd(aItem,{"D1_ALQPIS" ,SD1->D1_ALQPIS,NIL})
+		aadd(aItem,{"D1_ALQCOF" ,SD1->D1_ALQCOF,NIL})
+		aadd(aItem,{"D1_ALQCSL" ,SD1->D1_ALQCSL,NIL})
+		aadd(aItem,{"D1_ALIQCMP" ,SD1->D1_ALIQCMP,NIL})
 		aAdd(aItens,aItem)
-	SD1->(dbskip())
+		SD1->(dbskip())
 	ENDDO
-	//Next nX
-
-	/*
-	//Rateio de Centro de Custo
-	aItem := {}
-	aAdd(aItensRat, Array(2))
-	aItensRat[Len(aItensRat)][1] := "0001"
-	aItensRat[Len(aItensRat)][2] := {}
-
-	aAdd(aItem, {"DE_FILIAL" , xFilial("SDE") , Nil})
-	aAdd(aItem, {"DE_ITEM" , StrZero(1,TamSx3("DE_ITEM")[1]) , Nil})
-	aAdd(aItem, {"DE_DOC" , cNum , Nil})
-	aAdd(aItem, {"DE_SERIE" , "1" , Nil})
-	aAdd(aItem, {"DE_FORNECE" , "001 " , Nil})
-	aAdd(aItem, {"DE_LOJA" , "01" , Nil})
-	aAdd(aItem, {"DE_ITEMNF" , "0001" , Nil})
-	aAdd(aItem, {"DE_PERC" , 100 , Nil})
-	aAdd(aItem, {"DE_CC" , "01" , Nil})
-	aAdd(aItensRat[Len(aItensRat)][2], aClone(aItem))
-
-	//Array contendo a informação se gera DIRF e os códigos de retenção por imposto
-	aAdd( aCodRet, {01, "0297", 1, "..."} )
-	aAdd( aCodRet, {02, "0297", 1, "IRR"} )
-	aAdd( aCodRet, {03, "5979", 1, "PIS"} )
-	aAdd( aCodRet, {04, "5960", 1, "COF"} )
-	aAdd( aCodRet, {05, "5987", 1, "CSL"} ) */
 
 	//3-Inclusão / 4-Classificação / 5-Exclusão
 	MSExecAuto({|x,y,z,a,b| MATA103(x,y,z,,,,,a,,,b)},aCab,aItens,nOpc,/*aItensRat*/,/*aCodRet*/)
 
 	If !lMsErroAuto
-	ConOut(" NF Classificada RCTEC05: " + cNum)
+		ConOut(" NF Excluida RCTEC05: " + SF1->F1_DOC)
 	Else
-	MostraErro()
-	ConOut("Erro na Classificação RCTEC05")
+		MostraErro()
+		ConOut("Erro na Exclusao RCTEC05")
 	EndIf
 
-	ConOut("Fim Classificacao RCTEC05: " + Time())
+	ConOut("Fim Exclusao RCTEC05: " + Time())
 
-	RESET ENVIRONMENT
 
 Return
+
+// FUNCAO PARA BUSCAR O NOME DO solicitante NA SC7
+USER FUNCTION nSolicit()
+
+	DBSELECTAREA("SD1")
+	DBSETORDER(1)
+	DBGOTOP()
+	DBSEEK(xFilial("SF1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
+
+	DBSELECTAREA("SC7")
+	DBSETORDER(3)
+	DBGOTOP()
+	DBSEEK(xFilial("SD1")+SD1->D1_FORNECE+SD1->D1_LOJA+SD1->D1_PEDIDO)
+
+	IF !EMPTY(SC7->C7_SOLICIT)
+
+		cSolicit := SC7->C7_SOLICIT
+
+		RECLOCK("SF1", .F.)
+		SF1->F1_SOLICIT = cSolicit
+		MSUNLOCK()
+	ENDIF
+
+
+
+RETURN
