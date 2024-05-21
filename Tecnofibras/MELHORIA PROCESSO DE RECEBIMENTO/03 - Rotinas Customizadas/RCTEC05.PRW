@@ -14,6 +14,7 @@
 User Function RCTEC05()
 
 	Local   oBrowse
+	Local aArea    := GetArea()
 
 	oBrowse:= FWMBrowse():New()
 	oBrowse:SetAlias('SF1')
@@ -24,6 +25,7 @@ User Function RCTEC05()
 	//Adiciona Leganda
 	oBrowse:addLegend({|| SF1->F1_STATUS = 'Z'}        ,'BR_CINZA'  ,'pre classificacao/pendente recebimento')
 	oBrowse:Activate()
+	RestArea(aArea)
 
 Return()
 
@@ -258,8 +260,6 @@ USER FUNCTION CLAS103()
 	Private lMsErroAuto := .F.
 	Private lMsHelpAuto := .T.
 
-	PREPARE ENVIRONMENT EMPRESA cEmpAnt FILIAL cFilAnt MODULO "COM"
-
 	DBSELECTAREA("SD1")
 	DBSETORDER(1)
 	DBGOTOP()
@@ -355,6 +355,8 @@ USER FUNCTION CLAS103()
 
 	ConOut("Fim Classificacao RCTEC05: " + Time())
 
+	DBCLOSEAREA("SD1")
+
 Return
 
 USER FUNCTION DEL103()
@@ -378,8 +380,6 @@ USER FUNCTION DEL103()
 
 	Private lMsErroAuto := .F.
 	Private lMsHelpAuto := .T.
-
-	PREPARE ENVIRONMENT EMPRESA cEmpAnt FILIAL cFilAnt MODULO "COM"
 
 	DBSELECTAREA("SD1")
 	DBSETORDER(1)
@@ -474,6 +474,8 @@ USER FUNCTION DEL103()
 	EndIf
 
 	ConOut("Fim Exclusao RCTEC05: " + Time())
+
+	DBCLOSEAREA("SD1")
 
 
 Return
