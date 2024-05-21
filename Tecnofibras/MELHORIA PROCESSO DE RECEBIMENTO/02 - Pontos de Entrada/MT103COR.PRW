@@ -24,7 +24,5 @@ Local aCoresUsr :={	{'Empty(F1_STATUS).And.F1_GF<>"GF"'	,'ENABLE'			},;	// NF Na
 					{'F1_TIPO=="B"'						,'BR_CINZA'  		},;	// NF de Beneficiamento
 					{'F1_TIPO=="D"'						,'BR_AMARELO'		},;	// NF de Devolucao
 					{'F1_STATUS == "Z" ', 'BR_PRETO_1'} } // pré classificação/pendente recebimento
-                    //{'F1_STATUS == "X" ', 'BR_PRETO_2'},;
-                    //{'F1_STATUS == "Y" ', 'BR_PRETO_3'} 
 
 RETURN aCoresUsr
