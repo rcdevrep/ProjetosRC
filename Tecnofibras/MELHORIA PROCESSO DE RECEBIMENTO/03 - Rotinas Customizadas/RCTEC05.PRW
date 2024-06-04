@@ -164,7 +164,7 @@ Static Function STRUMASTER(cCampo)
 	CASE cCampo = "F1_SOLICIT" ; RETURN .T.
 	CASE cCampo = "F1_EMISSAO" ; RETURN .T.
 	CASE cCampo = "F1_EST" ; RETURN .T.
-	CASE cCampo = "F1_XRECEB" ; RETURN .T.
+	//CASE cCampo = "F1_XRECEB" ; RETURN .T.
 	CASE cCampo = "F1_NOMEFOR" ; RETURN .T.
 	CASE cCampo = "F1_STATUS"  ; RETURN .T.
 	ENDCASE
@@ -266,13 +266,14 @@ USER FUNCTION CLAS103()
 	DBSEEK(xFilial("SF1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
 
 	//Cabeçalho
+	aadd(aCab,{"F1_FILIAL" , SF1->F1_FILIAL ,NIL})
 	aadd(aCab,{"F1_TIPO" , SF1->F1_TIPO ,NIL})
 	aadd(aCab,{"F1_FORMUL" ,SF1->F1_FORMUL ,NIL})
 	aadd(aCab,{"F1_DOC" ,SF1->F1_DOC ,NIL})
 	aadd(aCab,{"F1_SERIE" ,SF1->F1_SERIE ,NIL})
 	aadd(aCab,{"F1_EMISSAO" ,DDATABASE ,NIL})
 	aadd(aCab,{"F1_DTDIGIT" ,DDATABASE ,NIL})
-	aadd(aCab,{"F1_XRECEB" ,SF1->F1_XRECEB ,NIL})
+	//aadd(aCab,{"F1_XRECEB" ,SF1->F1_XRECEB ,NIL})
 	aadd(aCab,{"F1_FORNECE" ,SF1->F1_FORNECE ,NIL})
 	aadd(aCab,{"F1_LOJA" ,SF1->F1_LOJA ,NIL})
 	aadd(aCab,{"F1_ESPECIE" ,SF1->F1_ESPECIE ,NIL})
@@ -288,7 +289,8 @@ USER FUNCTION CLAS103()
 
 	//Itens
 	aItem := {}
-	WHILE !SD1->(Eof()) .AND. SF1->F1_DOC = SD1->D1_DOC .AND. SF1->F1_SERIE = SD1->D1_SERIE .AND. SF1->F1_FORNECE = SD1->D1_FORNECE .AND. SF1->F1_LOJA = SD1->D1_LOJA
+	WHILE !SD1->(Eof()) .AND. SF1->F1_FILIAL = SD1->D1_FILIAL .AND. SF1->F1_DOC = SD1->D1_DOC .AND. SF1->F1_SERIE = SD1->D1_SERIE .AND. SF1->F1_FORNECE = SD1->D1_FORNECE .AND. SF1->F1_LOJA = SD1->D1_LOJA
+		aadd(aItem,{"D1_FILIAL" ,SD1->D1_FILIAL,NIL})
 		aadd(aItem,{"D1_ITEM" ,SD1->D1_ITEM,NIL})
 		aadd(aItem,{"D1_COD" ,SD1->D1_COD,NIL})
 		aadd(aItem,{"D1_UM" ,SD1->D1_UM,NIL})
@@ -325,6 +327,7 @@ USER FUNCTION CLAS103()
 		aadd(aItem,{"D1_DTVALID" ,SD1->D1_DTVALID,NIL})
 		aadd(aItem,{"D1_CLASFIS" ,SD1->D1_CLASFIS,NIL})
 		aadd(aItem,{"D1_CUSTO" ,SD1->D1_CUSTO,NIL})
+		aadd(aItem,{"D1_QTDPEDI" ,SD1->D1_QTDPEDI,NIL})
 		aadd(aItem,{"D1_RATEIO" ,SD1->D1_RATEIO,NIL})
 		aadd(aItem,{"D1_BASEINS" ,SD1->D1_BASEINS,NIL})
 		aadd(aItem,{"D1_RGESPST" ,SD1->D1_RGESPST,NIL})
@@ -343,11 +346,14 @@ USER FUNCTION CLAS103()
 		SD1->(dbskip())
 	ENDDO
 
+	aCab := FWVetByDic(aCab, 'SF1')
+    aItens := FWVetByDic(aItens, 'SD1', .T.)
+
 	//3-Inclusão / 4-Classificação / 5-Exclusão
 	MSExecAuto({|x,y,z,a,b| MATA103(x,y,z,,,,,a,,,b)},aCab,aItens,nOpc,/*aItensRat*/,/*aCodRet*/)
 
 	If !lMsErroAuto
-		ConOut(" NF Classificada RCTEC05: " + cNum)
+		ConOut(" NF Classificada RCTEC05: " + SF1->F1_DOC)
 	Else
 		MostraErro()
 		ConOut("Erro na Classificação RCTEC05")
@@ -486,33 +492,35 @@ USER FUNCTION nSolicit()
 	DBSELECTAREA("SD1")
 	DBSETORDER(1)
 	DBGOTOP()
-	DBSEEK(xFilial("SF1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
+	IF DBSEEK(xFilial("SF1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
 
-	cPedido := SD1->D1_PEDIDO
+		cPedido := SD1->D1_PEDIDO
 
-	DBSELECTAREA("SC7")
-	DBSETORDER(3)
-	DBGOTOP()
-	DBSEEK(xFilial("SF1")+SF1->F1_FORNECE+SF1->F1_LOJA+cPedido)
+		DBSELECTAREA("SC7")
+		DBSETORDER(3)
+		DBGOTOP()
+		IF DBSEEK(xFilial("SF1")+SF1->F1_FORNECE+SF1->F1_LOJA+cPedido)
 
-	cNumSc := SC7->C7_NUM
-	cItemSc := SC7->C7_ITEM
-	cItemGrd := SC7->C7_ITEMGRD
+			cNumSc := SC7->C7_NUMSC
+			cItemSc := SC7->C7_ITEMSC
 
-	DBSELECTAREA("SC1")
-	DBSETORDER(1)
-	DBGOTOP()
-	DBSEEK(xFilial("SF1")+cNumSc+cItemSc+cItemGrd)
+			DBSELECTAREA("SC1")
+			DBSETORDER(1)
+			DBGOTOP()
+			IF DBSEEK(xFilial("SF1")+cNumSc+cItemSc)
 
-	IF !EMPTY(SC1->C1_SOLICIT)
+				IF !EMPTY(SC1->C1_SOLICIT)
 
-		cSolicit := SC1->C1_SOLICIT
+					cSolicit := SC1->C1_SOLICIT
 
-		RECLOCK("SF1", .F.)
-		SF1->F1_SOLICIT = cSolicit
-		MSUNLOCK()
+					RECLOCK("SF1", .F.)
+					SF1->F1_SOLICIT = cSolicit
+					MSUNLOCK()
+				ENDIF
+
+			ENDIF
+		ENDIF
 	ENDIF
-
 
 
 RETURN
