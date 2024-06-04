@@ -55,6 +55,8 @@ User Function MT100TOK()
 	lAntecip 	:= .F.
 	lPrazo	 	:= .F.
 
+	//lMt100tok := .F.
+
 	If !l103Auto
 		If l103Class
 			SF1->(DbSetOrder(1))
@@ -237,7 +239,7 @@ User Function MT100TOK()
 
 		// RC CONSULTORIA - 07/05/2024
 		IF lRet
-			IF SF1->F1_STATUS == ' '
+			IF SF1->F1_STATUS == ' ' .AND. SF1->F1_XSTATUS == ' '
 				IF MsgYesNo("Deseja Enviar para Recebimento?", "Confirma", .T.)
 					U_RCTEC04(l103Class)
 					FWAlertSuccess("Enviado com sucesso! ", "Sucesso")
@@ -252,22 +254,19 @@ User Function MT100TOK()
 					ENDIF
 				ENDIF
 			ELSEIF SF1->F1_XSTATUS = 'Z'
-				If FWAlertYesNo("Esta Nota foi enviada para recebimento, deseja classificar mesmo assim?", "Continuar?")
-					FWAlertSuccess("Classificada com Sucesso!", "Sucesso")
+				IF l103Class
 					RETURN .T.
-				Else
-					FWAlertInfo("Nota Nao Classificada", "Cancelado")
+				ELSE
+					FWAlertError("Nota Já Enviada para Recebimento", "RCTEC05")
 					RETURN .F.
-				EndIf
-			ELSE
+				ENDIF
+			ENDIF
 
 			ENDIF
 
-		ENDIF
 
 
-
-		Return lRet
+			Return lRet
 
 /*/{Protheus.doc} lCkNumNF
 	(long_description)

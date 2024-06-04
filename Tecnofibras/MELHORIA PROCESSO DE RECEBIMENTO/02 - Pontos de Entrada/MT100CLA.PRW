@@ -9,7 +9,10 @@
 
 USER FUNCTION MT100CLA()
 
-//MSGALERT("Para Salvar a Nota sem Classificar, use a Opção: Outras Ações - Enviar P/ Recebimento")
+    IF SF1->F1_XSTATUS == 'Z'
+        FWAlertError("Nota Já Enviada para Recebimento", "RCTEC05")
+        RETURN .F.
+    ENDIF
 
 
 

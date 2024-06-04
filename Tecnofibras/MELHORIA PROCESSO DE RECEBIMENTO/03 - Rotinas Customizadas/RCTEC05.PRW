@@ -243,8 +243,6 @@ USER FUNCTION CLAS103()
 	Local aCab := {}
 	Local aItem := {}
 	Local aItens := {}
-	Local aItensRat := {}
-	Local aCodRet := {}
 	Local nOpc := 4 // Classificação
 	Local nI := 0
 	Local nX := 0
@@ -279,7 +277,7 @@ USER FUNCTION CLAS103()
 		aadd(aCab,{"F1_FORNECE" ,SF1->F1_FORNECE ,NIL})
 		aadd(aCab,{"F1_LOJA" ,SF1->F1_LOJA ,NIL})
 		aadd(aCab,{"F1_ESPECIE" ,SF1->F1_ESPECIE ,NIL})
-		aadd(aCab,{"F1_COND" ,SF1->F1_COND ,NIL})
+		//aadd(aCab,{"F1_COND" ,SF1->F1_COND ,NIL})
 		aadd(aCab,{"F1_DESPESA" ,SF1->F1_DESPESA,NIL})
 		aadd(aCab,{"F1_DESCONT" ,SF1->F1_DESCONT,Nil})
 		aadd(aCab,{"F1_SEGURO" ,SF1->F1_SEGURO,Nil})
@@ -294,10 +292,11 @@ USER FUNCTION CLAS103()
 		WHILE !SD1->(Eof()) .AND. SF1->F1_FILIAL = SD1->D1_FILIAL .AND. ;
 				SF1->F1_DOC = SD1->D1_DOC .AND. SF1->F1_SERIE = SD1->D1_SERIE .AND. ;
 				SF1->F1_FORNECE = SD1->D1_FORNECE .AND. SF1->F1_LOJA = SD1->D1_LOJA
-
-			aadd(aItem,{"D1_FILIAL" ,SD1->D1_FILIAL,NIL})
+	
+			aItem := {}
 			aAdd(aItem,{"LINPOS" , "D1_ITEM",SD1->D1_ITEM })
-			aadd(aItem,{"D1_ITEM" ,SD1->D1_ITEM,NIL})
+			aadd(aItem,{"D1_FILIAL" ,SD1->D1_FILIAL,NIL})
+			//aadd(aItem,{"D1_ITEM" ,SD1->D1_ITEM,NIL})
 			aadd(aItem,{"D1_COD" ,SD1->D1_COD,NIL})
 			aadd(aItem,{"D1_UM" ,SD1->D1_UM,NIL})
 			aadd(aItem,{"D1_QUANT" ,SD1->D1_QUANT,NIL})
@@ -349,23 +348,27 @@ USER FUNCTION CLAS103()
 			aadd(aItem,{"D1_ALQCSL" ,SD1->D1_ALQCSL,NIL})
 			aadd(aItem,{"D1_ALIQCMP" ,SD1->D1_ALIQCMP,NIL})
 			aadd(aItem,{"AUTDELETA" ,"N",Nil,Nil})
-			aAdd(aItem,{"LINPOS" , "D1_PEDIDO",SD1->D1_PEDIDO })
-			aAdd(aItem,{"LINPOS" , "D1_ITEMPC",SD1->D1_ITEMPC })
 			aAdd(aItens,aItem)
-			aadd(aItens[Len(aItens)], {'D1_PEDIDO', SD1->D1_PEDIDO ,NIL})
-          	aadd(aItens[Len(aItens)], {'D1_ITEMPC', SD1->D1_ITEMPC ,NIL})
+			aadd(Atail(aItens), {"LINPOS" , "D1_PEDIDO",SD1->D1_PEDIDO })
+          	aadd(Atail(aItens), {"LINPOS" , "D1_ITEMPC",SD1->D1_ITEMPC })
 			
 			SD1->(dbskip())
 		ENDDO
 
-		aCab := FWVetByDic(aCab, 'SF1')
-		aItens := FWVetByDic(aItens, 'SD1', .T.)
+		//aCab := FWVetByDic(aCab, 'SF1')
+		//aItens := FWVetByDic(aItens, 'SD1', .T.)
+
+		ASort(aItens,,, {|x, y| x[1][3] < y[1][3]})
 
 		//3-Inclusão / 4-Classificação / 5-Exclusão
-		MSExecAuto({|x,y,z,a,b| MATA103(x,y,z,,,,,a,,,b)},aCab,aItens,nOpc,aItensRat,aCodRet)
+		FWMsgRun(,{|| MSExecAuto({|x,y,z,w| MATA103(x,y,z,w)},aCab,aItens,nOpc,.T.)},"Aguarde","Classificando Nota...") 
 
 		If !lMsErroAuto
 			ConOut(" NF Classificada RCTEC05: " + SF1->F1_DOC)
+			FWAlertSuccess("Classificada com Sucesso!", "Sucesso")
+			Reclock("SF1",.F.)
+			SF1->F1_XSTATUS := 'A'
+			MSUNLOCK()
 		Else
 			MostraErro()
 			ConOut("Erro na Classificação RCTEC05")
@@ -488,7 +491,8 @@ USER FUNCTION DEL103()
 		ENDDO
 
 		//3-Inclusão / 4-Classificação / 5-Exclusão
-		MSExecAuto({|x,y,z,a,b| MATA103(x,y,z,,,,,a,,,b)},aCab,aItens,nOpc,/*aItensRat*/,/*aCodRet*/)
+		//MSExecAuto({|x,y,z,a,b| MATA103(x,y,z,,,,,a,,,b)},aCab,aItens,nOpc,/*aItensRat*/,/*aCodRet*/)
+		MSExecAuto({|x, y, z| MATA140(x, y, z)}, aCab, aItens, nOpc)
 
 		If !lMsErroAuto
 			ConOut(" NF Excluida RCTEC05: " + SF1->F1_DOC)
