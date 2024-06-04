@@ -1,7 +1,7 @@
 #include "Protheus.ch"
 #include "FWMVCDef.ch"
 
-Static cTitulo := "TELA TESTE"
+Static cTitulo := "TELA RQ"
 
 USER FUNCTION RCTEC01()
     Local aArea := GetArea()
@@ -22,10 +22,11 @@ USER FUNCTION RCTEC01()
 RETURN NIL
 
 STATIC FUNCTION MenuDef()
-    Local aRot := {}
+    Local aRotina := {}
 
-    ADD OPTION aRot TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC01' OPERATION MODEL_OPERATION_VIEW ACCESS 0
-RETURN aRot
+    ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC01' OPERATION 2 ACCESS 0
+
+RETURN (aRotina)
 
 STATIC FUNCTION ModelDef()
     Local oModel := NIL
