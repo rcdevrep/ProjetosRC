@@ -235,31 +235,39 @@ User Function MT100TOK()
 		EndIf
 		lRet := lRetu .and. U_GTPE005() // CONEXAO NFE
 
-    // RC CONSULTORIA - 07/05/2024
-    IF lRet
-		IF SF1->F1_STATUS == ' '
-			IF MsgYesNo("Deseja Enviar para Recebimento?", "Confirma", .T.)
-				U_RCTEC04(l103Class)
-				FWAlertSuccess("Enviado com sucesso! ", "RCTEC05")
-				RETURN .F.
-			ELSE
-				IF MsgYesNo("Deseja Classificar a Nota?", "Confirma", .T.)
-					RETURN .T.
-				ELSE
+		// RC CONSULTORIA - 07/05/2024
+		IF lRet
+			IF SF1->F1_STATUS == ' '
+				IF MsgYesNo("Deseja Enviar para Recebimento?", "Confirma", .T.)
+					U_RCTEC04(l103Class)
+					FWAlertSuccess("Enviado com sucesso! ", "Sucesso")
 					RETURN .F.
+				ELSE
+					IF MsgYesNo("Deseja Classificar a Nota?", "Confirma", .T.)
+						FWAlertSuccess("Classificada com Sucesso!", "Sucesso")
+						RETURN .T.
+					ELSE
+						FWAlertInfo("Nota Nao Classificada", "Cancelado")
+						RETURN .F.
+					ENDIF
 				ENDIF
-			ENDIF
-		ELSEIF SF1->F1_STATUS = 'Z'
-			FWAlertSuccess("Classificado com Sucesso! ", "RCTEC05")
+			ELSEIF SF1->F1_XSTATUS = 'Z'
+				If FWAlertYesNo("Esta Nota foi enviada para recebimento, deseja classificar mesmo assim?", "Continuar?")
+					FWAlertSuccess("Classificada com Sucesso!", "Sucesso")
+					RETURN .T.
+				Else
+					FWAlertInfo("Nota Nao Classificada", "Cancelado")
+					RETURN .F.
+				EndIf
 			ELSE
+
+			ENDIF
 
 		ENDIF
-    
-    ENDIF
 
 
 
-Return lRet
+		Return lRet
 
 /*/{Protheus.doc} lCkNumNF
 	(long_description)

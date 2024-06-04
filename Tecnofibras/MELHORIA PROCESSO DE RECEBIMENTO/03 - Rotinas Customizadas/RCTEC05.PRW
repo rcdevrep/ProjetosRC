@@ -20,10 +20,10 @@ User Function RCTEC05()
 	oBrowse:SetAlias('SF1')
 	oBrowse:SetDescription( "Notas Pendentes Recebimento" )
 	oBrowse:SetMenuDef("RCTEC05")
-	oBrowse:AddFilter('Status',"SF1->F1_STATUS = 'Z'",.T.,.T.)
+	oBrowse:AddFilter('Status',"SF1->F1_XSTATUS = 'Z'",.T.,.T.)
 
 	//Adiciona Leganda
-	oBrowse:addLegend({|| SF1->F1_STATUS = 'Z'}        ,'BR_CINZA'  ,'pre classificacao/pendente recebimento')
+	oBrowse:addLegend({|| SF1->F1_XSTATUS = 'Z'}        ,'BR_CINZA'  ,'pre classificacao/pendente recebimento')
 	oBrowse:Activate()
 	RestArea(aArea)
 
@@ -164,7 +164,7 @@ Static Function STRUMASTER(cCampo)
 	CASE cCampo = "F1_SOLICIT" ; RETURN .T.
 	CASE cCampo = "F1_EMISSAO" ; RETURN .T.
 	CASE cCampo = "F1_EST" ; RETURN .T.
-	//CASE cCampo = "F1_XRECEB" ; RETURN .T.
+		//CASE cCampo = "F1_XRECEB" ; RETURN .T.
 	CASE cCampo = "F1_NOMEFOR" ; RETURN .T.
 	CASE cCampo = "F1_STATUS"  ; RETURN .T.
 	ENDCASE
@@ -245,7 +245,7 @@ USER FUNCTION CLAS103()
 	Local aItens := {}
 	Local aItensRat := {}
 	Local aCodRet := {}
-	Local nOpc := 4
+	Local nOpc := 4 // Classificação
 	Local nI := 0
 	Local nX := 0
 	Local nReg := 1
@@ -260,106 +260,121 @@ USER FUNCTION CLAS103()
 	Private lMsErroAuto := .F.
 	Private lMsHelpAuto := .T.
 
+	cPedido := POSICIONE("SD1",1,xFilial("SD1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA, "D1_PEDIDO")
+
 	DBSELECTAREA("SD1")
-	DBSETORDER(1)
+	DBSETORDER(22)
 	DBGOTOP()
-	DBSEEK(xFilial("SF1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
+	IF(DBSEEK(xFilial("SD1")+cPedido))
 
-	//Cabeçalho
-	aadd(aCab,{"F1_FILIAL" , SF1->F1_FILIAL ,NIL})
-	aadd(aCab,{"F1_TIPO" , SF1->F1_TIPO ,NIL})
-	aadd(aCab,{"F1_FORMUL" ,SF1->F1_FORMUL ,NIL})
-	aadd(aCab,{"F1_DOC" ,SF1->F1_DOC ,NIL})
-	aadd(aCab,{"F1_SERIE" ,SF1->F1_SERIE ,NIL})
-	aadd(aCab,{"F1_EMISSAO" ,DDATABASE ,NIL})
-	aadd(aCab,{"F1_DTDIGIT" ,DDATABASE ,NIL})
-	//aadd(aCab,{"F1_XRECEB" ,SF1->F1_XRECEB ,NIL})
-	aadd(aCab,{"F1_FORNECE" ,SF1->F1_FORNECE ,NIL})
-	aadd(aCab,{"F1_LOJA" ,SF1->F1_LOJA ,NIL})
-	aadd(aCab,{"F1_ESPECIE" ,SF1->F1_ESPECIE ,NIL})
-	aadd(aCab,{"F1_COND" ,SF1->F1_COND ,NIL})
-	aadd(aCab,{"F1_DESPESA" ,SF1->F1_DESPESA,NIL})
-	aadd(aCab,{"F1_DESCONT" ,SF1->F1_DESCONT,Nil})
-	aadd(aCab,{"F1_SEGURO" ,SF1->F1_SEGURO,Nil})
-	aadd(aCab,{"F1_FRETE" ,SF1->F1_FRETE,Nil})
-	aadd(aCab,{"F1_MOEDA" ,SF1->F1_MOEDA,Nil})
-	aadd(aCab,{"F1_TXMOEDA" ,SF1->F1_TXMOEDA,Nil})
-	aadd(aCab,{"F1_STATUS" ,SF1->F1_STATUS,Nil})
-	aadd(aCab,{"E2_NATUREZ" ,"010456",Nil})
+		//Cabeçalho
+		aadd(aCab,{"F1_FILIAL" , SF1->F1_FILIAL ,NIL})
+		aadd(aCab,{"F1_TIPO" , SF1->F1_TIPO ,NIL})
+		aadd(aCab,{"F1_FORMUL" ,SF1->F1_FORMUL ,NIL})
+		aadd(aCab,{"F1_DOC" ,SF1->F1_DOC ,NIL})
+		aadd(aCab,{"F1_SERIE" ,SF1->F1_SERIE ,NIL})
+		aadd(aCab,{"F1_EMISSAO" ,DDATABASE ,NIL})
+		aadd(aCab,{"F1_DTDIGIT" ,DDATABASE ,NIL})
+		//aadd(aCab,{"F1_XRECEB" ,SF1->F1_XRECEB ,NIL})
+		aadd(aCab,{"F1_FORNECE" ,SF1->F1_FORNECE ,NIL})
+		aadd(aCab,{"F1_LOJA" ,SF1->F1_LOJA ,NIL})
+		aadd(aCab,{"F1_ESPECIE" ,SF1->F1_ESPECIE ,NIL})
+		aadd(aCab,{"F1_COND" ,SF1->F1_COND ,NIL})
+		aadd(aCab,{"F1_DESPESA" ,SF1->F1_DESPESA,NIL})
+		aadd(aCab,{"F1_DESCONT" ,SF1->F1_DESCONT,Nil})
+		aadd(aCab,{"F1_SEGURO" ,SF1->F1_SEGURO,Nil})
+		aadd(aCab,{"F1_FRETE" ,SF1->F1_FRETE,Nil})
+		aadd(aCab,{"F1_MOEDA" ,SF1->F1_MOEDA,Nil})
+		aadd(aCab,{"F1_TXMOEDA" ,SF1->F1_TXMOEDA,Nil})
+		aadd(aCab,{"F1_STATUS" ,SF1->F1_STATUS,Nil})
+		aadd(aCab,{"E2_NATUREZ" ,"010456",Nil})
 
-	//Itens
-	aItem := {}
-	WHILE !SD1->(Eof()) .AND. SF1->F1_FILIAL = SD1->D1_FILIAL .AND. SF1->F1_DOC = SD1->D1_DOC .AND. SF1->F1_SERIE = SD1->D1_SERIE .AND. SF1->F1_FORNECE = SD1->D1_FORNECE .AND. SF1->F1_LOJA = SD1->D1_LOJA
-		aadd(aItem,{"D1_FILIAL" ,SD1->D1_FILIAL,NIL})
-		aadd(aItem,{"D1_ITEM" ,SD1->D1_ITEM,NIL})
-		aadd(aItem,{"D1_COD" ,SD1->D1_COD,NIL})
-		aadd(aItem,{"D1_UM" ,SD1->D1_UM,NIL})
-		aadd(aItem,{"D1_QUANT" ,SD1->D1_QUANT,NIL})
-		aadd(aItem,{"D1_VUNIT" ,SD1->D1_VUNIT,NIL})
-		aadd(aItem,{"D1_TOTAL" ,SD1->D1_TOTAL,NIL})
-		aadd(aItem,{"D1_CONTA" ,SD1->D1_CONTA,NIL})
-		aadd(aItem,{"D1_TES" ,SD1->D1_TESACLAS,NIL})
-		aadd(aItem,{"D1_CF" ,SD1->D1_CF,NIL})
-		aadd(aItem,{"D1_LOTEFOR" ,SD1->D1_LOTEFOR,NIL})
-		aadd(aItem,{"D1_VLDLOTE" ,SD1->D1_VLDLOTE,NIL})
-		aadd(aItem,{"D1_LOTECTL" ,SD1->D1_LOTECTL,NIL})
-		aadd(aItem,{"D1_IPI" ,SD1->D1_IPI,NIL})
-		aadd(aItem,{"D1_PICM" ,SD1->D1_PICM,NIL})
-		aadd(aItem,{"D1_FORNECE" ,SD1->D1_FORNECE,NIL})
-		aadd(aItem,{"D1_LOJA" ,SD1->D1_LOJA,NIL})
-		aadd(aItem,{"D1_DOC" ,SD1->D1_DOC,NIL})
-		aadd(aItem,{"D1_EMISSAO" ,SD1->D1_EMISSAO,NIL})
-		aadd(aItem,{"D1_DTDIGIT" ,SD1->D1_DTDIGIT,NIL})
-		aadd(aItem,{"D1_VALICM" ,SD1->D1_VALICM,NIL})
-		aadd(aItem,{"D1_ITEMCTA" ,SD1->D1_ITEMCTA,NIL})
-		aadd(aItem,{"D1_SERIE" ,SD1->D1_SERIE,NIL})
-		aadd(aItem,{"D1_CC" ,SD1->D1_CC,NIL})
-		aadd(aItem,{"D1_PEDIDO" ,SD1->D1_PEDIDO,NIL})
-		aadd(aItem,{"D1_ITEMPC" ,SD1->D1_ITEMPC,NIL})
-		aadd(aItem,{"D1_LOCAL" ,SD1->D1_LOCAL,NIL})
-		aadd(aItem,{"D1_GRUPO" ,SD1->D1_GRUPO,NIL})
-		aadd(aItem,{"D1_TIPO" ,SD1->D1_TIPO,NIL})
-		aadd(aItem,{"D1_NUMSEQ" ,SD1->D1_NUMSEQ,NIL})
-		aadd(aItem,{"D1_TP" ,SD1->D1_TP,NIL})
-		aadd(aItem,{"D1_QTSEGUM" ,SD1->D1_QTSEGUM,NIL})
-		aadd(aItem,{"D1_SEQCALC" ,SD1->D1_SEQCALC,NIL})
-		aadd(aItem,{"D1_BASEICM" ,SD1->D1_BASEICM,NIL})
-		aadd(aItem,{"D1_DTVALID" ,SD1->D1_DTVALID,NIL})
-		aadd(aItem,{"D1_CLASFIS" ,SD1->D1_CLASFIS,NIL})
-		aadd(aItem,{"D1_CUSTO" ,SD1->D1_CUSTO,NIL})
-		aadd(aItem,{"D1_QTDPEDI" ,SD1->D1_QTDPEDI,NIL})
-		aadd(aItem,{"D1_RATEIO" ,SD1->D1_RATEIO,NIL})
-		aadd(aItem,{"D1_BASEINS" ,SD1->D1_BASEINS,NIL})
-		aadd(aItem,{"D1_RGESPST" ,SD1->D1_RGESPST,NIL})
-		aadd(aItem,{"D1_ALIQSOL" ,SD1->D1_ALIQSOL,NIL})
-		aadd(aItem,{"D1_BASEPIS" ,SD1->D1_BASEPIS,NIL})
-		aadd(aItem,{"D1_BASECOF" ,SD1->D1_BASECOF,NIL})
-		aadd(aItem,{"D1_BASECSL" ,SD1->D1_BASECSL,NIL})
-		aadd(aItem,{"D1_VALPIS" ,SD1->D1_VALPIS,NIL})
-		aadd(aItem,{"D1_VALCOF" ,SD1->D1_VALCOF,NIL})
-		aadd(aItem,{"D1_VALCSL" ,SD1->D1_VALCSL,NIL})
-		aadd(aItem,{"D1_ALQPIS" ,SD1->D1_ALQPIS,NIL})
-		aadd(aItem,{"D1_ALQCOF" ,SD1->D1_ALQCOF,NIL})
-		aadd(aItem,{"D1_ALQCSL" ,SD1->D1_ALQCSL,NIL})
-		aadd(aItem,{"D1_ALIQCMP" ,SD1->D1_ALIQCMP,NIL})
-		aAdd(aItens,aItem)
-		SD1->(dbskip())
-	ENDDO
+		//Itens
+		aItem := {}
+		WHILE !SD1->(Eof()) .AND. SF1->F1_FILIAL = SD1->D1_FILIAL .AND. ;
+				SF1->F1_DOC = SD1->D1_DOC .AND. SF1->F1_SERIE = SD1->D1_SERIE .AND. ;
+				SF1->F1_FORNECE = SD1->D1_FORNECE .AND. SF1->F1_LOJA = SD1->D1_LOJA
 
-	aCab := FWVetByDic(aCab, 'SF1')
-    aItens := FWVetByDic(aItens, 'SD1', .T.)
+			aadd(aItem,{"D1_FILIAL" ,SD1->D1_FILIAL,NIL})
+			aAdd(aItem,{"LINPOS" , "D1_ITEM",SD1->D1_ITEM })
+			aadd(aItem,{"D1_ITEM" ,SD1->D1_ITEM,NIL})
+			aadd(aItem,{"D1_COD" ,SD1->D1_COD,NIL})
+			aadd(aItem,{"D1_UM" ,SD1->D1_UM,NIL})
+			aadd(aItem,{"D1_QUANT" ,SD1->D1_QUANT,NIL})
+			aadd(aItem,{"D1_VUNIT" ,SD1->D1_VUNIT,NIL})
+			aadd(aItem,{"D1_TOTAL" ,SD1->D1_TOTAL,NIL})
+			aadd(aItem,{"D1_CONTA" ,SD1->D1_CONTA,NIL})
+			aadd(aItem,{"D1_TES" ,SD1->D1_TESACLAS,NIL})
+			aadd(aItem,{"D1_CF" ,SD1->D1_CF,NIL})
+			aadd(aItem,{"D1_LOTEFOR" ,SD1->D1_LOTEFOR,NIL})
+			aadd(aItem,{"D1_VLDLOTE" ,SD1->D1_VLDLOTE,NIL})
+			aadd(aItem,{"D1_LOTECTL" ,SD1->D1_LOTECTL,NIL})
+			aadd(aItem,{"D1_IPI" ,SD1->D1_IPI,NIL})
+			aadd(aItem,{"D1_PICM" ,SD1->D1_PICM,NIL})
+			aadd(aItem,{"D1_FORNECE" ,SD1->D1_FORNECE,NIL})
+			aadd(aItem,{"D1_LOJA" ,SD1->D1_LOJA,NIL})
+			aadd(aItem,{"D1_DOC" ,SD1->D1_DOC,NIL})
+			aadd(aItem,{"D1_EMISSAO" ,SD1->D1_EMISSAO,NIL})
+			aadd(aItem,{"D1_DTDIGIT" ,SD1->D1_DTDIGIT,NIL})
+			aadd(aItem,{"D1_VALICM" ,SD1->D1_VALICM,NIL})
+			aadd(aItem,{"D1_ITEMCTA" ,SD1->D1_ITEMCTA,NIL})
+			aadd(aItem,{"D1_SERIE" ,SD1->D1_SERIE,NIL})
+			aadd(aItem,{"D1_CC" ,SD1->D1_CC,NIL})
+			//aadd(aItem,{"D1_PEDIDO" ,SD1->D1_PEDIDO,NIL})
+			//aadd(aItem,{"D1_ITEMPC" ,SD1->D1_ITEMPC,NIL})
+			aadd(aItem,{"D1_LOCAL" ,SD1->D1_LOCAL,NIL})
+			aadd(aItem,{"D1_GRUPO" ,SD1->D1_GRUPO,NIL})
+			aadd(aItem,{"D1_TIPO" ,SD1->D1_TIPO,NIL})
+			aadd(aItem,{"D1_NUMSEQ" ,SD1->D1_NUMSEQ,NIL})
+			aadd(aItem,{"D1_TP" ,SD1->D1_TP,NIL})
+			aadd(aItem,{"D1_QTSEGUM" ,SD1->D1_QTSEGUM,NIL})
+			aadd(aItem,{"D1_SEQCALC" ,SD1->D1_SEQCALC,NIL})
+			aadd(aItem,{"D1_BASEICM" ,SD1->D1_BASEICM,NIL})
+			aadd(aItem,{"D1_DTVALID" ,SD1->D1_DTVALID,NIL})
+			aadd(aItem,{"D1_CLASFIS" ,SD1->D1_CLASFIS,NIL})
+			aadd(aItem,{"D1_CUSTO" ,SD1->D1_CUSTO,NIL})
+			aadd(aItem,{"D1_QTDPEDI" ,SD1->D1_QTDPEDI,NIL})
+			aadd(aItem,{"D1_RATEIO" ,SD1->D1_RATEIO,NIL})
+			aadd(aItem,{"D1_BASEINS" ,SD1->D1_BASEINS,NIL})
+			aadd(aItem,{"D1_RGESPST" ,SD1->D1_RGESPST,NIL})
+			aadd(aItem,{"D1_ALIQSOL" ,SD1->D1_ALIQSOL,NIL})
+			aadd(aItem,{"D1_BASEPIS" ,SD1->D1_BASEPIS,NIL})
+			aadd(aItem,{"D1_BASECOF" ,SD1->D1_BASECOF,NIL})
+			aadd(aItem,{"D1_BASECSL" ,SD1->D1_BASECSL,NIL})
+			aadd(aItem,{"D1_VALPIS" ,SD1->D1_VALPIS,NIL})
+			aadd(aItem,{"D1_VALCOF" ,SD1->D1_VALCOF,NIL})
+			aadd(aItem,{"D1_VALCSL" ,SD1->D1_VALCSL,NIL})
+			aadd(aItem,{"D1_ALQPIS" ,SD1->D1_ALQPIS,NIL})
+			aadd(aItem,{"D1_ALQCOF" ,SD1->D1_ALQCOF,NIL})
+			aadd(aItem,{"D1_ALQCSL" ,SD1->D1_ALQCSL,NIL})
+			aadd(aItem,{"D1_ALIQCMP" ,SD1->D1_ALIQCMP,NIL})
+			aadd(aItem,{"AUTDELETA" ,"N",Nil,Nil})
+			aAdd(aItem,{"LINPOS" , "D1_PEDIDO",SD1->D1_PEDIDO })
+			aAdd(aItem,{"LINPOS" , "D1_ITEMPC",SD1->D1_ITEMPC })
+			aAdd(aItens,aItem)
+			aadd(aItens[Len(aItens)], {'D1_PEDIDO', SD1->D1_PEDIDO ,NIL})
+          	aadd(aItens[Len(aItens)], {'D1_ITEMPC', SD1->D1_ITEMPC ,NIL})
+			
+			SD1->(dbskip())
+		ENDDO
 
-	//3-Inclusão / 4-Classificação / 5-Exclusão
-	MSExecAuto({|x,y,z,a,b| MATA103(x,y,z,,,,,a,,,b)},aCab,aItens,nOpc,/*aItensRat*/,/*aCodRet*/)
+		aCab := FWVetByDic(aCab, 'SF1')
+		aItens := FWVetByDic(aItens, 'SD1', .T.)
 
-	If !lMsErroAuto
-		ConOut(" NF Classificada RCTEC05: " + SF1->F1_DOC)
-	Else
-		MostraErro()
-		ConOut("Erro na Classificação RCTEC05")
-	EndIf
+		//3-Inclusão / 4-Classificação / 5-Exclusão
+		MSExecAuto({|x,y,z,a,b| MATA103(x,y,z,,,,,a,,,b)},aCab,aItens,nOpc,aItensRat,aCodRet)
 
-	ConOut("Fim Classificacao RCTEC05: " + Time())
+		If !lMsErroAuto
+			ConOut(" NF Classificada RCTEC05: " + SF1->F1_DOC)
+		Else
+			MostraErro()
+			ConOut("Erro na Classificação RCTEC05")
+		EndIf
+
+		ConOut("Fim Classificacao RCTEC05: " + Time())
+	ELSE
+		CONOUT("Item não encontrado.")
+	ENDIF
 
 	DBCLOSEAREA("SD1")
 
@@ -372,7 +387,7 @@ USER FUNCTION DEL103()
 	Local aItens := {}
 	Local aItensRat := {}
 	Local aCodRet := {}
-	Local nOpc := 5
+	Local nOpc := 5 // Exclusão
 	Local nI := 0
 	Local nX := 0
 	Local nReg := 1
@@ -390,96 +405,101 @@ USER FUNCTION DEL103()
 	DBSELECTAREA("SD1")
 	DBSETORDER(1)
 	DBGOTOP()
-	DBSEEK(xFilial("SF1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA)
+	IF(DBSEEK(xFilial("SD1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA))
 
-	//Cabeçalho
-	aadd(aCab,{"F1_TIPO" , SF1->F1_TIPO ,NIL})
-	aadd(aCab,{"F1_FORMUL" ,SF1->F1_FORMUL ,NIL})
-	aadd(aCab,{"F1_DOC" ,SF1->F1_DOC ,NIL})
-	aadd(aCab,{"F1_SERIE" ,SF1->F1_SERIE ,NIL})
-	aadd(aCab,{"F1_EMISSAO" ,DDATABASE ,NIL})
-	aadd(aCab,{"F1_DTDIGIT" ,DDATABASE ,NIL})
-	aadd(aCab,{"F1_FORNECE" ,SF1->F1_FORNECE ,NIL})
-	aadd(aCab,{"F1_LOJA" ,SF1->F1_LOJA ,NIL})
-	aadd(aCab,{"F1_ESPECIE" ,SF1->F1_ESPECIE ,NIL})
-	aadd(aCab,{"F1_COND" ,SF1->F1_COND ,NIL})
-	aadd(aCab,{"F1_DESPESA" ,SF1->F1_DESPESA,NIL})
-	aadd(aCab,{"F1_DESCONT" ,SF1->F1_DESCONT,Nil})
-	aadd(aCab,{"F1_SEGURO" ,SF1->F1_SEGURO,Nil})
-	aadd(aCab,{"F1_FRETE" ,SF1->F1_FRETE,Nil})
-	aadd(aCab,{"F1_MOEDA" ,SF1->F1_MOEDA,Nil})
-	aadd(aCab,{"F1_TXMOEDA" ,SF1->F1_TXMOEDA,Nil})
-	aadd(aCab,{"F1_STATUS" ,SF1->F1_STATUS,Nil})
-	aadd(aCab,{"E2_NATUREZ" ,"010456",Nil})
+		//Cabeçalho
+		aadd(aCab,{"F1_TIPO" , SF1->F1_TIPO ,NIL})
+		aadd(aCab,{"F1_FORMUL" ,SF1->F1_FORMUL ,NIL})
+		aadd(aCab,{"F1_DOC" ,SF1->F1_DOC ,NIL})
+		aadd(aCab,{"F1_SERIE" ,SF1->F1_SERIE ,NIL})
+		aadd(aCab,{"F1_EMISSAO" ,DDATABASE ,NIL})
+		aadd(aCab,{"F1_DTDIGIT" ,DDATABASE ,NIL})
+		aadd(aCab,{"F1_FORNECE" ,SF1->F1_FORNECE ,NIL})
+		aadd(aCab,{"F1_LOJA" ,SF1->F1_LOJA ,NIL})
+		aadd(aCab,{"F1_ESPECIE" ,SF1->F1_ESPECIE ,NIL})
+		aadd(aCab,{"F1_COND" ,SF1->F1_COND ,NIL})
+		aadd(aCab,{"F1_DESPESA" ,SF1->F1_DESPESA,NIL})
+		aadd(aCab,{"F1_DESCONT" ,SF1->F1_DESCONT,Nil})
+		aadd(aCab,{"F1_SEGURO" ,SF1->F1_SEGURO,Nil})
+		aadd(aCab,{"F1_FRETE" ,SF1->F1_FRETE,Nil})
+		aadd(aCab,{"F1_MOEDA" ,SF1->F1_MOEDA,Nil})
+		aadd(aCab,{"F1_TXMOEDA" ,SF1->F1_TXMOEDA,Nil})
+		aadd(aCab,{"F1_STATUS" ,SF1->F1_STATUS,Nil})
+		aadd(aCab,{"E2_NATUREZ" ,"010456",Nil})
 
-	//Itens
-	aItem := {}
-	WHILE !SD1->(Eof()) .AND. SF1->F1_DOC = SD1->D1_DOC .AND. SF1->F1_SERIE = SD1->D1_SERIE .AND. SF1->F1_FORNECE = SD1->D1_FORNECE .AND. SF1->F1_LOJA = SD1->D1_LOJA
-		aadd(aItem,{"D1_ITEM" ,SD1->D1_ITEM,NIL})
-		aadd(aItem,{"D1_COD" ,SD1->D1_COD,NIL})
-		aadd(aItem,{"D1_UM" ,SD1->D1_UM,NIL})
-		aadd(aItem,{"D1_QUANT" ,SD1->D1_QUANT,NIL})
-		aadd(aItem,{"D1_VUNIT" ,SD1->D1_VUNIT,NIL})
-		aadd(aItem,{"D1_TOTAL" ,SD1->D1_TOTAL,NIL})
-		aadd(aItem,{"D1_CONTA" ,SD1->D1_CONTA,NIL})
-		aadd(aItem,{"D1_TES" ,SD1->D1_TES,NIL})
-		aadd(aItem,{"D1_CF" ,SD1->D1_CF,NIL})
-		aadd(aItem,{"D1_LOTEFOR" ,SD1->D1_LOTEFOR,NIL})
-		aadd(aItem,{"D1_VLDLOTE" ,SD1->D1_VLDLOTE,NIL})
-		aadd(aItem,{"D1_LOTECTL" ,SD1->D1_LOTECTL,NIL})
-		aadd(aItem,{"D1_IPI" ,SD1->D1_IPI,NIL})
-		aadd(aItem,{"D1_PICM" ,SD1->D1_PICM,NIL})
-		aadd(aItem,{"D1_FORNECE" ,SD1->D1_FORNECE,NIL})
-		aadd(aItem,{"D1_LOJA" ,SD1->D1_LOJA,NIL})
-		aadd(aItem,{"D1_DOC" ,SD1->D1_DOC,NIL})
-		aadd(aItem,{"D1_EMISSAO" ,SD1->D1_EMISSAO,NIL})
-		aadd(aItem,{"D1_DTDIGIT" ,SD1->D1_DTDIGIT,NIL})
-		aadd(aItem,{"D1_VALICM" ,SD1->D1_VALICM,NIL})
-		aadd(aItem,{"D1_ITEMCTA" ,SD1->D1_ITEMCTA,NIL})
-		aadd(aItem,{"D1_SERIE" ,SD1->D1_SERIE,NIL})
-		aadd(aItem,{"D1_CC" ,SD1->D1_CC,NIL})
-		aadd(aItem,{"D1_PEDIDO" ,SD1->D1_PEDIDO,NIL})
-		aadd(aItem,{"D1_ITEMPC" ,SD1->D1_ITEMPC,NIL})
-		aadd(aItem,{"D1_LOCAL" ,SD1->D1_LOCAL,NIL})
-		aadd(aItem,{"D1_GRUPO" ,SD1->D1_GRUPO,NIL})
-		aadd(aItem,{"D1_TIPO" ,SD1->D1_TIPO,NIL})
-		aadd(aItem,{"D1_NUMSEQ" ,SD1->D1_NUMSEQ,NIL})
-		aadd(aItem,{"D1_TP" ,SD1->D1_TP,NIL})
-		aadd(aItem,{"D1_QTSEGUM" ,SD1->D1_QTSEGUM,NIL})
-		aadd(aItem,{"D1_SEQCALC" ,SD1->D1_SEQCALC,NIL})
-		aadd(aItem,{"D1_BASEICM" ,SD1->D1_BASEICM,NIL})
-		aadd(aItem,{"D1_DTVALID" ,SD1->D1_DTVALID,NIL})
-		aadd(aItem,{"D1_CLASFIS" ,SD1->D1_CLASFIS,NIL})
-		aadd(aItem,{"D1_CUSTO" ,SD1->D1_CUSTO,NIL})
-		aadd(aItem,{"D1_RATEIO" ,SD1->D1_RATEIO,NIL})
-		aadd(aItem,{"D1_BASEINS" ,SD1->D1_BASEINS,NIL})
-		aadd(aItem,{"D1_RGESPST" ,SD1->D1_RGESPST,NIL})
-		aadd(aItem,{"D1_ALIQSOL" ,SD1->D1_ALIQSOL,NIL})
-		aadd(aItem,{"D1_BASEPIS" ,SD1->D1_BASEPIS,NIL})
-		aadd(aItem,{"D1_BASECOF" ,SD1->D1_BASECOF,NIL})
-		aadd(aItem,{"D1_BASECSL" ,SD1->D1_BASECSL,NIL})
-		aadd(aItem,{"D1_VALPIS" ,SD1->D1_VALPIS,NIL})
-		aadd(aItem,{"D1_VALCOF" ,SD1->D1_VALCOF,NIL})
-		aadd(aItem,{"D1_VALCSL" ,SD1->D1_VALCSL,NIL})
-		aadd(aItem,{"D1_ALQPIS" ,SD1->D1_ALQPIS,NIL})
-		aadd(aItem,{"D1_ALQCOF" ,SD1->D1_ALQCOF,NIL})
-		aadd(aItem,{"D1_ALQCSL" ,SD1->D1_ALQCSL,NIL})
-		aadd(aItem,{"D1_ALIQCMP" ,SD1->D1_ALIQCMP,NIL})
-		aAdd(aItens,aItem)
-		SD1->(dbskip())
-	ENDDO
+		//Itens
+		aItem := {}
+		WHILE !SD1->(Eof()) .AND. SF1->F1_FILIAL = SD1->D1_FILIAL .AND. ;
+				SF1->F1_DOC = SD1->D1_DOC .AND. SF1->F1_SERIE = SD1->D1_SERIE .AND. ;
+				SF1->F1_FORNECE = SD1->D1_FORNECE .AND. SF1->F1_LOJA = SD1->D1_LOJA
 
-	//3-Inclusão / 4-Classificação / 5-Exclusão
-	MSExecAuto({|x,y,z,a,b| MATA103(x,y,z,,,,,a,,,b)},aCab,aItens,nOpc,/*aItensRat*/,/*aCodRet*/)
+			aadd(aItem,{"D1_ITEM" ,SD1->D1_ITEM,NIL})
+			aadd(aItem,{"D1_COD" ,SD1->D1_COD,NIL})
+			aadd(aItem,{"D1_UM" ,SD1->D1_UM,NIL})
+			aadd(aItem,{"D1_QUANT" ,SD1->D1_QUANT,NIL})
+			aadd(aItem,{"D1_VUNIT" ,SD1->D1_VUNIT,NIL})
+			aadd(aItem,{"D1_TOTAL" ,SD1->D1_TOTAL,NIL})
+			aadd(aItem,{"D1_CONTA" ,SD1->D1_CONTA,NIL})
+			aadd(aItem,{"D1_TES" ,SD1->D1_TES,NIL})
+			aadd(aItem,{"D1_CF" ,SD1->D1_CF,NIL})
+			aadd(aItem,{"D1_LOTEFOR" ,SD1->D1_LOTEFOR,NIL})
+			aadd(aItem,{"D1_VLDLOTE" ,SD1->D1_VLDLOTE,NIL})
+			aadd(aItem,{"D1_LOTECTL" ,SD1->D1_LOTECTL,NIL})
+			aadd(aItem,{"D1_IPI" ,SD1->D1_IPI,NIL})
+			aadd(aItem,{"D1_PICM" ,SD1->D1_PICM,NIL})
+			aadd(aItem,{"D1_FORNECE" ,SD1->D1_FORNECE,NIL})
+			aadd(aItem,{"D1_LOJA" ,SD1->D1_LOJA,NIL})
+			aadd(aItem,{"D1_DOC" ,SD1->D1_DOC,NIL})
+			aadd(aItem,{"D1_EMISSAO" ,SD1->D1_EMISSAO,NIL})
+			aadd(aItem,{"D1_DTDIGIT" ,SD1->D1_DTDIGIT,NIL})
+			aadd(aItem,{"D1_VALICM" ,SD1->D1_VALICM,NIL})
+			aadd(aItem,{"D1_ITEMCTA" ,SD1->D1_ITEMCTA,NIL})
+			aadd(aItem,{"D1_SERIE" ,SD1->D1_SERIE,NIL})
+			aadd(aItem,{"D1_CC" ,SD1->D1_CC,NIL})
+			aadd(aItem,{"D1_PEDIDO" ,SD1->D1_PEDIDO,NIL})
+			aadd(aItem,{"D1_ITEMPC" ,SD1->D1_ITEMPC,NIL})
+			aadd(aItem,{"D1_LOCAL" ,SD1->D1_LOCAL,NIL})
+			aadd(aItem,{"D1_GRUPO" ,SD1->D1_GRUPO,NIL})
+			aadd(aItem,{"D1_TIPO" ,SD1->D1_TIPO,NIL})
+			aadd(aItem,{"D1_NUMSEQ" ,SD1->D1_NUMSEQ,NIL})
+			aadd(aItem,{"D1_TP" ,SD1->D1_TP,NIL})
+			aadd(aItem,{"D1_QTSEGUM" ,SD1->D1_QTSEGUM,NIL})
+			aadd(aItem,{"D1_SEQCALC" ,SD1->D1_SEQCALC,NIL})
+			aadd(aItem,{"D1_BASEICM" ,SD1->D1_BASEICM,NIL})
+			aadd(aItem,{"D1_DTVALID" ,SD1->D1_DTVALID,NIL})
+			aadd(aItem,{"D1_CLASFIS" ,SD1->D1_CLASFIS,NIL})
+			aadd(aItem,{"D1_CUSTO" ,SD1->D1_CUSTO,NIL})
+			aadd(aItem,{"D1_RATEIO" ,SD1->D1_RATEIO,NIL})
+			aadd(aItem,{"D1_BASEINS" ,SD1->D1_BASEINS,NIL})
+			aadd(aItem,{"D1_RGESPST" ,SD1->D1_RGESPST,NIL})
+			aadd(aItem,{"D1_ALIQSOL" ,SD1->D1_ALIQSOL,NIL})
+			aadd(aItem,{"D1_BASEPIS" ,SD1->D1_BASEPIS,NIL})
+			aadd(aItem,{"D1_BASECOF" ,SD1->D1_BASECOF,NIL})
+			aadd(aItem,{"D1_BASECSL" ,SD1->D1_BASECSL,NIL})
+			aadd(aItem,{"D1_VALPIS" ,SD1->D1_VALPIS,NIL})
+			aadd(aItem,{"D1_VALCOF" ,SD1->D1_VALCOF,NIL})
+			aadd(aItem,{"D1_VALCSL" ,SD1->D1_VALCSL,NIL})
+			aadd(aItem,{"D1_ALQPIS" ,SD1->D1_ALQPIS,NIL})
+			aadd(aItem,{"D1_ALQCOF" ,SD1->D1_ALQCOF,NIL})
+			aadd(aItem,{"D1_ALQCSL" ,SD1->D1_ALQCSL,NIL})
+			aadd(aItem,{"D1_ALIQCMP" ,SD1->D1_ALIQCMP,NIL})
+			aAdd(aItens,aItem)
+			SD1->(dbskip())
+		ENDDO
 
-	If !lMsErroAuto
-		ConOut(" NF Excluida RCTEC05: " + SF1->F1_DOC)
-	Else
-		MostraErro()
-		ConOut("Erro na Exclusao RCTEC05")
-	EndIf
+		//3-Inclusão / 4-Classificação / 5-Exclusão
+		MSExecAuto({|x,y,z,a,b| MATA103(x,y,z,,,,,a,,,b)},aCab,aItens,nOpc,/*aItensRat*/,/*aCodRet*/)
 
-	ConOut("Fim Exclusao RCTEC05: " + Time())
+		If !lMsErroAuto
+			ConOut(" NF Excluida RCTEC05: " + SF1->F1_DOC)
+		Else
+			MostraErro()
+			ConOut("Erro na Exclusao RCTEC05")
+		EndIf
+
+		ConOut("Fim Exclusao RCTEC05: " + Time())
+
+	ENDIF
 
 	DBCLOSEAREA("SD1")
 
