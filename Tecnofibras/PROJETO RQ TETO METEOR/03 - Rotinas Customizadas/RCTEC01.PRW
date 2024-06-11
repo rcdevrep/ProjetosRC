@@ -1,7 +1,7 @@
 #include "Protheus.ch"
 #include "FWMVCDef.ch"
 
-Static cTitulo := "TELA RQ"
+Static cTitulo := "Producao Teto Meteor"
 
 USER FUNCTION RCTEC01()
     Local aArea := GetArea()
@@ -22,8 +22,8 @@ USER FUNCTION RCTEC01()
 RETURN NIL
 
 STATIC FUNCTION MenuDef()
+    
     Local aRotina := {}
-
     ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC01' OPERATION 2 ACCESS 0
 
 RETURN (aRotina)

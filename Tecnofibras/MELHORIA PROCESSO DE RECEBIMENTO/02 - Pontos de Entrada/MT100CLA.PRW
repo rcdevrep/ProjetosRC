@@ -9,9 +9,11 @@
 
 USER FUNCTION MT100CLA()
 
-    IF SF1->F1_XSTATUS == 'Z'
-        FWAlertError("Nota Já Enviada para Recebimento", "RCTEC05")
-        RETURN .F.
+    IF !(FunName() == "RCTEC05")
+        IF SF1->F1_XSTATUS == 'Z'
+            FWAlertError("Nota Já Enviada para Recebimento", "RCTEC05")
+            RETURN .F.
+        ENDIF
     ENDIF
 
 

@@ -10,20 +10,19 @@
 
 USER FUNCTION MT103COR()
 
-Local aCoresUsr :={	{'Empty(F1_STATUS).And.F1_GF<>"GF"'	,'ENABLE'			},;	// NF Nao Classificada
-					{'Empty(F1_STATUS).And.F1_GF=="GF"'	,'BR_MARRON_OCEAN'	},;	// NF Não Classificada com Guarda Fiscal
-					{'F1_STATUS=="B"'					,'BR_LARANJA'		},;	// NF Bloqueada
-					{'F1_STATUS=="C"'					,'BR_VIOLETA'   	},;	// NF Bloqueada s/classf.
-					{'F1_STATUS=="D"'					,'BR_BRANCO'	    },;	// Evento desacordo aguardando SEFAZ
-					{'F1_STATUS=="E"'					,'BR_AZUL_CLARO'  	},;	// Evento desacordo vinculado
-					{'F1_STATUS=="F"'					,'BR_VERDE_ESCURO' 	},;	// Evento desacordo com problemas
-					{'F1_XSTATUS == "Z" ', 'BR_PRETO_1'} ,;					    // pré classificação/pendente recebimento
-					{'F1_TIPO=="N" .OR. F1_XSTATUS == "A"','DISABLE'   		},;	// NF Normal
-					{'F1_TIPO=="P"'						,'BR_AZUL'   		},;	// NF de Compl. IPI
-					{'F1_TIPO=="I"'						,'BR_MARROM' 		},;	// NF de Compl. ICMS
-					{'F1_TIPO=="C"'						,'BR_PINK'   		},;	// NF de Compl. Preco/Frete
-					{'F1_TIPO=="B"'						,'BR_CINZA'  		},;	// NF de Beneficiamento
-					{'F1_TIPO=="D"'						,'BR_AMARELO'		},;	// NF de Devolucao
-					} 
+Local aCores :={}	
 
-RETURN aCoresUsr
+	aAdd(aCores,{'F1_XSTATUS=="Z"'	,'BR_PRETO_1', 'pré classificação/pendente recebimento'})
+	aAdd(aCores,{'F1_XSTATUS=="A"'	,'DISABLE', 'Nota Classificada RCTEC05'})
+	aAdd(aCores,{'Empty(F1_STATUS).And.F1_GF<>"GF"','ENABLE', 'NF Nao Classificada'})
+	aAdd(aCores,{'Empty(F1_STATUS).And.F1_GF=="GF"','BR_MARRON_OCEAN', 'NF Não Classificada com Guarda Fiscal'})
+	aAdd(aCores,{'F1_STATUS=="B"','BR_LARANJA', 'NF Bloqueada'})
+	aAdd(aCores,{'F1_STATUS=="C"','BR_VIOLETA' , 'NF Bloqueada s/classf.'})
+	aAdd(aCores,{'F1_TIPO=="N"'	,'DISABLE', 'NF Normal'})
+	aAdd(aCores,{'F1_TIPO=="P"'	,'BR_AZUL', 'NF de Compl. IPI'})
+	aAdd(aCores,{'F1_TIPO=="I"','BR_MARROM', 'NF de Compl. ICMS'})
+	aAdd(aCores,{'F1_TIPO=="D"'	,'BR_AMARELO', 'NF de Devolucao'})
+	
+	
+	
+RETURN aCores

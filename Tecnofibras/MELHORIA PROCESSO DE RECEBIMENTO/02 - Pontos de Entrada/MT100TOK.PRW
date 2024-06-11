@@ -262,11 +262,11 @@ User Function MT100TOK()
 				ENDIF
 			ENDIF
 
-			ENDIF
+		ENDIF
 
 
 
-			Return lRet
+		Return lRet
 
 /*/{Protheus.doc} lCkNumNF
 	(long_description)
