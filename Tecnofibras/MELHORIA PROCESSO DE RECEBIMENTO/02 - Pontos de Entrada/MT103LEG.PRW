@@ -11,6 +11,7 @@ USER FUNCTION MT103LEG()
 
 Local aLegeUsr := {}
 
+    aAdd(aLegeUsr,{"BR_PRETO_1", "pre classificacao/pendente recebimento"})
     aAdd(aLegeUsr, {"ENABLE"    ,"Docto. nao Classificado"}) //"Docto. nao Classificado"
     aAdd(aLegeUsr, {"BR_LARANJA","Docto. Bloqueado"}) //"Docto. Bloqueado"
     aAdd(aLegeUsr, {"BR_VIOLETA","Doc. C/Bloq. de Mov."}) //"Doc. C/Bloq. de Mov."
@@ -25,7 +26,6 @@ Local aLegeUsr := {}
 	aAdd(aLegeUsr,{"BR_AZUL_CLARO","Evento desacordo vinculado "}) // Evento desacordo vinculado 
 	aAdd(aLegeUsr,{"BR_VERDE_ESCURO","Evento desacordo com problemas"}) // Evento desacordo com problemas
 
-    aAdd(aLegeUsr,{"BR_PRETO_1", "pre classificacao/pendente recebimento"})
     //aAdd(aLegeUsr,{"BR_PRETO_2", "Recebimento OK"})
     //aAdd(aLegeUsr,{"BR_PRETO_3", "Não Conformidade no Recebimento"})
 

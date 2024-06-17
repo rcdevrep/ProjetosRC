@@ -7,3 +7,6 @@ MT103CLAS - Ponto que permite manipular informações do item e das duplicatas d
 MT103LEG - Incluir novas cores na legenda
 MT103COR - Ponto de entrada para tratar as cores do browse
 MT100TOK - Adicionado regras para enviar nota para recebimento sem classificar.
+
+Relatorios
+RCTECR1 - Relatorio Romaneio Recebimento 

@@ -38,7 +38,7 @@ Static Function MenuDef()
 	ENDIF
 
 	ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC05' OPERATION 2 ACCESS 0
-	ADD OPTION aRotina TITLE 'Receber'    ACTION 'VIEWDEF.RCTEC05' OPERATION 4 ACCESS 0
+	ADD OPTION aRotina TITLE 'Receber'    ACTION 'VIEWDEF.RCTEC05' OPERATION 2 ACCESS 0
 
 Return(aRotina)
 
@@ -65,6 +65,7 @@ Static Function ModelDef()
 	// Cria descrições para os objetos, para que seja possivel a chamada pelo nome posteriormente.
 	oModel:SetDescription('Recebimento de Notas')
 	oModel:getModel('SF1MASTER' ):SetDescription('Cabeçalho')
+	//oModel:getModel("SF1MASTER"):GetStruct():SetProperty("B1_COD", MODEL_FIELD_WHEN, FwBuildFeature(STRUCT_FEATURE_WHEN , ".F."))
 	oModel:getModel('SD1DETAIL' ):SetDescription('Itens')
 
 	// Faz o relacionamento entre as estruturas, o fonte ira realizar as validações necessarias por este relacionamento.
@@ -200,6 +201,7 @@ STATIC FUNCTION fRodape(oPanel)
 
 	oBtnOk := TButton():New(001,90 , "Confirmar Recebimento", oPanel, {|| U_ConfReceb()},nLargBtn)
 	oBtnCan := TButton():New(001,140 , "Cancelar Recebimento", oPanel, {|| U_CancReceb()},nLargBtn)
+	oBtnRom := TButton():New(001,190 , "Romaneio", oPanel, {|| U_RCTECR1()},nLargBtn)
 
 RETURN
 
@@ -285,6 +287,8 @@ USER FUNCTION CLAS103()
 		aadd(aCab,{"F1_MOEDA" ,SF1->F1_MOEDA,Nil})
 		aadd(aCab,{"F1_TXMOEDA" ,SF1->F1_TXMOEDA,Nil})
 		aadd(aCab,{"F1_STATUS" ,SF1->F1_STATUS,Nil})
+		aadd(aCab,{"F1_NFORIG" ,SF1->F1_NFORIG,Nil})
+		aadd(aCab,{"F1_SERORIG" ,SF1->F1_SERORIG,Nil})
 		aadd(aCab,{"E2_NATUREZ" ,"010456",Nil})
 
 		//Itens
@@ -347,6 +351,8 @@ USER FUNCTION CLAS103()
 			aadd(aItem,{"D1_ALQCOF" ,SD1->D1_ALQCOF,NIL})
 			aadd(aItem,{"D1_ALQCSL" ,SD1->D1_ALQCSL,NIL})
 			aadd(aItem,{"D1_ALIQCMP" ,SD1->D1_ALIQCMP,NIL})
+			aadd(aItem,{"D1_NFORI" ,SD1->D1_NFORI,NIL})
+			aadd(aItem,{"D1_SERIORI" ,SD1->D1_SERIORI,NIL})
 			aadd(aItem,{"AUTDELETA" ,"N",Nil,Nil})
 			aAdd(aItens,aItem)
 			aadd(Atail(aItens), {"LINPOS" , "D1_PEDIDO",SD1->D1_PEDIDO })
