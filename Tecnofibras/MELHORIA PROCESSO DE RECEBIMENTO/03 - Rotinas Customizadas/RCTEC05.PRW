@@ -39,6 +39,7 @@ Static Function MenuDef()
 
 	ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC05' OPERATION 2 ACCESS 0
 	ADD OPTION aRotina TITLE 'Receber'    ACTION 'VIEWDEF.RCTEC05' OPERATION 2 ACCESS 0
+	ADD OPTION aRotina TITLE 'Romaneio'    ACTION 'U_RCTECR1' OPERATION 2 ACCESS 0
 
 Return(aRotina)
 
@@ -201,7 +202,7 @@ STATIC FUNCTION fRodape(oPanel)
 
 	oBtnOk := TButton():New(001,90 , "Confirmar Recebimento", oPanel, {|| U_ConfReceb()},nLargBtn)
 	oBtnCan := TButton():New(001,140 , "Cancelar Recebimento", oPanel, {|| U_CancReceb()},nLargBtn)
-	oBtnRom := TButton():New(001,190 , "Romaneio", oPanel, {|| U_RCTECR1()},nLargBtn)
+	//oBtnRom := TButton():New(001,190 , "Romaneio", oPanel, {|| U_RCTECR1()},nLargBtn)
 
 RETURN
 
@@ -374,6 +375,7 @@ USER FUNCTION CLAS103()
 			FWAlertSuccess("Classificada com Sucesso!", "Sucesso")
 			Reclock("SF1",.F.)
 			SF1->F1_XSTATUS := 'A'
+			SF1->F1_USRREC := __cUserId
 			MSUNLOCK()
 		Else
 			MostraErro()
