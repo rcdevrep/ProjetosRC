@@ -375,7 +375,7 @@ USER FUNCTION CLAS103()
 			FWAlertSuccess("Classificada com Sucesso!", "Sucesso")
 			Reclock("SF1",.F.)
 			SF1->F1_XSTATUS := 'A'
-			SF1->F1_USRREC := __cUserId
+			SF1->F1_USRREC := UsrRetName(__cUserId)
 			MSUNLOCK()
 		Else
 			MostraErro()
