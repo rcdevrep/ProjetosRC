@@ -20,7 +20,7 @@ User Function RCTEC05()
 	oBrowse:SetAlias('SF1')
 	oBrowse:SetDescription( "Notas Pendentes Recebimento" )
 	oBrowse:SetMenuDef("RCTEC05")
-	oBrowse:AddFilter('Status',"SF1->F1_XSTATUS = 'Z'",.T.,.T.)
+	oBrowse:AddFilter('Status',"SF1->F1_XSTATUS = 'Z' .AND. SF1->F1_STATUS <> 'A'",.T.,.T.)
 
 	//Adiciona Leganda
 	oBrowse:addLegend({|| SF1->F1_XSTATUS = 'Z'}        ,'BR_CINZA'  ,'pre classificacao/pendente recebimento')
