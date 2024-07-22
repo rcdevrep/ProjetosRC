@@ -55,8 +55,6 @@ User Function MT100TOK()
 	lAntecip 	:= .F.
 	lPrazo	 	:= .F.
 
-	//lMt100tok := .F.
-
 	If !l103Auto
 		If l103Class
 			SF1->(DbSetOrder(1))
@@ -263,9 +261,6 @@ User Function MT100TOK()
 			ENDIF
 
 		ENDIF
-
-
-
 		Return lRet
 
 /*/{Protheus.doc} lCkNumNF
