@@ -238,6 +238,26 @@ User Function MT100TOK()
 		// RC CONSULTORIA - 07/05/2024
 		IF lRet
 			IF SF1->F1_STATUS == ' ' .AND. SF1->F1_XSTATUS == ' '
+
+				IF SELECT("TMPD1")
+					DbSelectArea("TMPD1")
+					DbCloseArea()
+				ENDIF
+				
+				cQryD1 := "SELECT * FROM SD1010 "
+				cQryD1 += "WHERE D1_DOC = '"+SF1->F1_DOC+"' AND D1_SERIE = '"+SF1->F1_SERIE+"' AND D1_FORNECE = '"+SF1->F1_FORNECE+"' AND D1_LOJA = '"+SF1->F1_LOJA+"' AND D_E_L_E_T_ <> '*' "
+				TCQuery cQryD1 NEW ALIAS "TMPD1"
+
+				cConta := SUBSTR(TMPD1->D1_CONTA,1,4) 
+
+				WHILE TMPD1->(!EOF())
+					IF (cConta == "1131" )
+						U_RCTEC04(l103Class)
+						FWAlertSuccess("Enviado para Recebimento! ", "Sucesso")
+						RETURN .F.
+					ENDIF
+					TMPD1->(DBSKIP())
+				END
 				IF MsgYesNo("Deseja Enviar para Recebimento?", "Confirma", .T.)
 					U_RCTEC04(l103Class)
 					FWAlertSuccess("Enviado com sucesso! ", "Sucesso")
