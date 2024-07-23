@@ -1,0 +1,642 @@
+#INCLUDE "MATR640.CH"
+#INCLUDE "FIVEWIN.CH"
+#Include "TOPCONN.CH"
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MATX640  ³ Autor ³ Wagner Xavier         ³ Data ³ 16.11.98 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Relacao de Duplicatas                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ MATX640(void)                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Verificar indexacoes no programa                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ ATUALIZACOES SOFRIDAS DESDE A CONSTRUCAO INICIAL.                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ PROGRAMADOR  ³ DATA   ³ BOPS ³  MOTIVO DA ALTERACAO                   ³±±
+±±³              ³        ³      ³                                        ³±±
+±±³ Patricia Sal.³29/12/99³XXXXXX³Acerto Layout e arq. de Trabalho(Fornec.³±±
+±±³              ³        ³      ³com 20 pos./Loja com 4 pos./Num. Dupl.  ³±±
+±±³              ³        ³      ³com 12 pos.                             ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function Matx640()
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Define Variaveis                                             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	LOCAL wnrel
+	LOCAL tamanho:="M"
+	LOCAL limite :=132
+	LOCAL titulo := OemtoAnsi(STR0001)		//"Relacao de Duplicatas"
+	LOCAL cDesc1 := OemtoAnsi(STR0002)		//"Este programa ira emitir a relacao de duplicatas"
+	LOCAL cDesc2 := OemtoAnsi(STR0003)		//"emitidas.Podera ser emitida por Ordem de Data+Numero, "
+	LOCAL cDesc3 := OemtoAnsi(STR0004)		//"por Vendedor ou Supervisor."
+	LOCAL cString:= "SE1"
+	LOCAL aOrd   := { OemToAnsi(STR0005),;		//"Numero"
+	OemToAnsi(STR0006),;		//"Emissao"
+	OemToAnsi(STR0007),;		//"Vencimento"
+	OemToAnsi(STR0008),;		//"Vendedor"
+	OemToAnsi(STR0009) }	    	//"Cliente"
+	LOCAL nAc1   := 0
+	LOCAL nAg1   := 0
+	LOCAL lContinua := .T.
+	Local aStru 	 := SE1->(dbStruct()), ni
+	Private aReturn :={ OemToAnsi(STR0003), 1,OemToAnsi(STR0004), 1, 2, 1, "",1 }  //"Zebrado"###"Administracao"
+	PRIVATE nomeprog:="MATX640"
+	PRIVATE aLinha  := { },nLastKey := 0
+	PRIVATE cPerg   :="MTX640"
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Ajusta grupo de perguntas                                    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	AjustaSX1()
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica as perguntas selecionadas                           ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	pergunte("MTX640",.F.)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Variaveis utilizadas para parametros                         ³
+	//³ mv_par01             // Da Duplicata                         ³
+	//³ mv_par02             // Ate a Duplicata                      ³
+	//³ mv_par03             // Do Vendedor                          ³
+	//³ mv_par04             // Ate o vendedor                       ³
+	//³ mv_par05             // Todos/em Aberto                      ³
+	//³ mv_par06             // Serie da Duplicata                   ³
+	//³ mv_par07             // A partir da Emissao                  ³
+	//³ mv_par08             // Ate a data de Emissao                ³
+	//³ mv_par09             // A partir do vencimento               ³
+	//³ mv_par10             // Ate o vencimento                     ³
+	//³ mv_par11             // Do Cliente                           ³
+	//³ mv_par12             // Ate o Cliente                        ³
+	//³ mv_par13             // Qual moeda                           ³
+	//³ mv_par14             // Pula Pagina Quebra                   ³
+	//³ mv_par15             // Pagina Inicial                       ³
+	//³ mv_par16             // Conside titulos Devolucao            ³
+	//³ mv_par17             // Serie Fienal                         ³
+	//³ mv_par18             // Considera Lubrificantes              ³
+	//³ mv_par19             // Considera Combustiveis               ³
+	//³ mv_par20             // Seleciona Situacao do Titulo         ³
+	//³ mv_par21             // Somente Arla                         ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Envia controle para a funcao SETPRINT                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	wnrel:="MATX640"
+
+	wnrel:=SetPrint(cString,wnrel,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.F.,aOrd,,Tamanho)
+
+	If nLastKey==27
+		Set Filter to
+		Return
+	Endif
+
+	SetDefault(aReturn,cString)
+
+	If nLastKey==27
+		Set Filter to
+		Return
+	Endif
+
+	RptStatus({|lEnd| C640Imp(@lEnd,wnRel,cString,aOrd)},Titulo)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ C640IMP  ³ Autor ³ Rosane Luciane Chene  ³ Data ³ 09.11.95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Chamada do Relatorio                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATX640	   	                                              ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+
+Static Function C640Imp(lEnd,WnRel,cString,aOrd)
+	LOCAL cabec1,cabec2
+	LOCAL nOrdem
+	LOCAL tamanho:= "G"
+	LOCAL limite := 220
+	LOCAL nAc1   := 0, nTotal:=0
+	LOCAL nAg1   := 0
+	LOCAL lContinua := .T.
+	LOCAL cVend, aCampos:={}
+	LOCAL nCnt  := 0
+	LOCAL nX
+	LOCAL aTamSXG  := TamSXG("001")
+	LOCAL aTamSXG2 := TamSXG("002")
+	LOCAL aCoord, aTam
+	Local aStru := SE1->(dbStruct()), ni
+	
+	PRIVATE aVend := {}
+	
+	nOrdem := aReturn[8]
+
+	m_pag := If(mv_par15>0,mv_par15,1)
+
+	If (MV_PAR21 = 1)
+		aVend := {"E1_XVEND6", "E1_XVEND7", "E1_XVEND8"}
+	Else
+		aVend := {"E1_VEND1", "E1_VEND2", "E1_VEND3"}
+	EndIf
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Variaveis utilizadas para Impressao do Cabecalho e Rodape    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cbcont   := 0
+	cbtxt    := SPACE(10)
+	li       := 80
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Cria indice temporario para buscar tipo produto              ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	//cArq :=CriaTrab(NIL,.F.)
+	//dbSELECTAREA("SD2")
+	//IndRegua("SD2",cArq,"D2_PDV+D2_SERIE+D2_DOC+D2_CLIENTE+D2_LOJA",,,"Selecionando registros...")
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Monta o Cabecalho de acordo com o tipo de emissao            ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	titulo := OemtoAnsi(STR0012) + aOrd[nOrdem] + " - " + GetMv("MV_MOEDA" + STR(mv_par13,1))//"RELACAO DAS DUPLICATAS EMITIDAS - "
+	If (aTamSXG[1] == aTamSXG[3]) .And. (aTamSXG2[1] == aTamSXG2[3])
+		//	cabec1 := OemtoAnsi(STR0013)	//"PRF NUMERO       P CODIGO LJ RAZAO SOCIAL                      EMISSAO     VENCTO                 VALOR   SUPERV. VENDEDOR    PEDIDO    DDD Telefone        Tipo"
+		cabec1 := "PRF NUMERO       P CODIGO LJ RAZAO SOCIAL                      EMISSAO     VENCTO                 VALOR   SUPERV. VENDEDOR    PEDIDO    DDD Telefone        TIPO          SITUACAO"
+		cabec2 := OemtoAnsi(STR0014)	//"                                                                                                  TOTAL"
+		//                                     999 123456789012 1 123456 99 123456789012345678901234567890   99/99/9999 99/99/9999  999999999999999999   XXXXXXX XXXXXX      999999    999 999999999999999  XXX
+		//                                     0         1         2         3         4         5         6         7         8         9        10        11        12        13        14        15        16
+		//                                     01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+		aCoord := {00, 04, 17, 19, 26, 29, 62, 73, 85, 106, 114, 126, 136, 140, 157,170}
+		aTam   := {30}
+	Else
+		//	cabec1 := OemtoAnsi(STR0021)	//"PRF NUMERO       P CODIGO               LOJA RAZAO SOCIAL              EMISSAO     VENCTO                VALOR SUPERV. VEND.  PEDIDO    DDD Telefone        Tipo"
+		cabec1 := "PRF NUMERO       P CODIGO               LOJA RAZAO SOCIAL              EMISSAO     VENCTO                VALOR SUPERV. VEND.  PEDIDO    DDD Telefone        TIPO         SITUACAO"
+		cabec2 := OemtoAnsi(STR0022)	//"                                                                                                         TOTAL"
+		//                                     999 123456789012 X 12345678901234567890 1234 123568789012345678901234 99/99/9999 99/99/9999 999999999999999999 XXXXXXX XXXXXX 999999    999 999999999999999  XXX
+		//                                     0         1         2         3         4         5         6         7         8         9        10        11        12        13        14        15        16
+		//                                     01234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+		aCoord := {00, 04, 17, 19, 40, 45, 70, 81, 92, 111, 119, 126, 136, 140, 157, 170}
+		aTam   := {24}
+	EndIf
+
+	SetRegua(RecCount())		// Total de Elementos da regua
+
+	If nOrdem == 4		// Relatorio por Vendedor
+
+		dbSelectArea("SE1")  // Colocado esta linha para funcionar SQL Deco 25/10/2006
+		dbSetOrder(1)        // Colocado esta linha para funcionar SQL Deco 25/10/2006
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Cria arquivo de trabalho                                     ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		AADD(aCampos,{ "TRB_CLIE"		,"C",aTamSXG[1] ,0 } )
+		AADD(aCampos,{ "TRB_LOJA"		,"C",aTamSXG2[1],0 } )
+		AADD(aCampos,{ "TRB_VEND"		,"C",06,0 } )
+		AADD(aCampos,{ "TRB_PREFIX"	,"C",03,0 } )
+		AADD(aCampos,{ "TRB_NUM"		,"C",LEN("SE1->E1_NUM"),0 } )
+		AADD(aCampos,{ "TRB_PARCEL"	,"C",01,0 } )
+		AADD(aCampos,{ "TRB_EMISSA"	,"D",08,0 } )
+		AADD(aCampos,{ "TRB_VENCRE"	,"D",08,0 } )
+		AADD(aCampos,{ "TRB_VALOR"		,"N",17,02 } )
+		AADD(aCampos,{ "TRB_SUPERV"	,"C",06,0 } )
+		AADD(aCampos,{ "TRB_PEDIDO"	,"C",06,0 } )
+		AADD(aCampos,{ "TRB_TIPO"	   ,"C",03,0 } )
+		AADD(aCampos,{ "TRB_HIST"	   ,"C",25,0 } )
+		AADD(aCampos,{ "TRB_SITUAC"   ,"C",1,0 } )
+
+		cArq := CriaTrab(aCampos,.T.)
+		dbUseArea( .T.,, cArq,"trb", IF(.t. .or. .f., !.f., nil), .f. )
+		IndRegua("TRB",cArq,"TRB_VEND+TRB_CLIE+TRB_LOJA",,,"Selecionando Registros...")
+
+        cQuery := GetSQL("")
+
+		dbSelectArea("SE1")
+		dbCloseArea()
+		dbUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), 'SE1', .F., .T.)
+
+		For ni := 1 to Len(aStru)
+			If aStru[ni,2] != 'C'
+				TCSetField('SE1', aStru[ni,1], aStru[ni,2],aStru[ni,3],aStru[ni,4])
+			EndIf
+		Next
+
+		dbSelectArea("SE1")
+
+		While !Eof() .And. lContinua
+
+			IncRegua()
+
+			If lEnd
+				@Prow()+1,001 Psay OemtoAnsi(STR0015)	//"CANCELADO PELO OPERADOR"
+				Exit
+			Endif
+
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Processa todos Vendedores existentes no arquivo SE1          ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			For nx := 1 To LEN(aVend)
+				cVend := FieldGet(FieldPos(aVend[nx]))
+
+				If (!Empty(cVend) .Or. nx==1) .And. (cVend >= mv_par03 .And. cVend <= mv_par04)
+
+					nTotal += xMoeda(SE1->E1_SALDO,SE1->E1_MOEDA,MV_PAR13, SE1->E1_EMISSAO)
+
+					RecLock("TRB",.T.)
+					TRB_LOJA    := SE1->E1_LOJA
+					TRB_CLIE    := SE1->E1_CLIENTE
+					TRB_VEND    := cVend
+					TRB_PREFIX  := SE1->E1_PREFIXO
+					TRB_NUM     := SE1->E1_NUM
+					TRB_PARCEL  := SE1->E1_PARCELA
+					TRB_EMISSA  := SE1->E1_EMISSAO
+					TRB_VENCRE  := SE1->E1_VENCREA
+					TRB_VALOR   := xMoeda(SE1->E1_SALDO,SE1->E1_MOEDA,MV_PAR13,SE1->E1_EMISSAO)
+					TRB_SUPERV  := SE1->E1_SUPERVI
+					TRB_PEDIDO  := SE1->E1_PEDIDO
+					TRB_TIPO    := SE1->E1_TIPO
+					TRB_HIST    := SE1->E1_HIST
+					TRB_SITUAC  := SE1->E1_SITUACA
+					MsUnlock()
+
+					DbSelectArea("SE1")
+				Endif
+			Next
+			dbSkip()
+		EndDo
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Imprime os dados selecionados no arquivo de trabalho         ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		dbSelectArea( "TRB" )
+		dbGoTop()
+		While !EOF()
+
+			IncRegua()
+
+			If lEnd
+				lContinua := .F.
+				Exit
+			EndIf
+
+			If li > 58
+				cabec(titulo,cabec1,cabec2,nomeprog,tamanho,Iif(aReturn[4]==1,GetMv("MV_COMP"),GetMv("MV_NORM")))
+			EndIf
+
+			cVend	:=	TRB_VEND
+			nCnt	:=	0
+			nAc1	:=	0
+
+			Do While !Eof() .And. TRB_VEND == cVend
+				If li > 58
+					cabec(titulo,cabec1,cabec2,nomeprog,tamanho,Iif(aReturn[4]==1,GetMv("MV_COMP"),GetMv("MV_NORM")))
+				EndIf
+
+				R640Impr("TRB",TRB_CLIE,TRB_LOJA,TRB_VEND,aCoord,aTam)
+				li++
+				nCnt += 1
+				nAc1 += TRB->TRB_VALOR
+				nAg1 += TRB->TRB_VALOR
+
+				dbSkip()
+			EndDo
+			If nCnt > 0
+				dbSelectArea("SA3")
+				dbSeek(xFilial()+cVend)
+				@li,000       Psay OemtoAnsi(STR0016) + cVend + " "+SA3->A3_NOME		//Total Do Vendedor   ==>
+				@li,aCoord[9] Psay nAc1	PicTure tm(nAc1,18)
+				li++
+			EndIf
+			@ li,  0 Psay __PrtThinLine()
+			li++
+			dbSelectArea("TRB")
+			If nCnt > 0 .And. mv_par14 == 1  //Pula pagina
+				li := 60
+			EndIf
+		EndDo
+	Else
+		dbSelectArea("SE1")
+		If nOrdem = 1			// Numero
+			dbSetOrder(1)
+			dbSeek(xFilial()+mv_par06+mv_par01,.T.)
+			cCond := "E1_NUM >= mv_par01 .and. E1_NUM <= mv_par02"
+			cOrder := 'E1_FILIAL,E1_PREFIXO,E1_NUM,E1_PARCELA,E1_TIPO'
+		Elseif nOrdem == 2	// Emissao
+			dbSetOrder(6)
+			dbSeek(xFilial()+DTOS(mv_par07),.T.)
+			cCond := "E1_EMISSAO >= mv_par07 .and. E1_EMISSAO <= mv_par08"
+			cOrder := 'E1_FILIAL,DTOS(E1_EMISSAO),E1_NOMCLI,E1_PREFIXO,E1_NUM,E1_PARCELA'
+		Elseif nOrdem == 3	// Vencrea
+			dbSetOrder(7)
+			dbSeek(xFilial()+DTOS(mv_par09),.T.)
+			cCond := "E1_VENCREA >= mv_par09 .and. E1_VENCREA <= mv_par10"
+			cOrder := 'E1_FILIAL,DTOS(E1_VENCREA),E1_NOMCLI,E1_PREFIXO,E1_NUM,E1_PARCELA'
+		Elseif nOrdem == 5
+			dbSetOrder(2)
+			dbSeek(xFilial()+mv_par11,.T.)
+			cCond := "E1_CLIENTE >= mv_par11 .and. E1_CLIENTE <= mv_par12"
+			cOrder := 'E1_FILIAL,E1_CLIENTE,E1_LOJA,E1_PREFIXO,E1_NUM,E1_PARCELA,E1_TIPO'
+		Endif
+
+        cQuery := GetSQL(cOrder)
+
+		dbSelectArea("SE1")
+		dbCloseArea()
+		dbUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), 'SE1', .F., .T.)
+
+		For ni := 1 to Len(aStru)
+			If aStru[ni,2] != 'C'
+				TCSetField('SE1', aStru[ni,1], aStru[ni,2],aStru[ni,3],aStru[ni,4])
+			EndIf
+		Next
+
+		dbSelectArea("SE1")
+
+		While !Eof() //.And. &cCond
+
+			IncRegua()							// Incrementa regua de impressao
+
+			If lEnd
+				@Prow()+1,001 Psay OemtoAnsi(STR0015)	//"CANCELADO PELO OPERADOR"
+				Exit
+			Endif
+
+			If nOrdem == 2						// Relatorio por Data + Numero titulo
+				cCond2 := "E1_EMISSAO"
+				cCampo :=  E1_EMISSAO
+			Elseif nOrdem == 3								// Quebra por Data Vencimento
+				cCond2 := "E1_VENCREA"
+				cCampo :=  E1_VENCREA
+			Elseif nOrdem == 1
+				cCond2 := "E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO"
+				cCampo :=  E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO
+			Elseif nOrdem == 5
+				cCond2 := "E1_CLIENTE"
+				cCampo :=  E1_CLIENTE
+			Endif
+
+			nAc1 := 0
+			nCnt := 0
+
+			While !Eof() .And. cCampo = &cCond2
+
+			   For nx := 1 to Len(aVend)
+			      cVend := FieldGet(FieldPos(aVend[nx]))
+			      
+					If (cVend >= MV_PAR03 .And. cVend <= MV_PAR04)
+						Exit
+					Endif
+			   Next
+
+				IncRegua()
+				If lEnd
+					lContinua := .F.
+					Exit
+				EndIf
+
+				If li > 58
+					cabec(titulo,cabec1,cabec2,nomeprog,tamanho,Iif(aReturn[4]==1,GetMv("MV_COMP"),GetMv("MV_NORM")))
+				EndIf
+
+				R640Impr("SE1",SE1->E1_CLIENTE,SE1->E1_LOJA, cVend, aCoord, aTam)
+				nCnt++
+				li++
+				nAc1  += xMoeda(SE1->E1_SALDO,SE1->E1_MOEDA,MV_PAR13, SE1->E1_EMISSAO)
+				nAg1	+= xMoeda(SE1->E1_SALDO,SE1->E1_MOEDA,MV_PAR13, SE1->E1_EMISSAO)
+				dbSkip()
+			EndDo
+
+			If nCnt > 0 .and. nOrdem > 1
+				If nOrdem == 2
+					@li, 0 Psay OemtoAnsi(STR0017) + DTOC(cCampo) 	//"Total dos Emitidos em ==>
+				Elseif nOrdem == 3
+					@li, 0 Psay OemtoAnsi(STR0018) + DTOC(cCampo)	//"Total dos Vencidos em ==>
+				Elseif nOrdem == 5
+					dbSelectArea("SA1")
+					dbSeek(xFilial()+cCampo)
+					@li, 0 Psay OemtoAnsi(STR0019) + cCampo + " "+SA1->A1_NOME //"Total do Cliente ==>
+				EndIf
+				@ li,aCoord[9] Psay nAc1	PicTure tm(nAc1,18)
+				li++
+				@ li,  0 Psay __PrtThinLine()
+				li++
+			Endif
+			dbSelectArea("SE1")
+			If nCnt > 0 .And. mv_par14 == 1  //Pula pagina
+				li := 60
+			EndIf
+		EndDo
+	EndIf
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Totaliza o relatorio													    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	li++
+	If li > 58 .Or. mv_par14 == 1  //Pula pagina
+		cabec(titulo,cabec1,cabec2,nomeprog,tamanho,Iif(aReturn[4]==1,GetMv("MV_COMP"),GetMv("MV_NORM")))
+	Endif
+	@prow()+1, 0 Psay OemtoAnsi(STR0020)	//"TOTAL ---------------->"
+	@prow()  ,aCoord[9] Psay nAg1		PicTure tm(nAg1,18)
+	roda(cbcont,cbtxt,Titulo)
+
+	//dbSelectArea("SE1")  //Substituida pelo abaixo para funcionar SQL Deco 25/10/2006
+	//RetIndex("SE1")      //Substituida pelo abaixo para funcionar SQL Deco 25/10/2006
+	//dbSetOrder(1)        //Substituida pelo abaixo para funcionar SQL Deco 25/10/2006
+	//Set Filter To        //Substituida pelo abaixo para funcionar SQL Deco 25/10/2006
+
+	dbSelectArea("SE1")
+	dbCloseArea()
+	ChkFile("SE1")
+	dbSelectArea("SE1")
+	dbSetOrder(1)
+	Set Filter To
+
+	If nOrdem == 4
+		dbSelectArea( "TRB" )
+		dbCloseArea()
+		If File(cArq+OrdBagExt())
+			Ferase(cArq+OrdBagExt())
+		Endif
+		If File(cArq+GetDBExtension())
+			Ferase(cArq+GetDBExtension())
+		Endif
+	EndIf
+
+	dbSelectArea("SE1")
+
+	If aReturn[5] = 1
+		Set Printer TO
+		dbCommitAll()
+		Ourspool(wnrel)
+	EndIf
+
+	MS_FLUSH()
+
+Return .T.
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ R640Impr ³ Autor ³ Cristina M. Ogura     ³ Data ³ 18/07/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprime os dados dos titulos                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ R640Impr()                                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATX640                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function R640Impr(cAlias,cCliente,cLoja,cVend,aCoord,aTam)
+	LOCAL nValor := Iif(cAlias=="SE1",xMoeda(SE1->E1_SALDO,SE1->E1_MOEDA,MV_PAR13, SE1->E1_EMISSAO),TRB->TRB_VALOR)
+	Local aSituacao :={"Carteira","Simples","Descontada","Caucionada",;	//"Carteira"###"Simples"###"Descontada"###"Caucionada"
+	"Vinculada","Advogado","Judicial","Caucao Desc." }	//"Vinculada"###"Advogado"###"Judicial###Caucao Desc."
+	dbSelectArea("SA1")
+	dbSeek(xFilial()+cCliente+cLoja)
+	@li,aCoord[1]  Psay IIF(cAlias=="SE1",SE1->E1_PREFIXO,TRB->TRB_PREFIX)
+	@li,aCoord[2]  Psay IIF(cAlias=="SE1",SE1->E1_NUM,TRB->TRB_NUM)
+	@li,aCoord[3]  Psay IIF(cAlias=="SE1",SE1->E1_PARCELA,TRB->TRB_PARCEL)
+	@li,aCoord[4]  Psay IIF(cAlias=="SE1",SE1->E1_CLIENTE,TRB->TRB_CLIE)
+	@li,aCoord[5]  Psay IIF(cAlias=="SE1",SE1->E1_LOJA,TRB->TRB_LOJA)
+	@li,aCoord[6]  Psay Left(SA1->A1_NOME, aTam[1])
+	@li,aCoord[7]  Psay IIF(cAlias=="SE1",SE1->E1_EMISSAO,TRB->TRB_EMISSA)
+	@li,aCoord[8]  Psay IIF(cAlias=="SE1",SE1->E1_VENCREA,TRB->TRB_VENCRE)
+	@li,aCoord[9]  Psay nValor Picture tm(nValor,18)
+	@li,aCoord[10] Psay IIF(cAlias=="SE1",SE1->E1_SUPERVI,TRB->TRB_SUPERV)
+	@li,aCoord[11] Psay cVend
+	@li,aCoord[12] Psay IIF(cAlias=="SE1",SE1->E1_PEDIDO,TRB->TRB_PEDIDO)
+	@li,aCoord[13] Psay alltrim(SA1->A1_DDD)
+	@li,aCoord[14] Psay alltrim(SA1->A1_TEL)
+	@li,aCoord[15] Psay IIF(cAlias=="SE1",SE1->E1_TIPO,TRB->TRB_TIPO)
+	If cAlias == "SE1"
+		If Empty(SE1->E1_HIST) // Caso E1_HIST com conteudo (Ex.: PROTESTADO) apresentar este controle manual cfe Fernando/Financeiro 07/03/2008.
+			@li,aCoord[16] Psay aSituacao[Val(SE1->E1_SITUACA)+1]
+		Else
+			@li,aCoord[16] PSAY Substr(SE1->E1_HIST,1,12)
+		Endif
+	Else
+		If Empty(TRB->TRB_HIST) // Caso E1_HIST com conteudo (Ex.: PROTESTADO) apresentar este controle manual cfe Fernando/Financeiro 07/03/2008.
+			@li,aCoord[16] Psay aSituacao[Val(TRB->TRB_SITUAC)+1]
+		Else
+			@li,aCoord[16] PSAY Substr(TRB->TRB_HIST,1,12)
+		Endif
+	EndIf
+
+	dbSelectArea(cAlias)
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Funcao    ³AjustaSX1 ³ Autor ³Edstron E. Correia     ³ Data ³06/08/2002³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Acerta o arquivo de perguntas                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+STATIC FUNCTION AjustaSx1()
+	Local cAlias := Alias()
+	PutSx1("MTX640","16","Considera Tit. Devolucao ?","","","mv_chg","N",01,0,0,"C","","","","","mv_par16","Sim","","","","Nao","","","","","","","","","")
+	PutSx1("MTX640","21","Somente Arla ?","","","mv_ch21","N",01,0,0,"C","","","","","mv_par21","Sim","","","","Nao","","","","","","","","","")
+	dbSelectArea(cAlias)
+Return
+
+Static Function GetSQL(cOrderBy)
+
+   Local cQuery := ""
+   Local nx := 0
+
+	cQuery := " SELECT *, R_E_C_N_O_ AS NRECNO "
+	cQuery += " FROM " + RetSqlName("SE1") + " (NOLOCK) "
+	cQuery += " WHERE E1_FILIAL   = '" + xFilial("SE1") + "' "
+	cQuery += " AND   E1_NUM     >= '" + mv_par01       + "' AND E1_NUM     <= '" + mv_par02       + "' "
+	cQuery += " AND   E1_VENCREA >= '" + Dtos(mv_par09) + "' AND E1_VENCREA <= '" + Dtos(mv_par10) + "' "
+	cQuery += " AND   E1_EMISSAO >= '" + Dtos(mv_par07) + "' AND E1_EMISSAO <= '" + Dtos(mv_par08) + "' "
+	cQuery += " AND   E1_CLIENTE >= '" + mv_par11       + "' AND E1_CLIENTE <= '" + mv_par12       + "' "
+	cQuery += " AND   E1_PREFIXO >= '" + mv_par06       + "' AND E1_PREFIXO <= '" + mv_par17       + "' "
+	cQuery += " AND   D_E_L_E_T_ <> '*' "
+
+	If ALLTRIM(mv_par20) <> '99'
+		cQuery += " AND E1_SITUACA = '" + ALLTRIM(mv_par20) + "' "
+	EndIf
+
+	If mv_par05 = 2  // Considera somente titulos em aberto
+		cQuery += " AND E1_SALDO > 0 "
+	EndIf
+
+	If mv_par16 = 2 // Desconsidera titulos de abatimentos
+		cQuery += " AND E1_TIPO <> 'NCC' "
+	EndIf
+
+	If (MV_PAR21 = 1)
+		cQuery += " AND EXISTS( "
+		cQuery += "  SELECT TOP 1 SD2.R_E_C_N_O_ "
+		cQuery += "  FROM " + RetSqlName("SD2") + " SD2 (NOLOCK) "
+		cQuery += "  WHERE D_E_L_E_T_ <> '*' "
+		cQuery += "    AND D2_SERIE   = E1_SERIE   "
+		cQuery += "    AND D2_DOC     = E1_NUM     "
+		cQuery += "    AND D2_CLIENTE = E1_CLIENTE "
+		cQuery += "    AND D2_LOJA    = E1_LOJA    "
+		cQuery += "    AND D2_PEDIDO  = E1_PEDIDO  "
+		cQuery += "    AND D2_EMISSAO = E1_EMISSAO "
+		cQuery += "    AND D2_TP   IN ('PA', 'AG') "
+		cQuery += " ) "
+	Else
+		If (MV_PAR19 = 2 .And. SUBSTR(MV_PAR03,1,2) == 'RL')
+			cQuery += " AND NOT EXISTS( "
+			cQuery += "  SELECT TOP 1 SD2.R_E_C_N_O_ "
+			cQuery += "  FROM " + RetSqlName("SD2") + " SD2 (NOLOCK) "
+			cQuery += "  WHERE D_E_L_E_T_ <> '*' "
+			cQuery += "    AND D2_SERIE   = E1_SERIE   "
+			cQuery += "    AND D2_DOC     = E1_NUM     "
+			cQuery += "    AND D2_CLIENTE = E1_CLIENTE "
+			cQuery += "    AND D2_LOJA    = E1_LOJA    "
+			cQuery += "    AND D2_PEDIDO  = E1_PEDIDO  "
+			cQuery += "    AND D2_EMISSAO = E1_EMISSAO "
+			cQuery += "    AND D2_TP      = 'CO'       "
+			cQuery += " ) "
+		EndIf
+
+		If (MV_PAR18 = 2 .And. SUBSTR(MV_PAR03,1,2) == 'RC')
+			cQuery += " AND NOT EXISTS( "
+			cQuery += "  SELECT TOP 1 SD2.R_E_C_N_O_ "
+			cQuery += "  FROM " + RetSqlName("SD2") + " SD2 (NOLOCK) "
+			cQuery += "  WHERE D_E_L_E_T_ <> '*' "
+			cQuery += "    AND D2_SERIE   = E1_SERIE   "
+			cQuery += "    AND D2_DOC     = E1_NUM     "
+			cQuery += "    AND D2_CLIENTE = E1_CLIENTE "
+			cQuery += "    AND D2_LOJA    = E1_LOJA    "
+			cQuery += "    AND D2_PEDIDO  = E1_PEDIDO  "
+			cQuery += "    AND D2_EMISSAO = E1_EMISSAO "
+			cQuery += "    AND D2_TP     <> 'CO'       "
+			cQuery += " ) "
+		EndIf
+	EndIf
+
+   cQuery += " AND ((" + aVend[1] + " >= '" + MV_PAR03 + "' AND " + aVend[1] + " <= '" + MV_PAR04 + "')"
+
+   For nx := 2 to Len(aVend)
+      cQuery += " OR (" + aVend[nx] + " >= '" + MV_PAR03 + "' AND " + aVend[nx] + " <= '" + MV_PAR04 + "')"
+   Next
+
+   cQuery += ") "
+
+	If !Empty(cOrderBy)
+		cQuery += " ORDER BY " + ALLTRIM(cOrderBy)
+	EndIf
+
+Return(cQuery)

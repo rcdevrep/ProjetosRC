@@ -1,0 +1,1673 @@
+{
+	"info": {
+		"_postman_id": "4b3e2ab4-2e1a-4f2d-ae1a-f89a736b6243",
+		"name": "(EXTERNA) - API PAGAMENTO DE BOLETOS",
+		"description": "<h2>Solução de Pagamentos Online para boletos Bradesco e Outros Bancos. A API de pagamentos possui um fluxo de 4 chamadas, que devem ser feitas na seguinte ordem:</h2> <ul><li><b>1º GET /pagamentos/boleto/limites - Consulta Limites e Horários Disponíveis para Pagamento</b></li> <p>Recurso tem a função de consultar os limites disponíveis para agência e conta que irá transacionar. Os parâmetros de cobrança para o pagamento são devolvidos nessa transação, por exemplo o parâmetro de valor superior e a grade horária parametrizada para uma transação de valor superior;</p><li><b>2º POST /pagamentos/boleto/validarDadosTitulo – Validar Dados do Título  - Bradesco  e/ou Outros Bancos</b></li><p>Recurso responsável por fazer a consistência do código de barras. Quando a barra for de um Banco diferente de <b>\"Bradesco\"</b>, o campo <b>\"numeroControleParticipante\"</b> virá preenchido, esse campo será usado, posteriormente nos recursos <b>\"POST /pagamentos/boleto/validarPagamento - Validação Dados do Pagamento\"</b> e <b>\"POST /pagamentos/boleto/efetivarPagamento - Efetivação do Pagamento\"</b>;</p><p>Quando uma barra de outro banco, é feita a consulta na CIP; No recurso também é devolvido no campo <b>\"aceitaPagarComValorDiferenciadoCalculado\"</b> a informação: </p><b>1 – PERMITE QUALQUER VALOR</b></br><b>2 – ENTRE O MINIMO E O MAXIMO</b></br><b>3 – NÃO ACEITA VALOR DIFERENTE</b></br><b>4 – CONSIDERA APENAS O MINIMO</b></br></br><li><b>3º POST /pagamentos/boleto/validarPagamento - Validar Dados do Pagamento</b></li><p>Recurso faz a pré-confirmação do pagamento,  ou seja, são feitas todas as consistência de saldo, revalidação da barra, do valor informado e recálculos. Se for um pagamento de uma barra diferente de <b>\"Bradesco\"</b>, o campo <b>\"numeroControleParticipante\"</b> deverá ser informado; </p><p>Quando informado um valor divergente do permitido, a transação devolve o retorno <b>2112- VALOR CALCULADO DIVERGE DO VALOR INFORMADO</b>, e ajusta no campo <b>\"valor\"</b>, o permitido a ser pago. A partir deste recurso o cliente pode <b>\"declinar\"</b> ou <b>\"efetivar\"</b> o pagamento com valor recalculado; </p><li><b>4º POST /pagamentos/boleto/efetivarPagamento - Efetivar Pagamento</b></li><p>Recurso faz a efetivação do pagamento. Se for um pagamento de uma barra diferente de <b>\"Bradesco\"</b>, o campo <b>\"numeroControleParticipante\"</b> deverá ser informado;</p><li><b>5º GET /pagamentos/boleto/consulta - Consultar Agendamento e Pagamento</b></li><p>Recurso de consulta de agendamentos e pagamentos efetuados</p><li><b>6º GET /pagamentos/boleto/consulta/{transactionId} - Consultar Agendamento e Pagamento através da informação TransactionId</b></li><p>Recurso de consulta de agendamentos e pagamentos efetuados utilizando a informação do transactio ID.</p><p> Id forneciado pelo parceiro no momento da efetivação do pagamento.</p></ul>\n\nContact Support:\n Name: 4253684@corpr.bradesco.com.br",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28236622"
+	},
+	"item": [
+		{
+			"name": "Access Token",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+							"type": "text"
+						},
+						{
+							"key": "assertion",
+							"value": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOiJodHRwczovL3Byb3h5LmFwaS5wcmViYW5jby5jb20uYnIvYXV0aC9zZXJ2ZXIvdjEuMS90b2tlbiIsInN1YiI6ImJiN2NjZjA5LThhODUtNGJlNi1hNjdlLTgyYmYxMTczNzk5NCIsImlhdCI6IjE2NTc1NDM4NzUiLCJleHAiOiIxNjYwMTM1ODc1IiwianRpIjoiMTY1NzU0Mzg3NTA3OSIsInZlciI6IjEuMSJ9.Ui-kjeHB1y6j4PuRUOVzAJZSHdPzokJwxk7mvPld8pjY7J17pGZbnhfzog4EWm1zxc6WljHjCR1szOOWZE3IuagB4PTAcVQtyZ3-cPsavgQuBv6OaY5sUa6S_wbot6k6ookQr9m1w-NsFHsrNuZwNAKz3fNbWWVMePhHIAyC--P0nhfkDW7mxMLHWiQ59b_vI_2E4y575p1Zkyb3PFL4nUrqDZRXcEikjI31jgGoHKDJF0I9yOiLXaDBtkGUrfLA3A1-GeUHdIbb1UHcpAC7jjdkwciEBmJI3oraJo5ournCmqdQtG8tSNWpWf_9HuoxZODlUh9qpZOzM0bxPXC73Q",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://proxy.api.prebanco.com.br/auth/server/v1.1/token",
+					"protocol": "https",
+					"host": [
+						"proxy",
+						"api",
+						"prebanco",
+						"com",
+						"br"
+					],
+					"path": [
+						"auth",
+						"server",
+						"v1.1",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Validar Dados do Titulo - Bradesco e/ou Outros Bancos",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"agencia\": 3995,\n    \"tipoEntrada\": 1,\n    \"dadosEntrada\": \"23794915600000000103995090257001472500755570\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/pagamentos/boleto/validarDadosTitulo",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"pagamentos",
+						"boleto",
+						"validarDadosTitulo"
+					]
+				},
+				"description": "Recurso responsável por fazer a consistência do código de barras. Quando a barra for de um Banco diferente de ''Bradesco'', o campo ''numeroControleParticipante'' virá preenchido, esse campo será usado, posteriormente nos recursos ''Validação Dados do Pagamento'' e ''Efetivação do Pagamento'';"
+			},
+			"response": [
+				{
+					"name": "OK",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -50600551,\n  \"dadosEntrada\": \"1 (Mínimo 1 e Máximo 54 Digitos)\",\n  \"tipoEntrada\": 26392687\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarDadosTitulo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarDadosTitulo"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"consultaDadosTituloCIPResponse\": {\n    \"aceitaPagamentoComValorDiferenteCalculado\": \"3\",\n    \"codigoRetorno\": 2143,\n    \"cpfCnpjCedente\": -11856891,\n    \"cpfCnpjSacado\": -31133298,\n    \"dataVencimento\": 20190722,\n    \"identificacaoErro\": \"Indentificação do Erro\",\n    \"indicadorPagamentoParcial\": \"S ou N\",\n    \"localErro\": \"Local com Erro\",\n    \"nomeCedente\": \"Nome do Cedente\",\n    \"nomeFantasiaBeneficiario\": \"Nome Fantasia do Beneficiario\",\n    \"nomeModuloComErro\": \"Nome do Modulo com Erro\",\n    \"nomePagadorBoleto\": \"Nome do Pagador\",\n    \"nomeSacado\": \"Nome do Sacado\",\n    \"obrigatorioInformarCpfCnpjSacado\": \"N ou S\",\n    \"reserva\": \"deserunt Excepteur voluptate dolore\",\n    \"valorAbatimento\": 24791413.075344697,\n    \"valorBonificacao\": 19656909.365644857,\n    \"valorCobrado\": 4003.03,\n    \"valorDesconto\": -41571017.52840071,\n    \"valorJuros\": -98126638.14462201,\n    \"valorMaximo\": 9999999999999.99,\n    \"valorMinimo\": 90949541.31840062,\n    \"valorMulta\": 22054358.716930583,\n    \"valorTitulo\": 14461762.306461662\n  },\n  \"consultaFatorDataVencimentoResponse\": {\n    \"aceitaPagarComValorDiferenteCalculado\": \"3\",\n    \"bancoTitulo\": 999,\n    \"cnpjBeneficiario\": -81041611,\n    \"codigoRetorno\": 2143,\n    \"consultaCIP\": \"S\",\n    \"cpfCnpjPagador\": 111222333,\n    \"dataVencimento\": 20190722,\n    \"fatorVencimento\": -18565273,\n    \"identificacaoErro\": \"Indentificação do Erro\",\n    \"indPermissaoPagamentoParcial\": \"commodo fugiat adipisicing\",\n    \"localErro\": \"Local com Erro\",\n    \"nomeBanco\": \"Banco Bradesco S.A.\",\n    \"nomeBeneficiario\": \"in dolore Lorem\",\n    \"nomeCedente\": \"Nome do Cedente\",\n    \"nomeModuloComErro\": \"Nome do Modulo com Erro\",\n    \"nomePagador\": \"Nome do Pagador\",\n    \"numeroControleParticipante\": \"0999CA01191580027694\",\n    \"permitePagarBoletoComCartaoCredito\": \"S ou N\",\n    \"tituloDDA\": \"S\",\n    \"valorTitulo\": -35937633.5862267\n  }\n}"
+				},
+				{
+					"name": "Created",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -50600551,\n  \"dadosEntrada\": \"1 (Mínimo 1 e Máximo 54 Digitos)\",\n  \"tipoEntrada\": 26392687\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarDadosTitulo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarDadosTitulo"
+							]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Bad Request",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -50600551,\n  \"dadosEntrada\": \"1 (Mínimo 1 e Máximo 54 Digitos)\",\n  \"tipoEntrada\": 26392687\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarDadosTitulo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarDadosTitulo"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Unauthorized",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -50600551,\n  \"dadosEntrada\": \"1 (Mínimo 1 e Máximo 54 Digitos)\",\n  \"tipoEntrada\": 26392687\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarDadosTitulo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarDadosTitulo"
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Forbbiden",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -50600551,\n  \"dadosEntrada\": \"1 (Mínimo 1 e Máximo 54 Digitos)\",\n  \"tipoEntrada\": 26392687\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarDadosTitulo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarDadosTitulo"
+							]
+						}
+					},
+					"status": "Forbidden",
+					"code": 403,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Not Found",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -50600551,\n  \"dadosEntrada\": \"1 (Mínimo 1 e Máximo 54 Digitos)\",\n  \"tipoEntrada\": 26392687\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarDadosTitulo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarDadosTitulo"
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Business Error.",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -50600551,\n  \"dadosEntrada\": \"1 (Mínimo 1 e Máximo 54 Digitos)\",\n  \"tipoEntrada\": 26392687\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarDadosTitulo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarDadosTitulo"
+							]
+						}
+					},
+					"status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+					"code": 422,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"codigo\": \"2124\",\n  \"mensagem\": \"System unavailable\"\n}"
+				},
+				{
+					"name": "Internal Server Error",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -50600551,\n  \"dadosEntrada\": \"1 (Mínimo 1 e Máximo 54 Digitos)\",\n  \"tipoEntrada\": 26392687\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarDadosTitulo",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarDadosTitulo"
+							]
+						}
+					},
+					"status": "Internal Server Error",
+					"code": 500,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				}
+			]
+		},
+		{
+			"name": "Validar Dados do Pagamento",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzUxMiJ9.ew0KICJ2ZXIiOiAiMS4wIiwNCiAiaXNzIjogImh0dHBzOi8vcHJveHkuYXBpLnByZWJhbmNvLmNvbS5ici9hdXRoL3NlcnZlci92MS4xL3Rva2VuIiwNCiAiYXVkIjogImh0dHBzOi8vcHJveHkuYXBpLnByZWJhbmNvLmNvbS5icjo4NDQzIiwNCiAiaWF0IjogMTY2MjAzOTQ2NSwNCiAiZXhwIjogMTY2NDYzMTgxNywNCiAic2NwIjogIkNSSU0sUFNEQyxQU0NFLFVPUkcsUkVDQSxwYWd0b3MscGdib2xldG8sR0FEQyxBdGVuZGltZW50byxURURCT1BFTixTUEksUkVTVCxGQUNFTUFUQ0gsQVRNLExHUEQsRklOSSxBVE0sR0NDTixQQ0NGLEJDUEEsQ0JPTixFUE1GLERCVE8iLA0KICJqdGkiOiAibW9ja1Nlc3Npb243OTY2MTI2ODExOTY0MDI3MjExODk0MDYwOTQ4OTc2Mjk3ODMyOSIsDQogInRva2VuVHlwZSI6ICJhY2Nlc3MiLA0KICJjbGllbnRUeXBlIjogInNlcnZlciIsDQogIm93bmVyVHlwZSIgOiAic2VydmVyIiwNCiAiYXV0aERhdGEiOiAiZXlKMGVYQWlPaUpLVjFRaUxDSmpkSGtpT2lKS1YxUWlMQ0poYkdjaU9pSlNVMEV0VDBGRlVDSXNJbVZ1WXlJNklrRXlOVFpEUWtNdFNGTTFNVElpZlEuWUEyYUZOU3ZMN0FMclQ2V1FKbHBkM3lOU1JJSk4tVkphSEFIVFZHUjlWSWZZV00tVHRXaUxpOWtCVE9aakNpLUpLLUQ2Ykt1ZDR6VlhHTG5ITUM0dEVialVqUk5mN0lxWG5Eek5YLUpiUENwVG9zNkVhTHQ4Z09NcDBxemVVcC1TdG12Y1c1cnlSTGc3ajhSdkNkeDVERkp5YnExcDA1VDN3Q056NU4zOWFxSmxKRlF5RUczOTE2dGQ4MWFjaWFRU1B1aVl5SUh3SHlhMEVfcnNzM0w2cmUwOGtjMFhZQ0VNLXpWWDhDR29mZnZRNl9fcDZzcmVGUlo5cUdiUjF6dzZXT0RyOHBKTUw3aUdUYnlLT2NXX0NuU1pDVVBJTEZmOFRGd1JXZk9Kalc3OWVLelNnNUF6V0pwdVhGQW9DT3ZzZUYyc3dvcVA1WlZNYndfSjRNWlFfcXdSWkxnZmpvZzVaR2w0cFFPOW1NZ0NvWTNKdWo0YlJFQXRfOGRWbW13V3pqaTZHOXRxNXQxZWEtZ3lMeC02V0kyekNkMWlsc1pBbmpvaV9mVndLbV9NVTVXemQteXJZY0JxVFB3bl85b1lGLTNwX205cl9xdEVJVG10b1l3SExuRHhzU01ibll6XzNwMmpQU1I1OC1IdERKeG9UdW5ENGk0Qm1UMzF5OG8wMzJ0dW5wRW5zQ3BNMkZTV29ETzRtd3ZCUG9jNWh6cHN1VVA0UkZLTkZPX0o3Umx4dEp0NkhzWDE4UTVmUmp3NGU3bWt1dmltdENXT0VWelYtUU5CbzlFZUJpYkJCTVpZUi1qQm1mYkkyZUdUc05CcEpGRVAxOXJzaDlmeVdOR1g3MlpDZnZQZ1dfNnJ3eFBXUE1YVDQzWmJoaWRzV3RmOWNtbnlqSGk5M1Eua1A3NzJmT204VDFDSHBzOVRGVFJsdy5kZGZ4Y0FoSURzdmZWck4zcUhBN3prZWQwTmZISGNYSE9wMzFLbFpPWk1mbVZSaWd6YjVCUUc2QmN0Tzdxc3pFT0poUlJDbVRsd1JBdklibDNZS25rMTBicWhyT0F4XzJFaEhwWFYwaHgxeU1kbFpmeGpVeXVtSmh2MU90N1pXQUdscDY3c29UZEFiYU5leXlJX1RaY2V0RV9PNjZ4NHBKWjY4d3F4QnFzU1hDelloS0o5ZVBWZVktWWtLa0VZcFFhUkhVeWxUZTZCZjhsM1ZRWkxTOEVXYzFJanN3Mmw1YVI5Mk1UVUJxTExhWTQ3cnZqam4tOEVUdlJzVlVtdFJuc2VUVVc0V3BabHptZnFxaGZLQUswMDlIakt1Y1F1b0Vqb2hKaWRiVmZKNXdMV29tcTFZT1dHcDZHY1dQUnowV1AxbnBaU094SkNpekFYbGNhZEEwX0MtVVVyLTVWMjVCM0Mxano1T2FSbXRXb09LM0FXOTlmOV9OUnFVRjhuei1WQ1huLVpCZjM5WndtQV94OF9wMTNYcGpTckgtTFVNN2kzNnJZaUs1bnV4ZFBzZkliU1hteVF2QUFBYjFHZ3V2ZjZJYVdBV1ZFRjNOMUViaFEwenRuOEtCSmhyOVBZSDRWd1dNOUlUN2xTY3Jrd3pVMWhSWDZYWFk3M3gwWU5hVGJaSktDdDY2c2RiMG5YajZDX3NxQkFzc2JBSTRWQmRNMDByN254Z2o2eVNCOWVwT0NGYTU5d3FNYTBpMnUydEo5QXBqVnlwUkxJRnVrOVdnVU45dDdHNXV6Tk1EUU5lRmloUzI2b0xOb08tRkdlYTloRS1CNXpaWWF5bnpRS0xUTHluZl9PWEFoWkJOUzNDZ2V0R0VMQXVTU3hxZEJtNnl2cUVHN1hzUmxrcHdEZmt6bUVSOWozX0hNUzNuLVZJbkVQZ0Z6OElmdmlQNk1QdU9yOFpjWUNMa3hRSjdzZmMtX0tTdlA2ZEo0R2Njd3prTU9QRlZaUEZtMno0LTlmcWxTWG9YX2U1cW5Gc0lFVHdmNmg2Yk81UkhKbmlYaWktQm5PbmZORUtiNEVxbno0TW1qeFBVWXZZMnB5ZWxSUGdVbTk4UzR1TzFkMG1URzNrb1k0T0ZVaDkyQlpPSWIxYklxdm9iTzA0N1g5ejRGRHhMYVN0d0M4NlZEOGFFYnVBU1doMkNOblc1a0Z5bGE1aVNqTTZhNzZRbGYxU2M5TVFFQ1RkUFdyX2ljSEF2UWFWYklCeExCdk5WRE9rdTFfd3JEMWNOSTYyR21aeTRIbUZ6UzQzbnJVT2xSeEQxT1VPb1MzUDk5eVZFako3bUNVVnNiVkEyYTItMzk2akR1REt6SHNmSW5ZZ3RmWkVLQVd0enRyTEREamtzdXJYR3h3bzBnUWRYWEdtSWt0a1Z1WlhoM3pwVEhjZkQyZm5PcnNPLUNHUm9VUnVKdFAyYlBsQnM5bFNwaWtzbGljWGVobmtVbzh3Y3ZCU2FtU2llbF8wMEltbEVkdW55cFg3UW55bnl6Ti00dlhYV0FpRWlYR01reHZ4cmM5WVRUNlpPYjAxckVfamdXZEJnVUwyUjhHaFE5ckNSb3ZmSE5Gdk9lLVpJNmNmSnVMNzMxenp0cTlSZGI5WXBiUERjU3hSak56MHF4SEZkajNxRTRTQzZ0czFzUDJmMk5KVmx4UktoSkJ2ekRRUzQ2eFQ0aU13ZG1KZ19rOUlGbkNzeEFpLUJoUHJzNTFYYW5jYWF1N29USWE1TEJESE5SODJDS2xjWWVBZGplLUo3UENEX3E4UnJrNFlDMUtXZ0ZBR0lHemV5LXRJdS1ZVnZiTk5yRnlwQ3ItVFYxT0MweWNHcFNHZ01qV1JwQ3EtN0s5b1RRMHI1eENKS25CdVFHdGpFcE90cm45RW5vZVV2Qm91b05xNC5rOU9TVC1ySm1tODdub1pVa0daMlZGQmhubEpOTlA3ei0xbWYtb21KYmVJIg0KfQ.NUg8OKs2IyX5sD0XMkNhyX_bxhqxXGblON7T77CJvODz3rPwo_RVs1IyVhIm-CxNh9GMhA-sNTR8vR0_-bk5EBAAjvwYfDh-Mex99k1LUR1hisMPCjMSnlZLEdIaLZK1hcBWa-HJC-B8Bs9e4LrMTWP49jV-EJsvQUkLdwE1F1ffYUIMh8Jq3qliZVLD4tOjg6IEv9mxkdqXHbhp8FWRoXFC3tetR0PKH2X8Rjg0XROFGxTINYYvkyBQGuuONTQfYf22YZBk-kIELhTSwVKNrEdYoOetDFUOo94vgxPEMC_hp3-JfNaSRRPKNNm1jA18zhhv_Nk6sL4tOzqx0StgVMekPCnuS7htQgcc-2l2uRHXPmx3o6w3UN0g6n4N-7-7Mw--C65A_0IPTu8He_6Rr3mzsG91yoVO2qynovTUwGmFDOxIVhT2XA580dKb_ehw5QfylvYEt4DfqItR1unwZTeSLU9mSX0ycqW2G4Udewhq2GUcM0rDQLxBcvIJiw3cISYMo3biZEtq4zKiY9Gjr9uJenKWSNtHsNy4BvoxaCjbMSm3bHNMooWLRIPIT7rFimYrhA8WfiqS-fCljID42Aa2VpvOFZWYZ8roNBQd_Awx-Sehp3XBGRikTfjRTWRpSzupUNP4SB40ghMkIB99AwGuZJaviM3D26qT5YGWabU",
+						"type": "text"
+					},
+					{
+						"key": "X-Brad-Signature",
+						"value": "c9HyicifOpNCDat3Z11pQbBwmMnnY0pFOnvKEQSjiHbOlv51llJGKvxmU4e456AxvyNDbDPtzURpqFBDQPAJWR9K7VZP-4dg_sMnGJVc65M0QP4Dvxt7oKyproCP0ldBlpoI-Y7J4RMqLw4_jHovTLvbc18p868BQNy2aDvedA08MUb2OtCwFDOeb9b8HTA91vJJ9Rg7rvaiFg4urLMEaQfiY_xknghm1E9mfZ_mpkH73j2Ngagyt53yZ1SHE1gpaBUNhtCSsLVGBxO4LzepJB_SgihYe1Ee88w3EiKF5OIUg0gIGmjDKReOmoN3zBWD1J2xXUQZeHRFo4xJPSOtMA",
+						"type": "text"
+					},
+					{
+						"key": "X-Brad-Nonce",
+						"value": "1662039819408",
+						"type": "text"
+					},
+					{
+						"key": "X-Brad-Timestamp",
+						"value": "2022-09-01T10:43:39-00:00",
+						"type": "text"
+					},
+					{
+						"key": "X-Brad-Algorithm",
+						"value": "SHA256",
+						"type": "text"
+					},
+					{
+						"key": "Access-token",
+						"value": "bb7ccf09-8a85-4be6-a67e-82bf11737994",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"agencia\": 3995,\n    \"pagamentoComumRequest\": {\n        \"contaDadosComum\": {\n            \"agenciaContaDebitada\": 3995,\n            \"bancoContaDebitada\": 237,\n            \"contaDebitada\": 75557,\n            \"digitoAgenciaDebitada\": 0,\n            \"digitoContaDebitada\": \"0\"\n        },\n        \"dadosSegundaLinhaExtrato\": \"TESTE\",\n        \"dataMovimento\": 20220131,\n        \"dataPagamento\": 20220131,\n        \"dataVencimento\": 20190724,\n        \"horaTransacao\": 145723,\n        \"identificacaoTituloCobranca\": \"00199895100000027150000002828026000101285617\",\n        \"indicadorFormaCaptura\": 1,\n        \"valorTitulo\": 4003.03\n    },\n    \"destinatarioDadosComum\": {\n        \"cpfCnpjDestinatario\": \"\"\n    },\n    \"identificacaoChequeCartao\": 0,\n    \"indicadorValidacaoGravacao\": \"N\",\n    \"nomeCliente\": \"JOSE DA SILVA\",\n    \"numeroControleParticipante\": \"0237CP01191480028496\",\n    \"portadorDadosComum\": {\n        \"cpfCnpjPortador\": \"\"\n    },\n    \"remetenteDadosComum\": {\n        \"cpfCnpjRemetente\": \"\"\n    },\n    \"valorMinimoIdentificacao\": 0\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/pagamentos/boleto/validarPagamento",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"pagamentos",
+						"boleto",
+						"validarPagamento"
+					]
+				},
+				"description": "Recurso faz a pré-confirmação do pagamento,  ou seja, são feitas todas as consistência de saldo, revalidação da barra, do valor informado e recálculos. Se for um pagamento de uma barra diferente de ''Bradesco'', o campo ''numeroControleParticipante'' deverá ser informado;"
+			},
+			"response": [
+				{
+					"name": "OK",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -24509365,\n  \"indicadorValidacaoGravacao\": \"N (Mínimo 1 e Máximo 1 Digito)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"identificacaoChequeCartao\": -20881904,\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 0 e Máximo 40 Caracteres)\",\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 90749360,\n    \"dataPagamento\": 47861006,\n    \"dataVencimento\": -42173677,\n    \"horaTransacao\": 42705088,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -89336725,\n    \"valorTitulo\": 36835662.64745551,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": 64445927,\n      \"bancoContaDebitada\": 45929326,\n      \"contaDebitada\": -63033456,\n      \"digitoAgenciaDebitada\": 82268266,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"valorMinimoIdentificacao\": 51565939.621453166\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarPagamento"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"pagamentoComumResponse\": {\n    \"agenciaProtesto\": -21356589,\n    \"bancoProtesto\": -37601052,\n    \"bancoRecebedor\": 999,\n    \"codigoCIP\": 93933537,\n    \"codigoRetorno\": 2100,\n    \"cpfCnpjBeneficiario\": 42814944,\n    \"cpfCnpjContaPagamento\": 46791000,\n    \"cpfCnpjPagador\": 29485438,\n    \"cpfCnpjSacadorAvalista\": -18709704,\n    \"dataEnvioCartorio\": -28479832,\n    \"dataInstrucaoProtesto\": -19098115,\n    \"dataQuitacao\": -71225823,\n    \"dataVencimento\": -8402865,\n    \"enderecoAgenciaProtesto\": \"Endereço da Agencia de Protesto\",\n    \"linhaDigitavelPrimeiraParte\": \"99992.04904 52414.411536 51729.999909 3\",\n    \"linhaDigitavelSegundaParte\": 79600000400303,\n    \"nomeAgenciaProtesto\": \"Nome da Agencia de Protesto\",\n    \"nomeBancoBeneficiario\": \"Banco Bradesco S.A.\",\n    \"nomeBancoRecebedor\": \"Banco Bradesco S.A.\",\n    \"nomeCedente\": \"Nome do Cedente\",\n    \"nomeFantasiaBeneficiario\": \"Nome Fantasia do Beneficiario\",\n    \"nomePagador\": \"Nome do Pagador\",\n    \"nomeSacadoDebitado\": \"Nome do Sacado\",\n    \"nomeSacadorAvalista\": \"Nome Sacador Avalista\",\n    \"numeroCartorio\": \"0 ou 12345\",\n    \"numeroProtocolo\": \"0 ou 123456789012345\",\n    \"pagamentoContingencia\": \"S\",\n    \"tituloAgendado\": \"S ou N\",\n    \"valorAbatimento\": -49262384.945093766,\n    \"valorBonificacao\": 5442267.189974055,\n    \"valorCobrado\": 4003.03,\n    \"valorDesconto\": -25094351.05352305,\n    \"valorJuros\": -35315597.6310005,\n    \"valorMaximoPagamento\": 9999.99,\n    \"valorMinimoPagamento\": 9999.99,\n    \"valorMulta\": 46420375.54514861,\n    \"valorTitulo\": -27859110.7328483\n  }\n}"
+				},
+				{
+					"name": "Created",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -24509365,\n  \"indicadorValidacaoGravacao\": \"N (Mínimo 1 e Máximo 1 Digito)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"identificacaoChequeCartao\": -20881904,\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 0 e Máximo 40 Caracteres)\",\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 90749360,\n    \"dataPagamento\": 47861006,\n    \"dataVencimento\": -42173677,\n    \"horaTransacao\": 42705088,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -89336725,\n    \"valorTitulo\": 36835662.64745551,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": 64445927,\n      \"bancoContaDebitada\": 45929326,\n      \"contaDebitada\": -63033456,\n      \"digitoAgenciaDebitada\": 82268266,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"valorMinimoIdentificacao\": 51565939.621453166\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarPagamento"
+							]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Bad Request",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -24509365,\n  \"indicadorValidacaoGravacao\": \"N (Mínimo 1 e Máximo 1 Digito)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"identificacaoChequeCartao\": -20881904,\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 0 e Máximo 40 Caracteres)\",\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 90749360,\n    \"dataPagamento\": 47861006,\n    \"dataVencimento\": -42173677,\n    \"horaTransacao\": 42705088,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -89336725,\n    \"valorTitulo\": 36835662.64745551,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": 64445927,\n      \"bancoContaDebitada\": 45929326,\n      \"contaDebitada\": -63033456,\n      \"digitoAgenciaDebitada\": 82268266,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"valorMinimoIdentificacao\": 51565939.621453166\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarPagamento"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Unauthorized",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -24509365,\n  \"indicadorValidacaoGravacao\": \"N (Mínimo 1 e Máximo 1 Digito)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"identificacaoChequeCartao\": -20881904,\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 0 e Máximo 40 Caracteres)\",\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 90749360,\n    \"dataPagamento\": 47861006,\n    \"dataVencimento\": -42173677,\n    \"horaTransacao\": 42705088,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -89336725,\n    \"valorTitulo\": 36835662.64745551,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": 64445927,\n      \"bancoContaDebitada\": 45929326,\n      \"contaDebitada\": -63033456,\n      \"digitoAgenciaDebitada\": 82268266,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"valorMinimoIdentificacao\": 51565939.621453166\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarPagamento"
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Forbbiden",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -24509365,\n  \"indicadorValidacaoGravacao\": \"N (Mínimo 1 e Máximo 1 Digito)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"identificacaoChequeCartao\": -20881904,\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 0 e Máximo 40 Caracteres)\",\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 90749360,\n    \"dataPagamento\": 47861006,\n    \"dataVencimento\": -42173677,\n    \"horaTransacao\": 42705088,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -89336725,\n    \"valorTitulo\": 36835662.64745551,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": 64445927,\n      \"bancoContaDebitada\": 45929326,\n      \"contaDebitada\": -63033456,\n      \"digitoAgenciaDebitada\": 82268266,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"valorMinimoIdentificacao\": 51565939.621453166\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarPagamento"
+							]
+						}
+					},
+					"status": "Forbidden",
+					"code": 403,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Not Found",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -24509365,\n  \"indicadorValidacaoGravacao\": \"N (Mínimo 1 e Máximo 1 Digito)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"identificacaoChequeCartao\": -20881904,\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 0 e Máximo 40 Caracteres)\",\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 90749360,\n    \"dataPagamento\": 47861006,\n    \"dataVencimento\": -42173677,\n    \"horaTransacao\": 42705088,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -89336725,\n    \"valorTitulo\": 36835662.64745551,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": 64445927,\n      \"bancoContaDebitada\": 45929326,\n      \"contaDebitada\": -63033456,\n      \"digitoAgenciaDebitada\": 82268266,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"valorMinimoIdentificacao\": 51565939.621453166\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarPagamento"
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Business Error.",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -24509365,\n  \"indicadorValidacaoGravacao\": \"N (Mínimo 1 e Máximo 1 Digito)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"identificacaoChequeCartao\": -20881904,\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 0 e Máximo 40 Caracteres)\",\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 90749360,\n    \"dataPagamento\": 47861006,\n    \"dataVencimento\": -42173677,\n    \"horaTransacao\": 42705088,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -89336725,\n    \"valorTitulo\": 36835662.64745551,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": 64445927,\n      \"bancoContaDebitada\": 45929326,\n      \"contaDebitada\": -63033456,\n      \"digitoAgenciaDebitada\": 82268266,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"valorMinimoIdentificacao\": 51565939.621453166\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarPagamento"
+							]
+						}
+					},
+					"status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+					"code": 422,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"codigo\": \"2124\",\n  \"mensagem\": \"System unavailable\"\n}"
+				},
+				{
+					"name": "Internal Server Error",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -24509365,\n  \"indicadorValidacaoGravacao\": \"N (Mínimo 1 e Máximo 1 Digito)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"identificacaoChequeCartao\": -20881904,\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 0 e Máximo 40 Caracteres)\",\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 90749360,\n    \"dataPagamento\": 47861006,\n    \"dataVencimento\": -42173677,\n    \"horaTransacao\": 42705088,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -89336725,\n    \"valorTitulo\": 36835662.64745551,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": 64445927,\n      \"bancoContaDebitada\": 45929326,\n      \"contaDebitada\": -63033456,\n      \"digitoAgenciaDebitada\": 82268266,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"valorMinimoIdentificacao\": 51565939.621453166\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/validarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"validarPagamento"
+							]
+						}
+					},
+					"status": "Internal Server Error",
+					"code": 500,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				}
+			]
+		},
+		{
+			"name": "Efetivar Pagamento",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"description": "(Required) cpfCnpj",
+						"key": "cpfCnpj",
+						"value": "-78982195"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"agencia\": 3995,\n\t  \"contaDadosComum\": {\n\t    \"agenciaContaDebitada\": 3995,\n\t    \"bancoContaDebitada\": 237,\n\t    \"contaDebitada\": 75557,\n\t    \"digitoAgenciaDebitada\": 0,\n\t    \"digitoContaDebitada\": \"0\"\n\t  },\n    \"dadosSegundaLinhaExtrato\": \"Teste\",\n    \"dataMovimento\": 20230829,\n    \"dataPagamento\": 20230829,\n    \"dataVencimento\": 20230820,\n    \"identificacaoTituloCobranca\": \"03392000000000000009492836982227900007310102\",\n    \"indicadorFormaCaptura\": 1,\n    \"valorTitulo\": 434.00,\n    \"horaTransacao\": 0,\n    \"destinatarioDadosComum\": {\n        \"cpfCnpjDestinatario\": \"\"\n    },\n    \"indicadorFuncao\": 1,\n    \"nomeCliente\": \"SANTANDER LIGHT MC INTERNAC - 4276\",\n    \"numeroControleParticipante\": \"0237CP01232410260571\",\n    \"portadorDadosComum\": {\n        \"cpfCnpjPortador\": \"\"\n    },\n    \"remetenteDadosComum\": {\n        \"cpfCnpjRemetente\": \"\"\n    },\n    \"transactionId\": 17836949\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/pagamentos/boleto/efetivarPagamento",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"pagamentos",
+						"boleto",
+						"efetivarPagamento"
+					]
+				},
+				"description": "Recurso faz a efetivação do pagamento. Se for um pagamento de uma barra diferente de ''Bradesco'', o campo ''numeroControleParticipante'' deverá ser informado;"
+			},
+			"response": [
+				{
+					"name": "OK",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "(Required) cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -26596603,\n  \"indicadorFuncao\": \"1 (Mínimo 1 e Máximo 1 Digito)\",\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 1 e Máximo 40 Caracteres)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"valorMinimoIdentificacao\": -16939062.384451374,\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 35002155,\n    \"dataPagamento\": 58098233,\n    \"dataVencimento\": -39062432,\n    \"horaTransacao\": 64283835,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -94250224,\n    \"valorTitulo\": 55197396.53745246,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": -43425630,\n      \"bancoContaDebitada\": 25401095,\n      \"contaDebitada\": 6439998,\n      \"digitoAgenciaDebitada\": 89450411,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"transactionId\": 42767540\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/efetivarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"efetivarPagamento"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"pagamentoComumResponse\": {\n    \"agenciaProtesto\": 20948849,\n    \"bancoProtesto\": 63527304,\n    \"bancoRecebedor\": 999,\n    \"codigoCIP\": 67443498,\n    \"codigoRetorno\": 2100,\n    \"cpfCnpjBeneficiario\": 82032140,\n    \"cpfCnpjContaPagamento\": -57875205,\n    \"cpfCnpjPagador\": -25667792,\n    \"cpfCnpjSacadorAvalista\": -69178447,\n    \"dataEnvioCartorio\": 28454871,\n    \"dataInstrucaoProtesto\": -77378207,\n    \"dataQuitacao\": 61479936,\n    \"dataVencimento\": -75734341,\n    \"enderecoAgenciaProtesto\": \"Endereço da Agencia de Protesto\",\n    \"linhaDigitavelPrimeiraParte\": \"99992.04904 52414.411536 51729.999909 3\",\n    \"linhaDigitavelSegundaParte\": 79600000400303,\n    \"nomeAgenciaProtesto\": \"Nome da Agencia de Protesto\",\n    \"nomeBancoBeneficiario\": \"Banco Bradesco S.A.\",\n    \"nomeBancoRecebedor\": \"Banco Bradesco S.A.\",\n    \"nomeCedente\": \"Nome do Cedente\",\n    \"nomeFantasiaBeneficiario\": \"Nome Fantasia do Beneficiario\",\n    \"nomePagador\": \"Nome do Pagador\",\n    \"nomeSacadoDebitado\": \"Nome do Sacado\",\n    \"nomeSacadorAvalista\": \"Nome Sacador Avalista\",\n    \"numeroCartorio\": \"0 ou 12345\",\n    \"numeroProtocolo\": \"0 ou 123456789012345\",\n    \"pagamentoContingencia\": \"S\",\n    \"tituloAgendado\": \"S ou N\",\n    \"valorAbatimento\": -37636595.53579295,\n    \"valorBonificacao\": -88289334.61853112,\n    \"valorCobrado\": 4003.03,\n    \"valorDesconto\": -5632188.382629663,\n    \"valorJuros\": 85544218.75673169,\n    \"valorMaximoPagamento\": 9999.99,\n    \"valorMinimoPagamento\": 9999.99,\n    \"valorMulta\": -69378527.0254696,\n    \"valorTitulo\": -17389369.951650485\n  },\n  \"numeroProtocoloCBCA\": 3506,\n  \"transactionId\": -91534756\n}"
+				},
+				{
+					"name": "Created",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "(Required) cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -26596603,\n  \"indicadorFuncao\": \"1 (Mínimo 1 e Máximo 1 Digito)\",\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 1 e Máximo 40 Caracteres)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"valorMinimoIdentificacao\": -16939062.384451374,\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 35002155,\n    \"dataPagamento\": 58098233,\n    \"dataVencimento\": -39062432,\n    \"horaTransacao\": 64283835,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -94250224,\n    \"valorTitulo\": 55197396.53745246,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": -43425630,\n      \"bancoContaDebitada\": 25401095,\n      \"contaDebitada\": 6439998,\n      \"digitoAgenciaDebitada\": 89450411,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"transactionId\": 42767540\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/efetivarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"efetivarPagamento"
+							]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Bad Request",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "(Required) cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -26596603,\n  \"indicadorFuncao\": \"1 (Mínimo 1 e Máximo 1 Digito)\",\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 1 e Máximo 40 Caracteres)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"valorMinimoIdentificacao\": -16939062.384451374,\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 35002155,\n    \"dataPagamento\": 58098233,\n    \"dataVencimento\": -39062432,\n    \"horaTransacao\": 64283835,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -94250224,\n    \"valorTitulo\": 55197396.53745246,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": -43425630,\n      \"bancoContaDebitada\": 25401095,\n      \"contaDebitada\": 6439998,\n      \"digitoAgenciaDebitada\": 89450411,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"transactionId\": 42767540\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/efetivarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"efetivarPagamento"
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Unauthorized",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "(Required) cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -26596603,\n  \"indicadorFuncao\": \"1 (Mínimo 1 e Máximo 1 Digito)\",\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 1 e Máximo 40 Caracteres)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"valorMinimoIdentificacao\": -16939062.384451374,\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 35002155,\n    \"dataPagamento\": 58098233,\n    \"dataVencimento\": -39062432,\n    \"horaTransacao\": 64283835,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -94250224,\n    \"valorTitulo\": 55197396.53745246,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": -43425630,\n      \"bancoContaDebitada\": 25401095,\n      \"contaDebitada\": 6439998,\n      \"digitoAgenciaDebitada\": 89450411,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"transactionId\": 42767540\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/efetivarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"efetivarPagamento"
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Forbbiden",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "(Required) cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -26596603,\n  \"indicadorFuncao\": \"1 (Mínimo 1 e Máximo 1 Digito)\",\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 1 e Máximo 40 Caracteres)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"valorMinimoIdentificacao\": -16939062.384451374,\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 35002155,\n    \"dataPagamento\": 58098233,\n    \"dataVencimento\": -39062432,\n    \"horaTransacao\": 64283835,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -94250224,\n    \"valorTitulo\": 55197396.53745246,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": -43425630,\n      \"bancoContaDebitada\": 25401095,\n      \"contaDebitada\": 6439998,\n      \"digitoAgenciaDebitada\": 89450411,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"transactionId\": 42767540\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/efetivarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"efetivarPagamento"
+							]
+						}
+					},
+					"status": "Forbidden",
+					"code": 403,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Not Found",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "(Required) cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -26596603,\n  \"indicadorFuncao\": \"1 (Mínimo 1 e Máximo 1 Digito)\",\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 1 e Máximo 40 Caracteres)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"valorMinimoIdentificacao\": -16939062.384451374,\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 35002155,\n    \"dataPagamento\": 58098233,\n    \"dataVencimento\": -39062432,\n    \"horaTransacao\": 64283835,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -94250224,\n    \"valorTitulo\": 55197396.53745246,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": -43425630,\n      \"bancoContaDebitada\": 25401095,\n      \"contaDebitada\": 6439998,\n      \"digitoAgenciaDebitada\": 89450411,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"transactionId\": 42767540\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/efetivarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"efetivarPagamento"
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Business Error.",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "(Required) cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -26596603,\n  \"indicadorFuncao\": \"1 (Mínimo 1 e Máximo 1 Digito)\",\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 1 e Máximo 40 Caracteres)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"valorMinimoIdentificacao\": -16939062.384451374,\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 35002155,\n    \"dataPagamento\": 58098233,\n    \"dataVencimento\": -39062432,\n    \"horaTransacao\": 64283835,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -94250224,\n    \"valorTitulo\": 55197396.53745246,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": -43425630,\n      \"bancoContaDebitada\": 25401095,\n      \"contaDebitada\": 6439998,\n      \"digitoAgenciaDebitada\": 89450411,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"transactionId\": 42767540\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/efetivarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"efetivarPagamento"
+							]
+						}
+					},
+					"status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+					"code": 422,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"codigo\": \"2124\",\n  \"mensagem\": \"System unavailable\"\n}"
+				},
+				{
+					"name": "Internal Server Error",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"description": "(Required) cpfCnpj",
+								"key": "cpfCnpj",
+								"value": "-78982195"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agencia\": -26596603,\n  \"indicadorFuncao\": \"1 (Mínimo 1 e Máximo 1 Digito)\",\n  \"nomeCliente\": \"Nome Cliente da Silva (Mínimo 1 e Máximo 40 Caracteres)\",\n  \"numeroControleParticipante\": \"0999CK01891480018491 (Mínimo 1 e Máximo 20 Caracteres)\",\n  \"valorMinimoIdentificacao\": -16939062.384451374,\n  \"destinatarioDadosComum\": {\n    \"cpfCnpjDestinatario\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"pagamentoComumRequest\": {\n    \"dadosSegundaLinhaExtrato\": \"Teste (Mínimo 1 e Máximo 32 Caracteres)\",\n    \"dataMovimento\": 35002155,\n    \"dataPagamento\": 58098233,\n    \"dataVencimento\": -39062432,\n    \"horaTransacao\": 64283835,\n    \"identificacaoTituloCobranca\": \"34592796000001001012019052414422535878999990 (Mínimo 1 e Máximo 44 Digitos)\",\n    \"indicadorFormaCaptura\": -94250224,\n    \"valorTitulo\": 55197396.53745246,\n    \"contaDadosComum\": {\n      \"agenciaContaDebitada\": -43425630,\n      \"bancoContaDebitada\": 25401095,\n      \"contaDebitada\": 6439998,\n      \"digitoAgenciaDebitada\": 89450411,\n      \"digitoContaDebitada\": \"99 (Mínimo 1 e Máximo 2 Digitos)\"\n    }\n  },\n  \"portadorDadosComum\": {\n    \"cpfCnpjPortador\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"remetenteDadosComum\": {\n    \"cpfCnpjRemetente\": \"11122233344 ou 111231234000123 (Mínimo 0 e Máximo 15 Digitos)\"\n  },\n  \"transactionId\": 42767540\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/efetivarPagamento",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"efetivarPagamento"
+							]
+						}
+					},
+					"status": "Internal Server Error",
+					"code": 500,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				}
+			]
+		},
+		{
+			"name": "Consulta Limites e Horarios disponiveis Para Pagamento",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/pagamentos/boleto/limites?agencia=-78982195&bancoCliente=-78982195&agenciaCliente=-78982195&digitoAgenciaCliente=laboris&contaCliente=-78982195&digitoContaCliente=laboris",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"pagamentos",
+						"boleto",
+						"limites"
+					],
+					"query": [
+						{
+							"key": "agencia",
+							"value": "-78982195",
+							"description": "(Required) Código Da Agência De Relacionamento"
+						},
+						{
+							"key": "bancoCliente",
+							"value": "-78982195",
+							"description": "(Required) Código Do Banco Da Conta Do Cliente"
+						},
+						{
+							"key": "agenciaCliente",
+							"value": "-78982195",
+							"description": "(Required) Código Da Agência Da Conta Do Cliente"
+						},
+						{
+							"key": "digitoAgenciaCliente",
+							"value": "laboris",
+							"description": "(Required) Digito Da Agência"
+						},
+						{
+							"key": "contaCliente",
+							"value": "-78982195",
+							"description": "(Required) Código Da Conta Do Cliente"
+						},
+						{
+							"key": "digitoContaCliente",
+							"value": "laboris",
+							"description": "(Required) Dígito Da Conta Do Cliente"
+						}
+					]
+				},
+				"description": "Recurso tem a função de consultar os limites disponíveis para agência e conta que irá transacionar. Os parâmetros de cobrança para o pagamento são devolvidos nessa transação, por exemplo o parâmetro de valor superior e a grade horária parametrizada para uma transação de valor superior;"
+			},
+			"response": [
+				{
+					"name": "OK",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/limites?agencia=-78982195&bancoCliente=-78982195&agenciaCliente=-78982195&digitoAgenciaCliente=laboris&contaCliente=-78982195&digitoContaCliente=laboris",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"limites"
+							],
+							"query": [
+								{
+									"key": "agencia",
+									"value": "-78982195"
+								},
+								{
+									"key": "bancoCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "agenciaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoAgenciaCliente",
+									"value": "laboris"
+								},
+								{
+									"key": "contaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoContaCliente",
+									"value": "laboris"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"codigoMensagemCICS\": 2143,\n  \"exibeGradeTED\": \"S\",\n  \"horaFechamentoGradeTED\": 2255,\n  \"horaFinalPagamentosBradesco\": 2359,\n  \"horaFinalPagamentosOutrosBancos\": 2100,\n  \"horaFinalPagamentosOutrosBancosVencido\": 231100,\n  \"horaInicioGradeTED\": 930,\n  \"horaInicioPagamentosOutrosBancosVencido\": 54900,\n  \"identificacaoErro\": \"Indentificação do Erro\",\n  \"localErro\": \"Local com Erro\",\n  \"nomeModuloComErro\": \"Nome do Modulo com Erro\",\n  \"parametroValorSuperior\": 25000000,\n  \"permitePagamentoCartaoCredito\": \"S\",\n  \"quantidadeAnosLimite\": 80,\n  \"valorLimiteDisponivelPagamentoBancoBradesco\": 9999999999,\n  \"valorLimiteDisponivelPagamentoBancoOutrosBancos\": 9999999999,\n  \"valorLimiteDisponivelPagamentoMidiaBradesco\": 9999999999,\n  \"valorLimiteDisponivelPagamentoMidiaOutrosBancos\": 9999999999,\n  \"valorLimiteDisponivelPagamentoTotalBradesco\": 9999999999,\n  \"valorLimiteDisponivelPagamentoTotalOutrosBancos\": 9999999999,\n  \"valorLimitePagamentoBancoBradesco\": 9999999999,\n  \"valorLimitePagamentoBancoOutrosBancos\": 9999999999,\n  \"valorLimitePagamentoComChequeBradesco\": 9999999999,\n  \"valorLimitePagamentoComChequeOutrosBancos\": 9999999999,\n  \"valorLimitePagamentoDebitoContaBradesco\": 9999999999,\n  \"valorLimitePagamentoDebitoContaOutrosBancos\": 9999999999,\n  \"valorLimitePagamentoDinheiroBradesco\": 9999999999,\n  \"valorLimitePagamentoDinheiroOutrosBancos\": 9999999999,\n  \"valorLimitePagamentoMidiaBradesco\": 9999999999,\n  \"valorLimitePagamentoMidiaOutrosBancos\": 9999999999\n}"
+				},
+				{
+					"name": "Bad Request",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/limites?agencia=-78982195&bancoCliente=-78982195&agenciaCliente=-78982195&digitoAgenciaCliente=laboris&contaCliente=-78982195&digitoContaCliente=laboris",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"limites"
+							],
+							"query": [
+								{
+									"key": "agencia",
+									"value": "-78982195"
+								},
+								{
+									"key": "bancoCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "agenciaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoAgenciaCliente",
+									"value": "laboris"
+								},
+								{
+									"key": "contaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoContaCliente",
+									"value": "laboris"
+								}
+							]
+						}
+					},
+					"status": "Bad Request",
+					"code": 400,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Unauthorized",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/limites?agencia=-78982195&bancoCliente=-78982195&agenciaCliente=-78982195&digitoAgenciaCliente=laboris&contaCliente=-78982195&digitoContaCliente=laboris",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"limites"
+							],
+							"query": [
+								{
+									"key": "agencia",
+									"value": "-78982195"
+								},
+								{
+									"key": "bancoCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "agenciaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoAgenciaCliente",
+									"value": "laboris"
+								},
+								{
+									"key": "contaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoContaCliente",
+									"value": "laboris"
+								}
+							]
+						}
+					},
+					"status": "Unauthorized",
+					"code": 401,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Forbbiden",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/limites?agencia=-78982195&bancoCliente=-78982195&agenciaCliente=-78982195&digitoAgenciaCliente=laboris&contaCliente=-78982195&digitoContaCliente=laboris",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"limites"
+							],
+							"query": [
+								{
+									"key": "agencia",
+									"value": "-78982195"
+								},
+								{
+									"key": "bancoCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "agenciaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoAgenciaCliente",
+									"value": "laboris"
+								},
+								{
+									"key": "contaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoContaCliente",
+									"value": "laboris"
+								}
+							]
+						}
+					},
+					"status": "Forbidden",
+					"code": 403,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Not Found",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/limites?agencia=-78982195&bancoCliente=-78982195&agenciaCliente=-78982195&digitoAgenciaCliente=laboris&contaCliente=-78982195&digitoContaCliente=laboris",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"limites"
+							],
+							"query": [
+								{
+									"key": "agencia",
+									"value": "-78982195"
+								},
+								{
+									"key": "bancoCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "agenciaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoAgenciaCliente",
+									"value": "laboris"
+								},
+								{
+									"key": "contaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoContaCliente",
+									"value": "laboris"
+								}
+							]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				},
+				{
+					"name": "Business Error.",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/limites?agencia=-78982195&bancoCliente=-78982195&agenciaCliente=-78982195&digitoAgenciaCliente=laboris&contaCliente=-78982195&digitoContaCliente=laboris",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"limites"
+							],
+							"query": [
+								{
+									"key": "agencia",
+									"value": "-78982195"
+								},
+								{
+									"key": "bancoCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "agenciaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoAgenciaCliente",
+									"value": "laboris"
+								},
+								{
+									"key": "contaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoContaCliente",
+									"value": "laboris"
+								}
+							]
+						}
+					},
+					"status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+					"code": 422,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"codigo\": \"2124\",\n  \"mensagem\": \"System unavailable\"\n}"
+				},
+				{
+					"name": "Internal Server Error",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pagamentos/boleto/limites?agencia=-78982195&bancoCliente=-78982195&agenciaCliente=-78982195&digitoAgenciaCliente=laboris&contaCliente=-78982195&digitoContaCliente=laboris",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"pagamentos",
+								"boleto",
+								"limites"
+							],
+							"query": [
+								{
+									"key": "agencia",
+									"value": "-78982195"
+								},
+								{
+									"key": "bancoCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "agenciaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoAgenciaCliente",
+									"value": "laboris"
+								},
+								{
+									"key": "contaCliente",
+									"value": "-78982195"
+								},
+								{
+									"key": "digitoContaCliente",
+									"value": "laboris"
+								}
+							]
+						}
+					},
+					"status": "Internal Server Error",
+					"code": 500,
+					"_postman_previewlanguage": "text",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "text/plain"
+						}
+					],
+					"cookie": [],
+					"body": ""
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://proxy.api.prebanco.com.br/v1",
+			"type": "string"
+		}
+	]
+}

@@ -1,0 +1,16 @@
+Nome Menu:  Analise
+Nome da rotina PRW:  ANALISE - 19/09/2017
+senha de acesso da rotina:  tudo
+
+Nome Menu:  Saldos
+Nome da rotina PRW: SLDANALI - 29/06/2018
+não tem senha de acesso.
+
+Nome Menu: Relatorio de Divergencias
+Nome da rotina PRW: RELANALI - 19/09/2017
+
+Nome Menu: Valoriza Inventario
+Nome da rotina PRW: VALORIZA - 19/09/2017
+Somente utilizar essa rotina quando for preciso valorizar um inventário zerado,
+Usuário irá colocar um inventário zerado e sistema irá buscar a valorização do último inventário feito.
+Antes de utilizar, verificar a rotina.

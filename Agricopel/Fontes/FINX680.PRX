@@ -1,0 +1,510 @@
+#include "FINR680.CH"
+#Include "PROTHEUS.CH"
+#Include "TOPCONN.CH"
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ FinX680  ³ Autor ³ Paulo Boschetti       ³ Data ³ 25.10.94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Extrato Bancaria - Via CNAB                                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ FinX680(void)                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Sigafin.Adv                                                ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+User Function FinX680()
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+LOCAL cDesc1  := STR0001  //"Este relat¢rio ir  emitir o extrato bancario via padr„o CNAB."
+LOCAL cDesc2  := STR0002  //"Para que o mesmo seja emitido, dever  ser efetuado a configu-"
+LOCAL cDesc3  := STR0003  //"ra‡„o conforme documenta‡„o do banco."
+LOCAL cString := "SE5"
+LOCAL Tamanho := "M"
+
+PRIVATE titulo := OemToAnsi(STR0004)  //"Extrato Bancario - Via CNAB"
+PRIVATE cabec1 := OemToAnsi(STR0005)  //"DATA      DOCUM     HISTORICO                             CREDITO              DEBITO               SALDO"
+PRIVATE cabec2 := "" , wnrel
+PRIVATE aReturn := { OemToAnsi(STR0006), 1,OemToAnsi(STR0007), 2, 2, 1, "",1 }  //"Zebrado"###"Administracao"
+PRIVATE nomeprog := "FINX680"
+PRIVATE aLinha   := { },nLastKey := 0
+PRIVATE cPerg    := "FINX680"
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+pergunte(cPerg,.F.)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para parametros 		³
+//³ mv_par01       // Do Banco         	   ³
+//³ mv_par02       // Da Agencia       	   ³
+//³ mv_par03       // Da Conta       	      ³
+//³ mv_par04       // Arquivo Config   	   ³
+//³ mv_par05       // Arquivo Extrato  	   ³
+//³ mv_par06       // Padrao Banco/Febraban  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia controle para a funcao SETPRINT                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+wnrel:="FINX680"            //Nome Default do relatorio em Disco
+wnrel:=SetPrint(cString,wnrel,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.F.,"",,Tamanho)
+
+If nLastKey == 27
+	Return
+Endif
+
+SetDefault(aReturn,cString)
+
+If nLastKey == 27
+	Return
+Endif
+
+RptStatus({|lEnd| Fa680Imp(@lEnd,wnRel,cString)},Titulo)
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³ Fun‡…o    ³ FA680Imp ³ Autor ³ Lu¡s C. Cunha         ³ Data ³ 05/11/93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Descri‡…o ³ Retorno do Extrato Banc rio                                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function FA680Imp(lEnd,wnRel,cString)
+
+LOCAL CbTxt := space(10)
+LOCAL CbCont := 0
+LOCAL tamanho := "M"
+LOCAL nHdlConf
+LOCAL nHdlBco
+LOCAL cData, dData , nValor , nTotCred , nTotDeb
+LOCAL nLidos := 0
+LOCAL aPosicoes:={ }
+LOCAL nSaldoInicial := 0
+Local lFebraban := .F.
+Local CSITLANC := ""
+Local cMVCOMP  := GetMv("MV_COMP")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para Impressao do Cabecalho e Rodape    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cbtxt    := SPACE(10)
+cbcont   := 0
+li       := 80
+m_pag    := 1
+
+/*
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Criacao de indice temporario
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+*
+* FILTRAGEM SE5
+*
+//CCOND := "E5_TIPODOC == 'CA' .OR. E5_TIPODOC == 'CH'"
+//CCOND := CCOND + " .AND. E5_BANCO == MV_PAR01 .AND. E5_AGENCIA == MV_PAR02 .AND. E5_CONTA == MV_PAR03"
+
+cArq :=CriaTrab(NIL,.F.)
+dbSELECTAREA("SE5")
+IndRegua("SE5",cArq,"E5_BANCO+E5_AGENCIA+E5_CONTA+E5_NUMCHEQ",,,"Selecionando registros...")
+*/
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Posiciona no cadastro de bancos.                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ! (SA6->(dbSeek( xFilial("SA6")+mv_par01+mv_par02+mv_par03 ) ) )
+	Set Device To Screen
+	Help(" ",1, "AFR680BCO" )
+	Return
+Endif
+dbSelectArea("SEE")
+SEE->(dbSeek(xFilial("SEE")+mv_par01+mv_par02+mv_par03))
+If !SEE->( found() )
+	Set Device To Screen
+	Help(" ",1,"PAR150")
+	Return .F.
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Caso esteja usando configuracao 240 bytes/linha p/bancos	  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If mv_par06 == 1
+	lFebraban := IIF(EE_BYTESXT > 200 , .t., .f.)
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Abertura do arquivo Configurador.                            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nHdlConf := Fopen(mv_par04 ,64)
+If nHdlConf < 0
+	Set Device To Screen
+	Help(" ",1, "AFR680CFG" )
+	Return
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Abertura do arquivo Configurador.                            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nHdlBco := Fopen( mv_par05 ,64)
+If nHdlBco < 0
+	Set Device To Screen
+	Help(" ",1, "AFR680BCO" )
+	Return
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Lˆ arquivo de configura‡„o ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nLidos:=0
+Fseek(nHdlConf,0,0)
+nTamArq:=FSEEK(nHdlConf,0,2)
+Fseek(nHdlConf,0,0)
+
+While nTamArq >= 0
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica o tipo de qual registro foi lido ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	xBuffer:=Space(85)
+	FREAD(nHdlConf,@xBuffer,85)
+	If mv_par06 == 1   // Padrao bancos
+		IF SubStr(xBuffer,1,1) == CHR(1)
+			nTamArq-=85
+			Loop
+		EndIF
+	Endif
+	Aadd( aPosicoes, { Substr(xBuffer,2,15),Val(Substr(xBuffer,17,3)),;
+							1+Int(Val(Substr(xBuffer,20,3)))-Int(Val(Substr(xBuffer,17,3))) })
+	nTamArq -=85
+Enddo
+
+nTamArq := Fseek( nHdlBco,0, 2 )
+Fseek( nHdlBco, 0, 0 )
+nBytes := 0
+li := 80  // Inicia com quebra de cabecalho
+nTamLin := IIF(SEE->EE_BYTESXT > 0, SEE->EE_BYTESXT + 2, 202 )
+xBuffer := Space(nTamLin)				// Registro Header
+Fread( nHdlBco, @xBuffer, nTamLin )
+
+SetRegua(nTamArq/Len(xBuffer))
+
+cabec(titulo,cabec1,cabec2,nomeprog,tamanho,cMVCOMP)
+
+xBuffer := Space( nTamLin )			   	// Registro Saldo Inicial
+Fread( nHdlBco, @xBuffer, nTamLin )
+
+If SubStr( xBuffer, 1,1 ) == "1" .or. lFebraban .or. mv_par06 == 2 //Febraban
+	@ li,20 PSAY repl("*",45)
+	li++
+	@ li, 20 PSAY OemToAnsi(STR0008)  //"SALDO INICIAL EM "
+	If mv_par06 == 1  //Bancos
+		cData := SubStr(xBuffer,aPosicoes[6,2],aPosicoes[6,3] )
+	ElseIf mv_par06 == 2 // Febraban
+		cData := SubStr(xBuffer,aPosicoes[4,2],aPosicoes[4,3] )
+	Endif
+	cData :=ChangDate(cData,SEE->EE_TIPODAT)
+
+	dData := CtoD(Substr( cData,1,2)+"/"+;
+					  SubStr( cData,3,2)+"/"+;
+					  SubStr( cData,5,2),"ddmmyy" )
+
+	@ li, 37 PSAY dData
+
+	cSitLanc := IIF ( mv_par06 == 1 ,;
+							SubStr(xBuffer,aPosicoes[7,2],aPosicoes[7,3] ),;
+							SubStr(xBuffer,aPosicoes[5,2],aPosicoes[5,3] ) )
+
+	nSaldoInicial := IIF ( mv_par06 == 1 ,;
+									Val(SubStr(xBuffer,aPosicoes[5,2],aPosicoes[5,3] ))/100 ,;
+									Val(SubStr(xBuffer,aPosicoes[3,2],aPosicoes[3,3] ))/100 )
+
+	@ li,    Iif( cSitLanc == "C", 50,70 ) PSAY nSaldoInicial Picture "@E 9999,999,999.99"
+	li++
+	@ li,20 PSAY repl("*",45)
+	IncRegua()
+	li++
+Endif
+nSaldoInicial *= Iif( cSitLanc == "C", 1,-1) // Inverte o sinal, caso o saldo inicial seja negativo.
+While (nTamArq - (nTamLin * 2)) > (nTamLin * 2) // Dois ultimos registros: saldo final e trailler
+	xBuffer := Space( nTamLin )			// Lancamentos
+	Fread( nHdlBco, @xBuffer, nTamLin )
+	If (SubStr( xBuffer, 1,1 ) == "9" .and. mv_par06 == 1 .and. !lFebraban) .or. ;		// Registro Trailler
+		(lFebraban  .and. Substr(xBuffer,8,1) $ "5#9") .or. ;		// Registro Saldo Final
+		(Substr( xBuffer, 8,1 ) $ "5#9" .and. mv_par06 == 2)
+		Exit
+	Endif
+	If li > 58
+		cabec(titulo,cabec1,cabec2,nomeprog,tamanho,cMVCOMP)
+	Endif
+	cCodMov	:=Substr(xBuffer,aPosicoes[11,2],aPosicoes[11,3])
+	dbSelectArea("SEJ")
+	If dbSeek(xFilial("SEJ")+mv_par01+cCodMov)
+		cSitLanc := SEJ->EJ_DEBCRE
+	Else
+		Help(" ",1,"FA470OCOR")
+		lSaida := .T.
+		Exit
+	Endif
+
+	cData := SubStr(xBuffer,aPosicoes[9,2],aPosicoes[9,3] )
+	cData := ChangDate(cData,SEE->EE_TIPODAT)
+
+	If MV_PAR01 == "237"
+		dData := CtoD(Substr( cData,1,2)+"/"+;
+						  SubStr( cData,3,2)+"/"+;
+						  SubStr( cData,5,2),"ddmmyy" )
+	ElseIf MV_PAR01 == "001"
+			dData := CtoD(Substr( cData,1,2)+"/"+;
+						  SubStr( cData,3,2)+"/"+;
+						  SubStr( cData,5,2),"ddmmyyyy" )
+	ElseIf MV_PAR01 == "246"
+			dData := CtoD(Substr( cData,1,2)+"/"+;
+						  SubStr( cData,3,2)+"/"+;
+						  SubStr( cData,5,2),"ddmmyyyy" )
+	EndIf
+
+	cNum     := SubStr(xBuffer,aPosicoes[8,2],aPosicoes[8,3] )
+	cDesc    := SubStr(xBuffer,aPosicoes[12,2],aPosicoes[12,3] )
+	nValor   := Val(SubStr(xBuffer,aPosicoes[10,2],aPosicoes[10,3] ))/100
+
+	If mv_par01 == "237"
+	   //cSeqExt	:= Substr(xBuffer,(198),3)
+	   cSeqExt	:= Substr(xBuffer,(196),5)
+	ElseIf mv_par01 == "001"
+		//cSeqExt	:= Substr(xBuffer,(11),3)
+		cSeqExt	:= Substr(xBuffer,(9),5)
+	ElseIf mv_par01 == "246"
+		//cSeqExt	:= Substr(xBuffer,(11),3)
+		cSeqExt	:= Substr(xBuffer,(9),5)
+	ElseIf mv_par01 == "033"
+		//cSeqExt	:= Substr(xBuffer,(11),3)
+		cSeqExt	:= Substr(xBuffer,(9),5)
+	EndIf
+
+
+	If cSitLanc == "C"
+		nSaldoInicial += nValor
+	Else
+		nSaldoInicial -= nValor
+	Endif
+
+	@ li,00 PSAY dData
+	@ li,10 PSAY cNum
+
+	cReconc := ' '
+
+/*	*
+	*  Verifica se Cheque Reconciliado
+	*
+	SELE SE5
+	dbgotop()
+	IF DbSeek(Mv_par01+Mv_par02+Mv_par03+cNum)
+	   If SE5->E5_Valor   == nValor .and.;
+	      SE5->E5_Dtdispo == dData
+	      cReconc := SE5->E5_RECONC
+	   Endif
+   EndIf */
+   *
+   * Verifica se Lancto Reconciliado
+   *
+
+    If mv_par01 == "237"
+		//cArqCnab := Substr(MV_PAR05,11,9)+cSeqExt
+		cArqCnab := Substr(MV_PAR05,11,7)+cSeqExt
+	ElseIf mv_par01 == "001"
+		//cArqCnab := Substr(MV_PAR05,15,9)+cSeqExt
+		cArqCnab := Substr(MV_PAR05,15,7)+cSeqExt
+	ElseIf mv_par01 == "246"
+		//cArqCnab := Substr(MV_PAR05,15,9)+cSeqExt
+		cArqCnab := Substr(MV_PAR05,15,7)+cSeqExt
+	ElseIf mv_par01 == "033"
+		//cArqCnab := Substr(MV_PAR05,15,9)+cSeqExt
+		cArqCnab := Substr(MV_PAR05,15,7)+cSeqExt
+	EndIF
+
+
+	//cArqCnab := Substr(MV_PAR05,11,9)+cSeqExt
+	cE5_DATA := Dtos(dData)
+	
+	cQuery1 := ""
+	cQuery1 += "SELECT R_E_C_N_O_ AS nIdRecno "
+	cQuery1 += "FROM "+RetSqlName("SE5")+" "
+	cQuery1 += "WHERE E5_FILIAL = '"+xFilial("SE5")+"' "
+	cQuery1 += "AND D_E_L_E_T_ <> '*' "
+	cQuery1 += "AND E5_BANCO = '"+MV_PAR01+"' "
+	cQuery1 += "AND E5_AGENCIA = '"+MV_PAR02+"' "
+	cQuery1 += "AND E5_CONTA = '"+MV_PAR03+"' "
+	cQuery1 += "AND E5_DTDISPO = '"+cE5_DATA+"' "
+	cQuery1 += "AND E5_ARQCNAB = '"+cArqCnab+"' "
+	cQuery1 += "AND E5_VALOR = "+ALLTRIM(STR(nVALOR))+"" 
+    cQuery1 += "AND E5_ORIGEM <> 'AGR208' " // para não conciliar TALAO Chamado 72322 	
+
+	cQuery1 := ChangeQuery(cQuery1)
+	
+	If Select("F47001") <> 0
+		dbSelectArea("F47001")
+		dbCloseArea()
+	Endif
+	TCQuery cQuery1 NEW ALIAS "F47001"
+	cReconc  := ''
+	nCont := 0
+	DbSelectArea("F47001")
+	While !Eof()
+		nCont := nCont + 1
+		DbSelectArea("F47001")
+	   DbSkip()
+	EndDo
+	If nCont > 0
+      cReconc := 'x'
+	EndIf
+   *
+	@ li,18 PSAY cReconc
+	@ li,20 PSAY Substr(cDesc,1,30)
+   @ li, Iif( cSitLanc == "C"  ,50,70) PSAY nValor Picture "@E 9999,999,999.99"
+	@ li,90 PSAY nSaldoInicial Picture "@E 9999,999,999.99"
+//	@ li,100 PSAY cCodMov
+
+   *
+   * Verifica Qtos Cheques ja estao no sistema em menos de 6 meses pois pode ser clonado cfe Fernando - Deco 09/11/2006
+   *
+	cE5_DTDISPO := dDataBase - 180  // Considera 6 meses para verificar re-entrada do cheque no sistema
+	cE5_VALOR   := Transform(nVALOR*100,"@E 999999999999,99")
+
+	cQuery1 := ""
+	cQuery1 += "SELECT R_E_C_N_O_ AS nIdRecno "
+	cQuery1 += "FROM "+RetSqlName("SE5")+" "
+	cQuery1 += "WHERE E5_FILIAL = '"+xFilial("SE5")+"' "
+	cQuery1 += "AND D_E_L_E_T_ <> '*' "
+	cQuery1 += "AND E5_BANCO = '"+MV_PAR01+"' "
+	cQuery1 += "AND E5_AGENCIA = '"+MV_PAR02+"' "
+	cQuery1 += "AND E5_CONTA = '"+MV_PAR03+"' "
+	cQuery1 += "AND E5_DTDISPO > '"+DTOS(cE5_DTDISPO)+"' "
+	cQuery1 += "AND E5_NUMCHEQ = '"+cNum+"' "
+	cQuery1 += "AND E5_RECPAG = 'P' "
+//	cQuery1 += "AND E5_VALOR <> '"+cE5_VALOR+"' "
+
+
+	cQuery1 := ChangeQuery(cQuery1)
+
+	If Select("F47001") <> 0
+		dbSelectArea("F47001")
+		dbCloseArea()
+	Endif
+	TCQuery cQuery1 NEW ALIAS "F47001"
+
+	nCont := 0
+	DbSelectArea("F47001")
+	While !Eof()
+		nCont := nCont + 1
+		DbSelectArea("F47001")
+	   DbSkip()
+	EndDo
+
+    nContCh := 1
+    If Trim(Substr(cDesc,1,30)) = "CHEQUE COMPENSADO"
+	   cQuery2 := ""
+	   cQuery2 += "SELECT SEF.R_E_C_N_O_ AS nIdRecno "   // Posiciona Cheque SEF para verificar se cheque esta cadastrado
+	   cQuery2 += "FROM "+RetSqlName("SEF")+" SEF (nolock) "
+	   cQuery2 += "WHERE SEF.EF_FILIAL = '"+xFilial("SEF")+"' "
+	   cQuery2 += "AND SEF.D_E_L_E_T_ <> '*' "
+	   cQuery2 += "AND SEF.EF_BANCO    = '"+MV_PAR01+"' "
+	   cQuery2 += "AND SEF.EF_AGENCIA  = '"+MV_PAR02+"' "
+	   cQuery2 += "AND SEF.EF_CONTA    = '"+MV_PAR03+"' "
+	   cQuery2 += "AND SEF.EF_NUM      = '"+cNum+"' "
+	   cQuery2 += "AND SEF.EF_DATA     > '"+DTOS(cE5_DTDISPO)+"' "
+	   cQuery2 += "AND SEF.EF_VALOR   <> '"+alltrim(str(nValor))+"' "
+
+       cQuery2 := ChangeQuery(cQuery2)
+       If Select("SEF002") <> 0
+	      dbSelectArea("SEF002")
+	      dbCloseArea()
+	   Endif
+	   TCQuery cQuery2 NEW ALIAS "SEF002"
+
+	   nContCh := 0
+	   DbSelectArea("SEF002")
+	   While !Eof()
+		  nContCh := nContCh + 1
+		  DbSelectArea("SEF002")
+	      DbSkip()
+ 	   EndDo
+	EndIf
+
+    If nCont > 1 .or. nContCh <= 0 // Caso mais que um cheque no sistema em 6 meses pode ser clonado cfe fernando
+       @ li,110 PSAY 'CHEQUE SUSPEITO'
+    EndIf
+
+	li++
+   IncRegua()
+	nTamArq -= nTamLin
+Enddo
+
+xBuffer := Space( nTamLin )			   	// Registro Saldo Final
+Fread( nHdlBco, @xBuffer, nTamLin )
+if (!lFebraban .and. SubStr(xBuffer,1,1) == "1") .or. ; // Bancos
+	( lFebraban .and. Substr(xBuffer,8,1) == "5") .or. ; // Bancos 240 bytes/linha
+	( mv_par06 == 2 .and. Substr(xBuffer,8,1) == "5")	  // Febraban
+
+	@ li,20 PSAY repl("*",45)
+	IncRegua()
+	li++
+	cSitLanc := SubStr(xBuffer,aPosicoes[16,2],aPosicoes[16,3] )
+	nValor := Val(SubStr(xBuffer,aPosicoes[15,2],aPosicoes[15,3] ))/100
+	cData := SubStr(xBuffer,aPosicoes[14,2],aPosicoes[14,3] )
+	cData := ChangDate(cData,SEE->EE_TIPODAT)
+	dData := CtoD(Substr( cData,1,2)+"/"+;
+					  SubStr( cData,3,2)+"/"+;
+					  SubStr( cData,5,2),"ddmmyy" )
+
+	If lFebraban  // Extrato de 240 posicoes
+		nTotCred := Val(SubStr(xBuffer,aPosicoes[19,2],aPosicoes[19,3] ))/100
+		nTotDeb  := Val(SubStr(xBuffer,aPosicoes[18,2],aPosicoes[18,3] ))/100
+	Endif
+
+	@ li, 20 PSAY "SALDO FINAL EM "
+	@ li, 37 PSAY dData
+   @ li,    Iif( cSitLanc == "C", 50, 70)  PSAY nValor Picture "@E 9999,999,999.99"
+	li++
+Endif
+IF !lFebraban .and. mv_par06 == 1
+	xBuffer := Space( nTamLin )
+	Fread( nHdlBco, @xBuffer, nTamLin )
+Endif
+
+// Registro Trailler
+If (!lFebraban .and. SubStr( xBuffer, 1,1 ) == "9") .or. ;
+	lFebraban .or. ;
+	mv_par06 == 2
+
+	If !lFebraban .or. mv_par06 == 2
+		nTotCred := Val(SubStr(xBuffer,aPosicoes[19,2],aPosicoes[19,3] ))/100
+		nTotDeb  := Val(SubStr(xBuffer,aPosicoes[18,2],aPosicoes[18,3] ))/100
+	Endif
+
+	@ li,20 PSAY OemToAnsi(STR0009)  //"TOTAL CREDITOS"
+	@ li,50 PSAY nTotCred Picture "@E 9999,999,999.99"
+	IncRegua()
+	li++
+	@ li,20 PSAY OemToAnsi(STR0010)  //"TOTAL DEBITOS "
+	@ li,50 PSAY nTotDeb Picture "@E 9999,999,999.99"
+	li++
+	@ li,20 PSAY repl("*",45)
+	li++
+Endif
+Roda(cbcont,cbtxt,"M")
+Set( 20, "SCREEN" )
+Fclose( nHdlBco )  // Fecha sequencial enviado pelo banco
+Fclose( nHdlConf ) // Fecha sequencial do configurador
+If aReturn[5] = 1
+    Set( 24, "" )
+    dbCommitAll()
+    OurSpool(wnrel)
+Endif
+MS_FLUSH()
+

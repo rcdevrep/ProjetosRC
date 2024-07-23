@@ -1,0 +1,26 @@
+#Include "Protheus.ch"
+#INCLUDE "TOPCONN.CH"
+#INCLUDE "FILEIO.CH"
+#include "tlpp-core.th"
+#include "tlpp-rest.th"
+#include 'tbiconn.ch'
+
+User Function SamplePIX()
+Local oPix := BRDPix():New()
+
+PREPARE ENVIRONMENT EMPRESA "01" FILIAL "01" MODULO "FAT" TABLES "SF2"
+
+oPix:SolicitarTransferencia()
+
+FwAlertInfo("SAMPLES PIX", "FINAL") 
+
+return
+
+User Function SampleComprovante
+Local oComprovante := FINComprovantes():New()
+PREPARE ENVIRONMENT EMPRESA "01" FILIAL "01" MODULO "FAT" TABLES "SF2"
+
+oComprovante:Teste()
+oComprovante:ImprimirComprovante()
+
+return

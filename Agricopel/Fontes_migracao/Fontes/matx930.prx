@@ -1,0 +1,1727 @@
+#INCLUDE "Matr930.ch"
+#INCLUDE "FIVEWIN.CH"
+STATIC aColunas // Utilizada na Funcao ColF3
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³FUNCAO    ³ MATX930  ³ Autor ³ Juan Jose Pereira     ³ Data ³ 18.12.96   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³DESCRICAO ³ Imprime Registro de Entadas P1 P1A e Saidas P2 P2A           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ ATUALIZACOES SOFRIDAS DESDE A CONSTRUCAO INICIAL.                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ PROGRAMADOR  ³ DATA   ³ BOPS ³  MOTIVO DA ALTERACAO                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Marcos Simidu³14/09/98³09795A³ Considerar data de emissao na impressao  ³±±
+±±³              ³14/09/98³09795A³ de NF entrada no livro de saida.         ³±±
+±±³ Marcos Simidu³23/09/98³XXXXXX³ Acertos NF form prop nos livros de saida.³±±
+±±³ Marcos Simidu³11/11/98³XXXXXX³ Impressao dos parametros de data nos     ³±±
+±±³              ³11/11/98³XXXXXX³ termos de abertura/encerramento.         ³±±
+±±³ Andreia      ³27/01/99³18598A³ Tratamento do no. de registros impressos ³±±
+±±³              ³        ³      ³ quando for nota de servico.              ³±±
+±±³ Andreia      ³11/03/99³xxxxxx³Tratamento da especie das notas fiscais   ³±±
+±±³              ³        ³      ³canceladas atraves do parametro MV_ESPECIE³±±
+±±³ Andreia      ³15/06/99³xxxxxx³Acertos Protheus.                         ³±±
+±±³ Andreia      ³09/08/99³22553A³ Criacao de pergunta para escolher se o im³±±
+±±³              ³        ³      ³ posto retido sera impresso na coluna "OB-³±±
+±±³              ³        ³      ³ SERVACAO" ou na coluna "Tributado"       ³±±
+±±³              ³        ³      ³ (mv_par21).              					 ³±±
+±±³ Andreia      ³04/10/99³23914A³ Funcao EXISTNF() - Acerto na verificacao ³±±
+±±³              ³        ³      ³ de notas fiscais canceladas.             ³±±
+±±³ Andreia      ³08/10/99³xxxxxx³ Tratamento da variavel nColuna na funcao ³±±
+±±³              ³        ³      ³ LivrArrayObs, quando e emitido o relato- ³±±
+±±³              ³        ³      ³ rio MATR920.                             ³±±
+±±³ Edilaine     ³01/06/00³003880³ Tratamento de variavel CTIPO. Funcao     ³±±
+±±³              ³        ³      ³ LivrAcumula()                            ³±±
+±±³ Andre Veiga  ³05/05/01³008831³ Escrituracao do Mapa Resumo ECF (Portaria³±±
+±±³              ³        ³      ³ CAT 55/98, Conv.ICMS 50/00)              ³±±
+±±³ Denis Martins³20/09/01³Melhor³ Tratamento de Filiais(Exc/Comp.)-F3_MSFIL³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User FUNCTION MATX930
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+wnRel	  :="MATX930"
+//Titulo    :=STR0001 //"Regime de Processamento de Dados"
+//cDesc1    :=STR0002 //"Emiss„o dos Registros de Entradas modelos P1 e P1A e Registros de Saidas"
+//cDesc2    :=STR0003 //"modelos P2 e P2A."
+//cDesc3    :=STR0004 //"Ir  imprimir os lan‡amentos fiscais conforme os parƒmetros informados."
+Titulo    :="Regime de Processamento de Dados"
+cDesc1    :="Emiss„o dos Registros de Entradas modelos P1 e P1A e Registros de Saidas"
+cDesc2    :="modelos P2 e P2A."
+cDesc3    :="Ir  imprimir os lan‡amentos fiscais conforme os parƒmetros informados."
+//aReturn   :={ STR0005, 1,STR0006, 2, 2, 1, "",1 } //"Zebrado"###"Administra‡„o"
+aReturn   :={ "Zebrado", 1,"Administracao", 2, 2, 1, "",1 } //"Zebrado"###"Administra‡„o"
+nomeprog  :="MATX930"
+cPerg	  :="MTR930"
+cString	  :="SF3"
+nPagina	  :=0
+nLin	  :=3
+nLargMax  :=220
+Tamanho	  :="G"
+cArqTemp  :=""
+dbSelectArea("SF3")
+dbSetOrder(1)
+aSvArea	  :={Alias(),IndexOrd(),Recno()}
+nPosObs	  :=0
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas no cabecalho     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//aMeses	  :={STR0007,STR0008,STR0009,STR0010,STR0011,STR0012,STR0013,STR0014,STR0015,STR0016,STR0017,STR0018} //"JANEIRO"###"FEVEREIRO"###"MARCO"###"ABRIL"###"MAIO"###"JUNHO"###"JULHO"###"AGOSTO"###"SETEMBRO"###"OUTUBRO"###"NOVEMBRO"###"DEZEMBRO"
+aMeses	  :={"JANEIRO","FEVEREIRO","MARCO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"} 
+cNome 	  :=SM0->M0_NOMECOM
+cInscr	  :=InscrEst()
+cCGC	  :=TRANSFORM(SM0->M0_CGC,"@R 99.999.999/9999-99")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Ajusta grupo de perguntas                                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AjustaSX1()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inicializa grupo de perguntas.        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Pergunte(cPerg,.F.)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia controle para a funcao SETPRINT ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nLastKey  :=0
+wnrel	  :=SetPrint(cString,wnrel,cPerg,Titulo,cDesc1,cDesc2,cDesc3,.F.,"",.F.,Tamanho,,.T.)
+If nLastKey==27
+	dbClearFilter()
+	Return
+Endif
+SetDefault(aReturn,cString)
+If nLastKey==27
+	dbClearFilter()
+	Return
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Executa relatorio                                            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+RptStatus({|lEnd| R930Imp(@lEnd,wnRel,cString,Tamanho)},titulo)
+
+If aReturn[5]==1
+	Set Printer To
+	ourspool(wnrel)
+Endif
+MS_FLUSH()
+
+Return
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ R930Imp  ³ Autor ³ Juan Jose Pereira     ³ Data ³ 18.12.96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprime Relatorio                                          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+STATIC FUNCTION R930Imp(lEnd,wnRel,cString,Tamanho)
+
+LOCAL 	lMatx931:=(existblock("MATX931"))
+LOCAL 	lMatx932:=(existblock("MATX932"))
+
+PRIVATE lAbortPrint:=.F.
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Parametros utilizados pelo Programa                          ³
+//³ mv_par01 - A partir da Data                                  ³
+//³ mv_par02 - Ate a Data                                        ³
+//³ mv_par03 - Imprime Modelo                                    ³
+//³ mv_par04 - Imprime  (1) Livros (2) Termos (3) Livros e Termos³
+//³ mv_par05 - Numero do Livro                                   ³
+//³ mv_par06 - Numero da Pagina Inicial                          ³
+//³ mv_par07 - Qtd. Paginas do Feixe                             ³
+//³ mv_par08 - Reinicia Paginas                                  ³
+//³ mv_par09 - Considera lacuna                                  ³
+//³ mv_par10 - Apuracao de ICMS                                  ³
+//³ mv_par11 - Apuracao de IPI                                   ³
+//³ mv_par12 - Livro Selecionado                                 ³
+//³ mv_par13 - Destaca NFs. de Servicos                          ³
+//³ mv_par14 - Destaca descontos                                 ³
+//³ mv_par15 - Imprime Linhas sem valor                          ³
+//³ mv_par16 - Imprime Total Mensal                              ³
+//³ mv_par17 - Imprime NF. de Entrada                            ³
+//³ mv_par18 - Aglutina NF                                       ³
+//³ mv_par19 - Totaliza por dia - Sim X Nao                      ³
+//³ mv_par20 - Estado Origem no Resumo - Sim X Nao               ³  
+//³ mv_par25 - Totalizar resumo estado ? Sim X Nao               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE dDtIni		:=mv_par01
+PRIVATE dDtFim		:=mv_par02
+PRIVATE nModelo  	:=mv_par03
+PRIVATE nImpTerm 	:=mv_par04
+PRIVATE cLivro		:=mv_par05
+PRIVATE nPagIni   :=mv_par06
+PRIVATE nQtFeixe	:=mv_par07
+PRIVATE lReiniPg	:=(mv_par08==1)
+PRIVATE lLacuna 	:=(mv_par09==1)
+PRIVATE nApurICM	:=mv_par10
+PRIVATE nApurIPI	:=mv_par11
+PRIVATE cNrLivro	:=mv_par12
+PRIVATE lServico	:=(mv_par13==1)
+PRIVATE lDesconto	:=(mv_par14==1)
+PRIVATE lImpZer	:=(mv_par15==1)
+PRIVATE lImpMes   :=(mv_par16==1)
+PRIVATE lEntrada	:=(mv_par17==1)
+PRIVATE lAglutina	:=(mv_par18==1)
+PRIVATE lTotalDia	:=(mv_par19==1)
+PRIVATE lLisEstOri :=(mv_par20==1)
+PRIVATE nPagina	:=IIf(nPagIni>0,nPagIni-1,1)
+PRIVATE nQtFeixe	:=IIf(nQtFeixe>3,nQtFeixe,500)
+PRIVATE lDesconto	:=(mv_par14==1)
+//PRIVATE cFilterUser :=aReturn[7]
+PRIVATE nTipoMov	:=If(nModelo==1.or.nModelo==2,1,2)
+PRIVATE nColuna 	:= mv_par21
+PRIVATE lLisIsenta  :=(mv_par22==1)
+PRIVATE lEmiteCiap  :=(mv_par23==1)
+PRIVATE lColCiap    :=(mv_par24==1)
+PRIVATE cCFOi       :=mv_par31
+PRIVATE cCFOf       :=mv_par32
+PRIVATE cFilterUser:= ""  //"F3_FILIAL=='"+xFilial()+"'.AND.DTOS(F3_ENTRADA)>='"+DTOC(dDtIni)+"'.AND.DTOS(F3_ENTRADA)<='"+DTOC(dDtFim)+"'.AND.Substr(F3_CFO,1,4)>='"+cCFOi+"'.AND.Substr(F3_CFO,1,4)<='"+cCFOf+"'"
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Recebe parametros ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE cMV_ESTADO   :=GetMv("MV_ESTADO")
+PRIVATE cContaContab :=NIL
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Limite da pagina em linhas³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE nLin	     :=80
+PRIVATE	nLimPag	     :=58
+PRIVATE	nLinNec	     :=0
+
+If nTipoMov==1
+	cContaContab:=Alltrim(GetMV("MV_CTALFE"))
+	// Retira ref. ao Alias SF3 //
+	cContaContab	:=	StrTran(cContaContab,"SF3->",)
+Else
+	cContaContab:=Alltrim(GetMV("MV_CTALFS"))
+	// Retira ref. ao Alias SF3 //
+	cContaContab	:=	StrTran(cContaContab,"SF3->",)
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Armazena maior tamanho das notas (em linhas)³
+//³ [1]=Maior Nota da Pagina                    ³
+//³ [2]=Maior Totalizacao de Transporte         ³
+//³ [3]=Maior Totalizacao do Dia                ³
+//³ [4]=Maior Totalizacao de Periodo ICM        ³
+//³ [5]=Maior Totalizacao de Periodo IPI        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE nTamNota	:=0
+PRIVATE nTamTransp	:=0
+PRIVATE nTamPerICM	:=0
+PRIVATE nTamPerIPI	:=0 
+PRIVATE aTamNotas	:={0,0,0,0,0}
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Especifico para os legislacao Fomentar de Goias ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE cTitLivro :=AvalFomentar()
+cTitLivro         :=If(Empty(cTitLivro)," ",cTitLivro)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Totalizadores ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE aTotDia 	:=	NIL	// Totalizador diario
+PRIVATE aTotPerICM  :=	NIL	// Totalizador de periodos de apuracao de ICMS
+PRIVATE aTotPerIPI  :=	NIL	// Totalizador de periodos de apuracao de IPI
+PRIVATE aTransp	    :=	NIL	// Totalizador de transporte de pagina
+PRIVATE aTotMes	    :=	NIL	// Totalizador Mensal
+PRIVATE aResumo	    :=	NIL	// Totalizador para resumo final
+PRIVATE aResCFO	    :=	NIL	// Totalizador para resumo por CFO
+PRIVATE nTotIcmDeb  :=  0  // Totalizador de ICMS NORMAL+ICMS ST 
+
+If nModelo==1.or.nModelo==3
+	If lMatx931
+		ExecBlock("MATX931",.F.,.F.)
+	Else
+		Matx931()
+	Endif
+Else
+	If lMatx932
+		ExecBlock("MATX932",.F.,.F.)
+	Else
+		Matx932()
+	Endif
+Endif
+
+Return
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³                                                              ³
+//³           FUNCOES GENERICAS DOS LIVROS FISCAIS               ³
+//³                                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³EmiteLivro³ Autor ³ Juan Jose Pereira             ³ Data ³ 13/12/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Gera arquivo temporario com lancamentos do SF3 que deverao ser      ³±±
+±±³          ³ser lancados nos registros de entradas e saidas                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³cArqTemp:=EmiteLivro(cMov,cDtIni,dDtFim,lLacuna,lServico,cNrLivro,  ³±±
+±±³          ³          cFiltroUser)                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³parametros³cArqTemp:=Alias/Nome do Arquivo gerado                              ³±±
+±±³          ³cMov:="E"ntradas / "S"aidas                                         ³±±
+±±³          ³dDtIni:=Data de Inicio dos Lancamentos                              ³±±
+±±³          ³dDtFim:=Data de Fim dos Lancamentos                                 ³±±
+±±³          ³lLacuna:=Lanca notas canceladas/nao lancadas/excluidas              ³±±
+±±³          ³lServico:=Lanca notas de Servico                                    ³±±
+±±³          ³cNrLivro:=Numero do Livro lancado , (*) Todos - FOMENTAR            ³±±
+±±³          ³cFiltroUser:=Filtro criado pelo usuario para o SF3                  ³±±
+±±³          ³cArqCiap:=Arquivo Ciap                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³Generico                                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function EmiteLivro(cMov,dDtIni,dDtFim,lLacuna,lServico,lDesconto,cNrLivro,cFilterUser,cArqCiap)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local aCampos     :={}
+Local aLivro      :={}
+Local aFixos      :=MatXAfixos()
+Local aSeries     :={}
+Local aRegSF3     :={}
+Local cCliente    :=""
+Local cLoja       :=""
+Local cFiltro     :=""
+Local cChave	  :=""
+Local cArqIndxF3  :=""
+Local cIndxTemp1  :=""
+Local cIndxTemp2  :=""
+Local cLivros     :=""
+Local cLivrEP     :=GetMV("MV_LIVRESP")
+Local cNFIni      :=""
+Local cNFFim      :=""
+Local cEst        :=""
+Local cEsp        :=""
+Local cAliasSF3   :=""
+Local i           :=0
+Local j           :=0
+Local nPos        :=0
+Local nI          :=0
+Local nx          :=0
+Local nReg        :=0
+Local dDtCanc     :=""
+Local dDtCan1     :=""
+Local lCanc       :=.F.
+Local nAliq       :=0
+Local cSer		  :=""	
+Local cCFO        :=""
+Local cFormula	  :=""
+Local lExist := IIF(SF3->(FieldPos("F3_OBSSOL"))>0,.T.,.F.)
+Private cArqTemp  :=""
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Cria Arquivo Temporario para Controle de Contribuintes e Nao Contribuintes ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aRegSF3,{"CHAVE","C",100,0})
+AADD(aRegSF3,{"CONTR","C",01,0})
+cArqSF3  :=CriaTrab(aRegSF3)
+dbUseArea(.T.,,cArqSF3,cArqSF3,.T.,.F.)
+cIndxSF3 :=Substr(CriaTrab(NIL,.F.),1,7)+"A"
+cChave:="CONTR+CHAVE"
+IndRegua(cArqSF3,cIndxSF3,cChave,,,"Criando Controles") 
+
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Cria Arquivo CIAP Temporario                                 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lEmiteCiap
+   If ( cArqCiap != NIL ) .And. Select("SF9") > 0
+      cArqCiap := CriaTrab({{"SF3","N",14,0},{"SF9","N",14,0}})
+	  dbUseArea(.T.,,cArqCiap,"CIAP",.T.,.F.)
+	  IndRegua("CIAP",cArqCiap,"SF3")
+   EndIf
+Endif
+   
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Cria Arquivo Temporario                                      ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SX3")
+dbSetOrder(1)
+dbSeek("SF3")
+While SX3->X3_ARQUIVO=="SF3".and.!Eof()
+	AADD(aCampos,{X3_CAMPO,X3_TIPO,X3_TAMANHO,X3_DECIMAL})
+	dbSkip()
+EndDo
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Campo auxiliar para corrigir numeracao nas lacunas           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aCampos,{"NUMNOTA","C",6,0})
+
+cArqTemp:=CriaTrab(aCampos)
+dbUseArea(.T.,,cArqTemp,cArqTemp,.T.,.F.)
+If cMov == "S"
+	cIndxTemp1:=Substr(CriaTrab(NIL,.F.),1,7)+"A"
+	cIndxTemp2:=Substr(CriaTrab(NIL,.F.),1,7)+"B"
+	cChave:="F3_SERIE+NUMNOTA+STR(F3_ALIQICM,5,2)+F3_CFO+F3_FORMULA"
+//	IndRegua(cArqTemp,cIndxTemp1,cChave,,,STR0019) //"Buscando Nts.Canceladas..."
+  	IndRegua(cArqTemp,cIndxTemp1,cChave,,,"Buscando Nts.Canceladas...") 
+	cChave:="F3_SERIE+F3_TIPO+F3_DOCOR"
+//	IndRegua(cArqTemp,cIndxTemp2,cChave,,,STR0019) //"Buscando Nts.Canceladas..."
+  	IndRegua(cArqTemp,cIndxTemp2,cChave,,,"Buscando Nts.Canceladas...") 
+	dbClearIndex()
+	DbSetIndex(cIndxTemp1+OrdBagExt())
+	DbSetIndex(cIndxTemp2+OrdBagExt())
+	dbSetOrder(1)
+EndIf	
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Prepara SF3 para extracao de dados                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SF3")
+cFiltro:="F3_FILIAL=='"+xFilial()+"'.AND.DTOS(F3_ENTRADA)>='"+DTOS(dDtIni)+"'.AND.DTOS(F3_ENTRADA)<='"+DTOS(dDtFim)+"'.AND.Substr(F3_CFO,1,4)>='"+cCFOi+"'.AND.Substr(F3_CFO,1,4)<='"+cCFOf+"'"
+If cMov=="E"
+    cFiltro +=  ".AND. F3_CFO<'500"+SPACE(LEN(F3_CFO)-3)+"'"
+	If !lServico
+		cFiltro	+=	".AND.F3_TIPO!='S'"
+	Endif
+	If cNrLivro!="*"
+		cFiltro	+=	".AND.F3_NRLIVRO=='"+cNrLivro+"'"
+	Endif
+Else
+	If !lEntrada
+        cFiltro +=  ".AND. F3_CFO>='500"+SPACE(LEN(F3_CFO)-3)+"'"
+	Else
+        cFiltro +=  ".AND.(F3_CFO>='500"+SPACE(LEN(F3_CFO)-3)+"' .OR.F3_FORMUL=='S')"
+	Endif
+	If !lServico
+		cFiltro	+=	".AND.F3_TIPO!='S'"
+	Endif
+	If cNrLivro!="*"
+		cFiltro	+=	".AND.F3_NRLIVRO=='"+cNrLivro+"'"
+	Endif
+Endif
+cChave		:=	"F3_FILIAL+DTOS(F3_ENTRADA)+F3_SERIE+F3_NFISCAL+F3_CFO"
+cArqIndxF3	:=	CriaTrab(NIL,.F.)
+//IndRegua("SF3",cArqIndxF3,cChave,,cFiltro,STR0020) //"Filtrando registros..."
+IndRegua("SF3",cArqIndxF3,cChave,,cFiltro,"Filtrando registros...")
+#IFNDEF TOP
+	dbClearIndex()
+	dbSetIndex(cArqIndxF3+OrdBagExt())
+#ENDIF
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Alimenta arquivo temporario                                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+SetRegua(LastRec())
+dbGotop()
+While !SF3->(eof())
+	IncRegua()
+	If Interrupcao(@lAbortPrint)
+		Exit
+	Endif       
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Considera Nf's de Entrada                ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If cMov=="S".And.!lEntrada.And.Val(substr(F3_CFO,1,1))<5
+		dbSkip()
+		Loop
+	Endif
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Considera NFs entrada form.proprio.   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If cMov=="S".And.lEntrada.And.F3_FORMUL=="S".And.Val(substr(F3_CFO,1,1))<5.And.!(SF3->F3_ENTRADA>=dDtIni.And.SF3->F3_ENTRADA<=dDtFim)
+		dbSkip()
+		Loop
+	Endif
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Considera filtro do usuario                                  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If !Empty(cFilterUser).and.!(&cFilterUser)
+		dbSkip()
+		Loop
+	Endif
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Armazena os numeros de livros lancados             ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If !(F3_NRLIVRO$cLivros)
+		cLivros	+=	F3_NRLIVRO+"/"
+	Endif
+	
+	If !(cNrLivro=="*")
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Filtra notas de outros livros                                ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If !(F3_NRLIVRO==cNrLivro)
+			dbSkip()
+			Loop
+		Endif
+	Else
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Filtra notas de Entrada de Ativo p/ Ceara "MV_LIVRESP"       ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If (F3_NRLIVRO == cLivrEP) .And. (cMov == "E")
+			dbSkip()
+			Loop
+		EndIf
+	Endif
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Desconsidera notas canceladas quando considerar lacuna.³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If ((cMov=="E") .And. (!lLacuna .And. !Empty(F3_DTCANC)) .And. F3_FORMUL=="S")
+	   dbSkip()
+	   Loop
+	Endif
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica se os lancamentos serao aglutinados                 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If nTipomov==1 .or. !lAglutina
+		dbSelectArea(cArqTemp)
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Desconsidera item de entrada c/ formul. proprio nos livros   ³
+		//³ de saida qdo ja foi gravado um item do lancto.               ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If cMov=="S".And.lEntrada.And.Val(substr(SF3->F3_CFO,1,1))<5.And.SF3->F3_FORMUL=="S".And. ;
+			dbSeek(SF3->F3_SERIE+StrZero(Val(SF3->F3_NFISCAL)),.F.)
+			dbSelectArea("SF3")
+			dbSkip()
+			Loop
+		Endif
+		
+		If cMov=="S"
+			dbSeek(SF3->F3_SERIE+SF3->F3_NFISCAL+STR(SF3->F3_ALIQICM,5,2)+SF3->F3_CFO,.F.)
+		endif
+		If !eof() .and. F3_TIPO =="S"
+			RecLock(cArqTemp,.F.)
+		Else
+			RecLock(cArqTemp,.T.)
+		EndIf
+		For i	:=	1 to FCount()
+			nx	:= FieldPos(SF3->(FieldName(i)))
+			if nx>0
+				FieldPut(nx,SF3->(FieldGet(i)))
+			endif
+		Next i
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Corrige numeracao da Nota                                    ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If cMov=="S"
+			(cArqTemp)->NUMNOTA := STRZERO(VAL(SF3->F3_NFISCAL),6)
+		Endif
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Zera valor de desconto para nao ser escriturado              ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If !lDesconto
+			(cArqTemp)->F3_VALOBSE := 0
+		Endif                                                             
+		
+	    RecLock(cArqSF3,.T.)
+        (cArqSF3)->CHAVE :=SF3->F3_FILIAL+DTOS(SF3->F3_ENTRADA)+SF3->F3_NFISCAL+SF3->F3_SERIE+SF3->F3_CLIEFOR+SF3->F3_LOJA+SF3->F3_CFO+STR(SF3->F3_ALIQICM,5,2)
+		(cArqSF3)->(MsUnLock())
+		dbSelectArea(cArqTemp)
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Altera registro de notas de Formulario Proprio na Saida e    ³
+		//³ Notas fiscais de Servico                                     ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If cMov=="S".and.(SF3->F3_FORMUL=="S".or.SF3->F3_TIPO=="S") .or. !empty(SF3->F3_DTCANC)
+			For i:=1 to FCount()
+				If Valtype(FieldGet(i))=="N"
+					FieldPut(i,0)
+				Endif
+			Next
+			If F3_FORMUL=="S" .and. empty(F3_DTCANC)
+//				(cArqTemp)->F3_OBSERV := STR0021 //"NT.FISCAL DE ENTRADA"
+				(cArqTemp)->F3_OBSERV := "NT.FISCAL DE ENTRADA"
+			Elseif F3_FORMUL=="S" .AND.!empty(F3_DTCANC)
+				If Empty((cArqTemp)->F3_OBSERV)
+//				   (cArqTemp)->F3_OBSERV := STR0022    //"CANCELADA"
+				   (cArqTemp)->F3_OBSERV := "CANCELADA"
+				EndIf
+			ElseIf !empty(F3_DTCANC	)
+				If Empty((cArqTemp)->F3_OBSERV)
+//					(cArqTemp)->F3_OBSERV := STR0022    //"CANCELADA"
+					(cArqTemp)->F3_OBSERV := "CANCELADA"
+				EndIf
+			Else
+//				(cArqTemp)->F3_OBSERV := STR0023+" "+(cArqTemp)->F3_OBSERV  //"NT.FISCAL DE SERVICO"
+				(cArqTemp)->F3_OBSERV := "NT.FISCAL DE SERVICO"+" "+(cArqTemp)->F3_OBSERV  
+			EndIf
+			if	empty(F3_DTCANC)	
+				(cArqTemp)->F3_CFO	:= "999"
+			EndIf	
+		
+			If F3_FORMUL=="S"
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Considera Dt.emissao NF entrada na emissao livro de saidas.  ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				(cArqTemp)->F3_ENTRADA := F3_EMISSAO
+			Endif
+		Endif                                      
+		
+		MsUnLock()
+        If lEmiteCiap
+		   If ( Select("CIAP") != 0 )
+			  dbSelectArea("SF9")
+			  dbSetOrder(2)
+			  If ( dbSeek(F3Filial("SF9")+Dtos(SF3->F3_ENTRADA)+SF3->F3_NFISCAL+;
+				 SF3->F3_SERIE+SF3->F3_CLIEFOR+SF3->F3_LOJA+SF3->F3_CFO+;
+				 STR(SF3->F3_ALIQICM,5,2)) )
+				 While ( !Eof() .And. F3Filial("SF9")==SF9->F9_FILIAL .And.;
+					   SF3->F3_ENTRADA==SF9->F9_DTENTNE 	.And. ;
+				 	   SF3->F3_NFISCAL==SF9->F9_DOCNFE 	.And.	;
+					   SF3->F3_SERIE	==	SF9->F9_SERNFE 	.And.;
+					   SF3->F3_CLIEFOR==SF9->F9_FORNECE .And.;
+					   SF3->F3_LOJA	==SF9->F9_LOJAFOR .And.;
+					   SF3->F3_CFO 	== SF9->F9_CFOENT .And.;
+					   SF3->F3_ALIQICM==SF9->F9_PICM )
+					   RecLock("CIAP",.T.)
+					   CIAP->SF3 := &(cArqTemp)->(Recno())
+					   CIAP->SF9 := SF9->(Recno())
+					   MsUnlock()
+					   dbSelectArea("SF9")
+					   dbSkip()
+				 EndDo
+			  EndIf
+			  dbSelectArea("SF9")
+			  dbSetOrder(1)
+		   EndIf
+		Endif
+		dbSelectArea("SF3")
+		dbSkip()
+	Else
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Aglutina lancamentos de mesma Data+Serie+CFO                 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		cNFIni	  := F3_NFISCAL
+		cNFFim	  := F3_NFISCAL
+		dData	  := F3_ENTRADA
+		cEst	  := F3_ESTADO
+		cEsp	  := F3_ESPECIE 
+		dDtCan1   := F3_DTCANC 
+	    cCliente  := F3_CLIEFOR
+	    cLoja     := F3_LOJA
+        nAliq     := F3_ALIQICM         
+	    cSer 	  := F3_SERIE                                                 
+	    cFormula  := F3_FORMULA
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Inicializa array de aglutinacao.            ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		aLivro := Array(Len(aFixos))
+		For i:=1 To Len(aFixos)
+			aLivro[i] := aFixos[i][2]
+		Next
+		
+		cSeek:=dTos(F3_ENTRADA)+F3_SERIE+F3_CFO+Str(F3_ALIQICM,5,2)+cEst+cEsp+cFormula
+		While !Eof().And.cSeek==dTos(F3_ENTRADA)+F3_SERIE+F3_CFO+Str(F3_ALIQICM,5,2)+F3_ESTADO+F3_ESPECIE+F3_FORMULA
+
+	        //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Considera Nf's de Entrada                ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If !lEntrada .and. Val(substr(F3_CFO,1,1))<5
+				dbSkip()
+				Loop
+			Endif
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Considera filtro do usuario                                  ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If !Empty(cFilterUser).and.!(&cFilterUser)
+				dbSkip()
+				Loop
+			Endif
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Acumula valores.             ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ 
+			if empty(F3_DTCANC)
+				For i:=1 To Len(aFixos)
+					If SF3->(FieldPos(aFixos[i][1])) > 0
+						cCampo:=&(aFixos[i,1])
+						If ValType(cCampo)$"CD".Or.aFixos[i,1]=="F3_ALIQICM"
+							aLivro[i]:=cCampo
+						Else
+							aLivro[i]+=cCampo
+						Endif 
+					Endif	
+				Next				
+ 			    RecLock(cArqSF3,.T.)
+  	            (cArqSF3)->CHAVE :=SF3->F3_FILIAL+DTOS(SF3->F3_ENTRADA)+SF3->F3_NFISCAL+SF3->F3_SERIE+SF3->F3_CLIEFOR+SF3->F3_LOJA+SF3->F3_CFO+STR(SF3->F3_ALIQICM,5,2)
+				MsUnLock()	
+				cNFFim   :=SF3->F3_NFISCAL
+				cSer 	 :=SF3->F3_SERIE
+				cCFO     :=SF3->F3_CFO
+	  		    cFormula :=SF3->F3_FORMULA				
+				GravaTemp(cNFIni,cNFFim,aFixos,aLivro,dData,cEst,cEsp,cCliente,cLoja,dDtCan1,cMov,lDesconto,nAliq,cSer,cCFO,cFormula)
+            Else
+               lCanc :=.T.
+               exit 
+			EndIf
+			dbSelectArea("SF3")
+            dbSkip()
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Verifica se proxima nota nao esta cancelada.                 ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If (Val(cNFFim)+1) <> Val(F3_NFISCAL)
+				Exit
+			Endif
+		EndDo
+		if lCanc
+           //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		   //³ Inicializa array de aglutinacao.            ³
+		   //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		   aLivro := Array(Len(aFixos))
+		   For i:=1 To Len(aFixos)
+			   aLivro[i] := aFixos[i][2]
+		   Next
+		   cNFIni	 := SF3->F3_NFISCAL
+		   cNFFim	 := SF3->F3_NFISCAL
+		   dData	 := SF3->F3_ENTRADA
+		   cEst	     := SF3->F3_ESTADO
+		   cEsp	     := SF3->F3_ESPECIE 
+		   dDtCan1   := SF3->F3_DTCANC 
+		   cCliente  := SF3->F3_CLIEFOR
+		   cLoja     := SF3->F3_LOJA
+		   lCanc     :=.F.
+           GravaTemp(cNFIni,cNFFim,aFixos,aLivro,dData,cEst,cEsp,cCliente,cLoja,dDtCan1,cMov,lDesconto,nAliq,cSer,cCFO)
+		   dbSelectArea("SF3")
+           dbSkip()		
+		endif
+		dbSelectArea("SF3")
+	Endif
+End
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Reposiciona SF3                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SF3")
+SET FILTER TO
+RetIndex("SF3")
+dbSetOrder(1)
+Ferase(cArqIndxF3+OrdBagExt())
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Acumula Valores do ICMS Normal + Retido - Instr. Normativa n. 564/02-GSF - Goias ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If mv_par27 == 1 .And. cMov=="S" .And. lExist
+	dbSelectArea("SF3")
+	cFiltro:="F3_FILIAL=='"+xFilial()+"'.AND.DTOS(F3_ENTRADA)>='"+DTOS(dDtIni)+"'.AND.DTOS(F3_ENTRADA)<='"+DTOS(dDtFim)+"'.AND.F3_CFO>='"+cCFOi+"'.AND.F3_CFO<='"+cCFOf+"'"
+	cFiltro +=  ".AND. F3_CFO<'500"+SPACE(LEN(F3_CFO)-3)+"'"
+	If !lServico
+		cFiltro	+=	".AND.F3_TIPO!='S'"
+	Endif
+	If cNrLivro!="*"
+		cFiltro	+=	".AND.F3_NRLIVRO=='"+cNrLivro+"'"
+	Endif
+	cChave		:=	"F3_FILIAL+DTOS(F3_ENTRADA)+F3_SERIE+F3_NFISCAL+F3_CFO"
+	cArqIndxF3	:=	CriaTrab(NIL,.F.)
+//	IndRegua("SF3",cArqIndxF3,cChave,,cFiltro,STR0020) //"Filtrando registros..."
+	IndRegua("SF3",cArqIndxF3,cChave,,cFiltro,"Filtrando registros...")
+	#IFNDEF TOP
+		dbClearIndex()
+		dbSetIndex(cArqIndxF3+OrdBagExt())
+	#ENDIF
+	SetRegua(LastRec())
+	dbGotop()
+	While !SF3->(eof())
+		IncRegua()
+		If Interrupcao(@lAbortPrint)
+			Exit
+		Endif
+		nTotIcmDeb += F3_OBSICM+F3_OBSSOL
+		dbSkip()		
+	EndDo	
+	dbSelectArea("SF3")
+	SET FILTER TO
+	RetIndex("SF3")
+	dbSetOrder(1)
+	Ferase(cArqIndxF3+OrdBagExt())
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Busca notas Fiscais Canceladas/Nao Lancadas/Nf.Servico       ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If cMov=="S".and.lLacuna.and.!lAbortPrint
+	dbSelectArea(cArqTemp)
+	dbSetOrder(1)
+	dbGotop()
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Busca series lancadas                                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	aSeries:={}
+	SetRegua(LastRec())
+	While !eof()
+		IncRegua()
+		If Interrupcao(@lAbortPrint)
+			Exit
+		Endif
+		nPos:=Ascan(aSeries,{|x|x[1]==F3_NRLIVRO.and.x[2]==F3_SERIE})
+		If nPos==0
+			AADD(aSeries,{F3_NRLIVRO,F3_SERIE,Val(NUMNOTA),0})
+			nPos:=Len(aSeries)
+		Endif
+		aSeries[nPos,4]:=Max(Max(Val(NUMNOTA),Val(F3_DOCOR)),aSeries[nPos,4])
+		dbSkip()
+	End
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica Series Lancadas                                     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dDtCanc	:=	dDtFim
+	For i:=1 to Len(aSeries)
+		SetRegua(aSeries[i,4]-aSeries[i,3])
+		For j:=aSeries[i,3] to aSeries[i,4]
+			
+			IncRegua()
+			If Interrupcao(@lAbortPrint)
+				Exit
+			Endif
+			
+			cSeek:=aSeries[i,2]+StrZero(j,6)
+			dbSetOrder(1)
+			If dbSeek(cSeek,.F.)
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Nao considera notas de Lote na sequencia ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If F3_TIPO=="L".And.!Empty(F3_DOCOR)
+					j:=Val(F3_DOCOR)
+					dbSkip()
+					While ( !Eof() .And. J==Val(NUMNOTA) )
+						j:=Val(F3_DOCOR)
+						dbSkip()
+					EndDo
+					If j>=aSeries[i,4]
+						Exit
+					Endif
+				Endif
+				dDtCanc:=F3_ENTRADA
+				Loop
+			Else
+				dbSetOrder(2)
+				cSeek:=aSeries[i,2]+"C"+StrZero(j,6)
+				If !dbSeek(cSeek)
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³ Verifica se a nota existe em outro livro ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					If !ExistNF(StrZero(j,6),aSeries[i,2],aSeries[i,1],cLivros)
+						RecLock(cArqTemp,.T.)
+						(cArqTemp)->F3_FILIAL 	:= xFilial("SF3")
+						(cArqTemp)->F3_TIPO		:= "C"
+						(cArqTemp)->F3_NFISCAL := StrZero(j,6)
+						(cArqTemp)->F3_DOCOR	:= StrZero(j,6)
+						(cArqTemp)->NUMNOTA		:= StrZero(j,6)
+						(cArqTemp)->F3_NRLIVRO := aSeries[i,1]
+						(cArqTemp)->F3_SERIE	:= aSeries[i,2]
+						(cArqTemp)->F3_EMISSAO	:= dDtCanc
+						(cArqTemp)->F3_ENTRADA := dDtCanc
+						(cArqTemp)->F3_CFO		:= "999"
+//						(cArqTemp)->F3_OBSERV	:= STR0022 //"CANCELADA"
+						(cArqTemp)->F3_OBSERV	:= "CANCELADA"
+						MsUnLock()
+					Else
+						If !dbSeek(cSeek,.F.)
+							dbSelectArea("SF3")
+							dbSetOrder(5)
+							If cMov=="S".And.lEntrada.And.dbSeek(xFilial()+aSeries[i,2]+StrZero(j,6),.F.).And.Val(substr(SF3->F3_CFO,1,1))<5.And.(SF3->F3_FORMUL=="S") ;
+								.And.(SF3->F3_EMISSAO>=dDtIni.And.SF3->F3_EMISSAO<=dDtFim)
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³ Altera registro de notas de Formulario Proprio na Saida e    ³
+								//³ Notas fiscais de Servico                                     ³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								If SF3->(EOF())
+								RecLock(cArqTemp,.T.)
+								(cArqTemp)->F3_FILIAL 	:= xFilial("SF3")
+								(cArqTemp)->F3_NFISCAL :=	StrZero(j,6)
+								(cArqTemp)->F3_DOCOR	:=	StrZero(j,6)
+								(cArqTemp)->NUMNOTA		:= StrZero(j,6)
+								(cArqTemp)->F3_NRLIVRO	:= aSeries[i,1]
+								(cArqTemp)->F3_SERIE	:= aSeries[i,2]
+//								(cArqTemp)->F3_OBSERV	:= STR0021 //"NT.FISCAL DE ENTRADA"
+								(cArqTemp)->F3_OBSERV	:= "NT.FISCAL DE ENTRADA"
+								(cArqTemp)->F3_CFO		:= "999"
+								(cArqTemp)->F3_ENTRADA := SF3->F3_EMISSAO
+								For nI:=1 to FCount()
+									If Valtype(FieldGet(nI))=="N"
+										FieldPut(nI,0)
+									Endif
+								Next
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³ Considera Dt.emissao NF entrada na emissao livro de saidas.  ³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								MsUnLock()
+							Endif
+						Endif
+						Endif
+				        dDtCanc:=F3_ENTRADA
+						dbSelectArea(cArqTemp)
+					Endif
+				Else
+ 				   dDtCanc:=F3_ENTRADA
+					RecLock(cArqTemp,.F.)
+					If J>Val(F3_DOCOR)
+						(cArqTemp)->F3_DOCOR 	:= StrZero(j,6)
+					Endif
+					MsUnLock()
+				Endif
+			Endif
+		Next j
+		If lAbortPrint
+			Exit
+		Endif
+	Next i
+Endif
+dbSelectArea(cArqTemp)
+If cMov=="S"
+	dbClearIndex()
+	Ferase(cIndxTemp1+OrdBagExt())
+	Ferase(cIndxTemp2+OrdBagExt())
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Indice principal de impressao                                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !lAbortPrint
+//	IndRegua(cArqTemp,cArqTemp,"F3_FILIAL+DTOS(F3_ENTRADA)+F3_SERIE+F3_NFISCAL+F3_CFO+F3_FORMULA",,,STR0024) //"Ordenando Notas..."
+	IndRegua(cArqTemp,cArqTemp,"F3_FILIAL+DTOS(F3_ENTRADA)+F3_SERIE+F3_NFISCAL+F3_CFO+F3_FORMULA",,,"Ordenando Notas...") 
+	dbGoTop()
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Inicializa array aColunas statico com colunas do SF3         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+ColF3()
+
+Return (cArqTemp)
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ LivrAcumula()³Autor ³ Juan Jose Pereira    ³Data³ 17/02/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Acumulador de valores fiscais para o ModP1,ModP1A          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static FUNCTION LivrAcumula(	cArqTemp,;
+aTotDia,;
+aTotPerICM,;
+aTotPerIPI,;
+aTotMes,;
+aTransp,;
+aResumo,;
+aResCFO,;
+cArqSF3)
+
+LOCAL aSF3:={}
+Local i
+Local cSvAlias:=Alias()
+Local nPos
+Local nPosCFO
+LOCAL cMens:=""
+//Local cCaption:=STR0025 //" ATENCAO "
+Local cCaption:=" ATENCAO "
+LOCAL cClieFor
+LOCAL cInscr
+LOCAL cTipo
+LOCAL lExist := IIF(SF3->(FieldPos("F3_OBSSOL"))>0,.T.,.F.)
+
+Private oDlgAviso
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se CFO das NFs sao validos.             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Empty(F3_CFO) .Or.ValType(Val(F3_CFO))!="N"
+//	cMens:=STR0026+F3_SERIE+" "+F3_NFISCAL+STR0027 //"NF "###" possui CFO incorreto ! "
+	cMens:="NF "+F3_SERIE+" "+F3_NFISCAL+" possui CFO incorreto ! " 
+	
+	DEFINE MSDIALOG oDlgAviso TITLE OemtoAnsi(cCaption) FROM  165,190 TO 300,440 PIXEL OF oMainWnd
+	@ 03, 10 TO 43, 115 LABEL "" OF oDlgAviso  PIXEL
+	@ 20, 15 SAY OemToAnsi(cMens) SIZE 100, 8 OF oDlgAviso PIXEL
+	DEFINE SBUTTON FROM 50  ,80  TYPE 1 ACTION (oDlgAviso:End()) ENABLE OF oDlgAviso
+	ACTIVATE MSDIALOG oDlgAviso
+	Return
+Endif
+
+If aResCFO==NIL
+	aResCFO:={}
+Endif
+If aResumo==NIL
+	aResumo:={}
+Endif
+
+dbSelectArea(cArqTemp)
+
+For i:=1 to FCount()
+	If ValType(FieldGet(i))=="N"
+		AADD(aSF3,FieldGet(i))
+	Else
+		AADD(aSF3,"NULL")
+	Endif
+Next
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica se o registro nao e do Mapa Resumo do ECF              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If substr(F3_CFO,1,3)=="999" .And. (Alltrim(F3_ESPECIE)<>"CF")
+	For i:=1 to Len(aSF3)
+		aSF3[i]:=If(Valtype(aSF3[i])=="N",0,aSF3[i])
+	Next
+Endif
+
+If aTotDia==NIL
+	aTotDia		:=	Aclone(aSF3)
+	aTotPerICM	:=	Aclone(aSF3)
+	aTotPerIPI	:=	Aclone(aSF3)
+	aTotMes		:=	Aclone(aSF3)
+	aTransp		:=	Aclone(aSF3)
+Else
+	For i:=1 to Len(aSF3)
+		If Valtype(aSF3[i])=="N"
+			nValor:=aSF3[i]
+			aTotDia[i]		+=nValor
+			aTotPerICM[i]	+=nValor
+			aTotPerIPI[i]	+=nValor
+			aTotMes[i] 		+=nValor
+			aTransp[i]		+=nValor
+		Endif
+	Next i
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Acumula valores por CFOS                                                                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nPosCFO:=ColF3("F3_CFO")
+If !(Subs(F3_CFO,1,3) $ "999#000") .And. Empty(F3_DTCANC) // nao imprimi resumo por CFOP para transferencias/Canceladas
+	nPos:=Ascan(aResCFO,{|x|x[nPosCFO]==F3_CFO})
+	If nPos==0
+		AADD(aResCFO,AClone(aSF3))
+		nPos:=Len(aResCFO)
+		aResCFO[nPos,nPosCFO]:=F3_CFO
+	Else
+		For i:=1 to Len(aSF3)
+			If ValType(aSF3[i])=="N"
+				aResCFO[nPos,i]+=aSF3[i]
+			Endif
+		Next i
+	Endif
+	nPos:=Ascan(aResCFO,{|x|x[nPosCFO]==Substr(F3_CFO,1,1)+"TT"})
+	If nPos==0
+		AADD(aResCFO,AClone(aSF3))
+		nPos:=Len(aResCFO)
+		aResCFO[nPos,nPosCFO]:=Substr(F3_CFO,1,1)+"TT"
+	Else
+		For i:=1 to Len(aSF3)
+			If ValType(aSF3[i])=="N"
+				aResCFO[nPos,i]+=aSF3[i]
+			Endif
+		Next i
+	Endif
+	nPos:=Ascan(aResCFO,{|x|x[nPosCFO]=="TTT"})
+	If nPos==0
+		AADD(aResCFO,AClone(aSF3))
+		nPos:=Len(aResCFO)
+		aResCFO[nPos,nPosCFO]:="TTT"
+	Else
+		For i:=1 to Len(aSF3)
+			If ValType(aSF3[i])=="N"
+				aResCFO[nPos,i]+=aSF3[i]
+			Endif
+		Next i
+	Endif
+EndIf
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Acumula valores de operacoes interestaduais                                                 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+IF Empty(F3_DTCANC) //Nao gera resumo para notas fiscais canceladas 
+	IF lAglutina
+	   cAliasSF3 :=ALIAS()
+	   dbSelectArea("SF3")
+	   dbsetorder(1)
+	   While !(cArqSF3)->(EOF())
+	       IF (cArqSF3)->CONTR!="*"
+	          dbseek((cArqSF3)->CHAVE)
+	          If F3_ESTADO!="EX"
+		         If F3_FORMUL<>"S"
+	 	            cClieFor	:=	F3_CLIEFOR+F3_LOJA
+		            If nTipoMov==1
+		               If(F3_TIPO$"DB",dbSelectArea("SA1"),dbSelectArea("SA2"))
+		            Else
+		               If(F3_TIPO$"DB",dbSelectArea("SA2"),dbSelectArea("SA1"))
+		            Endif   
+		            dbSeek(F3Filial(Alias())+cClieFor) //xFilial()
+		            dbSelectArea("SF3")                                                
+		
+		            If nTipoMov==1
+			           cInscr	:= If( F3_TIPO$"DB",SA1->A1_INSCR,SA2->A2_INSCR)
+			           cTipo   	:= If( F3_TIPO$"DB",SA1->A1_TIPO,SA2->A2_TIPO)
+	                else
+			           cInscr	:= If( F3_TIPO$"DB",SA2->A2_INSCR,SA1->A1_INSCR)
+	 		           cTipo 	:= If( F3_TIPO$"DB",SA2->A2_TIPO,SA1->A1_TIPO)
+	                EndIf   
+						If (ALLTRIM(F3_CFO)$"618/619/553/653/6107/6108/5307/6307") .or. "ISENT" $Upper(cInscr) .or. (empty(cInscr) .and. cTipo != "L")
+	                   cContrib := "NC"
+		            Else          
+			           cContrib :=	"CO"
+		            EndIf
+		            if nTipoMov==1
+			           cContrib :=	"CO"
+		            EndIf	
+		            nPos:=Ascan(aResumo,{|x|x[1]==cContrib.and.x[2]==F3_ESTADO})
+		            If (Subs(F3_CFO,1,3) $ "999#000") // nao imprimi demonstrativo para transferencias	
+		               If nPos==0
+			              AADD(aResumo,{	cContrib,;					// [1] Flag de Contribuinte
+			              F3_ESTADO,;					// [2] Estado
+			              0.00,;	// [3] Valor Contabil
+			              0.00,;	// [4] Base de Calculo
+			              0.00,;	// [5] ICMS Outras
+			              0.00,;	// [6] ICMS Retido
+			              0.00,;	// [7] ICMS Isento
+			           	  0.00,;	// [08] Valor do ICMS 
+			           	  0.00,;	// [09] Base de Calculo IPI
+			           	  0.00,;	// [10] Valor do IPI  
+			           	  0.00,;	// [11] IPI Isento    
+                          0.00,;   // [12] IPI Outras 
+					      0.00,;  // [13] ICMS NORMAL
+					      0.00})  // [14] ICMS ST. INT.
+		               Endif
+		            Else
+		               If nPos==0
+			              AADD(aResumo,{	cContrib,;					// [1] Flag de Contribuinte
+			              F3_ESTADO,;					// [2] Estado
+			              F3_VALCONT,;	// [3] Valor Contabil
+			              F3_BASEICM,;	// [4] Base de Calculo
+			              F3_OUTRICM,;	// [5] ICMS Outras
+			              F3_ICMSRET-IIF(lExist,F3_OBSSOL,0),;	// [6] ICMS Retido
+					   	  F3_ISENICM,;	// [7] ICMS Isento
+			           	  F3_VALICM,;	// [08] Valor do ICMS 
+			           	  F3_BASEIPI,;	// [09] Base de Calculo IPI
+			           	  F3_VALIPI,;	// [10] Valor do IPI  
+			           	  F3_ISENIPI,;	// [11] IPI Isento    
+			           	  F3_OUTRIPI,; // [12] IPI Outras 
+			           	  IIF(lExist,F3_OBSICM,0),;  // [13] ICMS NORMAL  
+			           	  IIF(lExist,F3_OBSSOL,0)})  // [14] ICMS ST. INT.	
+		               Else 
+			              aResumo[nPos,3]+=F3_VALCONT
+			              aResumo[nPos,4]+=F3_BASEICM
+			              aResumo[nPos,5]+=F3_OUTRICM
+			              aResumo[nPos,6]+=F3_ICMSRET-IIF(lExist,F3_OBSSOL,0)
+			              aResumo[nPos,7]+=F3_ISENICM
+	           		      aResumo[nPos,08]+=F3_VALICM
+			           	  aResumo[nPos,09]+=F3_BASEIPI
+			           	  aResumo[nPos,10]+=F3_VALIPI
+			           	  aResumo[nPos,11]+=F3_ISENIPI
+			           	  aResumo[nPos,12]+=F3_OUTRIPI		              
+			           	  aResumo[nPos,13]+=IIF(lExist,F3_OBSICM,0)
+			           	  aResumo[nPos,14]+=IIF(lExist,F3_OBSSOL,0)
+		               Endif
+		            Endif   
+	             Endif     
+	          Endif   
+	 		  RecLock(cArqSF3,.F.)
+	          (cArqSF3)->CONTR :="*"
+	          (cArqSF3)->(MsUnLock())
+	       Endif   
+	       (cArqSF3)->(dbseek(" "))
+	       dbSelectArea("SF3")
+	   Enddo
+	   dbselectarea(cAliasSF3)
+	Else
+	   If F3_ESTADO!="EX"
+		  cClieFor	:=	F3_CLIEFOR+F3_LOJA
+		  If nTipoMov==1
+		     If(F3_TIPO$"DB",dbSelectArea("SA1"),dbSelectArea("SA2"))
+		  Else
+		     If(F3_TIPO$"DB",dbSelectArea("SA2"),dbSelectArea("SA1"))
+		  Endif   
+		  dbSeek(F3Filial(Alias())+cClieFor)   //xFilial()
+		  dbSelectArea(cArqTemp)                                                
+		
+		  If nTipoMov==1
+			 cInscr	:= If( F3_TIPO$"DB",SA1->A1_INSCR,SA2->A2_INSCR)
+			 cTipo   	:= If( F3_TIPO$"DB",SA1->A1_TIPO,SA2->A2_TIPO)
+	      else
+			 cInscr	:= If( F3_TIPO$"DB",SA2->A2_INSCR,SA1->A1_INSCR)
+	 		 cTipo 	:= If( F3_TIPO$"DB",SA2->A2_TIPO,SA1->A1_TIPO)
+	      EndIf   
+			If (ALLTRIM(F3_CFO)$"618/619/553/653/6107/6108/5307/6307") .or. "ISENT" $Upper(cInscr) .or. (empty(cInscr) .and. cTipo != "L")
+	         cContrib := "NC"
+		  Else          
+			 cContrib :=	"CO"
+		  EndIf
+		  if nTipoMov==1
+			 cContrib :=	"CO"
+		  EndIf	
+		  nPos:=Ascan(aResumo,{|x|x[1]==cContrib.and.x[2]==F3_ESTADO})
+	      If (Subs(F3_CFO,1,3) $ "999#000") // nao imprimi demonstrativo para transferencias	
+		     If nPos==0
+			    AADD(aResumo,{	cContrib,;					// [1] Flag de Contribuinte
+	  		    F3_ESTADO,;					// [2] Estado
+			    0.00,;	// [3] Valor Contabil
+			    0.00,;	// [4] Base de Calculo
+			    0.00,;	// [5] ICMS Outras
+			    0.00,;	// [6] ICMS Retido
+	           	0.00,;	// [7] ICMS Isento
+	   	    	0.00,;	// [08] Valor do ICMS 
+		    	0.00,;	// [09] Base de Calculo IPI
+		    	0.00,;	// [10] Valor do IPI  
+		    	0.00,;	// [11] IPI Isento    
+                0.00,;  // [12] IPI Outras 
+			    0.00,;  // [13] ICMS NORMAL
+			    0.00})	// [14] ICMS ST. INT.
+	         Endif
+	      Else
+		     If nPos==0
+			    AADD(aResumo,{	cContrib,;					// [1] Flag de Contribuinte
+	  		    F3_ESTADO,;					// [2] Estado
+			    aSF3[ColF3("F3_VALCONT")],;	// [3] Valor Contabil
+			    aSF3[ColF3("F3_BASEICM")],;	// [4] Base de Calculo
+			    aSF3[ColF3("F3_OUTRICM")],;	// [5] ICMS Outras
+			    aSF3[ColF3("F3_ICMSRET")]-IIF(lExist,aSF3[ColF3("F3_OBSSOL")],0),;	// [6] ICMS Retido
+			    aSF3[ColF3("F3_ISENICM")],;			// [7] ICMS Isento
+			    aSF3[ColF3("F3_VALICM")],;			// [08] Valor do ICMS 
+			    aSF3[ColF3("F3_BASEIPI")],;			// [09] Base de Calculo IPI
+			    aSF3[ColF3("F3_VALIPI")],;			// [10] Valor do IPI  
+			    aSF3[ColF3("F3_ISENIPI")],;			// [11] IPI Isento    
+			    aSF3[ColF3("F3_OUTRIPI")],;			// [12] IPI Outras 
+			    IIF(lExist,aSF3[ColF3("F3_OBSICM")],0),;	// [13] ICMS NORMAL   
+			    IIF(lExist,aSF3[ColF3("F3_OBSSOL")],0)})	// [14] ICMS ST. INT.
+		     Else 
+			    aResumo[nPos,03]+=aSF3[ColF3("F3_VALCONT")]
+			    aResumo[nPos,04]+=aSF3[ColF3("F3_BASEICM")]
+			    aResumo[nPos,05]+=aSF3[ColF3("F3_OUTRICM")]
+			    aResumo[nPos,06]+=(aSF3[ColF3("F3_ICMSRET")]-IIF(lExist,aSF3[ColF3("F3_OBSSOL")],0))
+			    aResumo[nPos,07]+=aSF3[ColF3("F3_ISENICM")]
+			    aResumo[nPos,08]+=aSF3[ColF3("F3_VALICM")]
+			    aResumo[nPos,09]+=aSF3[ColF3("F3_BASEIPI")]
+			    aResumo[nPos,10]+=aSF3[ColF3("F3_VALIPI")]
+			    aResumo[nPos,11]+=aSF3[ColF3("F3_ISENIPI")]
+			    aResumo[nPos,12]+=aSF3[ColF3("F3_OUTRIPI")]
+			    aResumo[nPos,13]+=IIF(lExist,aSF3[ColF3("F3_OBSICM")],0)
+			    aResumo[nPos,14]+=IIF(lExist,aSF3[ColF3("F3_OBSSOL")],0)
+		     Endif
+		  Endif   
+	   Endif
+	Endif
+Endif
+dbSelectArea(cSvAlias)
+
+RETURN
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ LivrArrayObs ³Autor ³ Juan Jose Pereira    ³Data³ 17/02/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Cria array com mensagens da coluna de observacoes          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static FUNCTION LivrArrayObs(nTamObs,aArray)
+
+
+Local aColObs:={}, lArray:=(aArray==NIL), xx:=0, cMensagem
+Local aSave:={Alias(),IndexOrd(),Recno()},cSeek:=NIL
+Local lExist := IIF(SF3->(FieldPos("F3_OBSSOL"))>0,.T.,.F.)
+
+if type( "nColuna" ) =="U"
+	nColuna := 1
+EndIF
+
+If lArray
+   If !Empty(F3_OBSERV)
+	   cMensagem:=Trim(F3_OBSERV)
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+	  	   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif
+   If !Empty(F3_FORMULA)
+	   cMensagem:=Formula(F3_FORMULA)
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif
+   If F3_VALOBSE>0
+//	   cMensagem:=STR0028+Alltrim(TransForm(F3_VALOBSE,PesqPict("SF3","F3_VALOBSE"))) //"DESCONTO.....: "
+	   cMensagem:="DESCONTO.....: "+Alltrim(TransForm(F3_VALOBSE,PesqPict("SF3","F3_VALOBSE"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+  	   Next xx
+   Endif
+   If F3_IPIOBS>0
+//	   cMensagem:=STR0029+Alltrim(TransForm(F3_IPIOBS,PesqPict("SF3","F3_IPIOBS"))) //"IPI..........: "
+	   cMensagem:="IPI..........: "+Alltrim(TransForm(F3_IPIOBS,PesqPict("SF3","F3_IPIOBS")))
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif
+   If Empty(cTitLivro) .and. F3_ICMSRET-IIF(lExist,F3_OBSSOL,0) >0  .and. nColuna ==1
+	   If !lExist
+//		   cMensagem:=STR0030+Alltrim(TransForm(F3_BASERET,PesqPict("SF3","F3_BASERET"))) //"BASE ICMS RET: "
+		   cMensagem:="BASE ICMS RET: "+Alltrim(TransForm(F3_BASERET,PesqPict("SF3","F3_BASERET"))) 
+		   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   	   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+		   Next xx
+   	   Endif    
+//	   cMensagem:=STR0031+Alltrim(TransForm(F3_ICMSRET-IIF(lExist,F3_OBSSOL,0),PesqPict("SF3","F3_ICMSRET"))) //"ICMS RETIDO..: "
+	   cMensagem:="ICMS RETIDO..: "+Alltrim(TransForm(F3_ICMSRET-IIF(lExist,F3_OBSSOL,0),PesqPict("SF3","F3_ICMSRET"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif
+   If F3_ICMSCOM>0
+//	   cMensagem:=STR0032+Alltrim(TransForm(F3_ICMSCOM,PesqPict("SF3","F3_ICMSCOM"))) //"ICMS DIF.ALIQ: "
+	   cMensagem:="ICMS DIF.ALIQ: "+Alltrim(TransForm(F3_ICMSCOM,PesqPict("SF3","F3_ICMSCOM"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif
+   If F3_ICMAUTO>0
+//	   cMensagem:=STR0033+Alltrim(TransForm(F3_ICMAUTO,PesqPict("SF3","F3_ICMAUTO"))) //"ICMS FRET.AUT: "
+	   cMensagem:="ICMS FRET.AUT: "+Alltrim(TransForm(F3_ICMAUTO,PesqPict("SF3","F3_ICMAUTO"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif
+   If SF3->(FieldPos("F3_OBSICM"))>0 .and. F3_OBSICM>0
+//	   cMensagem:=STR0039+Alltrim(TransForm(F3_OBSICM,PesqPict("SF3","F3_OBSICM"))) //"ICMS NORMAL: "
+	   cMensagem:="ICMS NORMAL: "+Alltrim(TransForm(F3_OBSICM,PesqPict("SF3","F3_OBSICM"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif
+   If lExist .and. F3_OBSSOL>0
+//	   cMensagem:=STR0040+Alltrim(TransForm(F3_OBSSOL,PesqPict("SF3","F3_OBSSOL"))) //"ICMS ST. INT.: "
+	   cMensagem:="ICMS ST. INT.: "+Alltrim(TransForm(F3_OBSSOL,PesqPict("SF3","F3_OBSSOL"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif   
+Else
+   If aArray[FieldPos("F3_VALOBSE")]>0
+//	   cMensagem:=STR0028+Alltrim(TransForm(aArray[FieldPos("F3_VALOBSE")],PesqPict("SF3","F3_VALOBSE"))) //"DESCONTO.....: "
+	   cMensagem:="DESCONTO.....: "+Alltrim(TransForm(aArray[FieldPos("F3_VALOBSE")],PesqPict("SF3","F3_VALOBSE"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif
+   If aArray[FieldPos("F3_IPIOBS")]>0
+//	   cMensagem:=STR0029+Alltrim(TransForm(aArray[FieldPos("F3_IPIOBS")],PesqPict("SF3","F3_IPIOBS"))) //"IPI..........: "
+	   cMensagem:="IPI..........: "+Alltrim(TransForm(aArray[FieldPos("F3_IPIOBS")],PesqPict("SF3","F3_IPIOBS"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif
+   If Empty(cTitLivro).and.aArray[FieldPos("F3_ICMSRET")]-IIF(lExist,aArray[FieldPos("F3_OBSSOL")],0) >0  .and. nColuna ==1
+	   If !lExist
+//		   cMensagem:=STR0030+Alltrim(TransForm(aArray[FieldPos("F3_BASERET")],PesqPict("SF3","F3_BASERET"))) //"BASE ICMS RET: "
+		   cMensagem:="BASE ICMS RET: "+Alltrim(TransForm(aArray[FieldPos("F3_BASERET")],PesqPict("SF3","F3_BASERET")))
+		   For xx:=1 to MlCount(cMensagem,nTamObs)
+		  	   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	 	   Next xx
+	   Endif	  
+//	   cMensagem:=STR0031+Alltrim(TransForm(aArray[FieldPos("F3_ICMSRET")]-IIF(lExist,aArray[FieldPos("F3_OBSSOL")],0),PesqPict("SF3","F3_ICMSRET"))) //"ICMS RETIDO..: "
+	   cMensagem:="ICMS RETIDO..: "+Alltrim(TransForm(aArray[FieldPos("F3_ICMSRET")]-IIF(lExist,aArray[FieldPos("F3_OBSSOL")],0),PesqPict("SF3","F3_ICMSRET"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+	 	  AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+  	   Next xx
+   Endif
+   If aArray[FieldPos("F3_ICMSCOM")]>0
+//	   cMensagem:=STR0032+Alltrim(TransForm(aArray[FieldPos("F3_ICMSCOM")],PesqPict("SF3","F3_ICMSCOM"))) //"ICMS DIF.ALIQ: "
+	   cMensagem:="ICMS DIF.ALIQ: "+Alltrim(TransForm(aArray[FieldPos("F3_ICMSCOM")],PesqPict("SF3","F3_ICMSCOM"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+ 	   Next xx
+   Endif
+   If aArray[FieldPos("F3_ICMAUTO")]>0
+//	   cMensagem:=STR0033+Alltrim(TransForm(aArray[FieldPos("F3_ICMAUTO")],PesqPict("SF3","F3_ICMAUTO"))) //"ICMS FRET.AUT: "
+	   cMensagem:="ICMS FRET.AUT: "+Alltrim(TransForm(aArray[FieldPos("F3_ICMAUTO")],PesqPict("SF3","F3_ICMAUTO")))
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif
+   If SF3->(FieldPos("F3_OBSICM"))>0 .and. aArray[FieldPos("F3_OBSICM")]>0
+//	   cMensagem:=STR0039+Alltrim(TransForm(aArray[FieldPos("F3_OBSICM")],PesqPict("SF3","F3_OBSICM"))) //"ICMS NORMAL: "
+	   cMensagem:="ICMS NORMAL: "+Alltrim(TransForm(aArray[FieldPos("F3_OBSICM")],PesqPict("SF3","F3_OBSICM")))
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif   
+   If lExist .and. aArray[FieldPos("F3_OBSSOL")]>0
+//	   cMensagem:=STR0040+Alltrim(TransForm(aArray[FieldPos("F3_OBSSOL")],PesqPict("SF3","F3_OBSSOL"))) //"ICMS ST. INT.: "
+	   cMensagem:="ICMS ST. INT.: "+Alltrim(TransForm(aArray[FieldPos("F3_OBSSOL")],PesqPict("SF3","F3_OBSSOL"))) 
+	   For xx:=1 to MlCount(cMensagem,nTamObs)
+		   AADD(aColObs,{MemoLine(cMensagem,nTamObs,xx),.T.})
+	   Next xx
+   Endif   
+Endif
+
+dbSelectArea(aSave[1])
+dbSetOrder(aSave[2])
+dbGoto(aSave[3])
+
+Return (aColObs)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ DefPeriodo   ³Autor ³ Juan Jose Pereira    ³Data³ 17/02/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Define Periodo de Apuracao                                 ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static FUNCTION DefPeriodo(dData,nApuracao)
+
+Local nPeriodo
+Local nMes	:=	Month(dData)
+Local	nAno	:=	Year(dData)
+Local dIniMes
+Local dFimMes
+Local aPeriodos:={}
+
+//dIniMes :=  CTOD("01/"+StrZero(nMes,2)+"/"+Substr(StrZero(nAno,4),3),"ddmmyy")
+dIniMes :=  CTOD("01/"+StrZero(nMes,2)+"/"+Substr(StrZero(nAno,4),3,2))
+dFimMes	:=	UltimoDia(dIniMes)
+Do Case
+	Case nApuracao==1 // Decendial
+		AADD(aPeriodos,{dIniMes,dIniMes+9})
+		AADD(aPeriodos,{dIniMes+10,dIniMes+19})
+		AADD(aPeriodos,{dIniMes+20,dFimMes})
+	Case nApuracao==2 // Quinzenal
+		AADD(aPeriodos,{dIniMes,dIniMes+14})
+		AADD(aPeriodos,{dIniMes+15,dFimMes})
+	Otherwise // Mensal
+		AADD(aPeriodos,{dIniMes,dFimMes})
+EndCase
+If dData==CTOD("  /  /  ")
+	nPeriodo:=0
+Else
+	nPeriodo:=Ascan(aPeriodos,{|x|x[1]<=dData.and.x[2]>=dData})
+Endif
+
+Return (nPeriodo)
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ ColSF3       ³Autor ³ Juan Jose Pereira    ³Data³ 17/02/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Armazena e devolve colunas do SF3                          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static FUNCTION ColF3(cColuna)
+
+Local i:=0
+
+If cColuna==NIL
+	aColunas:={}
+	For i:=1 to FCount()
+		AADD(aColunas,FieldName(i))
+	Next i
+Else
+	i:=Ascan(aColunas,Trim(cColuna))
+Endif
+
+Return(i)
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ CtrlPg() ³ Autor ³ Juan Jose Pereira     ³ Data ³02/02/1996³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Controla numeracao de paginas dos livros fiscais           ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static FUNCTION CtrlPg(nPagina,nQtdPag,lReiniPg)
+
+Local cPagina
+Local nTam:=0
+Local lFeixe:=.f.
+Local aPaginas:={0,0}
+
+lReiniPg	:=	IIF(lReiniPg==NIL,.f.,lReiniPg)
+nQtdPag	:=	IIf(Empty(nQtdPag) .or. nQtdPag<=0,500,nQtdPag)
+
+nPagina	:=	If(nPagina==1,0,nPagina)
+If (nPagina%nQtdPag==0)
+	If lReiniPg
+		nPagina:=0
+	Endif
+	aPaginas[1]:=nPagina
+	aPaginas[2]:=nPagina+1
+	nPagina:=nPagina+2
+	lFeixe:=.t.
+Else
+	nPagina++
+	If (nPagina%nQtdPag==0)
+		If lReiniPg
+			nPagina:=0
+		Endif
+		aPaginas[1]:=nPagina
+		aPaginas[2]:=nPagina+1
+		nPagina:=nPagina+2
+		lFeixe:=.t.
+	Endif
+Endif
+Return(aPaginas)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ImprimeTermo³Autor³ Juan Jose Pereira     ³ Data ³02/02/1996³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Imprime termos de abertura e encerramento dos livros fiscais³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static FUNCTION ImprimeTermo(nPagina,nPagIni,nQuebra,cArqTerm,nLargMax,cPerg)
+
+Local	cSvAlias	:=	Alias()
+Local	i
+Local	aVariaveis:={}
+Local w
+Local j
+Local cCaracter
+Local cLinha
+Local nPosAcento
+Local	cAcentos:="€ú\‡ú\ú\ú\…ú\†ú\„ú\ ú\ú\ˆú\Šú\‚ú\¡ú\“ú\”ú\•ú\¢ú\£ú"
+Local cAcSubst:="C,\c,\A~\A'\a`\a~\a~\a'\E'\e^\e`\e'\i'\o^\o~\o`\o'\U'"
+Local aLayOut:={}
+Local cTexto
+Local uConteudo
+Local cConteudo
+
+If nPagina==0.or.!File(cArqTerm)
+	Return
+Endif
+aadd(aVariaveis,{"VAR_IXB",VAR_IXB})
+dbSelectArea("SM0")
+For i:=1 to FCount()
+	If FieldName(i)=="M0_CGC"
+		AADD(aVariaveis,{FieldName(i),Transform(FieldGet(i),"@R 99.999.999/9999-99")})
+	ElseIf FieldName(i)=="M0_INSC"
+		AADD(aVariaveis,{FieldName(i),InscrEst()})
+	Else
+		If FieldName(i)=="M0_NOME"
+			Loop
+		Endif
+		AADD(aVariaveis,{FieldName(i),FieldGet(i)})
+	Endif
+Next
+
+dbSelectArea("SX1")
+dbSeek(cPerg+"01")
+While SX1->X1_GRUPO==cPerg
+	uConteudo	:=	&(X1_VAR01)
+	If Valtype(uConteudo)=="N"
+		cConteudo	:=	Alltrim(Str(uConteudo))
+	Elseif Valtype(uConteudo)=="D"
+		cConteudo	:=	Alltrim(dToc(uConteudo))
+	Else
+		cConteudo	:=	Alltrim(uConteudo)
+	Endif
+	AADD(aVariaveis,{Rtrim(Upper(X1_VAR01)),cConteudo})
+	dbSkip()
+End
+
+AADD(aVariaveis,{"__PAGINAINICIAL",Transform(StrZero(nPagIni,6),"@R 999.999")})
+AADD(aVariaveis,{"__PAGINAFINAL",Transform(StrZero(nPagina,6),"@R 999.999")})
+
+cTexto:=MemoRead(cArqTerm)
+For w:=1 to len(aVariaveis)
+	cTexto	:=	StrTran(cTexto,aVariaveis[w,1],if(valtype(aVariaveis[w,2])<>"C" .and. valtype(aVariaveis[w,2])<>"U",if(valtype(avariaveis[w,2])="D",dtoc(aVariaveis[w,2]),str(aVariaveis[w,2])),aVariaveis[w,2]))
+Next
+@ 0,0 PSAY AvalImp(nLargMax)
+
+For i:=1 to Mlcount(cTexto,nLargMax)
+	
+	SysRefresh()
+	If Interrupcao(@lAbortPrint)
+		Exit
+	Endif
+	cLinha	:=	MemoLine(cTexto,nLargMax,i)
+	cLinha	:=	Strtran(cLinha,chr(13)+chr(10))
+	For j:=1 to Len(cLinha)
+		cCaracter	:=	Substr(cLinha,j,1)
+		nPosAcento	:=	Rat(cAcentos,cCaracter)
+		If nPosAcento>0
+			cCaracter:=Substr(AcSubst,nPosAcento,2)
+			@ i,j PSAY Substr(cCaracter,1,1)
+			@ i,j PSAY Substr(cCaracter,2,1)
+		Else
+			@ i,j PSAY cCaracter
+		Endif
+	Next j
+Next i
+
+dbSelectArea(cSvAlias)
+
+Return (nPagina)
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ R930CFOTra ³Autor³    Marcos Simidu      ³ Data ³23/04/1997³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Analisa CFO de Servicos de Transporte.                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static FUNCTION R930CFOTra(cCFO,cSerie)
+
+Local cAllCFO := "161/162/163/164/165/261/262/263/264/351/352/353/354/561/562/563/661/662/663/1351/1352/1353/1354/1355/1356/2351/2352/2353/2354/3351/3352/3353/3354/5351/5352/5357/6351/6352/6357"
+Local cEspecie:= If( At(cCFO,cAllCFO) > 0, "CT" , "NF" )
+
+If ( substr(cCFO,1,3) == "999" ) //Notas Canceladas
+	cEspecie := a460Especie(cSerie)
+EndIf
+
+Return(cEspecie)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³  ExistNF   ³Autor³    Marcos Simidu      ³ Data ³09/12/1997³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Verifica se existe NF em outro livro.                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ExistNF(cNota,cSerNF,cNumero,cLivros)
+Local lRet	:=.F.
+Local cAlias:=Alias()
+
+dbSelectArea("SF3")
+dbSetOrder(5)
+dbSeek(xFilial()+cSerNF+cNota,.F.)
+
+while !eof() .and. xFilial("SF3")+SF3->F3_SERIE+SF3->F3_NFISCAL == xFilial("SF3")+cSerNF+cNota
+	If Val(substr(F3_CFO,1,1))<5 .and. F3_FORMUL =="S"
+		lRet:= .T.
+		Exit
+	ElseIf Val(substr(F3_CFO,1,1))>=5 
+		lRet:= .T.
+		Exit      
+	EndIf
+	dbSkip()
+EndDo
+dbSelectArea(cAlias)
+
+Return(lRet)
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³  GravaTemp   ³Autor ³  Edstron             ³Data³ 06/04/01 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Grava Registro no Arquivo Temporario                       ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function GravaTemp(cNFIni,cNFFim,aFixos,aLivro,dData,cEst,cEsp,cCliente,cLoja,dDtCan1,cMov,lDesconto,nAliq,cSer,cCFO,cFormula)
+Default cFormula	:=SPACE(03)
+
+dbSelectArea(cArqTemp)
+dbSeek(cSer+STRZERO(VAL(cNFIni),6)+Str(nAliq,5,2)+cCFO+cFormula,.F.)
+If !eof()
+   RecLock(cArqTemp,.F.)
+   For i:=1 To Len(aFixos)
+       Replace &(aFixos[i,1]) With aLivro[i]
+   Next
+Else
+   RecLock(cArqTemp,.T.)
+   For i:=1 To Len(aFixos)
+	   Replace &(aFixos[i,1]) With aLivro[i]
+   Next
+   (cArqTemp)->F3_FILIAL 	:= xFilial("SF3")
+   (cArqTemp)->F3_ENTRADA	:= dData
+   (cArqTemp)->F3_EMISSAO	:= dData
+   (cArqTemp)->F3_NFISCAL	:= cNFIni
+   (cArqTemp)->F3_SERIE  	:= cSer
+   (cArqTemp)->F3_ESTADO	:= cEst
+   (cArqTemp)->F3_ESPECIE	:= cEsp
+   (cArqTemp)->F3_CLIEFOR	:= cCliente
+   (cArqTemp)->F3_LOJA  	:= cLoja
+Endif
+(cArqTemp)->F3_DOCOR	:= If(Empty(SF3->F3_DOCOR),cNFFim,SF3->F3_DOCOR)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Corrige numeracao da Nota                                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If cMov=="S"		//.and.lLacuna
+   (cArqTemp)->NUMNOTA := STRZERO(VAL(cNFIni),6)
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Zera valor de desconto para nao ser escriturado              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !lDesconto
+   (cArqTemp)->F3_VALOBSE := 0
+Endif
+
+IF !EMPTY(dDtCan1)
+   (cArqTemp)->F3_DTCANC := dDtCan1
+ENDIF
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Altera registro de notas de Formulario Proprio na Saida e    ³
+//³ Notas fiscais de Servico                                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If F3_FORMUL=="S".or.F3_TIPO=="S" .or. !empty(F3_DTCANC)
+   For i:=1 to FCount()
+       If Valtype(FieldGet(i))=="N"
+	  	  FieldPut(i,0)
+	   Endif
+   Next   
+   If F3_FORMUL=="S"	.AND. empty(F3_DTCANC)		
+// 	 (cArqTemp)->F3_OBSERV := STR0021 //"NT.FISCAL DE ENTRADA"
+   	 (cArqTemp)->F3_OBSERV := "NT.FISCAL DE ENTRADA"
+   ElseIf F3_FORMUL=="S" .AND. !empty(F3_DTCANC)
+//	 (cArqTemp)->F3_OBSERV := STR0022 //"CANCELADA"
+	 (cArqTemp)->F3_OBSERV := "CANCELADA"
+   ElseIf !empty(F3_DTCANC)
+//	 (cArqTemp)->F3_OBSERV := STR0022 //"CANCELADA"
+	 (cArqTemp)->F3_OBSERV := "CANCELADA"
+  Else
+//	 (cArqTemp)->F3_OBSERV := STR0023 + " " + (cArqTemp)->F3_OBSERV //"NT.FISCAL DE SERVICO"
+	 (cArqTemp)->F3_OBSERV := "NT.FISCAL DE SERVICO" + " " + (cArqTemp)->F3_OBSERV 
+  EndIf
+  (cArqTemp)->F3_CFO	:= "999"
+  (cArqTemp)->F3_TIPO	:= SF3->F3_TIPO
+Endif
+MsUnlock()		
+RETURN(.t.)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Funcao    ³AjustaSX1 ³ Autor ³Edstron E. Correia     ³ Data ³06/08/2002³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Acerta o arquivo de perguntas                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+STATIC FUNCTION AjustaSx1()
+Local cAlias	:=	Alias()
+PutSx1("MTR930","26","Codigo Tributario AM","","","mv_chq","N",01,0,2,"G","","","","","mv_par26","Sim","Sim","Sim","","Nao","Nao","Nao","","","","","","","")
+PutSx1("MTR930","27","Totaliza ICMS Entr.?","","","mv_chr","N",01,0,2,"G","","","","","mv_par27","Sim","Sim","Sim","","Nao","Nao","Nao","","","","","","","")
+PutSx1("MTR930","31","CFO de             ?","","","mv_chv","C",04,0,0,"G","","","","","mv_par31","","","","","","","","","","","","","","")
+PutSx1("MTR930","32","CFO Ate            ?","","","mv_chx","C",04,0,0,"G","","","","","mv_par32","","","","","","","","","","","","","","")
+dbSelectArea(cAlias)
+Return

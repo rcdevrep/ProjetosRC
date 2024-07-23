@@ -1,0 +1,1186 @@
+#INCLUDE "MATR090.CH"
+#INCLUDE "PROTHEUS.CH"
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MATX090  ³ Autor ³ Paulo Boschetti       ³ Data ³ 28.12.92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Emiss„o da rela‡„o de Compras                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ MATX090(void)                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ ATUALIZACOES SOFRIDAS DESDE A CONSTRUCAO INICIAL.                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ PROGRAMADOR  ³ DATA   ³ BOPS ³  MOTIVO DA ALTERACAO                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Bruno        ³09/12/98³melhor³Acerto para impressao na Argentina.     ³±±
+±±³ Cesar Valadao³31/08/99³21449A³Impressao do campo D1_LOCAL.            ³±±
+±±³ Patricia Sal.³17/12/99³XXXXXX³Troca da PesqPictQt() pela PesqPict()   ³±±
+±±³              ³        ³      ³Conversao campo Fornec.(20 pos.)/ Acerto³±±
+±±³              ³        ³      ³das Includes.                           ³±±
+±±³ Patricia Sal.³14/02/00³002574³Acerto na Totalizacao das NF's.         ³±±
+±±³ Paulo Augusto³26/05/00³Melhor³Acerto para imprimir o imposto1 no campo³±±
+±±³              ³        ³      ³de IVA que estava usando o IPI          ³±±
+±±³ Patricia Sal.³11/07/00³005088³Validar Filtro Usuario.                 ³±±
+±±³ Marcello     ³23/08/00³oooooo³Impressao da relacao em outras moedas   ³±±
+±±³ Alex Lemes   ³23/04/02³      ³Revisao Geral Implementacao Query p/SQL ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function MATX090()
+
+LOCAL wnrel     := "MATX090"
+LOCAL nOrdem    := 1
+LOCAL limite    := 220
+LOCAL cString   := "SD1"
+
+PRIVATE titulo  := OemToAnsi(STR0001)	//"Relacao de Compras"
+PRIVATE cDesc1  := OemToAnsi(STR0002)	//"Este relatorio ira imprimir a relacao de itens"
+PRIVATE cDesc2  := OemToAnsi(STR0003)	//"referentes a compras efetuadas."
+PRIVATE cDesc3  := ""
+PRIVATE cPerg   := "MTR090"
+PRIVATE tamanho := "G"
+PRIVATE aOrd    := {OemToAnsi(STR0004),OemToAnsi(STR0005),OemToAnsi(STR0006) ,OemToAnsi(STR0007)}//" Fornecedor         "###" Data De Digitacao  "###" Tipo+Grupo+Codigo  "###" Grupo+Codigo   "
+PRIVATE aReturn := {OemToAnsi(STR0008),1,OemToAnsi(STR0009), 1, 2, 1, "",1}		//"Zebrado"###"Administracao"
+PRIVATE aLinha  := { }
+PRIVATE nomeprog:= "MATX090"
+PRIVATE nLastKey:= 0
+
+cabec2:= ""
+m_pag := 01
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Pergunte("MTR090",.F.)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para parametros                         ³
+//³ mv_par01             // Produto de                           ³
+//³ mv_par02             // Produto Ate                          ³
+//³ mv_par03             // Data digitacao de                    ³
+//³ mv_par04             // Data digitacao Ate                   ³
+//³ mv_par05             // Fornecedor de                        ³
+//³ mv_par06             // Fornecedor Ate                       ³
+//³ mv_par07             // Imprime Devolucao ?                  ³
+//³ mv_par08             // Filtra Dt Devolucao ?                ³
+//³ mv_par09             // Moeda                                ³
+//³ mv_par10             // Otras moedas                         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia controle para a funcao SETPRINT                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+wnrel:=SetPrint(cString,wnrel,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.F.,aOrd,,Tamanho)
+If nLastKey == 27
+	Set Filter To
+	Return
+Endif
+SetDefault(aReturn,cString)
+If nLastKey == 27
+	Set Filter To
+	Return
+Endif
+RptStatus({|lEnd| C090Imp(@lEnd,wnRel,cString)},titulo)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ CA090Imp ³ Autor ³Alexandre Inacio Lemes ³ Data ³25/04/2002³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Chamada do Relatorio                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MTR090                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function C090Imp(lEnd,WnRel,cString)
+
+LOCAL cbCont    := 0
+LOCAL nTotal    := 0
+LOCAL nTotTip   := 0
+LOCAL nTotGrp   := 0
+LOCAL nTotProd  := 0
+LOCAL nTotForn  := 0
+LOCAL nCnt      := 0
+LOCAL nTotQt1   := 0
+LOCAL nTotQt2   := 0
+LOCAL nTotQt3   := 0
+LOCAL nTotVal1  := 0
+LOCAL nTotVal2  := 0
+LOCAL nTotVal3  := 0
+LOCAL nTotDtVal := 0
+LOCAL nTotDtCus := 0
+LOCAL nTotDtQt  := 0
+LOCAL nPosNome  := 133
+LOCAL nTamNome  := 040
+LOCAL nTamReduz := 026
+LOCAL nDecs     := Msdecimais(mv_par09) //casas decimais utilizadas na moeda da impressao
+LOCAL cTipAnt   := ""
+LOCAL cChave    := ""
+LOCAL condicao  := ""
+LOCAL cGrpAnt   := ""
+LOCAL cCondSD2  := ""
+LOCAL cIndice   := ""
+LOCAL cNomeArq  := ""
+LOCAL cNomeArq1 := ""
+LOCAL cQuery    := ""
+LOCAL cAliasSF1 := "SF1"
+LOCAL cAliasSD1 := "SD1"
+LOCAL cAliasSB1 := "SB1"
+LOCAL cAliasSA1 := "SA1"
+LOCAL cAliasSA2 := "SA2"
+LOCAL cAliasSF4 := "SF4"
+LOCAL aStrucSF1 := {}
+LOCAL aStrucSD1 := {}
+LOCAL aStrucSB1 := {}
+LOCAL aStrucSA1 := {}
+LOCAL aStrucSA2 := {}
+LOCAL aStrucSF4 := {}
+LOCAL nSD1 		:= 0
+LOCAL nSF1 		:= 0
+LOCAL nSA1 		:= 0
+LOCAL nSA2 		:= 0
+LOCAL nSF4 		:= 0  
+LOCAL nY		:= 0
+LOCAL cTipGrp	:= ""
+LOCAL cProdAnt	:= ""
+LOCAL cQuebra	:= ""
+LOCAL aRec      := {}
+LOCAL aImposto	:= {}
+LOCAL nImpInc   := 0
+LOCAL nImpNoInc	:= 0
+LOCAL nImpos	:= 0
+LOCAL cCampImp  := ""
+LOCAL nTaxa		:= 0
+LOCAL nMoeda	:= 0
+LOCAL dDtDig    := dDataBase
+LOCAL aTotais   := {0,0,0,0,0,0,0,0,0,0,0,0}
+LOCAL aTamSXG   := TamSXG("001")
+LOCAL lFiltro   := .T.                                                 
+LOCAL lQuery    := .F.
+Local cName     := ""
+Local cQryAdd   := ""
+Local nX        := 0
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Elementos do aTotais                                        ³
+//³01 e 02 = Total Imposto nao incluido e incluido / NF        ³
+//³03 e 04 = Total Imposto nao incluido e incluido / Fornecedor³
+//³05 e 06 = Total Imposto nao incluido e incluido / Data      ³
+//³07 e 08 = Total Imposto nao incluido e incluido / Grupo     ³
+//³09 e 10 = Total Imposto nao incluido e incluido / Tipo      ³
+//³11 e 12 = Total Imposto nao incluido e incluido / Geral     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+SF1->(dbsetorder(1))
+SF2->(dbsetorder(1))
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica conteudo da variavel p/ Grupo de Clientes (001)      ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+
+If cPaisLoc == "BRA"
+	If aTamSXG[1] <> aTamSXG[3]
+		cabec1:= STR0021  //"NOTA         PRODUTO         DESCRICAO                            QUANTIDADE UM      PR.UNITARIO  IPI             VALOR  ICM  CODIGO               RAZAO SOCIAL               TP TES TIPO GRUPO DATA DIG.           CUSTO LO"
+		//                    XXXXXXXXXXXX XXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXX XX XXXXXXXXXXXXXXXX XXXXX XXXXXXXXXXXXXXXX XXXXX XXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXX XX XXX X   XXXX  XX/XX/XXXX XXXXXXXXXXXXXXX XX
+		//                    0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0         1
+		//                    0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+	Else
+		cabec1:= STR0020  //"NOTA         PRODUTO         DESCRICAO                            QUANTIDADE UM      PR.UNITARIO  IPI             VALOR  ICM  CODIGO RAZAO SOCIAL                             TP TES TP  GRUPO  DATA DIG.           CUSTO LO"
+		//                    XXXXXXXXXXXX XXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXX XX XXXXXXXXXXXXXXXX XXXXX XXXXXXXXXXXXXXXX XXXXX XXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XX XXX X   XXXX  XX/XX/XXXX XXXXXXXXXXXXXXX XX
+		//                    0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0         1
+		//                    0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+	Endif
+Else
+	cabec1:= STR0022
+EndIf
+
+li := 80
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica campos para selecao                                 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nOrdem := aReturn[8]
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta IndRegua caso liste NFs de devolucao                   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If mv_par07 == 1
+	cNomeArq1:= CriaTrab("",.F.)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica data caso FILTRE NFs de devolucao fora do periodo³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If mv_par08 == 1
+		cCondSD2:="D2_FILIAL == '"+xFilial()+"' .And. DTOS(D2_EMISSAO)>='"+DTOS(mv_par03)+"'.And.DTOS(D2_EMISSAO)<='"+DTOS(mv_par04)+"'"
+	Else
+		cCondSD2:="D2_FILIAL == '"+xFilial()+"'"
+	EndIf
+	cCondSD2 += ".And. !("+IsRemito(2,'SD2->D2_TIPODOC')+")"			
+	dbSelectArea("SD2")
+	IndRegua("SD2",cNomeArq1,"D2_COD+D2_NFORI+D2_ITEMORI+D2_SERIORI+D2_CLIENTE+D2_LOJA",,cCondSD2,STR0010)		//"Selecionando Registros..."
+	nIndSD2 := RetIndex("SD2")
+	dbSelectArea("SD2")
+	#IFNDEF TOP
+		dbSetIndex(cNomeArq1+OrdBagExt())
+	#ENDIF
+	dbSetOrder(nIndSD2+1)
+	dbGoTop()
+EndIf
+
+// Se nao utiliza tamanho min., considera tamanho maximo e altera LayOut referente ao Grupo 001.
+If aTamSXG[1]  <>  aTamSXG[3]
+	nPosNome += aTamSXG[4] - aTamSXG[3]
+	nTamNome -= aTamSXG[4] - aTamSXG[3]
+Endif
+
+#IFDEF TOP
+   If (TcSrvType()#'AS/400')
+      //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+      //³ Query para SQL                 ³
+      //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+      aStrucSF1 := SF1->(dbStruct())
+      aStrucSD1 := SD1->(dbStruct())
+ 	   aStrucSB1 := SB1->(dbStruct())
+      aStrucSA1 := SA1->(dbStruct())
+      aStrucSA2 := SA2->(dbStruct())
+      aStrucSF4 := SF4->(dbStruct())
+      cALiasSF1 := "QRYSD1"
+      cAliasSD1 := "QRYSD1"
+      cALiasSB1 := "QRYSD1"
+      cALiasSA1 := "QRYSD1"
+      cALiasSA2 := "QRYSD1"
+      cALiasSF4 := "QRYSD1"
+	   lQuery :=.T.
+	   cQuery := "D1_FILIAL,D1_DOC,D1_SERIE,D1_FORNECE,D1_LOJA,D1_DTDIGIT,D1_COD,D1_QUANT,D1_VUNIT,D1_TOTAL,"
+      cQuery += "D1_VALIMP1,D1_VALIMP2,D1_VALIMP3,D1_VALIMP4,D1_VALIMP5,D1_VALIMP6,"
+      cQuery += "D1_TES,D1_IPI,D1_PICM,D1_TIPO,D1_TP,D1_GRUPO,D1_CUSTO,D1_LOCAL,D1_QTDEDEV,D1_ITEM"
+
+      If !Empty(aReturn[7])
+			For nX := 1 To SD1->(FCount())
+			 	cName := SD1->(FieldName(nX))
+			 	If AllTrim( cName ) $ aReturn[7]
+		      	If aStrucSD1[nX,2] <> "M"  
+		      		If !cName $ cQuery .And. !cName $ cQryAdd
+			        		cQryAdd += cName +","
+			       	Endif 	
+					EndIf
+				EndIf 			       	
+			Next nX
+      Endif    
+
+      cQuery := "SELECT D1_FILIAL,D1_DOC,D1_SERIE,D1_FORNECE,D1_LOJA,D1_DTDIGIT,D1_COD,D1_QUANT,D1_VUNIT,D1_TOTAL,"
+      cQuery += "D1_TES,D1_IPI,D1_PICM,D1_TIPO,D1_TP,D1_GRUPO,D1_CUSTO,D1_LOCAL,D1_QTDEDEV,D1_ITEM,F1_MOEDA,F1_TXMOEDA,F1_DTDIGIT,"
+      cQuery += "D1_VALIMP1,D1_VALIMP2,D1_VALIMP3,D1_VALIMP4,D1_VALIMP5,D1_VALIMP6,"
+      cQuery += cQryAdd
+      cQuery += "B1_DESC,B1_UM,A1_NOME,A1_NREDUZ,F4_AGREG,SD1.R_E_C_N_O_ SD1RECNO "
+	   cQuery += "FROM "+RetSqlName("SF1")+" SF1 ,"+RetSqlName("SD1")+" SD1 ,"+RetSqlName("SB1")+" SB1 ,"+RetSqlName("SA1")+" SA1 ,"+RetSqlName("SF4")+" SF4 "
+      cQuery += "WHERE "
+      cQuery += "SF1.F1_FILIAL='"+xFilial("SF1")+"' AND "
+    	cQuery += "NOT ("+IsRemito(3,'SF1.F1_TIPODOC')+ ") AND "
+	   cQuery += "SF1.D_E_L_E_T_ <> '*' AND "
+	   cQuery += "SD1.D1_FILIAL = '"+xFilial("SD1")+"' AND "
+      cQuery += "SD1.D1_DOC = SF1.F1_DOC AND "
+      cQuery += "SD1.D1_SERIE = SF1.F1_SERIE AND "
+      cQuery += "SD1.D1_FORNECE = SF1.F1_FORNECE AND "
+      cQuery += "SD1.D1_LOJA = SF1.F1_LOJA AND "
+      cQuery += "SD1.D1_TIPO IN ('D','B') AND "
+      cQuery += "SD1.D_E_L_E_T_ <> '*' AND "
+      cQuery += "SB1.B1_FILIAL ='"+xFilial("SB1")+"' AND "
+      cQuery += "SB1.B1_COD = SD1.D1_COD AND "
+      cQuery += "SB1.D_E_L_E_T_ <> '*' AND "
+      cQuery += "SF4.F4_FILIAL ='"+xFilial("SF4")+"' AND "
+      cQuery += "SF4.F4_CODIGO = SD1.D1_TES AND "
+      cQuery += "SF4.D_E_L_E_T_ <> '*' AND "
+	  cQuery += "SA1.A1_FILIAL ='"+xFilial("SA1")+"' AND "
+	  cQuery += "SA1.A1_COD = SD1.D1_FORNECE AND "
+	  cQuery += "SA1.A1_LOJA = SD1.D1_LOJA AND "
+	  cQuery += "SA1.D_E_L_E_T_ <> '*' AND "
+	  cQuery += "D1_COD >= '"  		+ MV_PAR01			+ "' AND "
+	  cQuery += "D1_COD <= '"  		+ MV_PAR02			+ "' AND "
+	  cQuery += "D1_DTDIGIT >= '"  	+ DTOS(MV_PAR03)	+ "' AND "
+	  cQuery += "D1_DTDIGIT <= '"  	+ DTOS(MV_PAR04)	+ "' AND "
+	  cQuery += "D1_FORNECE >= '"  	+ MV_PAR05			+ "' AND "
+	  cQuery += "D1_FORNECE <= '"  	+ MV_PAR06			+ "' "
+     cQuery += "UNION "
+     cQuery += "SELECT D1_FILIAL,D1_DOC,D1_SERIE,D1_FORNECE,D1_LOJA,D1_DTDIGIT,D1_COD,D1_QUANT,D1_VUNIT,D1_TOTAL,"
+     cQuery += "D1_TES,D1_IPI,D1_PICM,D1_TIPO,D1_TP,D1_GRUPO,D1_CUSTO,D1_LOCAL,D1_QTDEDEV,D1_ITEM,F1_MOEDA,F1_TXMOEDA,F1_DTDIGIT,"
+     cQuery += "D1_VALIMP1,D1_VALIMP2,D1_VALIMP3,D1_VALIMP4,D1_VALIMP5,D1_VALIMP6,"
+     cQuery += cQryAdd
+     cQuery += "B1_DESC,B1_UM,A2_NOME,A2_NREDUZ,F4_AGREG,SD1.R_E_C_N_O_ SD1RECNO "
+	  cQuery += "FROM "+RetSqlName("SF1")+" SF1 ,"+RetSqlName("SD1")+" SD1 ,"+RetSqlName("SB1")+" SB1 ,"+RetSqlName("SA2")+" SA2 ,"+RetSqlName("SF4")+" SF4 "
+     cQuery += "WHERE "
+     cQuery += "SF1.F1_FILIAL='"+xFilial("SF1")+"' AND "
+	  cQuery += "SF1.D_E_L_E_T_ <> '*' AND "
+	  cQuery += "SD1.D1_FILIAL = '"+xFilial("SD1")+"' AND "
+     cQuery += "SD1.D1_DOC = SF1.F1_DOC AND "
+     cQuery += "SD1.D1_SERIE = SF1.F1_SERIE AND "
+     cQuery += "SD1.D1_FORNECE = SF1.F1_FORNECE AND "
+     cQuery += "SD1.D1_LOJA = SF1.F1_LOJA AND "
+     cQuery += "SD1.D1_TIPO NOT IN ('D','B') AND "
+     cQuery += "NOT ("+IsRemito(3,'SD1.D1_TIPODOC')+ ") AND "
+     cQuery += "SD1.D_E_L_E_T_ <> '*' AND "
+     cQuery += "SB1.B1_FILIAL ='"+xFilial("SB1")+"' AND "
+     cQuery += "SB1.B1_COD = SD1.D1_COD AND "
+     cQuery += "SB1.D_E_L_E_T_ <> '*' AND "
+     cQuery += "SF4.F4_FILIAL ='"+xFilial("SF4")+"' AND "
+     cQuery += "SF4.F4_CODIGO = SD1.D1_TES AND "
+     cQuery += "SF4.D_E_L_E_T_ <> '*' AND "
+	  cQuery += "SA2.A2_FILIAL ='"+xFilial("SA2")+"' AND "
+	  cQuery += "SA2.A2_COD = SD1.D1_FORNECE AND "
+	  cQuery += "SA2.A2_LOJA = SD1.D1_LOJA AND "
+	  cQuery += "SA2.D_E_L_E_T_ <> '*' AND "
+	  cQuery += "D1_COD >= '"  		+ MV_PAR01			+ "' AND "
+	  cQuery += "D1_COD <= '"  		+ MV_PAR02			+ "' AND "
+	  cQuery += "D1_DTDIGIT >= '"  	+ DTOS(MV_PAR03)	+ "' AND "
+	  cQuery += "D1_DTDIGIT <= '"  	+ DTOS(MV_PAR04)	+ "' AND "
+	  cQuery += "D1_FORNECE >= '"  	+ MV_PAR05			+ "' AND "
+	  cQuery += "D1_FORNECE <= '"  	+ MV_PAR06			+ "' "
+	  
+	  If nOrdem == 1
+	     cQuery += " ORDER BY 4,5,2,3"	 //D1_FORNECE,D1_LOJA,D1_DOC,D1_SERIE	
+      ElseIf nOrdem == 2 
+	     cQuery += " ORDER BY 6,4,5,2,3" //D1_DTDIGIT,D1_FORNECE,D1_LOJA,D1_DOC,D1_SERIE		
+      ElseIf nOrdem == 3 
+	     cQuery += " ORDER BY 15,16,7,6" //D1_TP,D1_GRUPO,D1_COD,D1_DTDIGIT
+      ElseIf nOrdem == 4 
+	     cQuery += " ORDER BY 16,7,6"    //D1_GRUPO,D1_COD,D1_DTDIGIT
+      Endif
+      
+	  cQuery := ChangeQuery(cQuery)
+	  MsAguarde({|| dbUseArea(.T.,"TOPCONN",TCGenQry(,,cQuery),cALiasSD1,.T.,.T.)},OemToAnsi(STR0010)) //"Seleccionado registros"
+
+      For nSD1 := 1 to Len(aStrucSD1)
+         If aStrucSD1[nSD1,2] != 'C' .and.  FieldPos(aStrucSD1[nSD1][1]) > 0
+            TCSetField(cALiasSD1, aStrucSD1[nSD1,1], aStrucSD1[nSD1,2],aStrucSD1[nSD1,3],aStrucSD1[nSD1,4])
+         EndIf	
+      Next nSD1
+
+      For nSF1 := 1 to Len(aStrucSF1)
+         If aStrucSF1[nSF1,2] != 'C' .and.  FieldPos(aStrucSF1[nSF1][1]) > 0
+            TCSetField(cALiasSF1, aStrucSF1[nSF1,1], aStrucSF1[nSF1,2],aStrucSF1[nSF1,3],aStrucSF1[nSF1,4])
+         EndIf	
+      Next nSF1 
+      
+      For nSB1 := 1 to Len(aStrucSB1)
+         If aStrucSB1[nSB1,2] != 'C' .and.  FieldPos(aStrucSB1[nSB1][1]) > 0
+            TCSetField(cALiasSB1, aStrucSB1[nSB1,1], aStrucSB1[nSB1,2],aStrucSB1[nSB1,3],aStrucSB1[nSB1,4])
+         EndIf	
+      Next nSB1
+      
+      For nSA1 := 1 to Len(aStrucSA1)
+         If aStrucSA1[nSA1,2] != 'C' .and.  FieldPos(aStrucSA1[nSA1][1]) > 0
+            TCSetField(cALiasSA1, aStrucSA1[nSA1,1], aStrucSA1[nSA1,2],aStrucSA1[nSA1,3],aStrucSA1[nSA1,4])
+         EndIf	
+      Next nSA1
+      
+      For nSA2 := 1 to Len(aStrucSA2)
+         If aStrucSA2[nSA2,2] != 'C' .and.  FieldPos(aStrucSA2[nSA2][1]) > 0
+            TCSetField(cALiasSA2, aStrucSA2[nSA2,1], aStrucSA2[nSA2,2],aStrucSA2[nSA2,3],aStrucSA2[nSA2,4])
+         EndIf	
+      Next nSA2
+
+      For nSF4 := 1 to Len(aStrucSF4)
+         If aStrucSF4[nSF4,2] != 'C' .and.  FieldPos(aStrucSF4[nSF4][1]) > 0
+            TCSetField(cALiasSF4, aStrucSF4[nSF4,1], aStrucSF4[nSF4,2],aStrucSF4[nSF4,3],aStrucSF4[nSF4,4])
+         EndIf	
+      Next nSF4
+   Else 
+#ENDIF        
+      cNomeArq := CriaTrab("",.F.)
+      dbSelectArea(cAliasSD1)
+      If nOrdem == 1
+          cChave   := mv_par05
+          Condicao := IIF(!Empty(aReturn[7]),aReturn[7]+".And. ","")+"D1_FILIAL == '"+xFilial()+"' .And. D1_FORNECE <= '"+mv_par06+"'"
+          cIndice  := "D1_FORNECE+D1_LOJA+D1_DOC+D1_SERIE"
+      ElseIf nOrdem == 2
+	      cChave   := dtos(mv_par03)
+          Condicao := IIF(!Empty(aReturn[7]),aReturn[7]+".And. ","")+"D1_FILIAL == '"+xFilial()+"' .And. dtos(D1_DTDIGIT) <= '"+dtos(mv_par04)+"'"
+          cIndice  := "Dtos(D1_DTDIGIT)+D1_FORNECE+D1_LOJA+D1_DOC+D1_SERIE"
+      ElseIf nOrdem == 3
+          Condicao := IIF(!Empty(aReturn[7]),aReturn[7]+".And. ","")+"D1_FILIAL == '"+xFilial()+"'"
+	      cIndice  := "D1_TP+D1_GRUPO+D1_COD+Dtos(D1_DTDIGIT)"
+      ElseIf nOrdem == 4
+          Condicao := IIF(!Empty(aReturn[7]),aReturn[7]+".And. ","")+"D1_FILIAL == '"+xFilial()+"'"
+	      cIndice  := "D1_GRUPO+D1_COD+Dtos(D1_DTDIGIT)"
+      Endif
+     Condicao += ".And. !("+IsRemito(2,'SD1->D1_TIPODOC')+")"			
+      IndRegua("SD1",cNomeArq,cIndice,,Condicao,STR0010)		//"Selecionando Registros..."
+      nIndSD1 := RetIndex("SD1")
+      dbSelectArea(cAliasSD1)
+#IFNDEF TOP
+      dbSetIndex(cNomeArq+OrdBagExt())
+#ENDIF	   
+      dbSetOrder(nIndSD1+1)	
+      If nOrdem == 1 .Or. nOrdem == 2
+	     MsSeek(cChave,.T.)
+      Else
+	     dbGoTop()
+      Endif
+#IFDEF TOP	
+   Endif
+#ENDIF                   
+
+SetRegua(SD1->(RecCount())) // Total de Elementos da Regua
+dbSelectArea(cAliasSD1)
+
+nTotQt   := 0
+nTotVal  := 0
+
+cProdAnt := (cAliasSD1)->D1_COD
+cGrpAnt  := (cAliasSD1)->D1_GRUPO
+cTipAnt  := (cAliasSD1)->D1_TP
+cTipGrp  := (cAliasSD1)->D1_TP+(cAliasSD1)->D1_GRUPO
+cCodAnt  := (cAliasSD1)->D1_DOC
+cForna   := (cAliasSD1)->D1_FORNECE
+cSerNf   := (cAliasSD1)->D1_SERIE
+
+If nOrdem == 1
+	cQuebra      := (cAliasSD1)->D1_FORNECE
+Elseif nOrdem == 2
+	cQuebraDtDig := (cAliasSD1)->D1_DTDIGIT
+Endif
+
+If !lQuery
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ posiciona o cabecalho da nota                                ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	(cAliasSF1)->(MsSeek((cAliasSD1)->D1_FILIAL+(cAliasSD1)->D1_DOC+(cAliasSD1)->D1_SERIE+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA))
+Endif
+
+nTaxa   :=(cAliasSF1)->F1_TXMOEDA
+nMoeda  :=(cAliasSF1)->F1_MOEDA
+dDtDig  :=(cAliasSF1)->F1_DTDIGIT
+
+While !Eof()
+	
+	If lEnd
+		@PROW()+1,001 PSAY STR0011		//"CANCELADO PELO OPERADOR"
+		Exit
+	Endif
+	
+	lFiltro := Iif(((cAliasSD1)->D1_COD < mv_par01 .Or. (cAliasSD1)->D1_COD > mv_par02) .Or.;
+	((cAliasSD1)->D1_DTDIGIT < mv_par03 .Or. (cAliasSD1)->D1_DTDIGIT > mv_par04) .Or.;
+	((cAliasSD1)->D1_FORNECE < mv_par05 .Or. (cAliasSD1)->D1_FORNECE > mv_par06),.F.,.T.)
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica o Filtro do usuario                                 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If !Empty(aReturn[7]) .And. lFiltro
+		lFiltro := Iif(&(aReturn[7]),.T.,.F.)
+	Endif
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica Moeda                                               ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	if mv_par10==2  //nao imprimir notas com moeda diferente da escolhida
+		if if((cAliasSF1)->F1_MOEDA==0,1,(cAliasSF1)->F1_MOEDA) != mv_par09
+			lFiltro := .F.
+		endif
+	endif
+	
+	#IFDEF SHELL
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Despreza Nota Fiscal Cancelada.                              ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If (cAliasSD1)->D1_CANCEL == "S"
+			lFiltro := .F.
+		EndIf
+	#ENDIF
+	
+	If lFiltro
+		
+		If li > 60
+			cabec(titulo+" ("+alltrim(aOrd[nOrdem])+")",cabec1,cabec2,nomeprog,tamanho,15)
+		Endif
+		
+		@ li,000 PSAY (cAliasSD1)->D1_DOC Picture PesqPict("SD1","D1_DOC",Len((cAliasSD1)->D1_DOC))
+		@ li,013 PSAY (cAliasSD1)->D1_COD Picture PesqPict("SD1","D1_COD",6)
+		
+		If !lQuery
+			dbSelectArea(cAliasSB1)
+			dbSetOrder(1)
+			If MsSeek(xFilial()+(cAliasSD1)->D1_COD)
+				@ li,029 PSAY Substr((cAliasSB1)->B1_DESC,1,30)
+			Endif
+		Else
+			@ li,029 PSAY Substr((cAliasSB1)->B1_DESC,1,30)
+		Endif
+		
+		dbSelectArea(cAliasSD1)
+		
+		If cPaisLoc <> "BRA"
+			aImpostos:=TesImpInf((cAliasSD1)->D1_TES)
+			nImpInc	:=	0
+			nImpNoInc:=	0
+			nImpos	:=	0
+			For nY:=1 to Len(aImpostos)
+				cCampImp:=(cAliasSD1)+"->"+(aImpostos[nY][2])
+				nImpos:=&cCampImp
+				nImpos:=xmoeda(nImpos,nMoeda,mv_par09,dDtDig,nDecs+1,nTaxa)
+				If ( aImpostos[nY][3]=="1" )
+					nImpInc	+=nImpos
+				Else
+					nImpNoInc+=nImpos
+				EndIf
+			Next
+			aTotais[01] += nImpNoInc // Total imposto nao incluido / NF
+			aTotais[02] += nImpInc   // Total imposto incluido     / NF
+			aTotais[03] += nImpNoInc // Total imposto nao incluido / Fornecedor
+			aTotais[04] += nImpInc   // Total imposto incluido     / Fornecedor
+			aTotais[05] += nImpNoInc // Total imposto nao incluido / Data
+			aTotais[06] += nImpInc   // Total imposto incluido     / Data
+			aTotais[07] += nImpNoInc // Total imposto nao incluido / Grupo
+			aTotais[08] += nImpInc   // Total imposto incluido     / Grupo
+			aTotais[09] += nImpNoInc // Total imposto nao incluido / Tipo
+			aTotais[10] += nImpInc   // Total imposto incluido     / Tipo
+			aTotais[11] += nImpNoInc // Geral imposto nao incluido
+			aTotais[12] += nImpInc   // Geral imposto incluido
+		Endif
+		
+		@ li,060 PSAY (cAliasSD1)->D1_QUANT    Picture PesqPict("SD1","D1_QUANT",16)
+		@ li,077 PSAY (cAliasSB1)->B1_UM       Picture PesqPict("SB1","B1_UM",2)
+		@ li,080 PSAY xmoeda((cAliasSD1)->D1_VUNIT,(cAliasSF1)->F1_MOEDA,mv_par09,(cAliasSF1)->F1_DTDIGIT,nDecs+1,(cAliasSF1)->F1_TXMOEDA) Picture PesqPict("SD1","D1_VUNIT",16,mv_par09)
+		
+		If cPaisloc=="BRA"
+			@ li,097 PSAY (cAliasSD1)->D1_IPI  Picture PesqPict("SD1","D1_IPI",5)
+			@ li,103 PSAY xmoeda((cAliasSD1)->D1_TOTAL,(cAliasSF1)->F1_MOEDA,mv_par09,(cAliasSF1)->F1_DTDIGIT,nDecs+1,(cAliasSF1)->F1_TXMOEDA) Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+			@ li,120 PSAY (cAliasSD1)->D1_PICM Picture PesqPict("SD1","D1_PICM",5)
+			@ li,126 PSAY (cAliasSD1)->D1_FORNECE
+		Else
+			@ li,097 PSAY nImpNoInc   	Picture TM(nImpNoInc,12)
+			@ li,110 PSAY xmoeda((cAliasSD1)->D1_TOTAL,(cAliasSF1)->F1_MOEDA,mv_par09,(cAliasSF1)->F1_DTDIGIT,nDecs+1,(cAliasSF1)->F1_TXMOEDA) Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+			@ li,127 PSAY nImpInc     	Picture TM(nImpInc,12)
+			@ li,140 PSAY (cAliasSD1)->D1_FORNECE
+		Endif
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Exibir Cod. e Nome do Fornecedor/Cliente conf. o tipo da Nota ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If (cAliasSD1)->D1_TIPO $ "DB"
+			If !lQuery
+				dbSelectArea(cAliasSA1)
+				dbSetOrder(1)
+				If MsSeek(xFilial()+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA)
+					If cPaisLoc == "BRA"
+						@ li,nPosNome PSAY Substr((cAliasSA1)->A1_NOME,1,nTamNome)
+					Else
+						@ li,147 PSAY Left((cAliasSA1)->A1_NREDUZ,nTamReduz)
+					EndIf
+				Endif
+			Else
+				If cPaisLoc == "BRA"
+					@ li,nPosNome PSAY Substr((cAliasSA1)->A1_NOME,1,nTamNome)
+				Else
+					@ li,147 PSAY Left((cAliasSA1)->A1_NREDUZ,nTamReduz)
+				EndIf
+			Endif
+		Else
+			If !lQuery
+				dbSelectArea(cAliasSA2)
+				dbSetOrder(1)
+				If MsSeek(xFilial()+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA)
+					If cPaisLoc == "BRA"
+						@ li,nPosNome PSAY Substr((cAliasSA2)->A2_NOME,1,nTamNome)
+					Else
+						@ li,147 PSAY Left((cAliasSA2)->A2_NREDUZ,nTamReduz)
+					EndIf
+				Endif
+			Else
+				If cPaisLoc == "BRA"
+					@ li,nPosNome PSAY Substr((cAliasSA2)->A1_NOME,1,nTamNome)
+				Else
+					@ li,147 PSAY Left((cAliasSA2)->A1_NREDUZ,nTamReduz)
+				Endif
+			Endif
+		EndIf
+		
+		dbSelectArea(cAliasSD1)
+		
+		@ li,174 PSAY (cAliasSD1)->D1_TIPO		Picture PesqPict("SD1","D1_TIPO",2)
+		@ li,177 PSAY (cAliasSD1)->D1_TES		Picture PesqPict("SD1","D1_TES",3)
+		@ li,181 PSAY (cAliasSD1)->D1_TP		Picture PesqPict("SD1","D1_TP",2)
+		@ li,185 PSAY (cAliasSD1)->D1_GRUPO		Picture PesqPict("SD1","D1_GRUPO",4)
+		@ li,191 PSAY (cAliasSD1)->D1_DTDIGIT
+		nAuxCus:=xmoeda((cAliasSD1)->D1_CUSTO,1,mv_par09,(cAliasSF1)->F1_DTDIGIT,nDecs+1,(cAliasSF1)->F1_TXMOEDA)
+		@ li,201 PSAY nAuxCus					Picture PesqPict("SD1","D1_CUSTO",15,mv_par09)
+		@ li,218 PSAY (cAliasSD1)->D1_LOCAL		Picture PesqPict("SD1","D1_LOCAL",2)
+		
+		If !lQuery
+			dbSelectArea(cAliasSF4)
+			MsSeek(xFilial()+(cAliasSD1)->D1_TES)
+		Endif
+		
+		If (cAliasSF4)->F4_AGREG <> "N"
+			nTotForn += nAuxCus //D1_CUSTO
+			nTotProd += nAuxCus //D1_CUSTO
+			nTotal   += nAuxCus //D1_CUSTO
+			nTotDtCus+= nAuxCus //D1_CUSTO
+			nAuxTot:=xmoeda((cAliasSD1)->D1_TOTAL,(cAliasSF1)->F1_MOEDA,mv_par09,(cAliasSF1)->F1_DTDIGIT,nDecs+1,(cAliasSF1)->F1_TXMOEDA)
+			nTotQt   += (cAliasSD1)->D1_QUANT
+			nTotVal  += nAuxTot //D1_TOTAL
+			nTotQt1  += (cAliasSD1)->D1_QUANT
+			nTotVal1 += nAuxTot //D1_TOTAL
+			nTotQt2  += (cAliasSD1)->D1_QUANT          // Total Geral da Quant.
+			nTotVal2 += nAuxTot //D1_TOTAL   // Total Geral do Valor
+			nTotQt3  += (cAliasSD1)->D1_QUANT
+			nTotVal3 += nAuxTot //D1_TOTAL
+			nTotDtQt += (cAliasSD1)->D1_QUANT
+			nTotDtVal+= nAuxTot //D1_TOTAL
+		Endif
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Verificar a existencia de Devolucoes de Compras.              ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		dbSelectArea(cAliasSD1)
+		If (cAliasSD1)->D1_QTDEDEV <> 0 .And. mv_par07 == 1
+			AADD(aRec,Iif(lQuery,SD1RECNO,Recno()))
+		Endif
+		nCnt+=1
+		li++
+		
+	Endif
+	
+	dbSelectArea(cAliasSD1)
+	dbSkip()
+	IncRegua()
+	
+	lFiltro := Iif(((cAliasSD1)->D1_COD < mv_par01 .Or. (cAliasSD1)->D1_COD > mv_par02) .Or.;
+	((cAliasSD1)->D1_DTDIGIT < mv_par03 .Or. (cAliasSD1)->D1_DTDIGIT > mv_par04) .Or.;
+	((cAliasSD1)->D1_FORNECE < mv_par05 .Or. (cAliasSD1)->D1_FORNECE > mv_par06),.F.,.T.)
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica o Filtro do usuario                                 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If !Empty(aReturn[7]) .And. lFiltro
+		lFiltro := Iif(&(aReturn[7]),.T.,.F.)
+	Endif
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica Moeda                                               ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	if mv_par10==2  //nao imprimir notas com moeda diferente da escolhida
+		if if((cAliasSF1)->F1_MOEDA==0,1,(cAliasSF1)->F1_MOEDA) != mv_par09
+			lFiltro := .F.
+		endif
+	endif
+	
+	#IFDEF SHELL
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Despreza Nota Fiscal Cancelada.                              ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If (cAliasSD1)->D1_CANCEL == "S"
+			lFiltro := .F.
+		EndIf
+	#ENDIF
+	
+	If (((cAliasSD1)->D1_DOC+(cAliasSD1)->D1_SERIE+(cAliasSD1)->D1_FORNECE <> cCodAnt+cSerNF+cForna .And. nOrdem <3).Or.;
+		((cAliasSD1)->D1_COD <> cProdAnt .And. nOrdem >2)) .And. lFiltro .Or. Eof()
+		
+		nSaveRec := Iif(lQuery,SD1RECNO,Recno())
+		
+		If nCnt >= 1 .And. nOrdem < 3
+			ImpTotN(nTotProd,titulo,nOrdem,aTotais)
+			aTotais[1] := 0 // Total imposto nao incluido / NF
+			aTotais[2] := 0 // Total imposto incluido     / NF
+		Endif
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Tratar Devolucoes de Compras.                                 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		
+		For i:=1 to Len(aRec)
+			
+			dbSelectArea("SD1")
+			dbGoto(aRec[i])
+			dbSelectArea("SD2")
+			MsSeek(SD1->D1_COD+SD1->D1_DOC+SD1->D1_ITEM+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA)
+			SF2->(MsSeek(SD2->D2_FILIAL+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA))
+			
+			nTaxa   :=SF2->F2_TXMOEDA
+			nMoeda  :=SF2->F2_MOEDA
+			dDtDig  :=SF2->F2_EMISSAO
+			
+			While !Eof() .And. SD1->D1_COD+SD1->D1_DOC+SD1->D1_ITEM+SD1->D1_SERIE+SD1->D1_FORNECE+SD1->D1_LOJA ==;
+				SD2->D2_COD+SD2->D2_NFORI+SD2->D2_ITEMORI+SD2->D2_SERIORI+SD2->D2_CLIENTE+SD2->D2_LOJA
+				
+				If i == 1
+					@ li++,000 PSAY STR0012		//'-Devolucoes:'
+				Endif
+				
+				@ li,000 PSAY SD2->D2_DOC Picture PesqPict("SD2","D2_DOC",Len((cAliasSD1)->D1_DOC))
+				@ li,013 PSAY SD2->D2_COD Picture PesqPict("SD2","D2_COD",6)
+				
+				dbSelectArea("SB1")
+				dbSetOrder(1)
+				If MsSeek(xFilial()+SD1->D1_COD,.F.)
+					@ li,029 PSAY Substr(SB1->B1_DESC,1,30)
+				Endif
+				
+				dbSelectArea("SD2")
+				
+				If cPaisLoc <> "BRA"
+					aImpostos:=TesImpInf(SD2->D2_TES)
+					nImpInc	:=	0
+					nImpNoInc:=	0
+					nImpos	:=	0
+					For nY:=1 to Len(aImpostos)
+						cCampImp:="SD2->"+(aImpostos[nY][2])
+						nImpos:=&cCampImp
+						nImpos:=xmoeda(nImpos,nMoeda,mv_par09,dDtDig,nDecs+1,nTaxa)
+						If ( aImpostos[nY][3]=="1" )
+							nImpInc	+=nImpos
+						Else
+							nImpNoInc+=nImpos
+						EndIf
+					Next
+					aTotais[01] += nImpNoInc // Total imposto nao incluido / NF
+					aTotais[02] += nImpInc   // Total imposto incluido     / NF
+					aTotais[03] += nImpNoInc // Total imposto nao incluido / Fornecedor
+					aTotais[04] += nImpInc   // Total imposto incluido     / Fornecedor
+					aTotais[05] += nImpNoInc // Total imposto nao incluido / Data
+					aTotais[06] += nImpInc   // Total imposto incluido     / Data
+					aTotais[07] += nImpNoInc // Total imposto nao incluido / Grupo
+					aTotais[08] += nImpInc   // Total imposto incluido     / Grupo
+					aTotais[09] += nImpNoInc // Total imposto nao incluido / Tipo
+					aTotais[10] += nImpInc   // Total imposto incluido     / Tipo
+					aTotais[11] += nImpNoInc // Geral imposto nao incluido
+					aTotais[12] += nImpInc   // Geral imposto incluido
+				Endif
+				
+				@ li,060 PSAY SD2->D2_QUANT * -1 Picture PesqPict("SD2","D2_QUANT",16)
+				@ li,077 PSAY SB1->B1_UM		  Picture PesqPict("SB1","B1_UM",2)
+				@ li,080 PSAY xmoeda(SD2->D2_PRCVEN,SF2->F2_MOEDA,mv_par09,SF2->F2_EMISSAO,nDecs+1,SF2->F2_TXMOEDA) Picture PesqPict("SD2","D2_PRCVEN",16,mv_par09)
+				
+				If cPaisloc=="BRA"
+					@ li,097 PSAY SD2->D2_IPI		Picture PesqPict("SD2","D2_IPI",5)
+					@ li,103 PSAY xmoeda(SD2->D2_TOTAL * -1,SF2->F2_MOEDA,mv_par09,SF2->F2_EMISSAO,nDecs+1,SF2->F2_TXMOEDA)	Picture PesqPict("SD2","D2_TOTAL",16,mv_par09)
+					@ li,120 PSAY SD2->D2_PICM		Picture PesqPict("SD2","D2_PICM",5)
+					@ li,126 PSAY SD2->D2_CLIENTE
+				Else
+					@ li,097 PSAY nImpNoInc   Picture  TM(nImpNoInc,12)
+					@ li,110 PSAY xmoeda(D2_TOTAL * -1,SF2->F2_MOEDA,mv_par09,SF2->F2_EMISSAO,nDecs+1,SF2->F2_TXMOEDA)	Picture PesqPict("SD2","D2_TOTAL",16,mv_par09)
+					@ li,127 PSAY nImpInc     Picture  TM(nImpInc,12)
+					@ li,140 PSAY SD2->D2_CLIENTE
+				Endif
+				
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Exibir Cod. e Nome do Fornecedor/Cliente conf. o tipo da Nota ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				
+				dbSelectArea("SA2")
+				dbSetOrder(1)
+				If MsSeek(xFilial()+SD2->D2_CLIENTE+SD2->D2_LOJA)
+					If cPaisLoc == "BRA"
+						@ li,nPosNome  PSAY Substr(("SA2")->A2_NOME,1,nTamNome)
+					Else
+						@ li,147 PSAY Left(("SA2")->A2_NREDUZ,nTamReduz)
+					EndIf
+				Endif
+				
+				dbSelectArea("SD2")
+				
+				@ li,174 PSAY SD2->D2_TIPO		Picture PesqPict("SD2","D2_TIPO",2)
+				@ li,177 PSAY SD2->D2_TES		Picture PesqPict("SD2","D2_TES",3)
+				@ li,181 PSAY SD2->D2_TP		Picture PesqPict("SD2","D2_TP",1)
+				@ li,185 PSAY SD2->D2_GRUPO		Picture PesqPict("SD2","D2_GRUPO",4)
+				@ li,191 PSAY SD2->D2_EMISSAO
+				@ li,201 PSAY xmoeda(SD2->D2_CUSTO1 * -1,SF2->F2_MOEDA,mv_par09,SF2->F2_EMISSAO,nDecs+1,SF2->F2_TXMOEDA)  Picture PesqPict("SD2","D2_CUSTO1",15,mv_par09)
+				@ li,218 PSAY SD2->D2_LOCAL		Picture PesqPict("SD2","D2_LOCAL",2)
+				
+				dbSelectArea("SF4")
+				MsSeek(xFilial()+SD2->D2_TES)
+				
+				If SF4->F4_AGREG <> "N"
+					nAuxCus:=xmoeda(SD2->D2_CUSTO1,1,mv_par09,SF2->F2_EMISSAO,nDecs+1,SF2->F2_TXMOEDA)
+					nAuxTot:=xmoeda(SD2->D2_TOTAL,SF2->F2_MOEDA,mv_par09,SF2->F2_EMISSAO,nDecs+1,SF2->F2_TXMOEDA)
+					nTotQt1  -= SD2->D2_QUANT
+					nTotVal1 -= nAuxTot //D2_TOTAL
+					nTotQt2  -= SD2->D2_QUANT
+					nTotVal2 -= nAuxTot //D2_TOTAL
+					nTotForn -= nAuxCus //D2_CUSTO1
+					nTotal   -= nAuxCus //D2_CUSTO1
+					nTotDtQt  -= SD2->D2_QUANT
+					nTotDtVal -= nAuxTot //D2_TOTAL
+					nTotDtCus -= nAuxCus //D2_CUSTO1
+					
+					nTotQt   -= SD2->D2_QUANT
+					nTotVal  -= nAuxTot //D2_TOTAL
+					nTotQt3  -= SD2->D2_QUANT
+					nTotVal3 -= nAuxTot //D2_TOTAL
+					nTotProd -= nAuxCus //D2_CUSTO1
+					
+				Endif
+				
+				li++
+				
+				dbSelectArea("SD2")
+				dbSkip()
+				
+			EndDo
+			
+			dbSelectArea(cAliasSD1)
+			
+		Next
+		
+		dbgoto(nSaveRec)
+		aRec := {}
+		dbSelectArea(cAliasSD1)
+		
+		If nOrdem == 1 .Or. nOrdem == 2
+			
+			If Len(aRec) <> 0
+				@ li++,000 PSAY Replicate('-',220)
+			Endif
+			
+			If nCnt >= 1
+				
+				If  nOrdem == 1 .and. (cAliasSD1)->D1_FORNECE <> cQuebra .Or. nOrdem == 2 .and. (cAliasSD1)->D1_FORNECE <> cForna
+					ImpTotF(nTotForn,titulo,nOrdem,nTotQt1,nTotVal1,aTotais)
+					aTotais[3] := 0 // Total imposto nao incluido / Fornecedor
+					aTotais[4] := 0 // Total imposto incluido     / Fornecedor
+					nTotForn   := 0
+					ntotQt1    := 0
+					nTotVal1   := 0
+				Endif
+				
+				IF nOrdem == 2 .and. (cAliasSD1)->D1_DTDIGIT <> cQuebraDtDig
+					ImpTotDt(nTotDtCus,titulo,nOrdem,nTotDtQt,nTotDtVal,cQuebraDtDig,aTotais)
+					aTotais[5] := 0 // Total imposto nao incluido / Data
+					aTotais[6] := 0 // Total imposto incluido     / Data
+					nTotDtVal  := 0
+					nTotDtCus  := 0
+					nTotDtQt   := 0
+				Endif
+				
+			Endif
+			
+			If !lQuery
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ posiciona o cabecalho da nota                                ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				(cAliasSF1)->(MsSeek((cAliasSD1)->D1_FILIAL+(cAliasSD1)->D1_DOC+(cAliasSD1)->D1_SERIE+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA))
+			EndIf
+			
+			nTaxa   := (cAliasSF1)->F1_TXMOEDA
+			nMoeda  := (cAliasSF1)->F1_MOEDA
+			dDtDig  := (cAliasSF1)->F1_DTDIGIT
+			cCodAnt := (cAliasSD1)->D1_DOC
+			cForna  := (cAliasSD1)->D1_FORNECE
+			cSerNf  := (cAliasSD1)->D1_SERIE
+			nTotProd:= 0
+			nTotQt  := 0
+			nTotVal := 0
+			nCnt    := 0
+			
+			If nOrdem == 1
+				cQuebra      := (cAliasSD1)->D1_FORNECE
+			Elseif nOrdem == 2
+				cQuebraDtDig := (cAliasSD1)->D1_DTDIGIT
+			Endif
+			
+		Else
+			
+			If (nTotProd <> 0 .Or. cProdAnt <> (cAliasSD1)->D1_COD) .And. nCnt >= 1
+				ImpTotPr(nTotProd,cTipGrp,titulo,nOrdem)
+			EndIf
+			nTotGrp += nTotProd
+			nTotProd := 0
+			nTotQt   := 0
+			nTotVal  := 0
+			cProdAnt := (cAliasSD1)->D1_COD
+			nCnt     := 0
+			
+			If IIf(nOrdem == 3,(cAliasSD1)->D1_TP+(cAliasSD1)->D1_GRUPO <> cTipGrp,(cAliasSD1)->D1_GRUPO <> cGrpAnt)
+				If nTotGrp <> 0
+					ImpTotGrp(nTotGrp,cGrpAnt,cTipAnt,titulo,nOrdem,nTotQt1,nTotVal1,aTotais)
+					aTotais[07] := 0 // Total imposto nao incluido / Grupo
+					aTotais[08] := 0 // Total imposto incluido     / Grupo
+				EndIf
+				nTotTip += nTotGrp
+				nTotGrp  := 0
+				nTotQT1  := 0
+				nTotVal1 := 0
+				cTipGrp  := (cAliasSD1)->D1_TP+(cAliasSD1)->D1_GRUPO
+				cGrpAnt  := (cAliasSD1)->D1_GRUPO
+			Endif
+			
+			If IIf(nOrdem == 3,(cAliasSD1)->D1_TP <> cTipAnt,.t.)
+				If nTotTip <> 0 .and. nOrdem == 3
+					ImpTotTip(nTotTip,cTipAnt,titulo,nOrdem,nTotQt3,nTotVal3,aTotais)
+					aTotais[09] := 0 // Total imposto nao incluido / Tipo
+					aTotais[10] := 0 // Total imposto incluido     / Tipo
+				EndIf
+				nTotTip := 0
+				nTotQt3 := 0
+				nTotVal3:= 0
+				cTipAnt := (cAliasSD1)->D1_TP
+			Endif
+			
+		Endif
+		
+	Endif
+	
+EndDo
+
+If li <> 80
+	If nTotal <> 0
+		If li > 60
+			cabec(titulo+" ("+alltrim(aOrd[nOrdem])+")",cabec1,cabec2,nomeprog,tamanho,15)
+		Endif
+		If nOrdem == 2
+			li++
+		Endif
+		If li > 60
+			cabec(titulo+" ("+alltrim(aOrd[nOrdem])+")",cabec1,cabec2,nomeprog,tamanho,15)
+		Endif
+		
+		@ li,000 PSAY STR0013		//"TOTAL GERAL       --> "
+		@ li,060 PSAY nTotQt2   		Picture PesqPict("SD1","D1_QUANT",16)
+		If cPaisLoc == "BRA"
+			@ li,103 PSAY nTotVal2  	Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+		Else
+			@ li,097 PSAY aTotais[11] 	Picture TM(aTotais[7],12)
+			@ li,110 PSAY nTotVal2  	Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+			@ li,127 PSAY aTotais[12] 	Picture TM(aTotais[8],12)
+		EndIf
+		@ li,201 PSAY nTotal    		Picture PesqPict("SD1","D1_CUSTO",15,mv_par09)
+		li++
+		Roda(CbCont,"NOTAS","G")
+	Endif
+Endif
+
+#IFDEF TOP
+	dbCloseArea(cAliasSD1)
+#ENDIF
+
+RetIndex("SD1")
+dbSelectArea("SD1")
+Set Filter To
+dbSetOrder(1)
+
+RetIndex("SD2")
+dbSelectArea("SD2")
+Set Filter to
+dbSetOrder(1)
+
+If File(cNomeArq+OrdBagExt())
+	Ferase(cNomeArq+OrdBagExt())
+Endif
+
+If File(cNomeArq1+OrdBagExt())
+	Ferase(cNomeArq1+OrdBagExt())
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Se em disco, desvia para Spool                               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If aReturn[5] = 1
+	Set Printer To
+	dbCommitAll()
+	OurSpool(wnrel)
+Endif
+
+MS_FLUSH()
+
+Return .T.
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ ImpTotPr ³ Autor ³ Paulo Boschetti       ³ Data ³ 28.12.92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprime total do produto                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ ImpTotPr(void)                                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MatX090                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpTotPr(nTotProd,cTipGrp,titulo,nOrdem)
+If li > 60
+	cabec(titulo+" ("+alltrim(aOrd[nOrdem])+")",cabec1,cabec2,nomeprog,tamanho,15)
+Endif
+@ li,000 PSAY STR0014		//"TOTAL PRODUTO     --> "
+@ li,060 PSAY nTotQt   		Picture PesqPict("SD1","D1_QUANT",16)
+If cPaisLoc == "BRA"
+	@ li,103 PSAY nTotVal  	Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+Else
+	@ li,110 PSAY nTotVal  	Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+EndIf
+@ li,201 PSAY nTotProd 		Picture PesqPict("SD1","D1_CUSTO",15,mv_par09)
+li++
+Return .T.
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ ImpTotGrp³ Autor ³ Paulo Boschetti       ³ Data ³ 28.12.92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprime total do Grupo                                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ ImpTotGrp(void)                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpTotGrp(nTotGrp,cGrupo,cTipAnt,titulo,nOrdem,nTotQt1,nTotVal1,aTotais)
+If li > 60
+	cabec(titulo+" ("+alltrim(aOrd[nOrdem])+")",cabec1,cabec2,nomeprog,tamanho,15)
+Endif
+@ li,000 PSAY STR0015+cGrupo+"  --> "		//"TOTAL GRUPO "
+@ li,060 PSAY nTotQt1  			Picture PesqPict("SD1","D1_QUANT",16)
+If cPaisLoc == "BRA"
+	@ li,103 PSAY nTotVal1 		Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+Else
+	@ li,097 PSAY aTotais[07] 	Picture TM(aTotais[07],12)
+	@ li,110 PSAY nTotVal1 		Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+	@ li,127 PSAY aTotais[08] 	Picture TM(aTotais[08],12)
+EndIf
+@ li,201 PSAY nTotGrp  			Picture PesqPict("SD1","D1_CUSTO",15,mv_par09)
+If nOrdem == 4
+	li+=2
+Else
+	li++
+Endif
+Return .T.
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ ImpTotTip³ Autor ³ Paulo Boschetti       ³ Data ³ 28.12.92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprime Total do Tipo                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ ImpTotTip(void)                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MatX090                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpTotTip(nTotTip,cTipo,titulo,nOrdem,nTotQt3,nTotVal3,aTotais)
+If li > 60
+	cabec(titulo+" ("+alltrim(aOrd[nOrdem])+")",cabec1,cabec2,nomeprog,tamanho,15)
+Endif
+@ li,000 PSAY STR0016+cTipo+"    --> "		//"TOTAL TIPO  "
+@ li,060 PSAY nTotQt3   		Picture PesqPict("SD1","D1_QUANT",16)
+If cPaisLoc == "BRA"
+	@ li,103 PSAY nTotVal3  	Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+Else
+	@ li,097 PSAY aTotais[09] 	Picture TM(aTotais[09],12)
+	@ li,110 PSAY nTotVal3  	Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+	@ li,127 PSAY aTotais[10] 	Picture TM(aTotais[10],12)
+EndIf
+@ li,201 PSAY nTotTip   		Picture PesqPict("SD1","D1_CUSTO",15,mv_par09)
+li+=2
+Return .T.
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ ImpTotN  ³ Autor ³ Paulo Boschetti       ³ Data ³ 28.12.92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprime Total da Nota Fiscal                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ ImpTotN(void)                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MatX090                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpTotN(nTotProd,titulo,nOrdem,aTotais)
+If li > 60
+	cabec(titulo+" ("+alltrim(aOrd[nOrdem])+")",cabec1,cabec2,nomeprog,tamanho,15)
+Endif
+//If nTotProd <> 0
+	@ li,000 PSAY STR0017		//"TOTAL NOTA FISCAL --> "
+	@ li,060 PSAY nTotQt 			Picture PesqPict("SD1","D1_QUANT",16)
+	If cPaisLoc == "BRA"
+		@ li,103 PSAY nTotVal		Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+	Else
+		@ li,097 PSAY aTotais[1] 	Picture TM(aTotais[1],12)
+		@ li,110 PSAY nTotVal	  	Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+		@ li,127 PSAY aTotais[2] 	Picture TM(aTotais[2],12)
+	EndIf
+	@ li,201 PSAY nTotProd			Picture PesqPict("SD1","D1_CUSTO",15,mv_par09)
+	li+=1
+//EndIf
+Return .T.
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ ImpTotF  ³ Autor ³ Paulo Boschetti       ³ Data ³ 28.12.92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprime Total do Fornecedor                                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ ImpTotF(void)                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MatX090                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpTotF(nTotProd,titulo,nOrdem,nTotQt1,nTotVal1,aTotais)
+If li > 60
+	cabec(titulo+" ("+alltrim(aOrd[nOrdem])+")",cabec1,cabec2,nomeprog,tamanho,15)
+Endif
+If nTotProd <> 0
+	@ li,000 PSAY STR0018		//"TOTAL FORNECEDOR  --> "
+	@ li,060 PSAY nTotQt1  			Picture PesqPict("SD1","D1_QUANT",16)
+	If cPaisLoc == "BRA"
+		@ li,103 PSAY nTotVal1 		Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+	Else
+		@ li,097 PSAY aTotais[3] 	Picture TM(aTotais[3],12)
+		@ li,110 PSAY nTotVal1 		Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+		@ li,127 PSAY aTotais[4] 	Picture TM(aTotais[4],12)
+	EndIf
+	@ li,201 PSAY nTotProd 			Picture PesqPict("SD1","D1_CUSTO",15,mv_par09)
+	li+=2
+EndIf
+Return .T.
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ ImpTotDt ³ Autor ³ Rogerio F. Guimaraes  ³ Data ³ 05.12.92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Imprime Total das Notas por data de digitacao              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ ImpTotDT                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MatX090                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpTotDt(nTotCus,titulo,nOrdem,nTotQt,nTotVal,cQuebraDtDig,aTotais)
+If li > 60
+	cabec(titulo+" ("+alltrim(aOrd[nOrdem])+")",cabec1,cabec2,nomeprog,tamanho,15)
+Endif
+If nTotVal <> 0
+	@ li,000 PSAY STR0019+DTOC(cQuebraDtDig) //"TOT.DA DATA "
+	@ li,060 PSAY nTotQt 			Picture PesqPict("SD1","D1_QUANT",16)
+	If cPaisLoc == "BRA"
+		@ li,103 PSAY nTotVal		Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+	Else
+		@ li,097 PSAY aTotais[5] 	Picture TM(aTotais[5],12)
+		@ li,110 PSAY nTotVal		Picture PesqPict("SD1","D1_TOTAL",16,mv_par09)
+		@ li,127 PSAY aTotais[6] 	Picture TM(aTotais[6],12)
+	EndIf
+	@ li,201 PSAY nTotCus			Picture PesqPict("SD1","D1_CUSTO",15,mv_par09)
+	li++
+	@ li,000 PSAY Replicate("-",220)
+	li+=1
+EndIf
+Return .T.

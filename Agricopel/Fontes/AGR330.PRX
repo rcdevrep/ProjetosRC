@@ -1,0 +1,233 @@
+/*SIGAVILLE
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Cliente      ³ POSTO MIME 			                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Programa     ³ AGR330.PRX       ³ Responsavel ³ CRISTIANO NOVAK        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o    ³ TELA DE ALTERACAO DE DADOS DO PEDIDO                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Data        ³ 21/03/03   	   ³ Implatacao ³                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Programador ³ FRANCO FLINER                                           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Objetivos   ³ Rotina para alteracao de dados do pedido para serem     ³±±
+±±³             ³ alterados apos liberacao do pedido                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Arquivos    ³                                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Indices     ³                                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Parametros  ³                                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Observacoes ³                                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Cuidados na ³                                                         ³±±
+±±³ Atualizacao ³                                                         ³±±
+±±³ de versao   ³                                                         ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+SIGAVILLE */
+#Include "Rwmake.ch"
+
+User Function AGR330()
+
+Private inclui := .F. // variável necessária para abertura da tela de relacionamento de PA
+Private altera := .T. // variável necessária para abertura da tela de relacionamento de PA
+
+	cPerg := "AGR330"
+	aRegistros := {}
+	AADD(aRegistros,{cPerg,"01","Numero do Pedido   ?","mv_ch1","C",6,0,0,"G","","mv_par01","","","","","","","","","","","","","","",""})
+
+	U_CriaPer(cPerg,aRegistros)
+
+	cTransp    := ""
+	cTpFrete   := ""
+	cRedespacho:= ""
+	nFrete     := 0
+	nSeguro    := 0
+	nDespesa   := 0
+	nPesol     := 0
+	nPBruto    := 0
+	nVolume1   := 0
+	cEspeci1   := ""
+	CPlaca     := ""
+	cPedcli    := ""
+	cText1     := ""
+	CText2     := ""
+	cMENSA1    := ""
+	cMENSA2    := ""
+	cMENSA3    := ""
+
+	dbSelectArea("SC5") // Cabecalho de Pedidos
+	dbSetOrder(1)
+
+	//SAVE1:=SAVESCREEN(00,00,24,79)
+
+	//While lPerg
+	//////  RESTSCREEN(00,00,24,79,SAVE1) //////
+
+	if Pergunte(cPerg,.t.)
+		SELE SC5
+		IF dbSeek(xFilial("SC5")+mv_par01)
+			cTRANSP     := SC5->C5_TRANSP
+			If !Empty(SC5->C5_TPFRETE)
+				cTPFRETE    := SC5->C5_TPFRETE
+			Else
+				cTPFRETE    := "C"
+			EndIf
+			cREDESPACHO := SC5->C5_REDESP
+			nFRETE      := SC5->C5_FRETE
+			nSEGURO     := SC5->C5_SEGURO
+			nDESPESA    := SC5->C5_DESPESA
+			If !EMPTY(SC5->C5_CODTEX1)
+				cTEXT1      := SC5->C5_CODTEX1
+			Else
+				cTEXT1      := "001"
+			EndIf
+			If !EMPTY(SC5->C5_CODTEX2)
+				cTEXT2      := SC5->C5_CODTEX2
+			Else
+				cTEXT2      := "002"
+			EndIf
+			nVOLUME1    := SC5->C5_VOLUME1
+			cESPECI1    := SC5->C5_ESPECI1
+			CPLACA      := SC5->c5_PLACA
+			cPEDCLI     := SC5->C5_PEDCLI
+			nPESOL      := SC5->C5_PESOL
+			nPBRUTO     := SC5->C5_PBRUTO
+			cMENSA1     := SC5->C5_MENS1
+			cMENSA2     := SC5->C5_MENS2
+			cMENSA3     := SC5->C5_MENS3
+
+			aCRA      :={ "Confirma" , "Redigita" , "Abandona" }
+			nOp1:=0
+			@ 05,05 TO 380,610 DIALOG oDlg1 TITLE "Pedido - "+SC5->C5_NUM
+			@ 05,05 TO 170,300
+			//@ 175,260 BUTTON "Confirma" Size 40,10  ACTION Fecha()
+			@ 010,010 Say "Transp: "
+			@ 010,045 Get cTransp F3 "SA4" SIZE 50,10
+			@ 020,010 Say "Tp Frete: "+space(15)+" (C)if  ou  (F)ob "
+			@ 020,045 Get cTpFrete valid Pertence("CF")
+			@ 030,010 Say "Redespacho: "
+			@ 030,045 Get cRedespacho PICT "@!" F3 "SA4"  SIZE 50,10
+			@ 040,010 Say "Vl. Frete : "
+			@ 040,045 Get nFrete PICT "@E 9,999,999,999.99" SIZE 50,10
+			@ 010,110 Say "Vl. Seguro: "
+			@ 010,160 Get nSeguro PICT "@E 999,999.99"
+			@ 020,110 Say "Despesa : "
+			@ 020,160 Get nDespesa PICT "@E 999,999.99"
+			@ 030,110 Say "Volume 1: "
+			@ 030,160 Get nVolume1 pict "@E 99999" SIZE 50,10
+			@ 040,110 Say "Especie 1: "
+			@ 040,160 Get cEspeci1 Pict "@X" SIZE 90,10
+			@ 050,110 Say "Placa. : "
+			//		@ 050,160 Get cPlaca Pict "@X"
+			@ 050,160 Get cPlaca valid (Vazio() .Or. ExistCpo("DA3")) Pict "@X" F3 "DA3" SIZE 50,10
+			@ 060,110 Say "Pedido Cliente. : "
+			@ 060,160 Get cPedcli Pict "@X" SIZE 50,10
+			@ 050,010 Say "Peso Liq.: "
+			@ 050,045 Get nPesol pict "@E 9,999,999.99" SIZE 50,10
+			@ 060,010 Say "Peso Bruto: "
+			@ 060,045 Get nPBruto pict "@E 9,999,999.99" SIZE 50,10
+			@ 070,010 Say "Tx. Leg.1: "
+			@ 070,045 Get cText1 PICT "@!" F3 "SZ4" SIZE 50,10
+			@ 080,010 Say "Tx. Leg.2: "
+			@ 080,045 Get cText2 PICT "@!" F3 "SZ4" SIZE 50,10
+			@ 090,010 Say "Mensagem:"
+			@ 100,045 Get cMensa1 PICT "@!S45" SIZE 240,10
+			@ 110,045 Get cMensa2 PICT "@!S45" SIZE 240,10
+			@ 120,045 Get cMensa3 PICT "@!S45" SIZE 240,10
+
+			@ 175,100 BUTTON "Relaciona PA" Size 80,10  ACTION RELPA()
+			@ 175,200 BMPBUTTON TYPE 1 ACTION Fecha()
+			@ 175,250 BMPBUTTON TYPE 2 ACTION Close(oDlg1)
+			ACTIVATE DIALOG oDlg1 CENTERED
+			if nOp1 == 0
+				Return
+			endif
+			Processa( { ||GRAVA_ALT() }, )
+		Else
+			MsgBox ("NUMERO DO PEDIDO NAO ENCONTRADO","Aten‡Æo","ALERT")
+		Endif
+	Endif
+	//End
+return
+
+STATIC FUNCTION GRAVA_ALT()
+
+	GravaSF2(nVolume1)
+	
+	dbselectarea('SC5') 
+	Reclock("SC5",.f.)
+		SC5->C5_TRANSP  :=cTransp
+		SC5->C5_TPFRETE :=cTpFrete
+		SC5->C5_REDESP  :=cRedespacho
+		SC5->C5_FRETE   :=nFrete
+		SC5->C5_SEGURO  :=nSeguro
+		SC5->C5_DESPESA :=nDespesa
+		SC5->C5_PESOL   :=nPesol
+		SC5->C5_PBRUTO  :=nPBruto
+		SC5->C5_VOLUME1 :=nVolume1
+		SC5->C5_ESPECI1 :=cEspeci1
+		SC5->C5_PLACA   :=CPlaca
+		SC5->C5_PEDCLI  :=cPedcli
+		SC5->C5_CODTEX1 :=cText1
+		SC5->C5_CODTEX2 :=cText2
+		SC5->C5_MENS1	 :=cMensa1
+		SC5->C5_MENS2	 :=cMensa2
+		SC5->C5_MENS3	 :=cMensa3
+
+	SC5->(MsUnlock())
+	
+return
+
+STATIC FUNCTION FECHA
+
+	Close(oDlg1)
+	nOp1:= 1
+Return
+
+STATIC FUNCTION RELPA
+
+cModulo := "TMK" // CHAMADA VIA CALL CENTER
+
+SETFUNNAME("MATA410")
+DbSelectArea("SC5")
+SC5->(dbSetOrder(1)) //Ordeno no índice 1
+
+	If SC5->(dbSeek(xFilial("SC5")+SC5->C5_NUM)) //Localizo o meu pedido
+       //   MatA410(Nil, Nil, 4, Nil, "A410Altera") //executo a função padrão MatA410
+	             MatA410(Nil, Nil, Nil, Nil, "A410Altera") //executo a função padrão MatA410
+
+     EndIf
+	 
+Return
+
+
+Static Function GravaSF2(xVolume1)
+
+	//Local nVolSF2    := 0 
+	
+	Dbselectarea('SD2')
+	DbSetOrder(8)
+	If DbSeek(xfilial('SD2') + SC5->C5_NUM )
+
+		//Se Tiver só um item atualiza SF2
+		Dbselectarea('SF2')
+		DbsetOrder(1)
+		If DbSeek(xFilial('SF2') + SD2->D2_DOC  + SD2->D2_SERIE )
+			
+			//nVolSF2 := ( xVolume1 - SC5->C5_VOLUME1) 
+			//If  nVolSF2 <> 0 
+				DbSelectarea('SF2')
+				RecLock('SF2',.F.)
+					SF2->F2_VOLUME1 := xVolume1 //(SF2->F2_VOLUME1 + nVolSF2)
+				SF2->(MsUnlock())	
+			//Endif 
+		Endif 
+	Endif 
+
+Return 

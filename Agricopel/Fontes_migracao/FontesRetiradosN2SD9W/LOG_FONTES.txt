@@ -1,0 +1,22 @@
+Alterados para Pe Equivalente Shell: 
+- (Nx030tok - PASTA PE SHELL)MA030TOK.prw -> Duplicou com SHELL_MA030TOK   - Compilado na versão 17 Verificar - Fonte   07/02/17 14:10:50   MA030TOK.PRW(NÃO COMPILADO NA CUSTOM)
+- (NxD2460 - PASTA PE SHELL) MSD2460.prw  -> Duplicou com SHELL_MSD2460    - Compilado na versão 17 Verificar - Fonte   07/02/17 14:10:21   MSD2460.PRW(NÃO COMPILADA NA CUSTOM)
+- (NX2460i - PASTA PE SHELL) SF2460I.prw  -> Duplicou com SHELL_SF2460I 	  - Compilado na versão 17 Verificar - Fonte   11/12/18 10:20:20   SF2460I.PRW(NÃO COMPILADA NA CUSTOM)
+- (NXTMKCBP) TMKCBPRO.prw -> OK criado Pe Shell NXTMKCBP
+- (NX410ALT) Mt410Alt.prw -> OK Já tem pe (NX410ALT) Duplicou com SHELL_MT410ALT	- Compilado em produção Verificar 
+
+Alterados para _Custom e Criado Equivalente Shell
+- (Nx100lOk - PASTA PE SHELL) MT100LOK.prw -> Duplicou com SHELL_MT100LOK   - Compilado na versão 17 Verificar - Fonte   29/01/19 09:31:58   MT100LOK.PRW(Mesma Data na Custom)
+- (SH120LOK - PASTA PE SHELL) MT120LOK.prw -> Duplicou com SHELL_MT120LOK   - Compilado na versão 17 Verificar - Fonte   28/08/17 10:34:32   MT120LOK.PRW(CUSTOM 02/08/17 09:53:45 )
+- (NX1100i - PASTA PE SHELL) SD1100I.prw  -> Duplicou com SHELL_SD1100I    - Compilado na versão 17 Verificar - Fonte   11/12/18 10:01:47   SD1100I.PRW(CUSTOM 02/08/17 09:53:35 )
+- (NX2520e - PASTA PE SHELL) SF2520e.prw  -> Duplicou com SHELL_SF2520E    - Compilado na versão 17 Verificar - Fonte   30/09/19 18:19:30   SF2520E.PRW(Mesma Data na Custom)
+- (NX410LOK - PASTA PE SHELL )M410LIOK     -> Duplicou com SHELL_M410LIOK   - Compilado na versão 17 Verificar - Fonte   08/12/17 11:23:19   M410LIOK_SHELL_AJUSTADO (CUSTOM 02/08/17 09:53:35)
+
+Pendentes
+MS520VLD.prw -> Duplicou com SHELL_MS520VLD   - Compilado na versão 17 Verificar - Fonte   03/10/19 16:58:53   MS520VLD.PRW(Mesma Data na Custom)
+WTABELA.PRW  -> Duplicou com SHELL_SHELLXCALL - Compilado na versão 17 Verificar - Fonte   07/02/17 14:10:32   WTABELA.PRW(não compilada na custom)
+
+
+Excluídos do RPO 
+DLGR230.PRW  -> OK - RETIRADO pois o Fonte copiado do padrao e alterado user function para DLGR230X(Não usado)
+M030TOK.PRW  -> ok funcionou - Compilado em produção Verificar 

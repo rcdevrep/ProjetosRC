@@ -1,0 +1,1095 @@
+#include "rwmake.ch"
+#INCLUDE "TOPCONN.CH"
+#INCLUDE "FWPrintSetup.ch"
+#INCLUDE "AP5MAIL.CH"
+#Include 'Protheus.ch'
+#include "fileio.ch"
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºFUNCAO    ³AGR213    ºAutor  ³ALAN LEANDRO        º Data ³  13/02/03   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Pedido                                                      º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³SIGATMK  - Rotina de televendas                             º±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ ATUALIZACOES SOFRIDAS DESDE A CONSTRUCAO INICIAL.                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ PROGRAMADOR  ³ DATA   ³ BOPS ³MOTIVO DA ALTERACAO                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Fabio Rogerio ³12/09/00³      ³Revisao para a versao 5.08              ³±±
+±±³Armando Tessar³01/08/02³      ³Revisao para a versao 7.10              ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+User Function Tmkr03()
+
+	Local   lImprime := GETNEWPAR('MV_XIMPORC', .F.)
+
+	Private _lEmail := .F.
+	Private oFont12 := TFont():New( "Courier New"    ,,13,,.t.,,,,,.f. ) 
+	Private oFont16 := TFont():New( "Courier New"    ,,16,,.t.,,,,,.f. ) 
+	Private oFont10 := TFont():New( "Courier New"    ,,12,,.t.,,,,,.f. )
+	Private oFont05	:= TFont():New( "Courier New"    ,,10,,.t.,,,,,.f. )
+	Private oHGray		:= TBrush():New( , CLR_HGRAY )
+	Private li := 0
+	Private nTamcol := 18
+	Private cPedOrc    := "Orçamento" 
+	Private cNumPedOrc := ""
+	Private cNomeAtend := ""
+	Private cTelAtend  := ""
+	Private cCC  := ""
+
+	cPerg    := ""
+	Limite   := 80
+	cString  :="SUA"
+	cDesc1   := OemToAnsi("Este programa tem como objetivo, imprimir o relatorio")
+	cDesc2   := OemToAnsi("de metas dos vendedores e grupos de produtos selecionados")
+	cDesc3   := ""
+	nChar    := 18
+	cTamanho := "P"
+	cProduto := ""
+
+	aReturn  := {OemToAnsi("Zebrado"),1,OemToAnsi("Administracao"),2,2,1,"",1}
+	cNomeProg:= "TMKR03"
+	aLinha   := {}
+	nLastKey := 0
+
+	Titulo   := "ESPELHO DO PEDIDO DE VENDA"
+	cCabec1  := ""
+	cCabec2  := ""
+	cCancel  := "***** CANCELADO PELO OPERADOR *****"
+	m_pag    := 1        //Variavel que acumula numero da pagina
+	wnrel    := "TMKR03" //Nome Default do relatorio em Disco
+	cTipoImp := "L"
+
+	If (FunName() == "#TMKR03") .or. (FunName() == "#TMKR3A") .or. (FunName() == "TMKR03") .or. (FunName() == "TMKR3A")
+	
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Verifica as perguntas selecionadas .³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		cPerg := "TMK003"
+
+		If UPPER(CUSERNAME) <> "ELAINEAH" .and.;
+			UPPER(CUSERNAME) <> "MARI"     .and.;
+			UPPER(CUSERNAME) <> "MERCIA"   .and.;
+			UPPER(CUSERNAME) <> "NARA"     .and.;
+			UPPER(CUSERNAME) <> "NEIA"     .and.;
+			UPPER(CUSERNAME) <> "OSWALDO"  .and.;
+			UPPER(CUSERNAME) <> "SILVIA"   .and.;
+			UPPER(CUSERNAME) <> "TATIANE"  .and.;
+			UPPER(CUSERNAME) <> "LESLIE"   .and.;
+			UPPER(CUSERNAME) <> "ADMINISTRADOR"
+		
+			cTipoImp := "M"
+			EndIf
+
+		Pergunte(cPerg,.F.)
+		SetPrint(cString,wnrel,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.F.,"",.F.,cTamanho)
+	Else
+		SetPrint(cString,wnrel,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.F.,"",.F.,cTamanho)
+	Endif
+
+	If nLastKey <> 27
+		_lEmail := .F.
+		SetDefault(aReturn,cString)
+		RptStatus({|lEnd| STMKIMP(@lEnd,wnrel,cString)},Titulo)
+	Endif
+ 
+	If lImprime
+		If msgyesno('Deseja enviar email com o Orçamento/Pedido ?')
+			//Seta Relatório por email
+			_lEmail := .T.
+			STMKIMP2()
+		Endif
+	Endif
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºFuncao    ³C003      ºAutor  ³LUIS MARCELO KOTAKI º Data ³  06/11/97   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Chamada do Relatorio                                       º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ TMKR03                                                     º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function STMKIMP(lEnd,WnRel,cString)
+
+	Local lFirst    := .F.
+
+	PRIVATE aFatura   := {}
+	PRIVATE cFormPag  := ""
+	PRIVATE nTamLinha := 1
+	Private oPrn
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para Impressao do Cabecalho e Rodape  .³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cbtxt    := SPACE(10)
+	cbcont   := 0
+	li       := 80
+	m_pag    := 1
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se deve comprimir ou nao                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+	If !("TMKR03" $ FunName()) .and. !("TMKR3A" $ FunName())
+		MV_PAR01 := ""
+		MV_PAR02 := "ZZZZZZ"
+		Mv_Par03 := Ctod("01/01/00")
+		Mv_Par04 := Ctod("31/12/20")
+		MV_PAR05 := SUA->UA_NUM
+		MV_PAR06 := SUA->UA_NUM
+	EndIf
+
+	GeraQry()
+
+	Li := nTamLinha
+
+	SetPrc(0,0)
+	@ 000,000 PSAY CHR(18)
+
+	dbSelectArea("ALA")
+	dbGoTop()
+	Procregua(Reccount())
+	While !EOF()
+		IncProc()
+
+		If lEnd
+			@Prow()+1,001 PSAY "CANCELADO PELO OPERADOR"
+			Exit
+		EndIf
+
+		IMPCABEC()
+
+		lFirst:=.T.
+
+		CABITEM()
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Imprime os produtos/servicos pedidos.³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		nCont := 0
+		dbSelectArea("SUB")
+		dbSetOrder(1)
+		dbSeek(xFilial("SUB")+ALA->UA_NUM)
+		While !EOF() .and. (xFilial("SUB") == SUB->UB_FILIAL) .and. (ALA->UA_NUM    == SUB->UB_NUM)
+			nCont++
+
+			dbSelectArea("SUB")
+			dbSkip()
+		End
+
+
+		if cTipoImp == "M"
+			nPagR := nCont / 9
+		else
+			nPagR := nCont / 8
+		endif
+
+		nPagR++
+		cPagR := Alltrim(str(nPagR))
+		cPagR := substr(cPagR,1,1)
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Imprime os produtos/servicos pedidos.³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		dbSelectArea("SUB")
+		dbSetOrder(1)
+		If dbSeek(xFilial("SUB")+ALA->UA_NUM)
+			nVrunit  := 0
+			nTotQtd  := 0
+			nTotGeral:= 0
+
+			cProduto := ''
+			xTotQtd  := 0
+			xTotGeral:= 0
+			xVrunit  := 0
+
+			nPagA := 1
+
+			dbSelectArea("SUB")
+			Do While !Eof() .and. (xFilial("SUB") == SUB->UB_FILIAL) .and. (ALA->UA_NUM    == SUB->UB_NUM)
+				If Li == 23
+
+					@ 027,000		PSAY " ************  CONTINUA ************ "
+					@ 029,000		PSAY time() + " | Pagina: "+Alltrim(str(nPagA))+" - "+cPagR
+					@ 031,000		PSAY " "
+
+					nPagA++
+
+					if cTipoImp == "L"
+						Li := 1
+					else
+						Li := 33 //33
+					endif
+					IMPCABEC()
+					CABITEM()
+				ElseIf Li == 53
+					@ 057,000		PSAY " ************  CONTINUA ************ "
+					@ 059,000		PSAY time() + " | Pagina: "+Alltrim(str(nPagA))+" - "+cPagR
+
+					nPagA++
+					LI := 1
+					IMPCABEC()
+					CABITEM()
+				EndIf
+
+				dbSelectArea("SUB")
+				_cDesc1 := ""
+
+				dbSelectArea("SB1")
+				dbSetOrder(1)
+				dbGotop()
+				dbSeek(xFilial("SB1")+SUB->UB_PRODUTO)
+
+				If SB1->B1_PESO > 0
+					_cDesc1 := Substr(SB1->B1_DESC,1,38)
+				Else
+					_cDesc1 := "*" + Substr(SB1->B1_DESC,1,38)
+				EndIf
+
+				Li++
+
+				//soma ST no total
+				nValxST    := 0
+				nValUnitST := 0
+				dbSelectArea("SUB")
+				If FieldPos("UB_XVLST") > 0
+					If SUB->UB_XVLST > 0
+						nValxST 	:= SUB->UB_XVLST
+						nValUnitST  := (SUB->UB_XVLST / SUB->UB_QUANT  )
+					Endif
+				endif
+
+				@ Li,001		PSAY ALLTRIM(SUB->UB_PRODUTO)
+				@ Li,010		PSAY _cDesc1
+				@ Li,054		PSAY SUB->UB_UM
+
+				If SM0->M0_CODIGO == "02"
+					@ Li,055		PSAY SUB->UB_QUANT			PICTURE "@E 999,999.99"
+					@ Li,065		PSAY (SUB->UB_VRUNIT + nValUnitST)  PICTURE "@E 99999.9999"
+				Else
+					@ Li,055		PSAY SUB->UB_QUANT			PICTURE "@E 999,999.99"
+					@ Li,065		PSAY (SUB->UB_VRUNIT + nValUnitST) 	PICTURE "@E 999,999.99"
+				EndIf
+
+				dbSelectArea("SUB")
+
+				nTotQtd  += SUB->UB_QUANT
+				nVrunit  := SUB->UB_VRUNIT  + nValUnitST
+
+				nTotGeral+= SUB->UB_VLRITEM + nValxST
+
+				dbSelectArea("SUB")
+				dbSkip()
+			EndDo
+
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Imprime os totais de quantidade e valor.³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			Li+= 2
+			@ Li,000 PSAY Repl("-",80)
+			Li++
+
+
+			nTotGeral := nTotGeral - (nTotGeral * (ALA->UA_PDESCAB/100))
+
+			If xTotGeral > 0
+				xTotGeral := xTotGeral - (xTotGeral * (ALA->UA_PDESCAB/100))
+			EndIf
+
+			// Atualiza atendimento caso seja valor diferente do que saiu na impressao Cfe Neia 19/09/2006
+			If Empty(cProduto )
+				dbSelectArea("SUA")
+				If nTotGeral <> SUA->UA_VALBRUT .or. ;
+						nTotGeral <> SUA->UA_VALMERC .or. ;
+						nTotGeral <> SUA->UA_VLRLIQ  .or. ;
+						nTotGeral <> SUA->UA_FINANC
+
+					RecLock("SUA",.F.)
+					SUA->UA_VALBRUT := nTotGeral
+					SUA->UA_VALMERC := nTotGeral
+					SUA->UA_VLRLIQ  := nTotGeral
+					SUA->UA_FINANC  := nTotGeral
+					MsUnlock("SUA")
+				EndIf
+			Endif
+
+			@ Li,000 PSAY "Total das quantidades:" + Transform(nTotQtd, PESQPICT("SUB","UB_QUANT") )
+			@ Li,040 PSAY "Valor total do Pedido:" + Transform((nTotGeral+xTotGeral), "@E 99,999,999.99")
+
+			If Li > 33
+				@ 059,000		PSAY time() + " | Pagina: "+Alltrim(str(nPagA))+" - "+cPagR
+				nPagA++
+
+				Li := 1
+			Else
+				@ 029,000		PSAY time() + " | Pagina: "+Alltrim(str(nPagA))+" - "+cPagR
+				@ 031,000		PSAY " "
+
+				nPagA++
+				Li := 33
+			Endif
+
+		EndIf
+
+		aFatura   := {}
+		nTotQtd   := 0
+		nTotGeral := 0
+		xTotQtd   := 0
+		xTotGeral := 0
+
+		dbSelectArea("ALA")
+		dbSkip()
+
+	End
+
+	If (Select("ALA") <> 0)
+		dbSelectArea("ALA")
+		dbCloseArea()
+	Endif
+
+	Set Device To Screen
+
+	SetPgEject(.F.)  //Incluido para corrigir avanco de folha apos atualizacao do sistema em 13.02.04
+
+	If aReturn[5] == 1
+		Set Printer TO
+		dbcommitAll()
+		ourspool(wnrel)
+	EndIf
+
+	MS_FLUSH()
+
+Return
+
+Static Function IMPCABEC()
+
+	cNome     := Posicione("SA1",1,xFilial("SA1")+ALA->UA_CLIENTE+ALA->UA_LOJA,"SA1->A1_NOME")
+	cCGC      := Posicione("SA1",1,xFilial("SA1")+ALA->UA_CLIENTE+ALA->UA_LOJA,"SA1->A1_CGC")
+	cTpPessoa := Posicione("SA1",1,xFilial("SA1")+ALA->UA_CLIENTE+ALA->UA_LOJA,"SA1->A1_PESSOA")
+	cCid      := Posicione("SA1",1,xFilial("SA1")+ALA->UA_CLIENTE+ALA->UA_LOJA,"SA1->A1_MUN")
+	cEst      := Posicione("SA1",1,xFilial("SA1")+ALA->UA_CLIENTE+ALA->UA_LOJA,"SA1->A1_EST")
+	cDDD      := Posicione("SA1",1,xFilial("SA1")+ALA->UA_CLIENTE+ALA->UA_LOJA,"SA1->A1_DDD")
+	cTEL      := Posicione("SA1",1,xFilial("SA1")+ALA->UA_CLIENTE+ALA->UA_LOJA,"SA1->A1_TEL")
+	cBairro   := Posicione("SA1",1,xFilial("SA1")+ALA->UA_CLIENTE+ALA->UA_LOJA,"SA1->A1_BAIRRO")
+
+	cFormatCGC := If(cTpPessoa=="F",Transform(cCGC, "@R 999.999.999-99"),Transform(cCGC, "@R 99.999.999/9999-99"))
+
+	DbSelectArea("SL4")
+	DbSetOrder(1)
+	cFormPag := ""
+	If MsSeek(xFilial("SL4") + ALA->UA_Num + "SIGATMK")
+		Do While .not. eof() .and.;
+				SL4->L4_Filial == xFilial("SL4") .and.;
+				SL4->L4_Num == ALA->UA_Num .and.;
+				Trim(SL4->L4_ORIGEM) == "SIGATMK"
+
+			If Empty(cFormPag)
+				cFormPag := SL4->L4_FORMA
+			Endif
+			AaDd(aFatura, {SL4->L4_Data, SL4->L4_Valor, SL4->L4_Forma} )
+			DbSkip()
+		EndDo
+	EndIf
+
+	If SUA->UA_OPER == "1"
+		DbSelectArea("SC5")
+		DbSetOrder(1)
+		If MsSeek(xFilial("SC5") + ALA->UA_NUMSC5)
+			lSC5 := .T.
+		EndIf
+	EndIf
+
+	If !_lEmail
+		@ Li,000 PSAY Repl("-",80)
+		Li++
+		@ Li,000 PSAY "Pedido: " + ALA->UA_NUMSC5
+		@ Li,040 PSAY "Data: " + DTOC(ALA->UA_EMISSAO)
+		@ Li,058 PSAY "Orcamento: " + ALA->UA_NUM
+		Li++
+		@ Li,000 PSAY "Peso Total: " + AllTrim(Transform(GetPeso(ALA->UA_NUM), "@E 99,999,999.99")) + " KG"
+		@ Li,040 PSAY "Bairro: " + Alltrim(cBairro)
+		Li++
+		@ Li,000 PSAY "Cliente: " + ALA->UA_CLIENTE + "/" + ALA->UA_LOJA + " - " + Alltrim(SubStr(cNome,1,32)) + " | " + Alltrim(cCid) + ' / ' + cEst
+		Li++
+		@ Li,030 PSAY "Fone       : " + cDDD + " " + cTEL
+		Li++
+		@ Li,000 PSAY "Prazo: " + ALLTRIM(Posicione("SE4",1,xFilial("SE4")+ALA->UA_CONDPG,"E4_DESCRI"))
+		@ Li,030 PSAY "Forma Pagto: " + ALLTRIM(Posicione("SX5",1,xFilial("SX5")+"24"+cFormPag,"X5_DESCRI"))
+		@ Li,055 PSAY "% Desc.à Vista: " + Transform(ALA->UA_PDESCAB, "@E 99.99")
+		Li++
+		@ Li,000 PSAY "Obs: "+SUBSTR(ALA->UA_OBSERVA,1,70)
+		Li++
+		@ Li,000 PSAY "Representantes: "
+		@ Li,016 PSAY ALA->UA_VEND + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND,"A3_NREDUZ")
+		Li++
+
+		lVend2 := .F.
+		lVend3 := .F.
+
+		If !Empty(ALA->UA_VEND2)
+			@ Li,016 PSAY ALA->UA_VEND2 + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND2,"A3_NREDUZ")
+			Li++
+			lVend2 := .T.
+		EndIf
+		If !Empty(ALA->UA_VEND3)
+			@ Li,016 PSAY ALA->UA_VEND3 + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND3,"A3_NREDUZ")
+			Li++
+			lVend3 := .T. //lVend23 := .T.
+		EndIf
+
+		If !Empty(ALA->UA_VEND6)
+			@ Li,010 PSAY "Arla: " + ALA->UA_VEND6 + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND6,"A3_NREDUZ")
+			Li++
+		EndIf
+		If !Empty(ALA->UA_VEND7)
+			@ Li,010 PSAY "Arla: " + ALA->UA_VEND7 + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND7,"A3_NREDUZ")
+			Li++
+		EndIf
+		If !Empty(ALA->UA_VEND8)
+			@ Li,016 PSAY "Arla: " + ALA->UA_VEND8 + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND8,"A3_NREDUZ")
+			Li++
+		EndIf
+		Li++
+
+		@ Li,000 PSAY "Transportadora: "
+		@ Li,016 PSAY ALA->UA_TRANSP + " - " + Posicione("SA4",1,xFilial("SA4")+ALA->UA_TRANSP,"A4_NREDUZ")
+
+		If !lVend2 .And. !lVend3
+			Li++
+		EndIf
+	Else
+		//Logo do Atendimento
+		cLogoD := GetSrvProfString("Startpath","") + "ATEND" + cEmpAnt + cFilAnt + ".BMP"
+
+		// Caso não exista logo de atendimento
+		// Seta a logo do Danfe
+		If !(FILE(cLogoD))
+			cLogoD := GetSrvProfString("Startpath","") + "DANFE" + cEmpAnt + cFilAnt + ".BMP"
+		Endif
+
+		//Renderiza o logo no cabeçalho
+		oPrn:SayBitmap(-030, 048, cLogoD, 400, 400)
+
+		nLiIni := Li
+
+		//Monta linha horizontal superior do cabeçalho
+		oPrn:Line(Li, 0030, Li, 2350)
+
+		LI+=nTamLinha
+
+		oPrn:Say(  Li,500               , "Orcamento: " + ALA->UA_NUM,oFont12,100)
+		If alltrim(ALA->UA_NUMSC5) <> ""
+			oPrn:Say(  Li,500 +(040*nTamcol), "Pedido: " + ALA->UA_NUMSC5,oFont12,100)
+		Endif
+
+		LI+=nTamLinha
+		oPrn:Say(  Li,500 , "CNPJ: " + Alltrim(cFormatCGC), oFont12,100)
+		oPrn:Say(  Li,500+(040*nTamcol) , "Data: " + DTOC(ALA->UA_EMISSAO),oFont12,100)
+		LI+=nTamLinha
+		oPrn:Say(  Li,500 , "Cliente: " + ALA->UA_CLIENTE + "/" + ALA->UA_LOJA + " - " + Alltrim(SubStr(cNome,1,32)) + " | " + Alltrim(cCid) + ' / ' + cEst,oFont12,100)
+		LI+=nTamLinha
+		oPrn:Say(  Li,500 , "Peso Total: " + AllTrim(Transform(GetPeso(ALA->UA_NUM), "@E 99,999,999.99")) + " KG",oFont12,100)
+		oPrn:Say(  Li,500+(040*nTamcol) , "Bairro: " + Alltrim(cBairro),oFont12,100)
+		LI+=nTamLinha
+		oPrn:Say(  Li,500+(040*nTamcol) , "Fone  : " + cDDD + " " + cTEL,oFont12,100)
+		oPrn:Say(  Li,500 , "Forma Pagto: " + ALLTRIM(Posicione("SX5",1,xFilial("SX5")+"24"+cFormPag,"X5_DESCRI")),oFont12,100)
+
+		LI+=nTamLinha
+		oPrn:Say(  Li,500 , "Prazo: " + ALLTRIM(Posicione("SE4",1,xFilial("SE4")+ALA->UA_CONDPG,"E4_DESCRI")),oFont12,100)
+		oPrn:Say(  Li,500+(040*nTamcol) , "Transportadora: ",oFont12,100)
+		oPrn:Say(  Li,500+(040*nTamcol)+(016*nTamcol) , ALA->UA_TRANSP + " - " + Posicione("SA4",1,xFilial("SA4")+ALA->UA_TRANSP,"A4_NREDUZ"),oFont12,100)
+
+		LI+=nTamLinha
+
+		oPrn:Say(  Li,500+(040*nTamcol) , "Tipo Frete: "+iif(alltrim(ALA->UA_TPFRETE)== "C","CIF","FOB"),oFont12,100)
+
+		oPrn:Say(  Li,050 , "Representantes: ",oFont12,100)
+		oPrn:Say(  Li,050+(016*nTamcol) , ALA->UA_VEND + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND,"A3_NREDUZ"),oFont12,100)
+
+		LI+=nTamLinha
+		oPrn:Say(  Li,1000 , "Obs: "+SUBSTR(ALA->UA_OBSERVA,1,60),oFont12,100)
+		oPrn:Say(  Li+nTamLinha,1000 , "     "+SUBSTR(ALA->UA_OBSERVA,61,60),oFont12,100)
+
+		lVend2 := .F.
+		lVend3 := .F.
+		If !Empty(ALA->UA_VEND2)
+			oPrn:Say(  Li,050+(016*nTamcol) , ALA->UA_VEND2 + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND2,"A3_NREDUZ"),oFont12,100)
+			LI+=nTamLinha
+			lVend2 := .T.
+		EndIf
+		If !Empty(ALA->UA_VEND3)
+			oPrn:Say(  Li,050+(016*nTamcol) , ALA->UA_VEND3 + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND3,"A3_NREDUZ"),oFont12,100)
+			LI+=nTamLinha
+			lVend3 := .T.
+		EndIf
+		// Representantes Arla
+		If !Empty(ALA->UA_VEND6)
+			oPrn:Say(  Li,(016*nTamcol)-60 , "Arla: " + ALA->UA_VEND6 + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND6,"A3_NREDUZ"),oFont12,100)
+			LI+=nTamLinha
+		EndIf
+		If !Empty(ALA->UA_VEND7)
+			oPrn:Say(  Li,(016*nTamcol)-60 , "Arla: " + ALA->UA_VEND7 + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND7,"A3_NREDUZ"),oFont12,100)
+			LI+=nTamLinha
+		EndIf
+		If !Empty(ALA->UA_VEND8)
+			oPrn:Say(  Li,(016*nTamcol)-60 , "Arla: " + ALA->UA_VEND8 + " - " + Posicione("SA3",1,xFilial("SA3")+ALA->UA_VEND8,"A3_NREDUZ"),oFont12,100)
+			LI+=nTamLinha
+		EndIf
+		If !lVend2 .And. !lVend3
+			LI+=nTamLinha
+		EndIf
+
+		// Monta linhas horizontais
+		oPrn:Line(Li, 0030, Li, 2350)
+
+		// Monta linha verticais
+		oPrn:Line(nLiIni, 0030, Li, 0030)
+		oPrn:Line(nLiIni, 2350, Li, 2350)
+
+	Endif
+
+Return()
+
+Static Function CabItem()
+
+	If !_lEmail
+		Li++
+		@ Li,000 PSAY Repl("-",80)
+		Li++
+		@ Li,000 PSAY "* PRODUTO DESCRICAO                                   UM    QTDE         PRECO *"
+		Li++
+		@ Li,000 PSAY Repl("-",80)
+		Li++
+	Else
+
+		//Monta a caixa de cabeçalho
+		oPrn:Box(Li,030,Li+100,2355)
+		oPrn:FillRect( {Li+1,030,Li+95,2355}, oHGray )
+		oPrn:Line(Li, 0205, Li+100, 0205)
+		oPrn:Line(Li, 1085, Li+100, 1085)
+		oPrn:Line(Li, 1155, Li+100, 1155)
+		oPrn:Line(Li, 1265, Li+100, 1265)
+		oPrn:Line(Li, 1405, Li+100, 1405)
+		oPrn:Line(Li, 1495, Li+100, 1495)
+		oPrn:Line(Li, 1685, Li+100, 1685)
+		oPrn:Line(Li, 1905, Li+100, 1905)
+		oPrn:Line(Li, 2145, Li+100, 2145)
+
+		LI+=nTamLinha
+
+		//Insere titulos no cabeçalho
+		oPrn:Say(Li+15, 0050, "PRODUTO", oFont10, 100)
+		oPrn:Say(Li+15, 0220, "DESCRICAO", oFont10, 100)
+		oPrn:Say(Li+15, 1100, "UM", oFont10, 100)
+		oPrn:Say(Li+15, 1170, "CFOP", oFont10, 100)
+		oPrn:Say(Li+15, 1280, "% ICMS", oFont10, 100)
+		oPrn:Say(Li+15, 1420, "CST", oFont10, 100)
+		oPrn:Say(Li+15, 1510, "NCM", oFont10, 100)
+		oPrn:Say(Li+15, 1700, "QUANTIDADE", oFont10, 100)
+		oPrn:Say(Li+15, 1920, "PRECO UNIT.", oFont10, 100)
+		oPrn:Say(Li+15, 2160, "TOTAL", oFont10, 100)
+
+		LI+=nTamLinha
+	Endif
+
+Return()
+
+Static Function GetPeso(NrAtend)
+
+	Local cQryPeso := ""
+	Local cAlias   := GetNextAlias()
+	Local nPeso    := 0
+
+	cQryPeso += " SELECT SUM(UB_QUANT * COALESCE(B1_PESO,0)) AS PESO "
+	cQryPeso += " FROM " + RetSQLName("SUB") + " SUB (NOLOCK), " + RetSQLName("SB1") + " SB1 (NOLOCK) "
+	cQryPeso += " WHERE UB_PRODUTO = B1_COD "
+	cQryPeso += " AND   UB_FILIAL  = B1_FILIAL "
+	cQryPeso += " AND   SUB.D_E_L_E_T_ <> '*' "
+	cQryPeso += " AND   SB1.D_E_L_E_T_ <> '*' "
+	cQryPeso += " AND   UB_NUM = '" + NrAtend + "'"
+	cQryPeso += " AND   UB_FILIAL = '" + xFilial("SUB") + "'"
+
+	If Select(cAlias) <> 0
+		dbSelectArea(cAlias)
+		dbCloseArea()
+	Endif
+
+	TCQuery cQryPeso NEW ALIAS &cAlias
+
+	nPeso := (cAlias)->PESO
+
+	If Select(cAlias) <> 0
+		dbSelectArea(cAlias)
+		dbCloseArea()
+	Endif
+
+Return(nPeso)
+
+Static Function GeraQry()
+
+	Local cQuery := ""
+
+	cQuery += " SELECT UA_NUM, UA_CONDPG, UA_PDESCAB, UA_CLIENTE, UA_LOJA, UA_OBSERVA,UA_TRANSP,UA_OPERADO,UA_TPFRETE,"
+	cQuery += " UA_NUMSC5, UA_VEND, UA_VEND2, UA_VEND3,UA_VEND6,UA_VEND7,UA_VEND8, UA_EMISSAO "
+	cQuery += " FROM " + RetSqlName("SUA") + " (NOLOCK) "
+	cQuery += " WHERE UA_FILIAL = '" + xFilial("SUA") + "'"
+	cQuery += " AND D_E_L_E_T_ = '' "
+
+	If (!Empty(mv_par05) .And. mv_par05 == mv_par06)
+		cQuery += "AND UA_NUM = '" + mv_par05 + "'"
+	Else
+		cQuery += "AND UA_VEND BETWEEN '" + mv_par01 + "' AND '" + mv_par02 + "'"
+		cQuery += "AND UA_NUM BETWEEN '" + mv_par05 + "' AND '" + mv_par06 + "' "
+		cQuery += "AND UA_EMISSAO BETWEEN '" + dtos(mv_par03) + "' AND '" + dtos(mv_par04) + "'"
+	EndIf
+
+	cQuery += "AND UA_CANC <> 'S' "
+
+	If (Select("ALA") <> 0)
+		dbSelectArea("ALA")
+		dbCloseArea()
+	Endif
+
+	TCQuery cQuery NEW ALIAS "ALA"
+	TCSETFIELD("ALA","UA_PDESCAB"  ,"N",05,2)
+	TCSETFIELD("ALA","UA_EMISSAO"  ,"D",08,0)
+
+	//Captura dados para Envio do orçamento
+	If alltrim(ALA->UA_NUMSC5) <> ""
+		cPedOrc 	:= "Pedido"
+		cNumPedOrc  := ALA->UA_NUMSC5
+	Else
+		cPedOrc 	:= "Orçamento"
+		cNumPedOrc  := ALA->UA_NUM
+	Endif
+
+	DbSelectarea('SU7')
+	DbSetOrder(1)
+	Dbseek(xfilial('SU7')+ALA->UA_OPERADO)
+
+	cNomeAtend := SU7->U7_NOME
+	cTelAtend  := SU7->U7_TEL
+	cCC := alltrim(UsrRetMail(SU7->U7_CODUSU))
+Return
+
+//######################################//
+// Spiller - 07/08/2017                 // 
+// Chamado 56795                        //
+// Envio de relatório para Cliente  	// 
+// com orcamento anexado				//
+//######################################//
+Static Function STMKIMP2()
+
+	Local lFirst    := .F.
+	Local nQtdReg   := 0
+	Local i         := 1
+	Local cSitTrib  := ""
+
+	PRIVATE aFatura   := {}
+	PRIVATE cFormPag  := ""
+	PRIVATE nTamLinha := 1
+	Private oPrn
+
+	nTamLinha := 50
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para Impressao do Cabecalho e Rodape  .³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cbtxt    := SPACE(10)
+	cbcont   := 0
+	li       := 80
+	m_pag    := 1
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se deve comprimir ou nao                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+	If !("TMKR03" $ FunName()) .and. !("TMKR3A" $ FunName())
+		MV_PAR01 := ""
+		MV_PAR02 := "ZZZZZZ"
+		Mv_Par03 := Ctod("01/01/00")
+		Mv_Par04 := Ctod("31/12/20")
+		MV_PAR05 := SUA->UA_NUM
+		MV_PAR06 := SUA->UA_NUM
+	EndIf
+
+	//Gera Query com Dados
+	GeraQry()
+
+	Li := nTamLinha
+
+	SetPrc(0,0)
+
+	dbSelectArea("ALA")
+	dbGoTop()
+	Procregua(Reccount())
+	While !EOF()
+		IncProc()
+
+		If nQtdReg == 0
+			If cPedOrc == "Pedido"
+				cFile := 'PED'+ALA->UA_NUMSC5+"_"+dtos(ddatabase)
+			Else
+				cFile := 'ORC'+ALA->UA_NUM+"_"+dtos(ddatabase)
+			Endif
+
+			oPrn  := FWMSPrinter():New(cFile,6,.T.,,.T.)
+			oPrn:SetPortrait()
+			oPrn:SetPaperSize(9)
+		Endif
+
+		oPrn:StartPage()
+		IMPCABEC()
+
+		lFirst:=.T.
+
+		CABITEM()
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Imprime os produtos/servicos pedidos.³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		nCont := 0
+		dbSelectArea("SUB")
+		dbSetOrder(1)
+		dbSeek(xFilial("SUB")+ALA->UA_NUM)
+		While !EOF() .and. (xFilial("SUB") == SUB->UB_FILIAL) .and. (ALA->UA_NUM    == SUB->UB_NUM)
+			nCont++
+			dbSelectArea("SUB")
+			dbSkip()
+		End
+
+		nPagR := nCont / 40
+
+		nPagR++
+		cPagR := Alltrim(str(nPagR))
+		cPagR := substr(cPagR,1,1)
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Imprime os produtos/servicos pedidos.³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		dbSelectArea("SUB")
+		dbSetOrder(1)
+		If dbSeek(xFilial("SUB")+ALA->UA_NUM)
+			nVrunit  := 0
+			nTotQtd  := 0
+			nTotGeral:= 0
+
+			cProduto := ''
+			xTotQtd  := 0
+			xTotGeral:= 0
+			xVrunit  := 0
+
+			nPagA := 1
+
+			dbSelectArea("SUB")
+			Do While !Eof() .and. (xFilial("SUB") == SUB->UB_FILIAL) .and. (ALA->UA_NUM    == SUB->UB_NUM)
+
+				If Li == (90*nTamLinha)
+
+					oPrn:Say( 097*nTamLinha,020	, " ************  CONTINUA ************ ",oFont12,100)
+					oPrn:Say( 110*nTamLinha,020	, time() + " | Pagina: "+Alltrim(str(nPagA))+" - "+cPagR,oFont12,100)
+					oPrn:Say( 101*nTamLinha,020	, " ",oFont12,100)
+
+					nPagA++
+
+					if cTipoImp == "L"
+						Li := nTamLinha
+					else
+						Li := (33*nTamLinha) //33
+					endif
+
+					oPrn:EndPage()
+					oPrn:StartPage()
+
+					IMPCABEC()
+					CABITEM()
+				EndIf
+
+				dbSelectArea("SUB")
+				_cDesc1 := ""
+
+				dbSelectArea("SB1")
+				dbSetOrder(1)
+				dbGotop()
+				dbSeek(xFilial("SB1")+SUB->UB_PRODUTO)
+
+				If SB1->B1_PESO > 0
+					_cDesc1 := ALLTRIM(SB1->B1_DESC)
+				Else
+					_cDesc1 := "*" + ALLTRIM(SB1->B1_DESC)
+				EndIf
+
+				//soma ST no total
+				nValxST    := 0
+				nValUnitST := 0
+				dbSelectArea("SUB")
+
+				If SUB->(FieldPos("UB_XVLST") > 0) .And. SUB->UB_XVLST > 0
+					nValxST 	:= SUB->UB_XVLST
+					nValUnitST  := (SUB->UB_XVLST / SUB->UB_QUANT  )
+				Endif
+
+				cSitTrib := SitTribTes(SUB->UB_TES)
+				cSitTrib := AllTrim(SB1->B1_ORIGEM) + AllTrim(cSitTrib)
+
+				//Monta as linhas Verticais da lista
+				oPrn:Line(Li, 0205, Li+100+nTamLinha, 0205)
+				oPrn:Line(Li, 1085, Li+100+nTamLinha, 1085)
+				oPrn:Line(Li, 1155, Li+100+nTamLinha, 1155)
+				oPrn:Line(Li, 1265, Li+100+nTamLinha, 1265)
+				oPrn:Line(Li, 1405, Li+100+nTamLinha, 1405)
+				oPrn:Line(Li, 1495, Li+100+nTamLinha, 1495)
+				oPrn:Line(Li, 1685, Li+100+nTamLinha, 1685)
+				oPrn:Line(Li, 1905, Li+100+nTamLinha, 1905)
+				oPrn:Line(Li, 2145, Li+100+nTamLinha, 2145)
+
+				//Insere os itens na lista
+				LI+=nTamLinha
+				oPrn:Say(Li, 30+(001*nTamcol), ALLTRIM(SUB->UB_PRODUTO),oFont10,100)
+				oPrn:Say(Li, 40+(010*nTamcol), Substr(_cDesc1,1,50),oFont10,100)
+				oPrn:Say(Li, 1100, SUB->UB_UM,oFont10,100)
+				oPrn:Say(Li, 1170, SUB->UB_CF,oFont10,100)
+				oPrn:Say(Li, 1280, IIF(SUB->UB_XPICMS > 0,Transf(SUB->UB_XPICMS, "@E 99.99") , Transf(U_XAGICMS(SUB->UB_PRODUTO, SUB->UB_TES), "@E 99.99") ),oFont10,100)
+				oPrn:Say(Li, 1420, cSitTrib,oFont10,100)
+				oPrn:Say(Li, 1510, SB1->B1_POSIPI,oFont10,100)
+				oPrn:Say(Li, 1700, Transf(SUB->UB_QUANT, "@E 999,999.99"),oFont10,100)
+				oPrn:Say(Li, 1920, Transf((SUB->UB_VRUNIT + nValUnitST), "@E 999,999.9999"),oFont10,100)
+				oPrn:Say(Li, 2160, Transf((SUB->UB_VLRITEM + nValxST),"@E 999,999.99"),oFont10,100)
+
+				nTotQtd  += SUB->UB_QUANT
+				nVrunit  := SUB->UB_VRUNIT + nValUnitST
+
+				nTotGeral+= SUB->UB_VLRITEM  + nValxST
+
+				If Li >= (2750) .or. Eof()
+
+					oPrn:Say( LI+140,020		, " ",oFont12,100)
+					oPrn:Box(LI+50,030,LI+150,2355)
+					oPrn:Say( LI+120,040		, time() + " | Pagina: "+Alltrim(str(nPagA))+" - "+cPagR,oFont12,100)
+					oPrn:Line(100, 0030, Li+50, 0030)
+					oPrn:Line(100, 2350, Li+50, 2350)
+
+					nPagA++
+					oPrn:EndPage()
+					oPrn:StartPage()
+					Li := nTamcol//+100
+					IMPCABEC()
+					CABITEM()
+				Endif
+
+				dbSelectArea("SUB")
+				dbSkip()
+
+			EndDo
+
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Imprime os totais de quantidade e valor.³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			Li+= (2*nTamLinha)
+
+			oPrn:Box(LI,030,LI+100,2355)
+			oPrn:Line(100, 0030, Li, 0030)
+			oPrn:Line(100, 2350, Li, 2350)
+
+			LI+=nTamLinha
+
+			nTotGeral := nTotGeral - (nTotGeral * (ALA->UA_PDESCAB/100))
+
+			If xTotGeral > 0
+				xTotGeral := xTotGeral - (xTotGeral * (ALA->UA_PDESCAB/100))
+			EndIf
+
+			// Atualiza atendimento caso seja valor diferente do que saiu na impressao Cfe Neia 19/09/2006
+			If Empty(cProduto )
+				dbSelectArea("SUA")
+
+				If nTotGeral <> SUA->UA_VALBRUT .or. ;
+						nTotGeral <> SUA->UA_VALMERC .or. ;
+						nTotGeral <> SUA->UA_VLRLIQ  .or. ;
+						nTotGeral <> SUA->UA_FINANC
+
+					RecLock("SUA",.F.)
+					SUA->UA_VALBRUT := nTotGeral
+					SUA->UA_VALMERC := nTotGeral
+					SUA->UA_VLRLIQ  := nTotGeral
+					SUA->UA_FINANC  := nTotGeral
+					MsUnlock("SUA")
+				EndIf
+			Endif
+
+			oPrn:Say( Li-7,040 , "Total das quantidades:" + Transform(nTotQtd, PESQPICT("SUB","UB_QUANT") ),oFont12,100)
+			oPrn:Say( Li-7,044*nTamcol , "Valor total do Pedido:" + Transform((nTotGeral+xTotGeral), "@E 99,999,999.99"),oFont12,100)
+			oPrn:Say( LI+43,040		, time() + " | Pagina: "+Alltrim(str(nPagA))+" - "+cPagR,oFont12,100)
+
+		EndIf
+
+		aFatura   := {}
+		nTotQtd   := 0
+		nTotGeral := 0
+		xTotQtd   := 0
+		xTotGeral := 0
+
+		dbSelectArea("ALA")
+		dbSkip()
+
+	End
+
+	//Imprime as Condições gerais
+	LI+=nTamLinha
+	oPrn:Box(LI,030,LI+8*nTamLinha,2355)
+	LI+=nTamLinha
+	oPrn:Say(Li, 1000, 'CONDIÇÕES GERAIS', oFont16)
+	LI+=nTamLinha
+	oPrn:Say(Li, 70, '- Orçamento válido por 24 horas.', oFont10)
+	LI+=nTamLinha
+	oPrn:Say(Li, 70, '- Preços validos conforme condições acima ou enquanto durarem os estoques.', oFont10)
+	LI+=nTamLinha
+	oPrn:Say(Li, 70, '- Orçamentos com condições a prazo estão sujeitos à análise e aprovação de crédito.', oFont10)
+	LI+=nTamLinha
+	oPrn:Say(Li, 70, '- Não aceitamos devoluções de mercadorias solicitadas sob encomenda.', oFont10)
+	LI+=nTamLinha
+	oPrn:Say(Li, 70, '- Devoluções somente com nossa autorização dentro do prazo máximo de 7 dias conforme CDC art. 49.', oFont10)
+	LI+=nTamLinha
+	oPrn:Say(Li, 70, '- Devoluções ocasionadas por erros do cliente, será cobrado custo de frete para retorno.', oFont10)
+
+	oPrn:EndPage()
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Função de impressão do rodape na pagina final do relatorio³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+	If (Select("ALA") <> 0)
+		dbSelectArea("ALA")
+		dbCloseArea()
+	Endif
+
+	cPath := "C:\ORCAMENTO\"
+	MakeDir(Trim(Upper(cPath)))
+
+	oPrn:SetPortrait()
+	oPrn:SetPaperSize(9)
+	oPrn:lServer  := .F.
+	oPrn:cPathPDF := cPath
+	oPrn:SetViewPDF(.F.)
+	oPrn:Preview()
+	SetPgEject(.F.)
+	MS_Flush()
+
+	If _lemail
+		Envmail(cpath,cFile)
+
+		//Realiza a Exclusão dos arquivos
+		// que foram gerados nos dias anteriores
+		aLimpar := Directory( cpath + '*.*' )
+		i := 1
+		For i := 1 to len(aLimpar)
+			if aLimpar[i][3] < ddatabase
+				FErase( cpath + aLimpar[i][1] )
+			endif
+		Next i
+	Endif
+Return
+
+//################################//        
+// Chamado 56795                  //
+// Realiza o envio                //
+//################################//        
+Static function Envmail(cpath,cFile)
+
+	Local OdlgMail
+	Local Confirmar
+	Local oGetCC
+	Local cGetCC   := Space(244)
+	Local oGetMail
+	Local cGetMail := Space(244)
+	Local oGetOBS
+	Local cGetOBS  := Space(244)
+
+	Local lConfirm := .F.
+
+	DBSelectArea("SA1")
+	dbSetOrder(1)
+	If dbSeek(xFilial("SA1")+ALLTRIM(SUA->UA_CLIENTE)+ALLTRIM(SUA->UA_LOJA))
+		cGetMail := alltrim(SA1->A1_EMAIL)+space(244-len(alltrim(SA1->A1_EMAIL)))
+		//cGetCC 	 := ""
+	Endif
+
+	//Sugere Email do Usuário
+	cGetCC 	 := cCC+space(244-len(alltrim(cCC)))
+
+	DEFINE MSDIALOG OdlgMail TITLE "Enviar" FROM 000,000 TO 140,450 PIXEL
+
+	@ 007,032 MSGET oGetMail VAR cGetMail SIZE 175, 010 OF OdlgMail PIXEL
+	@ 008,009 SAY Email PROMPT "Email" SIZE 015, 007 OF OdlgMail PIXEL
+	@ 022,009 SAY oSay1 PROMPT "CC"    SIZE 015, 007 OF OdlgMail PIXEL
+	@ 021,032 MSGET oGetCC VAR cGetCC SIZE 175, 010 OF OdlgMail PIXEL
+	@ 022+014,009 SAY oSay2 PROMPT "Obs."    SIZE 015, 007 OF OdlgMail PIXEL
+	@ 021+014,032 MSGET oGetOBS VAR cGetOBS SIZE 175, 010 OF OdlgMail PIXEL
+	@ 034+016,168 BUTTON Confirmar PROMPT "Confirmar" ACTION( lConfirm := .T.,OdlgMail:end())SIZE 037,012 OF OdlgMail PIXEL
+
+	ACTIVATE MSDIALOG OdlgMail
+
+	IF lConfirm
+
+		//Valida se Existe Pasta
+		If !(ExistDir( "\impORC"))
+			MakeDir( "\impORC" )
+		Endif
+
+		//Start do WorkFlow
+		CpyT2S( cpath+cFile+".pdf", "\impORC" )
+		oProcess := TWFProcess():New( "EMAILORC", "Emissao Orcamento" )
+		oProcess:NewTask( "Inicio", AllTrim(getmv("MV_WFDIR"))+"\WFORCAMENTO.HTML" )
+
+		oProcess:ClientName(cUsername)
+		oProcess:cTo := alltrim(cGetMail)
+		oProcess:cCC := alltrim(cGetCC)
+		oProcess:cSubject := "Agricopel - "+cPedOrc+" - "+cNumPedOrc//"Orcamento\Pedido"
+		oProcess:AttachFile("\impORC\"+cFile+".pdf")
+
+		oProcess:oHtml:ValByName("Nome_atend"  , cNomeAtend )
+		oProcess:oHtml:ValByName("Tel_atend"   , cTelAtend )
+		oProcess:oHtml:ValByName("Ped_Orc"     , cPedOrc+': '+cNumPedOrc )
+		oProcess:oHtml:ValByName("Observacao"  , alltrim(cGetOBS) )
+
+		If !Empty(oProcess:Start())
+			oProcess:Finish()
+		Endif
+	Endif
+Return
+
+Static Function SitTribTes(cTes)
+
+	Local cQuery   := ""
+	Local cSitTrib := ""
+	Local _cAlias  := ""
+
+	cQuery := " SELECT SF4.F4_SITTRIB "
+	cQuery += " FROM " + RetSQLName("SF4") + " SF4 WITH (NOLOCK) "
+	cQuery += " WHERE SF4.D_E_L_E_T_ = '' "
+	cQuery += " AND   SF4.F4_FILIAL = '" + xFilial("SF4") + "'"
+	cQuery += " AND   SF4.F4_CODIGO = '" + cTes + "'"
+
+	_cAlias := MpSysOpenQuery(cQuery)
+
+	cSitTrib := (_cAlias)->F4_SITTRIB
+
+	(_cAlias)->(dbCloseArea())
+
+Return(cSitTrib)

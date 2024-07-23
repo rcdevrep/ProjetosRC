@@ -1,0 +1,1218 @@
+#INCLUDE "FINR480.CH"
+#include "FiveWin.ch"
+STATIC nColVlr
+STATIC nLin1Ext
+STATIC nCol1Ext
+STATIC nLin2Ext
+STATIC nCol2Ext
+STATIC nLinFav
+STATIC nColFav
+STATIC nLinDat
+STATIC nColVir
+STATIC cExt
+STATIC nCasas  :=0
+STATIC nColAno :=0
+STATIC nTamChq	:=0
+STATIC nTamExt
+STATIC nTamLin
+STATIC cValor
+STATIC nSalto
+STATIC nComp
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ FINX480  ³ Autor ³ Wagner Xavier         ³ Data ³ 09.07.92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Impress„o de Cheques                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ FINX480(void)                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function FINX480()
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+LOCAL cDesc1:= STR0001  //"Este programa ir  imprimir os Cheques do Banco, atrav‚s de"
+LOCAL cDesc2:= STR0002  //"formul rio pr‚-impresso."
+LOCAL cDesc3:=""
+LOCAL CbTxt
+LOCAL CbCont
+LOCAL cString :="SEF"
+LOCAL aDados := {}
+Local aHelpPor		:= {}
+Local aHelpEng		:= {}
+Local aHelpSpa		:= {}
+
+AADD(aHelpPor,"Indique 'Padrao' para que o cheque seja")
+AADD(aHelpPor,"impresso utilizando o layout padrao ou ")
+AADD(aHelpPor,"'CPMF' p/ cheques sem cobranca de CPMF")
+
+AADD(aHelpSpa,"Informe 'Standard' p/ que el cheque sea")
+AADD(aHelpSpa,"impreso utilizando el lay-out standard ")
+AADD(aHelpSpa,"o 'CPMF' p/cheques sin cobranza de CPMF")
+
+AADD(aHelpEng,"Select 'Standard' to use the standard  ")
+AADD(aHelpEng,"printing layout or 'CPMF' for checks   ")
+AADD(aHelpEng,"with no CPMF collection                ")
+
+Aadd(aDados,{"LayOut dos Cheques","¨Layout de los Cheq.","Checks Lay-Out     ?","mv_chb","N",1,0,1,"C","","mv_par11","Padrao","Standard","Standard","","","CPMF","CPMF","CPMF","","","","","","","","","","","","","","","","","","","S",,aHelpPor,aHelpEng,aHelpSpa})
+
+PRIVATE wnrel
+PRIVATE titulo:= STR0003  //"Emiss„o de Cheques em Formul rio Cont¡nuo"
+PRIVATE cabec1
+PRIVATE cabec2
+PRIVATE aReturn := { OemToAnsi(STR0004), 1, OemToAnsi(STR0005), 1, 2, 1, "",1 }  //"Cheque"###"Administracao"
+PRIVATE nomeprog:="FINX480"
+PRIVATE nLastKey:= 0
+PRIVATE cPerg   :="FIN480"
+PRIVATE lComp   := .T.
+PRIVATE lLayOut := .F.
+PRIVATE nLinVlr := 0
+PRIVATE cNumCheq
+PRIVATE cBenef
+
+nComp	:= GetMv("MV_COMP")
+
+// Removido pois estava dando erro que funcao AjustaSX1 nao estava disponivel no Protheus
+// alteração feita por Thiago em 03/01/2019
+//If cPaisLoc == "BRA"
+//	AjustaSx1("FIN480",aDados)
+//Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+pergunte("FIN480",.F.)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para parametros                         ³
+//³ mv_par01            // Codigo do Banco                       ³
+//³ mv_par02            // Agencia                               ³
+//³ mv_par03            // Conta                                 ³
+//³ mv_par04            // Do Cheque                             ³
+//³ mv_par05            // Ate o Cheque                          ³
+//³ mv_par06            // Numera cheque automaticamente (S/N)   ³
+//³ mv_par07            // Numero do 1.Cheque                    ³
+//³ mv_par08            // Data Inicial                          ³
+//³ mv_par09            // Data Final                            ³
+//³ mv_par10            // Imprime cheques para PAS              ³
+//³ mv_par11            // LayOut do Cheque (Normal ou CPMF)     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia controle para a funcao SETPRINT                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+wnrel := "FINX480"            //Nome Default do relatorio em Disco
+wnrel := SetPrint(cString,wnrel,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.F.,"",,"M")
+
+If nLastKey == 27
+	Return
+Endif
+
+SetDefault(aReturn,cString)
+
+If nLastKey == 27
+	Return
+Endif
+
+RptStatus({|lEnd| FA480Imp(@lEnd,wnRel,cString)},Titulo)
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ FA480Imp ³ Autor ³ Marcos Patricio       ³ Data ³ 20/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Impressao de Cheques                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ FA600Imp(lEnd,wnRel,cString)                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ lEnd    - A‡Æo do Codeblock                                ³±±
+±±³          ³ wnRel   - T¡tulo do relat¢rio                              ³±±
+±±³          ³ cString - Mensagem                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ FINA600                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function FA480Imp()
+
+LOCAL nRecAnt := 0
+LOCAL nSavRec := 0
+Local aDriver := ReadDriver()
+
+If cPaisLoc	<>	"BRA"
+	Private	aLayout	:=	{{0,0,""}}
+	Private 	nMoeda:=1
+Endif
+
+If !( "DEFAULT" $ Upper( __DRIVER ) )
+	SetPrc(000,000)
+Endif
+
+// Reseta a impressora se nao for via windows
+If aReturn[5] <> 2 
+	If GetMv("MV_COMP") == 15
+		@ pRow(),pCol() PSAY &(If(aReturn[4]=1,aDriver[3],aDriver[4]))
+	Else
+		@ pRow(),pCol() PSAY &(aDriver[4])
+	EndIf
+EndIF
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se existe o Banco                                   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SA6")
+dbSeek(cFilial+mv_par01+mv_par02+mv_par03)
+IF !Found()
+	Help(" ",1,"BCONOEXIST")
+	Return
+End
+If cPaisLoc<>"BRA"
+	nMoeda:=Iif(SA6->A6_MOEDA>0,SA6->A6_MOEDA,1)
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se j  existe o cheque inicial                       ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If mv_par06 == 1
+	dbSelectArea("SEF")
+	If (dbSeek(cFilial+mv_par01+mv_par02+mv_par03+mv_par07))
+		Help( " ",1,"A460CHEQUE")
+		Return
+	EndIf
+EndIf
+
+mv_par01:=mv_par01+Space( 3-Len(mv_par01))
+mv_par02:=mv_par02+Space( 5-Len(mv_par02))
+mv_par03:=mv_par03+Space(10-Len(mv_par03))
+mv_par04:=mv_par04+Space(15-Len(mv_par04))
+
+cNumCheq  := mv_par07
+lImprimiu := .F.
+lTeste := .F.
+
+If cPaisLoc<>"BRA"
+	IF !Empty( mv_par07 ) .and. mv_par06 == 1   //Cheques n„o gerados
+		dbSelectArea("SEF")
+		dbSetOrder(1)
+		DbGotop()	
+		dbSeek( cFilial+mv_par01+mv_par02+mv_par03 )
+		cCond1 := "SEF->EF_BANCO==mv_par01.and.SEF->EF_AGENCIA==mv_par02.and.SEF->EF_CONTA==mv_par03"
+	Else
+		dbSelectArea("SEF")
+		dbSeek( cFilial+mv_par01+mv_par02+mv_par03+mv_par04,.T. )
+		cCond1:="SEF->EF_BANCO==mv_par01.and.SEF->EF_AGENCIA==mv_par02.and.SEF->EF_CONTA==mv_par03.and.EF_NUM<=mv_par05"
+	EndIF
+Else
+	IF !Empty( mv_par07 ) .and. mv_par06 == 1   //Cheques n„o gerados
+		dbSelectArea( "SEF" )
+		dbSeek( cFilial )
+		cCond1 := ".T."
+	Else
+		dbSelectArea("SEF")
+		dbSeek( cFilial+mv_par01+mv_par02+mv_par03+mv_par04,.T. )
+		cCond1:="SEF->EF_BANCO==mv_par01.and.SEF->EF_AGENCIA==mv_par02.and.SEF->EF_CONTA==mv_par03.and.EF_NUM<=mv_par05"	
+	Endif
+EndIF
+
+SetRegua(RecCount())
+
+While !SEF->(Eof()) .and. SEF->EF_FILIAL = cFilial .and. &cCond1
+
+	IncRegua()
+	nPosTot:=1
+
+	IF SEF->EF_IMPRESS $ "SAC"
+		SEF->(dbSkip())
+		Loop
+	Endif
+
+   If Alltrim(SEF->EF_TIPO) $ MVPAGANT .and. mv_par10==2
+		SEF->(dbSkip())
+		Loop
+	Endif
+
+	If !Empty( EF_BANCO)
+		If EF_BANCO != mv_par01
+			dbSkip( )
+			Loop
+		EndIf
+	EndIf
+
+	IF mv_par06 == 2 .and. ( Empty( SEF->EF_NUM ) .or. SubStr( SEF->EF_NUM,1,1 ) = "*" )
+		SEF->(dbSkip())
+		Loop
+	EndIF
+
+	If SEF->EF_DATA < mv_par08 .or. SEF->EF_DATA > mv_par09
+		dbSkip()
+		Loop
+	Endif
+
+	*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	*³Se for numeracao automatica e cheque j  tenha sido gerado,³
+	*³n„o ser  impresso                                         ³
+	*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If mv_par06 == 1 .and. (!Empty(SEF->EF_NUM) .and. Substr(SEF->EF_NUM,1,1) != "*" )
+		SEF->(dbSkip())
+		Loop
+	Endif
+
+	*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	*³ Se houver selecao de banco, filtra o banco escolhido.    ³
+	*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If !Empty(SEF->EF_BANCO)
+		If SEF->EF_BANCO # mv_par01 .or. ;
+			SEF->EF_AGENCIA # mv_par02 .or. ;
+			SEF->EF_CONTA # mv_par03
+			SEF->(dbSkip())
+			Loop
+		Endif
+	Endif
+
+	*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	*³ Recupera o extenso do cheque e monta as linhas           ³
+	*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	nRecAnt := Recno()
+	dbSkip( )
+	nSavRec := RecNo()
+	dbGoto(nRecAnt)
+	cBenef := SEF->EF_BENEF
+	IF Empty(SEF->EF_BENEF) .and. !(SEF->EF_ORIGEM $ "FINA390AVU#FINA100PAG")
+		IF !Empty( SEF->EF_BANCO )
+			dbSelectArea( "SA6" )
+			dbSeek( xFilial() + SEF->EF_BANCO )
+			cBenef := SPACE(40) //SA6->A6_NOME
+		Else
+			dbSelectArea( "SA2" )
+			dbSeek( xFilial() + SEF->EF_FORNECE + SEF->EF_LOJA )
+			cBenef := SA2->A2_NOME
+		Endif
+	Endif
+	If cPaisLoc ==	"BRA"
+		If !ImpCheq(mv_par01,mv_par02,mv_par03,.F.,xFilial("SE5"),mv_par11)
+			Exit
+		Endif
+	Else
+		If !ImpCheqLoc(mv_par01,mv_par02,mv_par03,.F.,xFilial("SE5"))
+			Exit
+		Endif
+	Endif
+	lImprimiu := .T.
+	dbSelectArea( "SEF" )
+	dbGoTo( nSavRec )
+Enddo
+
+If lImprimiu
+	@ Prow(), PCol() PSAY Chr(27)+Chr(64)  // (48 = 1/8)  (64 = 1/6)
+	@ Prow(), PCol() PSAY Chr(18)+" "
+Endif
+	
+Set Device To Screen
+dbSelectArea("SEF")
+dbSetOrder(1)
+dbSelectArea("SA6")
+dbSetOrder(1)
+Set Filter To
+
+Set Device To Screen
+If aReturn[5] = 1
+	Set Printer To
+	Commit
+	Ourspool(wnrel)
+Endif
+MS_FLUSH()
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ImpCheq   ³ Autor ³ Wagner Xavier         ³ Data ³ 09.07.92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Imprime um determinado cheque                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ImpCheq                                                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpCheq(cBanco,cAgencia,cConta,lMovBco,cFilAtual,nLayOut)
+Local lRet		:=	.F.
+LOCAL cValor
+LOCAL nPosTot  :=1
+LOCAL nLin		:=0
+LOCAL lFirst	:=.T.
+LOCAL aMes := { OemToAnsi(STR0006),OemToAnsi(STR0007),OemToAnsi(STR0008),;   //"Janeiro"###"Fevereiro"###"Marco"
+	OemToAnsi(STR0009),OemToAnsi(STR0010),OemToAnsi(STR0011),;   //"Abril"###"Maio"###"Junho"
+	OemToAnsi(STR0012),OemToAnsi(STR0013),OemToAnsi(STR0014),;   //"Julho"###"Agosto"###"Setembro"
+	OemToAnsi(STR0015),OemToAnsi(STR0016),OemToAnsi(STR0017) }   //"Outubro"###"Novembro"###"Dezembro"
+
+
+Local cExtenso:= Extenso( SEF->EF_VALOR,.F.,1 )
+Local cExt1
+Local cExt2
+Local nPosAnt := 1
+Local nTamanho
+Local nLoop
+Local nRepete
+LOCAL lFa480Dat := ExistBlock("FA480DAT")
+Local aArea:={}
+
+nComp := IIF(nComp == NIL , GetMv("MV_COMP"), nComp)
+nLayOut := IIF(nLayOut == NIL, 1, nLayOut)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se cheque foi configurado.                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+IF Empty( SA6->A6_LAYOUT )
+	Help(" ",1,"CHEQNAOCONF")
+	Return .f.
+Endif
+
+If ! lLayout 
+	If nLayOut == 1
+		nTamChq :=Val(Substr(SA6->A6_LAYOUT,1,2))
+		nSalto  :=Val(Substr(SA6->A6_LAYOUT,3,1))
+		nLinVlr :=Val(SubStr(SA6->A6_LAYOUT,4,1))
+		nColVlr :=Val(SubStr(SA6->A6_LAYOUT,25, 3))
+		nColVlr :=IIF(nColVlr==0,93,nColVlr)
+		nLin1Ext:=Val(SubStr(SA6->A6_LAYOUT,5,1))-nLinVlr
+		nCol1Ext:=Val(SubStr(SA6->A6_LAYOUT,6,2))
+		nLin2Ext:=Val(SubStr(SA6->A6_LAYOUT,8,1))-Val(SubStr(SA6->A6_LAYOUT,5,1))
+		nCol2Ext:=Val(SubStr(SA6->A6_LAYOUT,9,2))
+		nTamExt :=Val(SubStr(SA6->A6_LAYOUT,23, 2))
+		nTamExt :=IIF(nTamExt==0,95,nTamExt)
+		nLinFav :=Val(SubStr(SA6->A6_LAYOUT,11,2))-Val(SubStr(SA6->A6_LAYOUT,8,1))
+		nColFav :=Val(SubStr(SA6->A6_LAYOUT,13,2))
+		nLinDat :=Val(SubStr(SA6->A6_LAYOUT,15,2))-Val(SubStr(SA6->A6_LAYOUT,11,2))
+		nColVir :=Val(SubStr(SA6->A6_LAYOUT,17,2))
+		nCasas  :=Val(SubStr(SA6->A6_LAYOUT,19,1))
+		nCasas  :=IIF(nCasas==0,2,nCasas)
+		nColAno :=Val(SubStr(SA6->A6_LAYOUT,20,3))
+		lComp   :=(SubStr(SA6->A6_LAYOUT,28, 1)=="S" .or. SubStr(SA6->A6_LAYOUT,28, 1)==" ")
+	Else
+		nTamChq :=Val(Substr(SA6->A6_LAYIPMF,1,2))
+		nSalto  :=Val(Substr(SA6->A6_LAYIPMF,3,1))
+		nLinVlr :=Val(SubStr(SA6->A6_LAYIPMF,4,1))
+		nColVlr :=Val(SubStr(SA6->A6_LAYIPMF,25, 3))
+		nColVlr :=IIF(nColVlr==0,93,nColVlr)
+		nLin1Ext:=Val(SubStr(SA6->A6_LAYIPMF,5,1))-nLinVlr
+		nCol1Ext:=Val(SubStr(SA6->A6_LAYIPMF,6,2))
+		nLin2Ext:=Val(SubStr(SA6->A6_LAYIPMF,8,1))-Val(SubStr(SA6->A6_LAYIPMF,5,1))
+		nCol2Ext:=Val(SubStr(SA6->A6_LAYIPMF,9,2))
+		nTamExt :=Val(SubStr(SA6->A6_LAYIPMF,23, 2))
+		nTamExt :=IIF(nTamExt==0,95,nTamExt)
+		nLinFav :=Val(SubStr(SA6->A6_LAYIPMF,11,2))-Val(SubStr(SA6->A6_LAYIPMF,8,1))
+		nColFav :=Val(SubStr(SA6->A6_LAYIPMF,13,2))
+		nLinDat :=Val(SubStr(SA6->A6_LAYIPMF,15,2))-Val(SubStr(SA6->A6_LAYIPMF,11,2))
+		nColVir :=Val(SubStr(SA6->A6_LAYIPMF,17,2))
+		nCasas  :=Val(SubStr(SA6->A6_LAYIPMF,19,1))
+		nCasas  :=IIF(nCasas==0,2,nCasas)
+		nColAno :=Val(SubStr(SA6->A6_LAYIPMF,20,3))
+		lComp   :=(SubStr(SA6->A6_LAYIPMF,28, 1)=="S" .or. SubStr(SA6->A6_LAYIPMF,28, 1)==" ")
+	Endif
+	lLayOut := .T.
+	nLinVlr :=FA480Test(nColVlr)
+
+	If  nLinVlr == 99
+		 Return .f.
+	Endif
+
+Endif
+
+*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+*³ Verifica se o extenso ultrapassa o tamanho de colunas    ³
+*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cExt1 := SubStr (cExtenso,1,nTamExt ) // 1.a linha do extenso
+nLoop := Len(cExt1)
+
+While .T.
+
+	If Len(cExtenso) == Len(cExt1) .and. Len(cExt1)+nCol1Ext <= nTamExt
+		Exit
+	EndIf
+
+	If SubStr(cExtenso,Len(cExt1),1) == " " .and. Len(cExt1)+nCol1Ext <= nTamExt
+		Exit
+	EndIf
+
+	cExt1 := SubStr( cExtenso,1,nLoop )
+	nLoop --
+	If nLoop <= 0
+		MsgAlert(STR0024) // "Erro na configuracao do cheque"+CHR(13)+"Verifique o tamanho das linhas de extenso"
+		Return .f.
+	Endif
+Enddo
+
+cExt2 := SubStr(cExtenso,Len(cExt1)+1,nTamExt) // 2.a linha do extenso
+IF Empty(cExt2)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Se nao tem 2a. linha de extenso, completa 1a. com *          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cExt1 += Replicate( "*",nTamExt - Len(cExt1) - nCol1Ext )
+Else
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Se tem, completa a primeira linha com espa‡os entre as palavras  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cExt1 := StrTran(cExt1," ","  ",,nTamExt - Len(cExt1) - nCol1Ext + 1)
+Endif
+cExt2 += Replicate( "*",nTamExt - Len(cExt2) - nCol2Ext )
+
+*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+*³ Imprime o cheque                                         ³
+*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lFirst
+	If lTeste  // SE FOI IMPRESSO TESTE
+      SetPrc(0,0)
+		@ 0,0 PSAY Chr(27)+Chr(64)
+		If nSalto = 8
+         SetPrc(0,0)
+			@0,0 PSAY Chr(27)+Chr(48)
+		Endif
+		If lComp .and. !Empty(nComp)
+         SetPrc(0,0)
+			@ 0,0 PSAY CHR(nComp)
+		Endif
+		nLinVlr := PROW()
+	Else
+		@nLinVlr, 0 PSAY Chr(27)+Chr(64)
+		If nSalto = 8
+			@nLinVlr, 0 PSAY Chr(27)+Chr(48)
+		Endif
+		If lComp .and. !Empty(nComp)
+			@nLinVlr,0 PSAY CHR(nComp)
+		Endif
+	Endif
+Endif
+
+cSimb  :=GETMV("MV_SIMB1")
+cValor :=Alltrim(Transform(SEF->EF_VALOR,PesqPict("SEF","EF_VALOR",17)))
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³  Ajuste do posicionamento da impressora: compactada: 1 posi‡„o ;  ³
+//³  sem compactar: 2 posi‡”es; segunda impress„o em diante: sem      ³
+//³  ajuste. Lembrete: ajuste apenas no primeiro cheque.              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+__LogPages()
+If lFirst
+	If lComp
+      SetPrc(nLinVlr,0)
+		@nLinVlr,nColVlr+1 PSAY cSimb
+	Else
+      SetPrc(nLinVlr,0)
+		@nLinVlr,nColVlr+2 PSAY cSimb
+	Endif
+	lFirst := .F.
+Else
+	@nLinVlr,nColVlr PSAY cSimb
+Endif
+
+nRepete := pCol()+Len(cValor)+17-Len(cValor) - nTamExt
+
+If nRepete > 0
+	cValor += Replicate("*",17-Len(cValor)-nRepete)
+Else
+	cValor += Replicate("*",17-Len(cValor))
+EndIf
+
+@nLinVlr,PCOL()             PSAY cValor
+@Prow()+nLin1Ext,nCol1Ext   PSAY cExt1
+@Prow()+nLin2Ext,nCol2Ext   PSAY cExt2
+@Prow()+nLinFav ,nColFav    PSAY IIF(cBenef==NIL,SEF->EF_BENEF,cBenef)
+nTamanho    :=1+ Len(Trim("Jaragua do Sul,")) //Len(Trim(SA6->A6_MUN))
+@Prow()+nLinDat,nColVir-nTamanho  PSAY "Jaragua do Sul," //IIF(!Empty(SA6->A6_MUN),Trim(SA6->A6_MUN)," ")
+@Prow(),nColVir+1           PSAY Day(SEF->EF_DATA)  PicTure "99"
+@Prow(),Pcol()+6            PSAY aMes[Month(SEF->EF_DATA)]
+IF nCasas == 1
+	@Prow(),nColAno         PSAY SubStr(Str(Year(SEF->EF_DATA),4),4,1)
+Elseif nCasas == 2
+	@Prow(),nColAno         PSAY SubStr(Str(Year(SEF->EF_DATA),4),3,2)
+Elseif nCasas == 3
+	@Prow(),nColAno         PSAY SubStr(Str(Year(SEF->EF_DATA),4),2,3)
+Else
+	@Prow(),nColAno         PSAY Str(Year(SEF->EF_DATA),4)
+Endif
+
+If lFA480DAT
+	ExecBlock("FA480DAT",.F.,.F.)
+Endif
+
+@Prow()+1,0 PSAY " "   // Para descarregar buffer Windows 95
+
+dbSelectArea("SEF")
+nLinVlr+=nTamChq
+
+@nLinVLr,0 PSAY " "		// Para avancar at‚ o fim do cheque
+SetPrc(nLinVlr,0)
+
+Reclock("SEF")
+SEF->EF_IMPRESS := "S"
+MsUnlock( )
+
+lRet	:=	Fr480Grav(cBanco,cAgencia,cConta,lMovBco,cFilAtual)
+
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³FR480Grav ºAutor  ³Bruno Sobieski      º Data ³  06/15/00   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Faz as gravações necessarias após a impressao.             º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ FINX480                                                    º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function FR480Grav(cBanco,cAgencia,cConta,lMovBco,cFilAtual)
+LOCAL lGerar    := .F.
+LOCAL cCheqAnt
+LOCAL nRecAnt   :=0
+LOCAL nRegProx
+LOCAL nRegCheq
+Local cHistor:=""
+Local nSEFpos := 0
+Local lSpbInUse := SpbInUse()
+Local aAreaSEF := {}
+
+cNatGpe := GETMV("MV_CHQGPE")
+
+lMovBco := Iif(lMovbco=Nil,.f.,lMovBco)
+*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+*³ Caso cheque n„o tenha sido gerado, ira gravar a movimen-³
+*³ ‡„o banc ria e atualizar cheque emitido                 ³
+*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+IF (Empty( SEF->EF_NUM ) .or. SubStr(SEF->EF_NUM, 1, 1 ) = "*") .Or. FunName() == "GPER280"
+ 
+	*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	*³ Somente atualiza Movimentacao Bancaria caso cheque NO SEJA p/ ³
+	*³ um "PA" e esteja liberado pelo parametro MV_LIBCHEQ (=S)       ³
+	*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	nSEFpos := Recno()
+	lMovbco := GetMv("MV_LIBCHEQ")="S"
+	lGerar  := .T.
+	cCheqAnt := SEF->EF_NUM
+	If FunName() != "GPER280" .and. Empty(cCheqAnt)     // GPE, o cheque j  foi gerado pelo GPER280
+		Reclock( "SEF" )
+		SEF->EF_NUM  	 := cNumCheq
+		SEF->EF_BANCO   := mv_par01
+		SEF->EF_AGENCIA := mv_par02
+		SEF->EF_CONTA   := mv_par03
+		SEF->EF_BENEF   := cBenef
+		MsUnlock( )
+	Endif
+	nRegCheq := RecNo()
+	If (Empty(cCheqAnt)) .AND. !SEF->EF_TIPO $ MVRECANT+"/"+MV_CRNEG
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Grava o numero do cheque no SE2 - para contabilizacao   ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If FunName()  != "GPER280"        //GPE
+			dbSelectArea("SE2")
+			If SE2->(dbSeek(xFilial()+SEF->EF_PREFIXO+SEF->EF_TITULO+SEF->EF_PARCELA+SEF->EF_TIPO+SEF->EF_FORNECE+SEF->EF_LOJA))
+				RecLock("SE2")
+				SE2->E2_NUMBCO := cNumCheq
+				MsUnlock()
+				dbSelectArea("SE5")
+				dbSetOrder(7)
+				SE5->( dbSeek(xFilial()+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+SE2->E2_TIPO))
+				While ( SE5->(!Eof()) .And. xFilial("SE5") == SE5->E5_FILIAL .And.;
+					SE2->E2_PREFIXO == SE5->E5_PREFIXO .And.;
+					SE2->E2_NUM     == SE5->E5_NUMERO  .And.;
+					SE2->E2_PARCELA == SE5->E5_PARCELA .And.;
+					SE2->E2_TIPO    == SE5->E5_TIPO )
+					If ( SE2->E2_FORNECE+SE2->E2_LOJA == SE5->E5_CLIFOR+SE5->E5_LOJA ) .and.;
+						SE5->E5_SEQ == SEF->EF_SEQUENC .and. SE5->E5_TIPODOC != "CP"
+						If Empty(SE5->E5_NUMCHEQ)
+							RecLock("SE5",.F.)
+							SE5->E5_BANCO   := mv_par01
+							SE5->E5_AGENCIA := mv_par02
+							SE5->E5_CONTA   := mv_par03
+							SE5->E5_NUMCHEQ := cNumCheq
+							MsUnlock()
+						Endif
+						cHistor			 := SE5->E5_HISTOR
+					EndIf
+					dbSelectArea("SE5")
+					SE5->( dbSkip())
+				EndDo
+				dbSelectArea("SEF")
+			Endif
+		Endif
+	EndIf
+
+	If SEF->EF_TIPO $ MVRECANT+"/"+MV_CRNEG
+		lMovBco := .F.
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Neste caso o titulo veio de um Contas³
+		//³ a Receber (SE1)                      ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		dbSelectArea("SE1")
+		dbSetOrder(1)
+		dbSeek(xFilial()+SEF->EF_PREFIXO+SEF->EF_TITULO+SEF->EF_PARCELA+SEF->EF_TIPO)
+		dbSelectArea("SE5")
+		dbSetOrder(7)
+		dbSeek(xFilial("SE5")+SEF->EF_PREFIXO+SEF->EF_TITULO+SEF->EF_PARCELA+SEF->EF_TIPO)
+		While !Eof() .And. xFilial()+SEF->EF_PREFIXO+SEF->EF_TITULO+SEF->EF_PARCELA+SEF->EF_TIPO=;
+			SE5->E5_FILIAL+SE5->E5_PREFIXO+SE5->E5_NUMERO+SE5->E5_PARCELA+SE5->E5_TIPO
+	
+			IF	SE5->E5_MOTBX == "CMP"
+				dbSkip()
+				Loop
+			Endif
+						
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Grv. o N.Cheque nos registros do    SE5 .³
+			//³ se nao for caixa , considerando E5_SEQ   ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If ( SE5->E5_CLIFOR+SE5->E5_LOJA == SE1->E1_CLIENTE+SE1->E1_LOJA ) .and. ;
+				Substr(SE5->E5_BANCO,1,2) != "CX" .and. ;
+				!(SE5->E5_BANCO $ GetMV("MV_CARTEIR")) .and.;
+				SE5->E5_SEQ == SEF->EF_SEQUENC .And. SE5->E5_RECPAG == "P" .and. ;
+				Empty (SE5->E5_NUMCHEQ)
+				RecLock("SE5",.F.)
+				SE5->E5_BANCO 		:= cBanco
+				SE5->E5_AGENCIA	:= cAgencia
+				SE5->E5_CONTA		:= cConta
+				SE5->E5_NUMCHEQ	:= cNumCheq
+				MsUnlock()
+			EndIf
+			dbSkip()
+		Enddo
+	Endif
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Caso cheque tenha sido gerado, ir  regravar novo numero ³
+	//³ nos elementos do cheque.                                ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If SubStr(cCheqAnt,1,1) = "*"
+		dbSelectArea( "SEF" )
+		dbSetOrder(1)
+		SEF->( dbSeek( cFilial + mv_par01 + mv_par02 + mv_par03 + cCheqAnt ))
+		While SEF->( !Eof() ).and. mv_par01+mv_par02+mv_par03+cCheqAnt == EF_BANCO+EF_AGENCIA+EF_CONTA+EF_NUM .And.;
+				SEF->EF_FILIAL == xFilial("SEF")
+			nRecAnt  := Recno()
+			dbSkip( )
+			nRegProx := RecNo()
+			dbGoto(nRecAnt)
+			Reclock( "SEF" )
+			SEF->EF_NUM   := cNumCheq
+			SEF->EF_BENEF := cBenef
+			MsUnlock()
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Grava o numero do cheque no SE2 - para contabilizacao   ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If FunName() != "GPER280" .and. !SEF->EF_TIPO $ MVRECANT +"/"+MV_CRNEG
+				dbSelectArea( "SE2" )
+				If SE2->(dbSeek(xFilial()+SEF->EF_PREFIXO+SEF->EF_TITULO+SEF->EF_PARCELA+SEF->EF_TIPO+SEF->EF_FORNECE+SEF->EF_LOJA))
+					RecLock("SE2")
+					SE2->E2_NUMBCO := cNumCheq
+					MsUnlock()
+					dbSelectArea("SE5")
+					dbSetOrder(4)
+					dbSeek(xFilial()+SE2->E2_NATUREZ+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+SE2->E2_TIPO,.T.)
+					While ( !Eof() .And. xFilial("SE5") == SE5->E5_FILIAL .And.;
+							SE2->E2_NATUREZ == SE5->E5_NATUREZ .And.;
+							SE2->E2_PREFIXO == SE5->E5_PREFIXO .And.;
+							SE2->E2_NUM     == SE5->E5_NUMERO  .And.;
+							SE2->E2_PARCELA == SE5->E5_PARCELA .And.;
+							SE2->E2_TIPO    == SE5->E5_TIPO )
+						If ( SE2->E2_FORNECE+SE2->E2_LOJA == SE5->E5_CLIFOR+SE5->E5_LOJA ) .and.;
+								SE5->E5_SEQ == SEF->EF_SEQUENC
+							RecLock("SE5",.F.)
+							SE5->E5_BANCO   := mv_par01
+							SE5->E5_AGENCIA := mv_par02
+							SE5->E5_CONTA   := mv_par03
+							SE5->E5_NUMCHEQ := SE2->E2_NUMBCO
+							cHistor         := SE5->E5_HISTOR
+							MsUnlock()
+						EndIf
+						dbSelectArea("SE5")
+						dbSkip()
+					EndDo
+				Else
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³ Trata caso o registro seja origin rio de uma movimenta- ³
+					//³ ‡„o banc ria manual e atualiza o saldo banc rio do che- ³
+					//³ que renumerado.                                         ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					dbSelectArea("SE5")
+					dbSetOrder(1)
+					If dbSeek(xFilial()+DtoS(SEF->EF_DATA)+SEF->EF_BANCO+SEF->EF_AGENCIA+SEF->EF_CONTA+cCheqAnt)
+						lMovBco := .F.
+						While ! Eof() .And.SE5->E5_FILIAL== xFilial() .And.;
+								DTOS(SE5->E5_DATA)== DtoS(SEF->EF_DATA)
+							If SE5->E5_SITUACA == "C" .Or. SE5->E5_TIPODOC == "TE" ;
+									.Or. (SE5->E5_TIPODOC == "TR" .And. SE5->E5_MOEDA == "ES")
+								dbSkip()
+								Loop
+							EndIf
+							If SE5->E5_TIPODOC == "TR"
+								If Substr(SE5->E5_NUMCHEQ,1,15) == Substr(cCheqAnt,1,15) .or. ;
+										Substr(SE5->E5_DOCUMEN,1,15) == Substr(cCheqAnt,1,15)
+									RecLock("SE5",.F.)
+									IF SE5->E5_RECPAG == "P"
+										SE5->E5_NUMCHEQ := cNumCheq
+									Else
+										SE5->E5_DOCUMEN := cNumCheq
+									Endif
+									MsUnlock()
+									If SE5->E5_RECPAG == "P"
+										AtuSalBco( SE5->E5_BANCO,SE5->E5_AGENCIA,SE5->E5_CONTA,SE5->E5_DTDISPO,SE5->E5_VALOR,"-")
+									Else
+										AtuSalBco( SE5->E5_BANCO,SE5->E5_AGENCIA,SE5->E5_CONTA,SE5->E5_DTDISPO,SE5->E5_VALOR,"+")
+									EndIf
+								Endif
+							Else
+								If Substr(SE5->E5_NUMCHEQ,1,15) == Substr(cCheqAnt,1,15)
+									RecLock("SE5",.F.)
+									SE5->E5_NUMCHEQ := cNumCheq
+									MsUnlock()
+									If SE5->E5_RECPAG == "P"
+										AtuSalBco( SE5->E5_BANCO,SE5->E5_AGENCIA,SE5->E5_CONTA,SE5->E5_DTDISPO,SE5->E5_VALOR,"-")
+									Else
+										AtuSalBco( SE5->E5_BANCO,SE5->E5_AGENCIA,SE5->E5_CONTA,SE5->E5_DTDISPO,SE5->E5_VALOR,"+")
+									EndIf
+								Endif
+							EndIf
+							dbSelectArea("SE5")
+							dbSkip()
+						EnddO
+					Endif
+				Endif
+			Endif
+			dbSelectArea( "SEF" )
+			dbSetOrder(1)
+			SEF->( dbGoTo( nRegProx ) )
+		EndDO
+	Endif
+	dbGoTo( nRegCheq )
+Endif
+
+If cPaisLoc != "BRA" .AND. nSEFpos != 0 .AND. Alltrim(SEF->EF_ORIGEM) 	== "FINA085A"
+	aArea:=GetArea()
+	DbSelectArea("SEF")
+	DbGoto(nSEFpos)
+	DbSelectArea("SE2")
+	DbSetOrder(1)
+	If dbSeek(xFilial()+SEF->EF_PREFIXO+SEF->EF_TITULO+SEF->EF_PARCELA+SEF->EF_TIPO+SEF->EF_FORNECE+SEF->EF_LOJA)
+		lMovBco := .F.
+	EndIf
+	RestArea(aArea)
+Endif
+
+If lMovBco
+	Reclock( "SE5",.T. )
+	SE5->E5_FILIAL      := Iif(cFilAtual=Nil,xFilial(),cFilAtual)
+	SE5->E5_BANCO       := cBanco
+	SE5->E5_AGENCIA     := cAgencia
+	SE5->E5_CONTA       := cConta
+	SE5->E5_BENEF       := SEF->EF_BENEF
+	SE5->E5_DATA        := SEF->EF_DATA
+	SE5->E5_NUMCHEQ     := cNumCheq
+	SE5->E5_DTDIGIT     := SEF->EF_DATA
+	SE5->E5_HISTOR      := if(!Empty(SEF->EF_HIST),SEF->EF_HIST,cHistor)
+	SE5->E5_RECPAG      := "P"
+	SE5->E5_TIPODOC     := "CH"
+	SE5->E5_DTDISPO     := SEF->EF_DATA
+	SE5->E5_VALOR       := SEF->EF_VALOR
+	If FunName() == "GPER280"     //GPE
+		SE5->E5_NATUREZ     := &cNatGpe
+	Endif
+	//Se o cheque vem de uma ordem de pagamento, gravar o numero dela no SE5
+	If cPaisLoc	<>	"BRA" .And. SEF->EF_TIPO == "ORP"
+		SE5->E5_ORDREC	:=	Alltrim(SEF->EF_TITULO)
+	Endif
+	If lSpbInuse
+		SE5->E5_MODSPB  := "3"
+	Endif
+	MsUnlock()
+
+	If FunName() != "GPER280"     //GPE
+		If !SE2 -> E2_TIPO $ MVPAGANT
+			Reclock("SE5")
+			SE5->E5_NATUREZ     := SE2->E2_NATUREZ
+			MsUnlock()
+		Endif
+	Endif
+
+	If ExistBlock("FA480SAL")
+		ExecBlock("FA480SAL",.F.,.F.)
+	Endif
+
+	If FunName() != "GPER280" .Or. (FunName() == "GPER280" .And. Select("SE8") > 0)   //GPE
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Atualiza o Saldo Bancario                               ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		AtuSalBco( cBanco,cAgencia,cConta,SEF->EF_DATA,SEF->EF_VALOR,"-")
+	Endif
+Elseif SEF->EF_TIPO $ MVPAGANT
+	dbSelectArea("SE5")
+	dbSetOrder(3)
+	If dbSeek(xFilial()+SEF->EF_BANCO+SEF->EF_AGENCIA+SEF->EF_CONTA+SEF->EF_PREFIXO+SEF->EF_TITULO+SEF->EF_PARCELA+SEF->EF_TIPO)
+		Reclock("SE5")
+		SE5->E5_NUMCHEQ := SEF->EF_NUM
+		MsUnlock()
+	Endif
+Endif
+If lMovBco .or. lGerar
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Incrementa o Numero do Cheque caso houve movimentacao   ³
+	//³ bancaria ou um novo cheque foi gerado                   ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	While .T.
+		cNumCheq:=Soma1(Trim(cNumCheq),Len(Trim(cNumCheq)))
+		aAreaSEF := SEF->(GetArea())
+		SEF->(dbSetOrder(1))
+		If !(SEF->(dbSeek(xFilial("SEF")+cBanco+cAgencia+cConta+cNumCheq)))
+			SEF->(RestArea(aAreaSEF))
+			Exit
+		Endif
+	Enddo	
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ PE FA480COM                                             ³
+//³ Utilizado para gravar dados complementares apos imprimir³
+//³ o cheque                                                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ExistBlock("FA480COM")
+	ExecBlock("FA480COM",.F.,.F.)
+Endif
+
+Return .t.
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ fa480Test³ Autor ³ Wagner Xavier         ³ Data ³ 14/02/92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Teste da emissao do cheque                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ fa480test                                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function FA480TEST(nColVlr)
+
+Local nOpca
+Local oDlg
+LOCAL li:=nLinVlr
+Local aSays:={}, aButtons:={},cCadastro := ""
+
+AADD(aSays,OemToAnsi( STR0019 ) ) //"Antes de iniciar a impress„o, verifique se o formul rio continuo"
+AADD(aSays,OemToAnsi( STR0020 ) ) //"est  ajustado. O teste ser  impresso na coluna do valor."
+AADD(aSays,OemToAnsi( STR0018 ) ) //"Clique no botÆo impressora para teste de posicionamento."
+AADD(aSays,OemToAnsi( STR0021 ) )  //"Formul rio posicionado corretamente ?"
+AADD(aButtons, { 1,.T.,{|o| nOpca:= 1,o:oWnd:End()}} )
+AADD(aButtons, { 2,.T.,{|o| nOpca:= 0, li:=99,o:oWnd:End()}} )
+AADD(aButtons, { 6,.T.,{|o| nOpca:= 0, li:=CKIMP(nColVlr)}} )
+FormBatch( cCadastro, aSays, aButtons )
+
+Return li
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ CKIMP    ³ Autor ³ Marcos Patricio       ³ Data ³ 20/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Imprime caracter para teste                                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ CKIMP                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ FINX480                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function CKIMP(nColVlr)
+LOCAL cTeste
+LOCAL li :=nLinVlr
+cTeste := "."
+If lComp .and. !Empty(nComp)
+	cTeste:= CHR(nComp)+"."
+Endif
+@li,00      PSAY cTeste
+@li,nColVlr PSAY "."
+prnflush()
+lTeste := .T.
+Return nColVlr
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ FA480CH  ³ Autor ³ Wagner Xavier         ³ Data ³ 24/06/98 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Ponto de entrada para teste do n§ cheque e outros          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe e ³ FA480CH()                                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ FINX480                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function fa480Ch()
+LOCAL lRet := .T.
+If !Execblock("FA480CH",.f.,.f.)
+	lRet := .f.
+Endif
+Return lRet
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³ImpCheqLoc³ Autor ³ Bruno Sobieski        ³ Data ³ 15.06.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Imprime um determinado cheque (Localizacoes)                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ImpCheqLoc(cBanco,cAgencia,cConta,lMovBco,cFilAtual)        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ImpCheqLoc(cBanco,cAgencia,cConta,lMovBco,cFilAtual)
+Local lRet			:=	.F.
+LOCAL cValor
+LOCAL nPosTot   	:=1
+LOCAL nLin      	:=0
+LOCAL lFirst    	:=.T.
+LOCAL aMes := { OemToAnsi(STR0006),OemToAnsi(STR0007),OemToAnsi(STR0008),;   //"Janeiro"###"Fevereiro"###"Marco"
+	OemToAnsi(STR0009),OemToAnsi(STR0010),OemToAnsi(STR0011),;   //"Abril"###"Maio"###"Junho"
+	OemToAnsi(STR0012),OemToAnsi(STR0013),OemToAnsi(STR0014),;   //"Julho"###"Agosto"###"Setembro"
+	OemToAnsi(STR0015),OemToAnsi(STR0016),OemToAnsi(STR0017) }   //"Outubro"###"Novembro"###"Dezembro"
+Local cExtenso := ""
+
+Local cExt1
+Local cExt2
+Local nPosExt1	:=	nPosExt2	:=	0
+Local nLoop
+Local nRepete
+Local	aLaySort	:=	{}
+Local nDesplaza	:=	0
+Local aArea:={}
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se cheque foi configurado.                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+IF Empty( SA6->A6_LAYOUT )
+	Help(" ",1,"CHEQNAOCONF")
+	Return .f.
+Endif
+
+If cPaisLoc=="PAR"  // Acertado pois no Paraguai nao pode imprimir a descricao 
+	cExtenso:= Extenso( SEF->EF_VALOR,.F.,nMoeda,".")
+Else
+	cExtenso:= Extenso( SEF->EF_VALOR,.F.,nMoeda)
+Endif
+
+If ! lLayout
+	aLayout	:=	{}
+	AAdd(aLayout,{Val(SubStr(SA6->A6_LAYOUT,4,1))	,IIF(Val(SubStr(SA6->A6_LAYOUT,25, 3))==0,93,Val(SubStr(SA6->A6_LAYOUT,25, 3))),"VALOR"})
+	AAdd(aLayout,{Val(SubStr(SA6->A6_LAYOUT,5,1))	,Val(SubStr(SA6->A6_LAYOUT,6,2))	,"EXTENSO1"	})
+	AAdd(aLayout,{Val(SubStr(SA6->A6_LAYOUT,8,1))	,Val(SubStr(SA6->A6_LAYOUT,9,2))	,"EXTENSO2"	})
+	AAdd(aLayout,{Val(SubStr(SA6->A6_LAYOUT,11,2))	,Val(SubStr(SA6->A6_LAYOUT,13,2))	,"FAVORECI"	})
+	AAdd(aLayout,{Val(SubStr(SA6->A6_LAYOUT,15,2))	,Val(SubStr(SA6->A6_LAYOUT,17,2))-(1+Len(Trim("Jaragua do Sul,"))) ,"MUNICIP"	})//(1+Len(Trim(SA6->A6_MUN))) ,"MUNICIP"	})
+	AAdd(aLayout,{Val(SubStr(SA6->A6_LAYOUT,15,2))	,Val(SubStr(SA6->A6_LAYOUT,17,2))+2,"DIA"})
+	AAdd(aLayout,{Val(SubStr(SA6->A6_LAYOUT,15,2))	,Val(SubStr(SA6->A6_LAYOUT,17,2))+8,"MES"	}) //2 do DIA + 6 de espaco para  o "  DE  " do cheque
+	AAdd(aLayout,{Val(SubStr(SA6->A6_LAYOUT,15,2))	,Val(SubStr(SA6->A6_LAYOUT,20,3))	,"ANO"	})
+	
+	
+	//Ordernar por linha + coluna
+	aLaySort	:=	aSort(aLayout,,,{|x,y| IIf(x[1] == y[1],x[2] < y[2],x[1] < y[1] ) })
+	aLayout	:=	AClone(aLaySort)
+	
+	//Arrumo todas as linhas para ficarem relativas a primeira, comeco da ultima.
+	For nI	:=	Len(aLayout)	To	2	STEP -1
+		aLayOut[nI][1]	:=	aLayOut[nI][1] - aLayOut[nI-1][1]
+	Next		
+	
+	nTamChq :=Val(Substr(SA6->A6_LAYOUT,1,2))
+	nSalto  :=Val(Substr(SA6->A6_LAYOUT,3,1))
+	nTamExt :=Val(SubStr(SA6->A6_LAYOUT,23, 2))
+	nTamExt :=IIF(nTamExt==0,95,nTamExt)
+	nCasas  :=Val(SubStr(SA6->A6_LAYOUT,19,1))
+	nCasas  :=IIF(nCasas==0,2,nCasas)
+	lComp   :=(SubStr(SA6->A6_LAYOUT,28, 1)=="S" .or. SubStr(SA6->A6_LAYOUT,28, 1)==" ")
+	
+	//For‡o o valor da nLinVlr porque dentro da funcao fa480test() referencia ela.
+	nLinVlr  :=	aLayOut[1][1]
+	nPrimCol	:=	aLayOut[1][2]
+	
+	aLayOut[1][1]	:=	FA480Test(nPrimCol)
+	
+	lLayOut := .T.
+	
+	If	aLayOut[1][1] == 99
+		Return .f.
+	Endif
+	
+Endif
+
+//Vou Obter as Posicoes no Array de cada um dos campos que precisso
+nPosExt1	:=	Ascan(aLayout,{|X| X[3] == "EXTENSO1" })
+nPosExt2	:=	Ascan(aLayout,{|X| X[3] == "EXTENSO2" })
+
+*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+*³ Verifica se o extenso ultrapassa o tamanho de colunas    ³
+*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+cExt1 := SubStr (cExtenso,1,nTamExt ) // 1.a linha do extenso
+nLoop := Len(cExt1)
+
+While .T.
+	
+	If Len(cExtenso) == Len(cExt1) .And. Len(cExt1) + aLayout[nPosExt1][2] <= nTamExt
+		Exit
+	EndIf
+	
+	If SubStr(cExtenso,Len(cExt1),1) == " " .And. Len(cExt1)+ aLayout[nPosExt1][2] <= nTamExt
+		Exit
+	EndIf
+	
+	cExt1 := SubStr( cExtenso,1,nLoop )
+	nLoop --  
+	If nLoop <= 0
+		MsgAlert(STR0024) // "Erro na configuracao do cheque"+CHR(13)+"Verifique o tamanho das linhas de extenso"
+		Return .f.
+	Endif
+
+Enddo
+
+cExt2 := SubStr(cExtenso,Len(cExt1)+1,nTamExt) // 2.a linha do extenso
+IF Empty(cExt2)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Se nao tem 2a. linha de extenso, completa 1a. com *          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cExt1 += Replicate( "*",nTamExt - Len(cExt1) - aLayout[nPosExt1][2] )
+Else
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Se tem, completa a primeira linha com espa‡os entre as palavras  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cExt1 := StrTran(cExt1," ","  ",,nTamExt - Len(cExt1) - aLayout[nPosExt1][2] + 1)
+Endif
+cExt2 += Replicate( "*",nTamExt - Len(cExt2) - aLayout[nPosExt2][2] )
+
+*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+*³ Imprime o cheque                                         ³
+*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lFirst
+	@aLayout[1][1], 0 PSAY Chr(27)+Chr(64)
+	If nSalto = 8
+		@aLayout[1][1], 0 PSAY Chr(27)+Chr(48)
+	Endif
+	If lComp
+		@aLayout[1][1],0 PSAY Chr(15)
+	Endif
+Endif
+
+if cPaisLoc=="PAR"
+	cSimb:= " "
+else 
+	cSimb  :=GetMv("MV_SIMB"+alltrim(Str(nMoeda,2)))
+EndIf 
+cValor := cSimb + Alltrim(Transform(SEF->EF_VALOR,PesqPict("SEF","EF_VALOR",17)))
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³  Ajuste do posicionamento da impressora: compactada: 1 posi‡„o ;  ³
+//³  sem compactar: 2 posi‡”es; segunda impress„o em diante: sem      ³
+//³  ajuste. Lembrete: ajuste apenas no primeiro cheque.              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+__LogPages()
+
+If lFirst
+	If lComp
+		nDesplaza	:=	1
+	Else
+		nDesplaza	:=	2
+	Endif
+	lFirst := .F.
+Else
+	nDesplaza	:=	0
+Endif
+
+For	nI	:=	1	To	Len(aLayout)
+	If nI	==	1	//So o primeiro tem uma posicao absoluta, os outros sao relativos ao primeiro
+		nRow	:=	0
+	Else
+		nRow	:=	PROW()
+	Endif	
+	Do Case	
+	Case aLayout[nI][3] == "VALOR"
+		nRepete := nDesplaza + aLayout[nI][2] +Len(cValor)+17-Len(cValor) - nTamExt
+		If nRepete > 0
+			cValor += Replicate("*",17-Len(cValor)-nRepete)
+		Else
+			cValor += Replicate("*",17-Len(cValor))
+		EndIf
+		@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2] PSAY cValor
+		nDesplaza	:=	0
+	Case aLayout[nI][3] == "EXTENSO1"
+		@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2] PSAY cExt1
+		nDesplaza	:=	0
+	Case aLayout[nI][3] == "EXTENSO2"
+		@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2] PSAY cExt2
+		nDesplaza	:=	0
+	Case aLayout[nI][3] == "FAVORECI"
+		@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2] PSAY IIF(cBenef==NIL,SEF->EF_BENEF,cBenef)
+		nDesplaza	:=	0
+	Case aLayout[nI][3] == "MUNICIP"
+		@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2] PSAY "Jaragua do Sul,"//Trim(SA6->A6_MUN)
+		nDesplaza	:=	0
+	Case aLayout[nI][3] == "DIA"
+		@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2] PSAY Day(SEF->EF_DATA) PICTURE "99"
+		nDesplaza	:=	0
+	Case aLayout[nI][3] == "MES"
+		@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2] PSAY aMes[Month(SEF->EF_DATA)]
+		nDesplaza	:=	0
+	Case aLayout[nI][3] == "ANO"
+		IF nCasas == 1
+			@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2]	PSAY SubStr(Str(Year(SEF->EF_DATA),4),4,1)
+		Elseif nCasas == 2
+			@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2]	PSAY SubStr(Str(Year(SEF->EF_DATA),4),3,2)
+		Elseif nCasas == 3
+			@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2]	PSAY SubStr(Str(Year(SEF->EF_DATA),4),2,3)
+		Else
+			@nRow + aLayout[nI][1], nDesplaza + aLayout[nI][2]	PSAY Str(Year(SEF->EF_DATA),4)
+		Endif
+		nDesplaza	:=	0
+	Endcase	
+Next
+
+dbSelectArea("SEF")
+
+aLayout[1][1]	+=	nTamChq
+
+Reclock("SEF")
+SEF->EF_IMPRESS := "S"
+MsUnlock( )
+
+lRet	:=	Fr480Grav(cBanco,cAgencia,cConta,lMovBco,cFilAtual)
+
+If mv_par06 == 1 .and. lRet
+	aArea:=GetArea()
+	dbSelectArea("SEF")
+	DbSetOrder(1)
+	If (dbSeek(cFilial+mv_par01+mv_par02+mv_par03+cNumcheq))
+		MsgAlert(STR0025+cNumcheq)
+		lRet:=.F.	
+	EndIf
+	RestArea(aArea)
+Endif
+Return lRet
+
+

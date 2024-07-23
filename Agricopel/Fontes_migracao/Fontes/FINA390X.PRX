@@ -1,0 +1,1615 @@
+#INCLUDE "FINA390.CH"
+#Include "FIVEWIN.CH"
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³ FinA390X	³ Autor ³ Wagner Xavier 		  ³ Data ³ 27/02/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Gera‡„o de Cheques sobre titulos s/baixa de titulos ou	  ³±±
+±±³			 ³ cheques avulsos.														  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ FinA390X()																  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ SIGAFIN																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±³         ATUALIZACOES SOFRIDAS NA VERSAO 5.08                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Programador ³ Data   ³ BOPS ³  Motivo da Alteracao                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Rubens Pante³16/10/00³xxxxxx³ Acrescentar gravacao de EF_COMPROB para  ³±±
+±±³            ³        ³      ³ localizacoes - Colombia                  ³±±
+±±³Rubens Pante³01/12/00³xxxxxx³ Gravar loja e codigo do fornecedor no    ³±±
+±±³            ³        ³      ³ cheque avulso para Colombia              ³±±
+±±³Rubens Pante³13/03/01³xxxxxx³ Pedir codigo do fornecedor para cheque   ³±±
+±±³            ³        ³      ³ avulso (Colombia)                        ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function FinA390x()
+LOCAL nSavRec := RecNo()
+
+PRIVATE aTELA[0][0],aGETS[0]
+PRIVATE aRotina := { {OemToAnsi(STR0001), "AxPesqui", 0 , 1},;  // "Pesquisar" 
+							{OemToAnsi(STR0002), "U_fA390TitX", 0 , 2},;  // "Chq s/Tit" 
+							{OemToAnsi(STR0003), "fA390Avu", 0 , 2},;  // "Avulsos"   
+							{OemToAnsi(STR0004), "fa390Red", 0 , 2},;  // "Redeposito"
+							{OemToAnsi(STR0005), "fa390Can", 0 , 3} }  // "caNcelar"  
+
+Private cBanco390, cAgencia390, cConta390, cCheque390, dVencIni, dVencFim
+Private nLimite, cNatur390, cBenef390, cForn390, cHist390, aTitulos:={}
+Private cFil390,cLojaBen
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Chamada da fun‡„o pergunte											  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Set Key VK_F12 To fA390Perg()
+pergunte("FIN390",.F.)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define o cabe‡alho principal do programa.						  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE cCadastro := OemToAnsi(STR0006)  //"Cheques a Pagar"
+Private cMarca 	:= GetMark()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica o numero do Lote 											  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private cLote
+LoteCont( "FIN" )
+IF ExistBlock("F390BROW")
+	ExecBlock("F390BROW",.f.,.f.)
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Endereca a Fun‡„o de BROWSE											  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+mBrowse( 6, 1,22,75,"SE2",,"E2_IMPCHEQ" )
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Recupera a Integridade dos dados									  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SE2")
+dbSetOrder(1)
+dbGoTo( nSavRec )
+
+Set Key VK_F12 To
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³ fA390TitX ³ Autor ³ Wagner Xavier 		  ³ Data ³ 26/05/92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Escolha dos titulos para gera‡„o do cheque					  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fa390TitX()																  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ Gen‚rico 																  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+User Function fA390TitX(cAlias,cCampo,nOpcE)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Vari veis 														  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local oDlg,oDlg1
+Local oValor		:= 0
+Local oQtdTit		:= 0
+LOCAL lRet			:=.F.
+LOCAL nSaldo
+LOCAL cArquivo
+LOCAL nTotal		:=0
+LOCAL nHdlPrv		:=0
+LOCAL lPadrao,cPadrao:="566"
+LOCAL nRec			:= Recno()
+LOCAL nSavOrd1 	:= IndexOrd()
+LOCAL nTotAbat
+LOCAL cNumero
+LOCAL cPrefixo
+LOCAL cTipo
+LOCAL cParcela
+LOCAL cFornece
+LOCAL cIndex		:= " "
+Local lHead       := .F.
+Local nRegSef     := 0
+Local cLiberado	:= GetMv("MV_LIBCHEQ")
+Local nOpca 		:= 0
+Local lEntrada 	:= ExistBlock("A390CHEQ")
+Local nRecSe2     := 0
+Local lEof
+Local nRecSe2Atu  := 0
+Local lMostra
+Local lAglutina
+Local lContabiliza
+Local lEntrada2 	:= ExistBlock("A390SEF")
+Local la390Acr  	:= ExistBlock("A390ACR")
+Local oLimite
+Local nAcrescimo  := 0
+
+Private lInverte	:= .F.
+Private cMarca 	:= GetMark()
+Private nValor 	:= 0
+Private nQtdTit	:= 0
+
+aTam			:=TamSX3("E2_FORNECE")
+cBanco390	:= CriaVar("EF_BANCO")
+cAgencia390 := Criavar("EF_AGENCIA")
+cConta390	:= Criavar("EF_CONTA")
+cCheque390	:= Space(15)
+dVencIni 	:= dDataBase
+dVencFim 	:= dDataBase
+nLimite		:= 0
+cNatur390	:= Space(10)
+cBenef390	:= CriaVar("EF_BENEF")
+cForn390 	:= Space(aTam[1])
+cHist390 	:= CriaVar("EF_HIST")
+cLojaBen    := Space( 2)
+
+If ExistBlock("A390HIST")
+	cHist390 :=padr(ExecBlock("A390HIST",.F.,.F.),40)
+Endif
+
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se data do movimento n„o ‚ menor que data limite de ³
+//³ movimentacao no financeiro    										  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !DtMovFin()
+	Return
+Endif	
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Desenha tela de entrada de dados									  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+While .T.
+	DEFINE MSDIALOG oDlg FROM 15,1 TO 350,495 TITLE OemToAnsi(STR0011) PIXEL  //"Pagamentos com Cheques"
+
+	@ 003, 004 TO 037, 196 OF oDlg	PIXEL
+	@ 042, 004 TO 076, 196 OF oDlg	PIXEL
+	@ 082, 004 TO 115, 196 OF oDlg	PIXEL
+	@ 122, 004 TO 155, 196 OF oDlg	PIXEL
+
+	@ 010, 011 SAY 	OemToAnsi(STR0012) 							 	SIZE 21, 07 OF oDlg PIXEL  //"Banco"
+	@ 020, 011 MSGET	cBanco390	F3 "SA6" Valid Fa390Banco(1)  SIZE 21, 11 OF oDlg PIXEL
+	@ 010, 047 SAY 	OemToAnsi(STR0013)                        SIZE 28, 07 OF oDlg PIXEL  //"Agˆncia"
+	@ 020, 047 MSGET	cAgencia390 			Valid Fa390Banco(2)  SIZE 28, 11 OF oDlg PIXEL
+	@ 010, 082 SAY 	OemToAnsi(STR0014)                        SIZE 25, 07 OF oDlg PIXEL  //"Conta"
+	@ 020, 082 MSGET	cConta390				Valid Fa390Banco(3)  SIZE 39, 11 OF oDlg PIXEL
+	@ 010, 128 SAY 	OemToAnsi(STR0015)                        SIZE 46, 07 OF oDlg PIXEL  //"N£mero Cheque"
+//	@ 020, 128 MSGET	cCheque390				Valid Fa390Cheq(1)	SIZE 46, 11 OF oDlg PIXEL
+	@ 020, 128 MSGET	cCheque390				                  	SIZE 46, 11 OF oDlg PIXEL
+
+	@ 049, 011 SAY 	OemToAnsi(STR0016)                        SIZE 53, 07 OF oDlg PIXEL  //"Vencidos"
+	@ 060, 011 SAY 	OemToAnsi(STR0017)                        SIZE 32, 07 OF oDlg PIXEL  //"Entre"
+	@ 059, 027 MSGET	dVencIni 											SIZE 45, 11 OF oDlg PIXEL
+	@ 060, 077 SAY 	OemToAnsi(STR0018)                        SIZE 10, 07 OF oDlg PIXEL  //"e"
+	@ 059, 085 MSGET	dVencFim 		Valid  dVencFim>=dVencIni	SIZE 45, 11 OF oDlg PIXEL
+	@ 049, 135 SAY 	OemToAnsi(STR0019)         		         SIZE 53, 07 OF oDlg PIXEL  //"Valor do Cheque"
+	@ 059, 135 MSGET	oLimite VAR nLimite		 Picture"@E 9,999,999,999.99" SIZE 57, 11 OF oDlg PIXEL
+	oLimite:cReadvar:="NLIMIT190"  // direcionador de help
+	@ 088, 011 SAY 	OemToAnsi(STR0020)                        SIZE 35, 07 OF oDlg PIXEL  //"Fornecedor"
+	@ 098, 011 MSGET	cForn390 	F3 "SA2" Valid fa390Fornece() SIZE 70, 11 OF oDlg PIXEL
+	@ 088, 109 SAY 	OemToAnsi(STR0022)                        SIZE 53, 07 OF oDlg PIXEL  //"Benefici rio"
+	@ 098, 109 MSGET	cBenef390		Picture "@!S30"            SIZE 84, 11 OF oDlg PIXEL
+
+	@ 127, 011 SAY 	OemToAnsi(STR0021)                        SIZE 32, 07 OF oDlg PIXEL  //"Natureza"
+	@ 137, 011 MSGET	cNatur390	F3 "SED" Picture "@!" Valid fa390Natur()  SIZE 40, 11 OF oDlg PIXEL
+
+	@ 127, 061 SAY 	OemToAnsi(STR0023)                        SIZE 35, 07 OF oDlg PIXEL  //"Hist¢rico"
+	@ 137, 061 MSGET	cHist390												SIZE 128, 11 OF oDlg PIXEL
+
+	DEFINE SBUTTON FROM 07, 211 TYPE 1 ACTION (nOpca := 1,;
+					Iif(Fa390Ok(oDlg),oDlg:End(),nOpca:=0)) ENABLE OF oDlg
+	DEFINE SBUTTON FROM 20, 211 TYPE 2 ACTION oDlg:End() ENABLE OF oDlg
+
+	ACTIVATE MSDIALOG oDlg CENTERED
+
+	If nOpca == 0 .or. nOpca == 2
+		Exit
+	Endif
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Execblock a ser executado antes da Indregua                  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	IF (ExistBlock("F390FIL"))
+		cFil390 := ExecBlock("F390FIL",.f.,.f.)
+	Else
+		cFIl390 := ""
+	Endif
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Monta express„o do Filtro para sele‡„o							  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cIndex := CriaTrab(nil,.f.)
+	cChave := IndexKey()
+	IndRegua("SE2",cIndex,cChave,,FA390Chec(),OemToAnsi(STR0027))  //"Selecionando Registros..."
+	nIndex := RetIndex("SE2")
+	dbSelectArea("SE2")
+	#IFNDEF TOP
+		dbSetIndex(cIndex+OrdBagExt())
+	#ENDIF
+	dbSetOrder(nIndex+1)
+
+	dbGoTop()
+	If BOF() .and. EOF()
+		Help(" ",1,"RECNO")
+		Exit
+	Endif
+	DBEVAL({ || FA390Blank() })
+	dbGoTop()
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Mostra browse com os titulos que irao compor o cheque		  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	nValor	:= 0	// valor total dos titulos,mostrado no rodape do browse
+	nQtdTit	:= 0	// quantidade de titulos,mostrado no rodape do browse
+
+	nOpcA := 0
+	oValor:=0
+	oQtdTit := 0
+	dbSelectArea(cAlias)
+	dbSetOrder(nIndex+1)
+
+	DEFINE MSDIALOG oDlg1 TITLE OemToAnsi("Gera‡„o de Cheques") From 9,0 To 28,80 OF oMainWnd
+
+	@ 1.6 , 00.8 SAY OemToAnsi(STR0028)+cBanco390               FONT oDlg1:oFont  //"Banco: "
+	@ 2.4 , 00.8 Say OemToAnsi(STR0029)+cAgencia390             FONT oDlg1:oFont  //"Agˆncia: "
+	@ 1.6 , 08	 SAY OemToAnsi(STR0030)+cConta390               FONT oDlg1:oFont  //"Conta: "
+	@ 2.4 , 08	 SAY OemToAnsi(STR0031)+SubStr(cCheque390,1,15) FONT oDlg1:oFont  //"N§ Cheque: "
+
+	@ 1.6 , 23	 Say OemToAnsi(STR0032)       						FONT oDlg1:oFont  //"N§ T¡tulos Selecionados: "
+	@ 1.6 , 35	 Say oQtdTit VAR nQtdTit Picture "999"          FONT oDlg1:oFont
+	@ 2.4 , 23	 Say OemToAnsi(STR0033)                    		FONT oDlg1:oFont  //"Valor Total: "
+	@ 2.4 , 30	 Say oValor VAR nValor Picture "@E 999,999,999.99" FONT oDlg1:oFont
+
+	@ 1.0 , 00.3 To 3,21.5	OF oDlg1
+	@ 1.0 , 22	 To 3,39 	OF oDlg1
+
+	oMark 		:=MsSelect():New(cAlias,"E2_OK","E2_IMPCHEQ",,@lInverte,@cMarca,{45,1,143,315})
+	oMark:bMark := {||Fa390Exibe(cMarca,oValor,oQtdTit,1)}
+	oMark:oBrowse:lhasMark = .t.
+	oMark:oBrowse:lCanAllmark := .t.
+	oMark:oBrowse:bAllMark := { || FA390Inverte(cMarca,oValor,oQtdTit,1) }
+
+	ACTIVATE MSDIALOG oDlg1 ON INIT EnchoiceBar(oDlg1,{|| nOpca := 1,oDlg1:End()},{|| nOpca := 2,oDlg1:End()}) CENTERED
+
+	If nValor == 0
+		Exit
+	EndIF
+
+	If nOpca == 1
+		If cPaisLoc == "COL"
+			cComprobante := Tabela("YG","CE")
+			If SX5->(RecLock("SX5"))
+		 	    cComprobX        := StrZero(Val(cComprobante)+1,Len(cComprobante))
+		 		SX5->X5_DESCSPA := cComprobX
+		 		SX5->X5_DESCRI  := cComprobX
+		 		SX5->X5_DESCENG := cComprobX
+			EndIf
+			SX5->(MsUnlock())
+		EndIf
+		dbSelectArea("SE2")
+		dbGoTop()
+		aTitulos := {}
+		
+		lEof := .F.	
+		While !(lEof)
+			lEof := Eof()
+			If E2_FILIAL != xFilial("SE2")
+				dbSkip()
+				Loop
+			Endif
+
+			nOrdem := IndexOrd()
+			nRecSe2Atu := RecNo()
+			dbSkip()
+			nRecSe2 := RecNo()
+			dbGoto(nRecSe2Atu)
+
+			If E2_OK == cMarca .and. !E2_TIPO $ MVABATIM
+				*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				*³Este array pode ser utilizado caso haja necessi- ³
+				*³dade de ser saber todos os titulos que foram uti-³
+				*³lizados para formar o cheque.      					³
+				*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				Aadd(aTitulos,{ SE2->E2_PREFIXO,SE2->E2_NUM,SE2->E2_PARCELA,;
+									 SE2->E2_TIPO,SE2->E2_FORNECE,SE2->E2_LOJA})
+				cPrefixo := E2_PREFIXO
+				cNumero	:= E2_NUM
+				cParcela := E2_PARCELA
+				cTipo 	:= E2_TIPO
+				cFornece := E2_FORNECE
+
+				*ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				*³Soma Titulos Abatimentos 								³
+				*ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				dbSelectArea("SE2")
+				dbSetOrder(1)
+				dbSeek(cFilial+cPrefixo+cNumero+cParcela)
+				nTotAbat := 0
+
+				While !Eof( ) .And. E2_FILIAL==cFilial .And. E2_PREFIXO=cPrefixo ;
+					.And. E2_NUM==cNumero .And. E2_PARCELA==cParcela .And.;
+					E2_FORNECE==cFornece
+
+					IF E2_TIPO $ MVABATIM .And. E2_SALDO>0
+						nTotAbat+=xMoeda(E2_SALDO,E2_MOEDA,1)
+						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³ Atualiza flag do arquivo		  ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						RecLock("SE2",.F.)
+						Replace E2_IMPCHEQ With "S"
+						MsUnlock()
+					EndIf
+					dbSkip()
+				EndDo
+
+				nAcrescimo := 0			// Campo do Usuario
+
+				If lA390Acr
+					nAcrescimo := Execblock("A390ACR",.F.,.F.)		//Tratamento do usuario
+				Endif
+
+				nValor += nAcrescimo		//soma o resultado do acrescimento no cheque totalizador
+
+				dbSetOrder( nOrdem )
+				dbGoto(nRecSe2Atu)
+				If xMoeda((E2_SALDO+E2_SDACRES-E2_SDDECRE+nAcrescimo),E2_MOEDA,1)-nTotAbat > 0
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³ Atualiza arquivo de cheques. 						  ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					Reclock( "SEF", .T. )
+					SEF -> EF_FILIAL	:= xFilial()
+					SEF -> EF_NUM		:= cCheque390
+					SEF -> EF_BANCO	:= cBanco390
+					SEF -> EF_AGENCIA := cAgencia390
+					SEF -> EF_CONTA	:= cConta390
+					SEF -> EF_DATA 	:= dDataBase
+					SEF -> EF_VALOR	:= xMoeda((SE2->E2_SALDO+SE2->E2_SDACRES-SE2->E2_SDDECRE+nAcrescimo)-nTotAbat,SE2->E2_MOEDA,1)
+					SEF -> EF_BENEF	:= cBenef390
+					SEF -> EF_IMPRESS := "A"
+					SEF -> EF_PREFIXO := SE2->E2_PREFIXO
+					SEF -> EF_TITULO	:= SE2->E2_NUM
+					SEF -> EF_PARCELA := SE2->E2_PARCELA
+					SEF -> EF_TIPO 	:= SE2->E2_TIPO
+					SEF -> EF_FORNECE := SE2->E2_FORNECE
+					SEF -> EF_LOJA 	:= SE2->E2_LOJA
+					SEF -> EF_HIST 	:= cHist390
+					SEF -> EF_LIBER	:= cLiberado
+					SEF -> EF_ORIGEM  := "FINA390TIT"
+		            If cPaisLoc == "COL"
+    		            SEF->EF_COMPROB := cComprobante
+    		        EndIf
+					MsUnlock()
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³ Ponto de Entrada A390SEF								  ³
+					//³ Para grava‡äes complementares no item do cheque  ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					If lEntrada2
+						ExecBlock("A390SEF",.F.,.F.)
+					Endif
+				EndIF
+				Reclock( "SE2" )
+				SE2 -> E2_IMPCHEQ  := "S"
+				SE2 -> E2_NUMBCO	 := cCheque390
+				MsUnlock()
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Realiza lan‡amentos cont beis pelo SE2: Coloca SEF em Eof(),³
+				//³ pois a segunda sequencia ser  feita pelo SEF posicionado no ³
+				//³ registro totalizador e o SE2 estar  em Eof()                ³
+				//³ Soma dos debitos igual ao total do credito                  ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				lContabiliza := IIF(mv_par03==1, .T.,.F.)
+				If lContabiliza
+					lContabiliza := IIF(GETMV("MV_CTBAIXA") $ "AC", .T.,.F.)
+				Endif
+				If (lPadrao := VerPadrao(cPadrao)) .and. lContabiliza
+					nRegSEF := SEF->(Recno())
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³ Desposiciona para ignorar SEF gerado neste momento.         ³         
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					SEF->(dbGoBottom())
+					SEF->(dbSkip())
+					// Posiciona fornecedor para utilizar sua conta contabil
+					SA2->(MsSeek(xFilial("SA2")+SE2->(E2_FORNECE+E2_LOJA))) 
+					IF !lHead
+						nHdlPrv:=HeadProva(cLote,"FINA390",Substr(cUsuario,7,6),@cArquivo)
+						lHead:=.T.
+					Endif
+					nTotal+=DetProva(nHdlPrv,cPadrao,"FINA390",cLote)
+					SEF->(DbGoto(nRegSEF))
+					RecLock("SEF")
+					Replace EF_LA With "S"
+					MsUnlock()
+				Endif
+			Endif
+			dbSelectArea( "SE2" )
+			dbSetOrder(nOrdem)
+			dbGoto(nRecSe2)
+		EndDo
+
+		If nValor > 0
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Atualiza arquivo de cheques. 						  ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			Reclock( "SEF", .T. )
+			SEF->EF_FILIAL	:= cFilial
+			SEF->EF_NUM		:= cCheque390
+			SEF->EF_BANCO	:= cBanco390
+			SEF->EF_AGENCIA := cAgencia390
+			SEF->EF_CONTA	:= cConta390
+			SEF->EF_DATA 	:= dDataBase
+			SEF->EF_VALOR	:= nValor
+			SEF->EF_BENEF	:= cBenef390
+			SEF->EF_HIST 	:= cHist390
+			SEF->EF_LIBER	:= cLiberado
+			SEF->EF_ORIGEM  := "FINA390TIT"
+            If cPaisLoc == "COL" //Necessito para buscar NIT/CC do Beneficiario
+                SEF->EF_LOJA    := cLojaBen
+                SEF->EF_FORNECE := cForn390
+	            SEF->EF_COMPROB := cComprobante
+	        EndIf
+			MsUnlock()
+		EndIf
+
+		If nValor > 0 .And. cLiberado == "S"
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Grava registro referente a movimenta‡„o Banc ria ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			Reclock("SE5",.T.)
+			Replace E5_FILIAL 	With xFilial()
+			Replace E5_BENEF		With cBenef390
+			Replace E5_VALOR		With nValor
+			Replace E5_DATA		With dDataBase
+			Replace E5_NATUREZ	With cNatur390
+			Replace E5_RECPAG 	With "P"
+			Replace E5_DTDIGIT	With dDataBase
+			Replace E5_TIPODOC	With "CH"
+			Replace E5_DTDIGIT	With dDataBase
+			Replace E5_BANCO		With cBanco390
+			Replace E5_AGENCIA	With cAgencia390
+			Replace E5_CONTA		With cConta390
+			Replace E5_NUMCHEQ	With cCheque390
+			Replace E5_CLIFOR 	With cForn390
+			Replace E5_HISTOR 	With cHist390
+			Replace E5_DTDISPO	With E5_DATA
+
+			If SpbInUse()
+				Replace E5_MODSPB With "3"
+			Endif
+			
+			MsUnlock()
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Atualiza saldo bancario.								  ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			AtuSalBco(cBanco390,cAgencia390,cConta390,SE5->E5_DATA,SE5->E5_VALOR,"-")
+		Endif
+
+		If nValor > 0
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Ativa um ponto de entrada para eventual execblock³
+			//³ chamado A390CHEQ 										  ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If lEntrada
+				ExecBlock("A390CHEQ",.F.,.F.)
+			Endif
+
+			lContabiliza := IIF(mv_par03==1, .T.,.F.)
+			If lContabiliza
+				lContabiliza := IIF(GETMV("MV_CTBAIXA") $ "AC", .T.,.F.)
+			Endif				
+
+			If (lPadrao := VerPadrao( cPadrao)) .and. lContabiliza
+				IF !lHead
+					nHdlPrv:=HeadProva(cLote,"FINA390",Substr(cUsuario,7,6),@cArquivo)
+					lHead:=.T.
+				Endif
+				If !(SE2->(EOF()))
+					SE2->(dbGoBottom())
+					SE2->(dbSkip())
+				Endif
+				nTotal+=DetProva(nHdlPrv,cPadrao,"FINA390",cLote)
+				RodaProva(nHdlPrv,nTotal)
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Envia para Lan‡amento Contabil							  ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				lAglutina:=Iif(mv_par04==1,.t.,.f.)
+				lMostra	:=Iif(mv_par02==1,.t.,.f.)
+				cA100Incl(cArquivo,nHdlPrv,3,cLote,lMostra,lAglutina)
+				RecLock("SEF")
+				Replace EF_LA With "S"
+				MsUnlock()
+			EndIf
+		EndIf
+		dbSelectArea( "SE2" )
+	ElseIf nOpca == 2
+		RetIndex("SE2")
+		Set Filter to
+		Loop
+	EndIf
+	Exit
+EndDo
+MsUnlockAll()
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Restaura os indices 													  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+RetIndex("SE2")
+Set Filter To
+If !Empty( cIndex )
+	dbSelectArea("SE2")
+	dbSetOrder(nSavOrd1)
+	dbGoTo( nRec )
+	FErase (cIndex+OrdBagExt())
+Endif
+
+Return (.T.)
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³fa390Avu	³ Autor ³ Wagner Xavier 		  ³ Data ³ 21/03/94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Cadastra cheque avulso.												  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³fa390Avu()																  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³FINA390x																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function fa390Avu( cAlias, nRec, nOpcE )
+
+LOCAL oDlg
+LOCAL nValor390
+LOCAL lPadrao,cPadrao:="567"
+LOCAL cArquivo, cComprobX
+LOCAL nTotal	:=0
+LOCAL nHdlPrv	:=0
+LOCAL nOpca 	:= 0
+Local cLiberado:= GetMv("MV_LIBCHEQ")
+
+cBanco390		:= CriaVar("EF_BANCO")
+cAgencia390 	:= Criavar("EF_AGENCIA")
+cConta390		:= Criavar("EF_CONTA")
+nValor390		:= 0
+cBenef390		:= Space(40)
+cHist390 		:= Space(40)
+cNatur390		:= Space(10)
+cCheque390		:= Space(15)
+cForn390			:= Space( 6)
+nSavRec			:= RecNO()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se data do movimento n„o ‚ menor que data limite de ³
+//³ movimentacao no financeiro    										  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !DtMovFin()
+	Return
+Endif	
+
+While .T.
+	cBanco390	:= CriaVar("EF_BANCO")
+	cAgencia390 := Criavar("EF_AGENCIA")
+	cConta390	:= Criavar("EF_CONTA")
+	nValor390  :=0
+	cBenef390  :=Space(40)
+	cHist390   :=Space(40)
+	cNatur390  :=Space(10)
+	cCheque390 :=Space(15)
+    cForn390   :=Space( 6)
+    cLojaBen   :=Space( 2)
+
+	If ExistBlock("A390HIST")
+		cHist390:=padr(ExecBlock("A390HIST",.f.,.f.),40)
+	Endif
+
+	nOpca := 0
+	DEFINE MSDIALOG oDlg FROM 15,6 TO 284,485 TITLE OemToAnsi(STR0035) PIXEL  //"Cheques Avulsos"
+
+	@ 003, 011 TO 038, 193 OF oDlg	PIXEL
+	@ 042, 011 TO 129, 193 OF oDlg	PIXEL
+
+	@ 011, 016 SAY 	OemToAnsi(STR0012)                                               SIZE 021, 07 OF oDlg PIXEL  //"Banco"
+	@ 020, 016 MSGET	cBanco390 F3 "SA6"   Valid Fa390Banco(1) Picture "@!" SIZE 021, 11 OF oDlg PIXEL
+	@ 011, 052 SAY 	OemToAnsi(STR0013)                                    SIZE 028, 07 OF oDlg PIXEL  //"Agˆncia"
+	@ 020, 052 MSGET	cAgencia390 			Valid Fa390Banco(2) Picture "@!" SIZE 028, 11 OF oDlg PIXEL
+	@ 011, 087 SAY 	OemToAnsi(STR0014)                                               SIZE 025, 07 OF oDlg PIXEL  //"Conta"
+	@ 020, 087 MSGET	cConta390				Valid Fa390Banco(3) Picture "@!" SIZE 039, 11 OF oDlg PIXEL
+	@ 011, 134 SAY 	OemToAnsi(STR0015)                            			SIZE 046, 07 OF oDlg PIXEL  //"N£mero Cheque"
+   @ 020, 133 MSGET	cCheque390				Valid Fa390Cheq(1) Picture "@!"  SIZE 049, 11 OF oDlg PIXEL
+
+	@ 049, 018 SAY 	OemToAnsi(STR0019)                                        			SIZE 053, 07 OF oDlg PIXEL  //"Valor do Cheque"
+	@ 059, 018 MSGET	nValor390 Picture "@E 9999,999,999.99" Valid nValor390>0;
+																									SIZE 063, 11 OF oDlg PIXEL
+	@ 049, 120 SAY 	OemToAnsi(STR0021)                                    SIZE 046, 07 OF oDlg PIXEL  //"Natureza"
+	@ 059, 119 MSGET	cNatur390 F3 "SED"   Valid fa390Natur() Picture "@!"  SIZE 060, 11 OF oDlg PIXEL
+	@ 075, 018 SAY 	OemToAnsi(STR0023)                                    SIZE 053, 07 OF oDlg PIXEL  //"Hist¢rico"
+	@ 085, 018 MSGET	cHist390 				Picture "@!S35"                  SIZE 168, 11 OF oDlg PIXEL
+	If cPaisLoc != "COL"
+		@ 101, 018 SAY 	OemToAnsi(STR0022)                             			SIZE 053, 07 OF oDlg PIXEL  //"Benefici rio"
+		@ 111, 018 MSGET cBenef390				Picture "@!S29"                   SIZE 168, 11 OF oDlg PIXEL
+	Else
+		@ 101, 018 SAY 	OemToAnsi(STR0020)                        SIZE 35, 07 OF oDlg PIXEL  //"Fornecedor"
+		@ 111, 018 MSGET cForn390 	F3 "SA2" Valid fa390Fornece() SIZE 28, 11 OF oDlg PIXEL
+		@ 101, 060 SAY 	OemToAnsi(STR0022)                        SIZE 53, 07 OF oDlg PIXEL  //"Benefici rio"
+		@ 111, 060 MSGET cBenef390	Picture "@!S30"	SIZE 126, 11 OF oDlg PIXEL
+	EndIf
+
+	DEFINE SBUTTON FROM 07, 204 TYPE 1 ACTION (If(Fa390Ok(oDlg),(nOpca := 1,oDlg:End()),nOpca:=0)) ENABLE OF oDlg
+	DEFINE SBUTTON FROM 20, 204 TYPE 2 ACTION oDlg:End() ENABLE OF oDlg
+
+	ACTIVATE MSDIALOG oDlg CENTERED
+
+
+	If nOpca == 2 .Or. nOpca == 0
+		Exit
+	ElseIf nOpca == 1
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Grava cheque no sistema.												  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+		BEGIN TRANSACTION
+			
+			Reclock( "SEF", .T. )
+			SEF -> EF_FILIAL	:= cFilial
+			SEF -> EF_NUM		:= cCheque390
+			SEF -> EF_VALOR	:= nValor390
+			SEF -> EF_BANCO	:= cBanco390
+			SEF -> EF_AGENCIA := cAgencia390
+			SEF -> EF_CONTA	:= cConta390
+			SEF -> EF_BENEF	:= cBenef390
+			SEF -> EF_DATA 	:= dDataBase
+			SEF -> EF_HIST 	:= cHist390
+			SEF -> EF_LIBER   := cLiberado
+			SEF -> EF_ORIGEM  := "FINA390AVU"
+			SEF -> EF_FORNECE := cForn390
+			SEF -> EF_LOJA    := cLojaBen
+			If cPaisLoc == "COL"
+				cComprobante := Tabela("YG","CE")			
+			 	If SX5->(RecLock("SX5"))
+			 	    cComprobX        := StrZero(Val(cComprobante)+1,Len(cComprobante))
+			 		SX5->X5_DESCSPA := cComprobX
+			 		SX5->X5_DESCRI  := cComprobX
+			 		SX5->X5_DESCENG := cComprobX
+			 	EndIf
+			 	SEF->EF_COMPROB := cComprobante
+			 	SX5->(MsUnlock())
+			EndIf
+			MsUnlock( )
+	
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Registra na movimenta‡„o Banc ria. 								  ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If ( cLiberado == "S" )
+				Reclock( "SE5", .T. )
+				SE5 -> E5_FILIAL	:= cFilial
+				SE5 -> E5_BANCO	:= cBanco390
+				SE5 -> E5_AGENCIA := cAgencia390
+				SE5 -> E5_CONTA	:= cConta390
+				SE5 -> E5_RECPAG	:= "P"
+				SE5 -> E5_DATA 	:= dDataBase
+				SE5 -> E5_HISTOR	:= cHist390
+				SE5 -> E5_BENEF	:= cBenef390
+				SE5 -> E5_DTDIGIT := dDataBase
+				SE5 -> E5_VALOR	:= nValor390
+				SE5 -> E5_NUMCHEQ := cCheque390
+				SE5 -> E5_NATUREZ := cNatur390
+				SE5 -> E5_TIPODOC := "CA"
+				SE5 -> E5_DTDISPO := E5_DATA
+	         SE5 -> E5_CLIFOR  := cForn390
+	         SE5 -> E5_LOJA    := cLojaBen
+	
+				If SpbInUse()
+					Replace E5_MODSPB With "3"
+				Endif
+				
+				MsUnlock( )
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Atualiza saldo bancario.								  ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				 AtuSalBco(cBanco390,cAgencia390,cConta390,SE5->E5_DATA,SE5->E5_VALOR,"-")
+			EndIf
+	
+		END TRANSACTION
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Ativa um ponto de entrada para eventual execblock³
+		//³ chamado A390AVU  										  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If ExistBlock("A390AVU")
+			ExecBlock("A390AVU",.F.,.F.)
+		Endif
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Monta Lan‡amento contabil.								  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If (lPadrao := VerPadrao( cPadrao ) .and. mv_par03 == 1)
+			nHdlPrv:=HeadProva(cLote,"FINA390",Substr(cUsuario,7,6),@cArquivo)
+			nTotal+=DetProva(nHdlPrv,cPadrao,"FINA390",cLote)
+			RodaProva(nHdlPrv,nTotal)
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Envia para Lan‡amento Contabil 							  ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			cA100Incl(cArquivo,nHdlPrv,3,cLote,Iif(mv_par02==1,.T.,.F.),.F.)
+			 
+ 			RecLock("SEF")
+			Replace EF_LA With "S"
+			MsUnlock()				
+			
+		EndIf
+	EndIf
+EndDo
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Recupera a Integridade dos dados									  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+MsUnlockAll()
+dbSelectArea("SE2")
+dbSetOrder(1)
+dbGoTo( nSavRec )
+
+Return
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³fa390Can	³ Autor ³ Alessandro Freire	  ³ Data ³ 18/04/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Cancela cheques sobre titulo										  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³fa390can()																  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³FINA390x																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function fa390Can()
+
+LOCAL oDlg
+LOCAL cAlias	:= Alias()
+LOCAL nOrder	:= IndexOrd()
+LOCAL nRec		:= Recno()
+LOCAL lRetorna := .F.
+LOCAL lF390Canc := ExistBlock("F390CANC")
+Local lCancelou := .F.
+
+PRIVATE cBanco390
+PRIVATE cAgencia390
+PRIVATE cConta390
+PRIVATE cCheque390
+PRIVATE nOpcA
+
+cBanco390		:= CriaVar("EF_BANCO")
+cAgencia390 	:= Criavar("EF_AGENCIA")
+cConta390		:= Criavar("EF_CONTA")
+cCheque390		:= Space( 15 )
+
+While .T.
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica se data do movimento n„o ‚ menor que data limite de ³
+	//³ movimentacao no financeiro    										  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	
+	If !DtMovFin()
+		Exit
+	Endif	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Procura no SEF o registro correspondente do SE2 posiciona no momento.³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea( "SEF" )
+	dbSetOrder( 3 )
+	dbSeek( xFilial() 			+;
+				SE2->E2_PREFIXO	+;
+				SE2->E2_NUM 		+;
+				SE2->E2_PARCELA	+;
+				SE2->E2_TIPO	)
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Procura no SEF o registro que contem o No. do Cheque ³
+	//³ Considera Fornecedor na Chave								³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	While !Eof() .And. ;
+	SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+SE2->E2_TIPO == ;
+	SEF->EF_PREFIXO+SEF->EF_TITULO+SEF->EF_PARCELA+SEF->EF_TIPO .And. ;
+	(Empty( SEF->EF_NUM ) .or. SE2->E2_FORNECE != SEF->EF_FORNECE )
+		dbSkip()
+	EndDo
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Recebe dados do cheque a ser cancelado.							  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cBanco390	:= SEF->EF_BANCO
+	cAgencia390 := SEF->EF_AGENCIA
+	cConta390	:= SEF->EF_CONTA
+	cCheque390	:= SEF->EF_NUM
+	dData390 	:= SEF->EF_DATA
+	nOpca := 0
+	DEFINE MSDIALOG oDlg FROM 10, 5 TO 22, 46 TITLE OemToAnsi(STR0038)  //"Cancelar Cheque"
+	@ 1.0,2	Say OemToAnsi(STR0040)  //"Banco : "
+	@ 1.0,7.5 MSGET cBanco390 F3 "SA6" Valid Fa390Banco(1)
+
+	@ 2.0,2	Say OemToAnsi(STR0041)  //"Agˆncia : "
+	@ 2.0,7.5 MSGET cAgencia390	Valid Fa390Banco(2)
+
+	@ 3.0,2	Say OemToAnsi(STR0042)  //"Conta : "
+	@ 3.0,7.5 MSGET cConta390	Valid Fa390Banco(3)
+
+	@ 4.0,2	Say OemToAnsi(STR0043)  //"N£m Cheque:"
+	@ 4.0,7.5 MSGET cCheque390 	Valid Fa390Cheq(2)
+
+	@.3,1 TO 5,20 OF oDlg
+
+	DEFINE SBUTTON FROM 072,097 TYPE 1 ACTION (nOpca := 1,If(!Empty(cBanco390),oDlg:End(),nOpca:=0)) ENABLE OF oDlg
+	DEFINE SBUTTON FROM 072,124.1 TYPE 2 ACTION oDlg:End() ENABLE OF oDlg
+
+	ACTIVATE MSDIALOG oDlg CENTERED
+
+	If nOpca == 1
+		//Ponto de entrada para permissao ou nao do cancelamento do cheque
+		If lF390Canc
+			If !(ExecBlock("F390CANC",.F.,.F.))
+				Exit
+			Endif
+		Endif
+		BEGIN TRANSACTION
+			lCancelou := fa390ver()
+		END TRANSACTION
+		If lCancelou != Nil .And. ! lCancelou
+			// No retorno da Fa390Ver, o SE2 e o SEF estao posicionados nos
+			// registros que foram invalidados.
+			If Empty( SE2->E2_IMPCHEQ )
+				Help( " ", 1, "ORIGEM390" )
+			ElseIf SEF->EF_IMPRESS == "C"
+				Help( " ", 1, "JA CANCELA")
+			Endif	
+		Endif
+	ElseIf nOpca  == 2 .Or. nOpca == 0
+		Exit
+	Else
+		Loop
+	EndIf
+EndDo
+
+dbSelectArea( cAlias )
+dbSetOrder( nOrder )
+dbGoto( nRec )
+Return( Nil )
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³fa390Red	³ Autor ³ Pilar S. Albaladejo   ³ Data ³ 16/05/97 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Redeposito de cheques 												  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³fa390Red()																  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³FINA390x																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function fa390Red()
+
+LOCAL oDlg
+Local oValor		:= 0
+Local oQtdTit		:= 0
+LOCAL cAlias	:= "SEF"
+LOCAL nOrder	:= IndexOrd()
+LOCAL nReg
+Local cIndex
+Local nValTot	:= 0
+Local lPadrao,cPadrao:="569"
+LOCAL cArquivo
+LOCAL nTotal	:=0
+LOCAL nHdlPrv	:=0
+LOCAL nProxReg :=0
+LOCAL nRecAnt  := 0
+LOCAL lChqLiber := .F.
+Local lF390RedP := ExistBlock("F390REDP")
+
+PRIVATE cBanco390
+PRIVATE cAgencia390
+PRIVATE cConta390
+PRIVATE cCheque390
+Private cNatur390
+PRIVATE nOpcA
+Private lInverte	:= .F.
+Private nValor 	:= 0
+Private nQtdTit	:= 0
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica o numero do Lote 											  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private cLote
+LoteCont( "FIN" )
+
+cBanco390		:= CriaVar("EF_BANCO")
+cAgencia390 	:= Criavar("EF_AGENCIA")
+cConta390		:= Criavar("EF_CONTA")
+cCheque390		:= Space( 15 )
+cNatur390		:= CRIAVAR("ED_CODIGO")
+cHist390 		:= Space(40)
+
+lPadrao := VerPadrao( cPadrao )
+
+If ExistBlock("A390HIST")
+	cHist390:=padr(ExecBlock("A390HIST",.f.,.f.),40)
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica se data do movimento n„o ‚ menor que data limite de ³
+//³ movimentacao no financeiro    										  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !DtMovFin()
+	Return
+Endif	
+
+While .T.
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Procura no SEF o registro correspondente do SE2. ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea( "SEF" )
+	dbSetOrder( 3 )
+
+	dbSeek( xFilial() 		+;
+				SE2->E2_PREFIXO +;
+				SE2->E2_NUM 		+;
+				SE2->E2_PARCELA +;
+				SE2->E2_TIPO		+;
+				SE2->E2_NUMBCO )
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Recebe dados do cheque a ser redepositado						  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cBanco390	:= SEF->EF_BANCO
+	cAgencia390 := SEF->EF_AGENCIA
+	cConta390	:= SEF->EF_CONTA
+	cCheque390	:= SEF->EF_NUM
+
+	nOpca := 0
+	DEFINE MSDIALOG oDlg FROM 10, 5 TO 26, 56 TITLE OemToAnsi(STR0039)  //"Redepositar Cheque"
+	@ 1.0,2	Say OemToAnsi(STR0040)  //"Banco : "
+	@ 1.0,7.5 MSGET cBanco390 F3 "SA6" Valid Fa390Banco(1)   SIZE 21,11 OF oDlg
+	@ 2.0,2	Say OemToAnsi(STR0041)  //"Agˆncia : "
+	@ 2.0,7.5 MSGET cAgencia390	Valid Fa390Banco(2)			SIZE 28,11 OF oDlg
+	@ 3.0,2	Say OemToAnsi(STR0042)  //"Conta : "
+	@ 3.0,7.5 MSGET cConta390	Valid Fa390Banco(3)				SIZE 39,11 OF oDlg
+	@ 4.0,2	Say OemToAnsi(STR0043)  //"N£m Cheque:"
+	@ 4.0,7.5 MSGET cCheque390 	Valid Fa390Cheq(2)			SIZE 46,11 OF oDlg
+	@ 5.0,2	Say OemToAnsi(STR0044)  //"Natureza:"
+	@ 5.0,7.5 MSGET cNatur390	F3 "SED" Valid Fa390Natur()   SIZE 40,11 OF oDlg
+	@ 6.0,2	Say OemToAnsi(STR0048)  //"Hist¢rico:"
+	@ 6.0,7.5 MSGET cHist390	Picture "@!"                  SIZE 128, 11 OF oDlg
+	@.3,1 TO 7.3,24.2 OF oDlg
+
+	DEFINE SBUTTON FROM 102,139 TYPE 1 ACTION (nOpca := 1,;
+			Iif(Fa390Ok(oDlg),oDlg:End(),nOpca:=0)) ENABLE OF oDlg
+	DEFINE SBUTTON FROM 102,166.1 TYPE 2 ACTION oDlg:End() ENABLE OF oDlg
+
+	ACTIVATE MSDIALOG oDlg CENTERED
+
+	If nOpca == 0 .Or. nOpca == 2
+		Exit
+	EndIf
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica se cheque esta liberado									  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	nRecAnt := SEF->(Recno())
+	lChqLiber := .F.
+	dbSetOrder(4)
+	If dbSeek(xFilial("SEF")+cCheque390+cBanco390+cAgencia390+cConta390)
+		While !Eof() .and. SEF->(EF_FILIAL+EF_NUM+EF_BANCO+EF_AGENCIA+EF_CONTA) == xFilial("SEF")+cCheque390+cBanco390+cAgencia390+cConta390
+			If Empty(SEF->EF_TITULO)
+				If SEF->EF_LIBER != "S"
+					Help( " ",1,"fa390Nolib" )
+					lChqLiber := .F.
+				Else
+					lChqLiber := .T.
+				EndIf
+				Exit
+			Else
+				dbSkip()
+				Loop
+			Endif
+		Enddo
+	Else
+		lChqLiber := .T.
+	Endif
+	If !lChqLiber
+		Exit
+	Endif	
+	dbSetOrder(3)
+	dbGoto(nRecAnt)
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Monta express„o do Filtro para sele‡„o							  ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cIndex := CriaTrab(nil,.f.)
+	cChave := IndexKey( )
+	IndRegua("SEF",cIndex,cChave,,FA390Chec1(),OemToAnsi(STR0027))  //"Selecionando Registros..."
+	nIndex := RetIndex("SEF")
+	dbSelectArea("SEF")
+	#IFNDEF TOP
+		dbSetIndex(cIndex+OrdBagExt())
+	#ENDIF
+	dbSetOrder(nIndex+1)
+
+	dbGoTop()
+	If BOF() .and. EOF()
+		Help(" ",1,"RECNO")
+		Exit
+	End
+
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Mostra Browse para selecao dos titulos do cheque ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	nOpcA := 0
+	dbSelectArea(cAlias)
+	dbSetOrder(nIndex+1)
+
+	DEFINE MSDIALOG oDlg1 TITLE OemToAnsi(STR0045) From 9,0 To 28,80 OF oMainWnd  //"Gera‡„o de Cheques"
+	@ 1.0 , 00.3 To 3.35,25 OF oDlg1
+	@ 1.6 , 00.8 SAY OemToAnsi(STR0028)    +cBanco390     FONT oDlg1:oFont  //"Banco: "
+	@ 2.4 , 00.8 Say OemToAnsi(STR0029)  +cAgencia390     FONT oDlg1:oFont  //"Agˆncia: "
+	@ 1.6 , 08	 SAY OemToAnsi(STR0030)    +cConta390     FONT oDlg1:oFont  //"Conta: "
+	@ 2.4 , 08	 SAY OemToAnsi(STR0031)+SubStr(cCheque390,1,15) FONT oDlg1:oFont  //"N§ Cheque: "
+
+	@ 1.0 , 22	 To 3.35,39 OF oDlg1
+	@ 1.6 , 23	 Say OemToAnsi(STR0032)        				FONT oDlg1:oFont  //"N§ T¡tulos Selecionados: "
+	@ 1.6 , 35	 Say oQtdTit VAR nQtdTit Picture "999"    FONT oDlg1:oFont
+	@ 2.4 , 23	 Say OemToAnsi(STR0033)                   FONT oDlg1:oFont  //"Valor Total: "
+	@ 2.4 , 30	 Say oValor VAR nValor Picture "@E 999,999,999.99" FONT oDlg1:oFont
+
+	oMark 		:=MsSelect():New(cAlias,"EF_OK",,,@lInverte,@cMarca,{45,1,143,315})
+	oMark:bMark := {||Fa390Exibe(cMarca,oValor,oQtdTit,2)}
+	oMark:oBrowse:lhasMark = .t.
+	oMark:oBrowse:lCanAllmark := .t.
+	oMark:oBrowse:bAllMark := { || FA390Inverte(cMarca,oValor,oQtdTit,2) }
+
+	ACTIVATE MSDIALOG oDlg1 ON INIT EnchoiceBar(oDlg1,{|| nOpca := 1,oDlg1:End()},{|| nOpca := 2,oDlg1:End()}) CENTERED
+
+	If nOpca == 1
+		dbSelectArea("SEF")
+		dbGoTop( )
+		nValTot := 0
+		While !Eof()
+
+			If EF_FILIAL != cFilial
+				dbSkip( )
+				Loop
+			EndIF
+			dbSkip()
+			nProxReg := RecNo()
+			dbSkip(-1)
+			
+			If EF_OK == cMarca
+				cPrefixo := EF_PREFIXO
+				cNumero	:= EF_TITULO
+				cParcela := EF_PARCELA
+				cTipo 	:= EF_TIPO
+				cFornece := EF_FORNECE
+				cLoja 	:= EF_LOJA
+
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ "Libera registro do SE2                          ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				dbSelectArea( "SE2" )
+				dbSetOrder( 1 )
+				If dbSeek(cFilial+cPrefixo+cNumero+cParcela+cTipo+cFornece+cLoja)
+					dbSelectArea("SE5")
+					SE5->( dbSetOrder(7))
+					SE5->( dbSeek(xFilial("SE5")+SEF->(EF_PREFIXO+EF_TITULO+EF_PARCELA+EF_TIPO)))
+					While SE5->( !Eof() ) .And. xFilial()+SEF->(EF_PREFIXO+EF_TITULO+EF_PARCELA+EF_TIPO)=;
+							E5_FILIAL+E5_PREFIXO+E5_NUMERO+E5_PARCELA+E5_TIPO
+						If ( SE5->E5_CLIFOR+SE5->E5_LOJA == SE2->E2_FORNECE+SE2->E2_LOJA ) .and. ;
+								Substr(SE5->E5_BANCO,1,2) != "CX" .and. ;
+								!(SE5->E5_BANCO $ GetMv("MV_CARTEIR")) .and. ;
+								SE5->E5_SEQ == SEF->EF_SEQUENC
+							RecLock("SE5",.F.)
+							SE5->E5_NUMCHEQ   := ""
+							MsUnlock()
+						EndIf
+						dbSkip()
+					Enddo
+					RecLock("SE2",.F.)
+					Replace E2_IMPCHEQ With " "
+					Replace E2_NUMBCO  With Space(15)
+					MsUnlock( )
+				EndIf
+
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ "Libera registro do SEF                          ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				dbSelectArea("SEF")
+				nValTOT	+= SEF->EF_VALOR
+				RecLock("SEF",.F.)
+				If EF_IMPRESS == "A"
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³ Caso seja cheque aglutinado, apaga o N. do Cheque³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					Replace EF_NUM with ""
+				Endif
+				Replace EF_IMPRESS With " "
+				If lPadrao				
+					Replace EF_LA With "S"
+				EndIf	
+				MsUnlock()
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ P.Entrada para complemento de gravacao do SEF    ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If lF390Redp
+					ExecBlock("F390REDP",.F.,.F.)
+				Endif
+			Endif
+			dbSelectArea( "SEF" )
+			dbGoto(nProxReg)
+		EndDo
+
+		If nValTot > 0
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Grava registro referente a movimenta‡„o Banc ria ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			Reclock("SE5",.T.)
+			Replace E5_FILIAL 	With cFilial
+			Replace E5_VALOR		With nValTot
+			Replace E5_DATA		With dDataBase
+			Replace E5_NATUREZ	With cNatur390
+			Replace E5_RECPAG 	With "R"
+			Replace E5_DTDIGIT	With dDataBase
+			Replace E5_TIPODOC	With "CH"
+			Replace E5_DTDIGIT	With dDataBase
+			Replace E5_BANCO		With cBanco390
+			Replace E5_AGENCIA	With cAgencia390
+			Replace E5_CONTA		With cConta390
+			Replace E5_NUMCHEQ	With cCheque390
+			Replace E5_HISTOR 	With cHist390
+			Replace E5_DTDISPO	With E5_DATA
+			Replace E5_VLMOED2	With nValTot
+
+			If SpbInUse()
+				Replace E5_MODSPB With "3"
+			Endif
+			
+			MsUnlock( )
+
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Atualiza saldo bancario.								  ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			AtuSalBco(cBanco390,cAgencia390,cConta390,SE5->E5_DATA,SE5->E5_VALOR,"+")
+
+			If lPadrao
+				nHdlPrv:=HeadProva(cLote,"FINA390",Substr(cUsuario,7,6),@cArquivo)
+				nTotal+=DetProva(nHdlPrv,cPadrao,"FINA390",cLote)
+				RodaProva(nHdlPrv,nTotal)
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Envia para Lan‡amento Contabil							  ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				cA100Incl(cArquivo,nHdlPrv,3,cLote,Iif(mv_par02==1,.T.,.F.),.F.)
+			EndIf
+		EndIf
+
+	ElseIf nOpca == 2
+		RetIndex("SEF")
+		Set Filter to
+		Loop
+	EndIf
+	Exit
+EndDo
+
+MsUnlockAll()
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Restaura os indices 													  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SEF")
+RetIndex("SEF")
+Set Filter To
+
+If !Empty( cIndex )
+	dbSelectArea("SEF")
+	ferase (cIndex+OrdBagExt())
+Endif
+Return (.T.)
+
+
+****************************************************************************
+*																									*
+*							FUNCOES GENERICAS DO PROGRAMA 								*
+*																									*
+****************************************************************************
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³fA390Perg ³ Autor ³ Wagner Xavier 		  ³ Data ³ 26/05/92 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Ativa Parametros do Programa										  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ 																			  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ Gen‚rico 																  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function fA390Perg()
+pergunte("FIN390",.T.)
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³fa390Chec ³ Autor ³ Wagner Xavier 		  ³ Data ³ 21/03/94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Retorna Condi‡„o para Indice Condicional						  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³fa390Chec () 															  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³FINA390x																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function Fa390Chec()
+Local cFiltro := ""
+
+cFiltro += 'E2_SALDO > 0'
+cFiltro += '.AND.DTOS(E2_VENCREA)>= "' + dTos(dVencIni) + '"'
+cFiltro += '.AND.DTOS(E2_VENCREA)<= "' + dTos(dVencFim) + '"'
+
+cFIltro += '.AND.!(E2_TIPO$"'+MVPROVIS+"/"+MVPROVIS+"/"+MVPAGANT+"/"+MV_CPNEG+'")'
+
+cFiltro += '.AND.E2_IMPCHEQ="' + Space(Len(E2_IMPCHEQ)) +'"'
+
+If ! Empty( cForn390 )
+	cFiltro += '.AND.E2_FORNECE="' + cForn390 + '"'
+EndIf
+
+// "Ch.s/tit.em bordero ?"
+If mv_par01 == 2
+	cFiltro += '.AND.E2_NUMBOR="' + Space(Len(E2_NUMBOR)) + '"'
+End
+// Caso trabalhe com liberacao de pagamento
+IF GetMv("MV_CTLIPAG")
+	cFiltro += '.and.(!Empty(E2_DATALIB)'
+	cFiltro += '.or.(E2_SALDO+E2_SDACRES-E2_SDDECRE<='+ALLTRIM(STR(GetMv('MV_VLMINPG'),17,2))+'))'	
+Endif
+
+If !(Empty(cFil390))
+	cFiltro := '(' +cFiltro+ ').and.(' +cFil390+')'
+Endif
+
+Return( cFiltro )
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³fa390Chec1³ Autor ³ Pilar S. Albaladejo   ³ Data ³ 16/05/97 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Retorna Condi‡„o para Indice Condicional						  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³fa390Chec1() 															  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³FINA390x																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function Fa390Chec1()
+
+LOCAL cFiltro := ""
+
+cFiltro += 'EF_NUM = "' + cCheque390 + '"'
+cFiltro += ' .AND. EF_BANCO = "' + cBanco390 + '"'
+cFiltro += ' .AND. EF_AGENCIA = "' + cAgencia390 + '"'
+cFIltro += ' .AND. EF_CONTA = "' + cConta390 + '"'
+cFiltro += ' .AND. EF_IMPRESS = "A"'
+
+Return cFiltro
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³fa390Natur³ Autor ³ Wagner Xavier 		  ³ Data ³ 21/03/94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Valida natureza digitada.											  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³fa390Natur() 															  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³FINA390x																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function fa390Natur( )
+Local cAlias := Alias( )
+Local lRet	 := .t.
+
+If Empty( cNatur390 )
+	Return ( .f. )
+Endif
+
+dbSelectArea( "SED" )
+If !(dbSeek( cFilial + cNatur390 ) )
+	 Help( " ",1,"fa390Natur" )
+	 lRet := .f.
+Endif
+
+//Validacao extra do usuario
+If lRet
+	IF ExistBlock("F390NATU")
+		lRet := ExecBlock("F390NATU",.f.,.f.)
+	Endif
+Endif	
+
+dbSelectArea( cAlias )
+Return lRet
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³fa390Forn ³ Autor ³ Wagner Xavier 		  ³ Data ³ 21/03/94 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Valida fornecedor digitado											  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³fa390Forn()																  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³FINA390x																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function fa390Fornece( )
+Local cAlias := Alias( )
+Local lRet	 := .t.
+Local lAltera := IIF(ProcName(3)== "FA390OK",.F.,.T.)
+If Empty( cForn390 )
+	Return ( .T. )
+Endif
+dbSelectArea( "SA2" )
+If cForn390 != SA2->A2_COD
+	If !(MsSeek( cFilial + cForn390 ) )
+		Help( " ",1,"fa390Forn" )
+		lRet := .f.
+	End
+Endif
+
+If lAltera .or. Empty(cBenef390)
+	cBenef390 := SA2->A2_NOME
+Endif
+
+If ExistBlock("F390BEN")
+	cBenef390 :=ExecBlock("F390BEN",.F.,.F.,cBenef390)
+Endif
+If cPaisLoc == "COL"
+   cLojaBen := SA2->A2_LOJA
+Endif
+dbSelectArea( cAlias )
+Return lRet
+
+/*
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o	 ³FA390Exibe³ Autor ³ Pilar S. Albaladejo   ³ Data ³ 07/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Exibe Totais de titulos selecionados							  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ FA390Exibe()															  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ FINA390x																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function Fa390Exibe(cMarca,oValor,oQtdTit,nNum)
+
+Local lMarkTit := .t.
+If nNum == 1
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ PONTO DE ENTRADA F390TIT                                       ³
+	//³ Verifica se titulo pode ser marcado para compor o cheque,      ³
+	//³ caso tenha sido alterada a marca‡Æo do titulo, ExecBlock       ³
+	//³ dever  retornar .F., para nÆo haver altera‡Æo dos acumuladores ³
+	//³ de valores e numero de titulos.                                ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If (ExistBlock("F390TIT"))
+		lMarkTit := ExecBlock("F390TIT",.F.,.F.)
+	Endif
+	If lMarkTit
+		If SE2->E2_OK == cMarca .And. SE2->E2_FILIAL == cFilial
+			IF !E2_TIPO $ MVABATIM
+				nValor += xMoeda((E2_SALDO+SE2->E2_SDACRES-SE2->E2_SDDECRE),SE2->E2_MOEDA,1)
+			Else
+				nValor -= xMoeda((E2_SALDO+SE2->E2_SDACRES-SE2->E2_SDDECRE),SE2->E2_MOEDA,1)
+			End
+			nQtdTit++
+		Else
+			If SE2->E2_FILIAL == cFilial
+				IF !E2_TIPO $ MVABATIM
+					nValor -= xMoeda((E2_SALDO+SE2->E2_SDACRES-SE2->E2_SDDECRE),SE2->E2_MOEDA,1)
+				Else
+					nValor += xMoeda((E2_SALDO+SE2->E2_SDACRES-SE2->E2_SDDECRE),SE2->E2_MOEDA,1)
+				End
+				nQtdTit--
+			Endif
+		EndIf
+	Endif
+Else
+	If SEF->EF_OK == cMarca .And. SEF->EF_FILIAL == cFilial
+		IF !EF_TIPO $ MVABATIM
+			nValor += EF_VALOR
+		Else
+			nValor -= EF_VALOR
+		End
+		nQtdTit++
+	Else
+		If SEF->EF_FILIAL == cFilial
+			IF !EF_TIPO $ MVABATIM
+				nValor -= EF_VALOR
+			Else
+				nValor += EF_VALOR
+			End
+			nQtdTit--
+		Endif
+	EndIf
+EndIf
+
+oValor:Refresh()
+oQtdTit:Refresh()
+
+Return
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³FA390Inver³ Autor ³ Pilar S. Albaladejo   ³ Data ³ 20/12/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Inverte marcacoes - Windows										  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ FINA390x																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function Fa390Inverte(cMarca,oValor,oQtdTit,nNum)
+
+Local nReg
+Local cAlias := Alias()
+Local lMarkTit:=.t.
+Local lF390Tit := ExistBlock("F390TIT")
+
+If nNum == 1					// Fa390TitX chamou esta rotina (nNum == 1)
+	dbSelectArea("SE2")
+	nReg := Recno()
+	dbSeek(cFilial)
+	While !Eof() .and. cFilial == E2_FILIAL
+		RecLock("SE2")
+		If SE2->E2_OK == cMarca
+			SE2->E2_OK := "  "
+			If SE2->E2_TIPO $ MVABATIM
+				nValor	+= xMoeda((E2_SALDO+SE2->E2_SDACRES-SE2->E2_SDDECRE),SE2->E2_MOEDA,1)
+			Else
+				nValor	-= xMoeda((E2_SALDO+SE2->E2_SDACRES-SE2->E2_SDDECRE),SE2->E2_MOEDA,1)
+			EndIf
+			nQtdTit--
+		Else
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ PONTO DE ENTRADA F390TIT                                       ³
+			//³ Verifica se titulo pode ser marcado para compor o cheque,      ³
+			//³ caso tenha sido alterada a marca‡Æo do titulo, ExecBlock       ³
+			//³ dever  retornar .F., para nÆo haver altera‡Æo dos acumuladores ³
+			//³ de valores e numero de titulos.                                ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If lF390TIT
+				lMarkTit := ExecBlock("F390TIT",.F.,.F.)
+			Endif
+			If lMarkTit
+				SE2->E2_OK := cMarca
+				If SE2->E2_TIPO $ MVABATIM
+					nValor	-= xMoeda((E2_SALDO+SE2->E2_SDACRES-SE2->E2_SDDECRE),SE2->E2_MOEDA,1)
+				Else
+					nValor	+= xMoeda((E2_SALDO+SE2->E2_SDACRES-SE2->E2_SDDECRE),SE2->E2_MOEDA,1)
+				EndIf
+				nQtdTit++
+			EndIF
+		EndIF
+		MsUnlock()
+		dbSkip()
+	Enddo
+	SE2->(dbGoto(nReg))
+Else
+	dbSelectArea("SEF")
+	nReg := Recno()
+	dbSeek(cFilial)
+	While !Eof() .and. cFilial == EF_FILIAL
+		RecLock("SEF")
+		If EF_OK == cMarca
+			SEF->EF_OK := "  "
+			If !SEF->EF_TIPO $ MVABATIM
+				nValor	+= EF_VALOR
+			Else
+				nValor	-= EF_VALOR
+			EndIf
+			nQtdTit--
+		Else
+			SEF->EF_OK := cMarca
+			If SEF->EF_TIPO $ MVABATIM
+				nValor	-= EF_VALOR
+			Else
+				nValor	+= EF_VALOR
+			EndIf
+			nQtdTit++
+		EndIF
+		MsUnlock()
+		dbSkip()
+	Enddo
+	SEF->(dbGoto(nReg))
+EndIf
+
+dbSelectArea(cAlias)
+oValor:Refresh()
+oQtdTit:Refresh()
+oMark:oBrowse:Refresh(.t.)
+Return Nil
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o	 ³FA390Ok	³ Autor ³ Pilar S. Albaladejo   ³ Data ³ 20/12/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Verifica se dados essenciais foram digitados 				  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso		 ³ FINA390x																	  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function Fa390Ok(oDlg)
+Local nX
+Local lRet := .T.
+
+For nX := 1 To Len(oDlg:aControls)
+	If ValType(oDlg:aControls[nX]) == "O" .And.;
+		!Empty(oDlg:aControls[nX]:bValid)
+		
+		lRet:=Eval(oDlg:aControls[nX]:bValid)
+		If ValType(lRet) != "L"
+			lRet := .T.
+		Endif	
+		If !lRet
+			Help(" ",1,"Fa390Erro1")
+			Exit // Sai no primeiro campo invalido
+		Endif	
+		
+	Endif
+Next
+
+If lRet .And. ExistBlock("FA390TOK")
+	lRet := Execblock("FA390TOK",.F.,.F.,oDlg)
+Endif
+Return lRet
+
+
+/*/
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³FA390blank³ Autor ³ Wagner Xavier         ³ Data ³ 11/01/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³ Limpa as marcacoes do arquivo (E2_OK)                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe   ³ FA390blank()                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ FINA390x                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function FA390Blank()
+
+Reclock("SE2")
+SE2->E2_OK := "  "
+MsUnlock( )
+

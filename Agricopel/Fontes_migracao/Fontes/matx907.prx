@@ -1,0 +1,2420 @@
+#INCLUDE "Matr907.ch"
+#INCLUDE "FIVEWIN.CH"
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÖo    ≥ MATX907  ≥ Autor ≥ Edstron E. Correia    ≥ Data ≥ 29/04/02 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÖo ≥ LMP - Livro de Movimentacao de Produtos                    ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥ Uso      ≥ SIGAFIS                                                    ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+/*/
+User Function MATX907
+//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+//≥ Salva a Integridade dos dados de Entrada                     ≥
+//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+Local aSave:={Alias(),IndexOrd(),Recno()}
+
+//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+//≥ Define Variaveis                                             ≥
+//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+#IFDEF WINDOWS
+	Local oDlg
+	Local aSays:={}, aButtons:={}
+#ENDIF
+Local   cCadastro := " LMP - Livro de Movimentacao de Produtos "
+LOCAL   nOpca     := 0
+Local   cTitulo   := " LMP - Livro de Movimentacao de Produtos "
+Local   cText1    := "Este programa emite o Livro de Movimentacao de Produtos - LMP"
+Local   cPerg     := "MTX907"
+Local   NomeProg  := "MATX907"
+Local   cString   := "SD2"
+Private nLastKey  := 0
+Private Limite    := 132
+Private cTamanho  := "M"
+Private lEnd      := .F.
+Private aReturn   := { "Zebrado" , 1,"Administracao", 2, 2, 1, "",1 }
+
+//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+//≥ Variaveis utilizadas para parametros                     ≥
+//≥ mv_par01            // Data Inicial                      ≥
+//≥ mv_par02            // Data Final                        ≥
+//≥ mv_par03            // Do Grupo                          ≥
+//≥ mv_par04            // Ate o Grupo                       ≥
+//≥ mv_par05            // Livros/T.Abertura/T.Fechamento    ≥
+//≥ mv_par06            // Numero Sequencial  ?              ≥
+//≥ mv_par07            // Cap. Armazenamento ?              ≥
+//≥ mv_par08            // Data de Abertura   ?              ≥
+//≥ mv_par09            // Data de Fechamento ?              ≥
+//≥ mv_par10            // Inscricao Municipal?              ≥
+//≥ mv_par13            // Cod Velho          ?              ≥
+//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+
+// Ajusta grupo de perguntas
+AjustaSx1()
+
+Pergunte(cPerg,.F.)
+
+//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+//≥ Envia controle para a funcao SETPRINT                        ≥
+//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+wnrel:="MATX907"   // nome default do relatorio em disco
+wnrel:=SetPrint(cString,wnrel,cPerg,cTitulo,cText1,,,.F.,"",,cTamanho)
+If nLastKey==27
+   Set Filter To
+   Return
+Endif
+SetDefault(aReturn,cString)
+If nLastKey==27
+   Set Filter To
+   Return
+Endif
+#IFNDEF WINDOWS
+    Processa({||LivroLMP()})
+#ELSE
+	LivroLMP()
+#ENDIF
+//⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+//≥ Restaura Ambiente                                            ≥
+//¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+dbSelectArea("SD1")
+dbSetOrder(1)
+#IFNDEF WINDOWS
+	Set Device To Screen
+#ENDIF
+If aReturn[5] == 1
+	Set Printer TO
+   dbcommitAll()
+   OurSpool(wnrel)
+Endif
+Return
+
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥FunáÖo    ≥ LivroLMP ≥ Autor ≥Edstron E. Correia ≥ Data ≥ 29/04/02 ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÖo ≥ Selecao dos Dados e Emissao do LMP                     ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+*/
+STATIC FUNCTION LivroLMP
+
+Local cAliasSD1 := "SD1"
+Local cAliasSD2 := "SD2"
+Local cNome     := ""
+Local cNomeProd := ""
+Local cCodigo   := ""
+Local cArqLmpE	:= ""
+Local cArqLmpS	:= ""
+Local aSaldo    := {}
+Local aSaldo2   := {}
+Local aTotais   := {}
+Local aCampos	 := {}
+Local aCampos2	 := {} 
+Local aNotas    := {}
+Local cAlias	 := Alias()
+Local aTam 	    := TAMSX3("B1_COD")
+Local aLay      := Array(31)
+Local nPos      := 0
+Local nFolha    := mv_par16 - 1//0
+Local nLin   	 := 0
+Local nNx       := 0
+Local dData 	 := CTOD("//")
+Local cProduto	 := ""
+Local nCont     := 0
+Local cChave    := ""
+Local cChave2   := ""
+Local cLin      := " "
+Local nTotSai   := 0
+Local nQuant    := 0
+
+If mv_par05 == 1
+   AADD(aCampos,{"PRODUTO"		    ,"C"	,008,0})
+   AADD(aCampos,{"CODVELH"      	,"C"	,015,0})
+   AADD(aCampos,{"NOMEPROD"	    	,"C"	,050,0})
+   AADD(aCampos,{"DATAMOV"		    ,"D"	,008,0})
+   AADD(aCampos,{"ESTOQUE"		    ,"N"	,014,3})
+   AADD(aCampos,{"ESTOQUE2"	        ,"N"	,014,3})
+   AADD(aCampos,{"NOTAFISCAL"	    ,"C"	,TAMSX3("F1_DOC")[1],0})
+   AADD(aCampos,{"SERIE"		    ,"C"	,003,0})
+   AADD(aCampos,{"DATAFISCAL"	    ,"D"	,008,0})
+   AADD(aCampos,{"CODEMITE"		    ,"C"	,008,0})
+   AADD(aCampos,{"EMITENTE"		    ,"C"	,050,0})
+   AADD(aCampos,{"QUANTIDADE"	    ,"N"	,014,3})
+   AADD(aCampos,{"TIPO"        	    ,"C"	,001,0})
+   AADD(aCampos,{"LIMPA"        	,"C"	,001,0}) 
+   AADD(aCampos,{"CF"               ,"C"	,005,0}) 
+   
+
+   cArqLmpE	:=	CriaTrab(aCampos)
+   dbUseArea(.T.,__LocalDriver,cArqLmpE,cArqLmpE,.T.,.F.)
+// IndRegua(cArqLmpE,cArqLmpE,"DTOS(DATAMOV)+PRODUTO+SERIE+NOTAFISCAL+CODEMITE",,,"Indexando Arquivo Temporario") 
+   IndRegua(cArqLmpE,cArqLmpE,"DTOS(DATAMOV)+CODVELH+SERIE+NOTAFISCAL+CODEMITE",,,"Indexando Arquivo Temporario") 
+   DbSelectArea(cArqLmpE)
+   DbClearIndex()
+   DbSetIndex(cArqLmpE+OrdBagExt())
+   dbSetOrder(1)
+   dbSelectArea(cAlias)
+
+   AADD(aCampos2,{"PRODUTO"		,"C"	,008,0})
+   AADD(aCampos2,{"CODVELH"    	,"C"	,015,0})
+   AADD(aCampos2,{"NOMEPROD"    ,"C"	,050,0})
+   AADD(aCampos2,{"DATAMOV"		,"D"	,008,0})
+   AADD(aCampos2,{"ESTOQUE"		,"N"	,014,3})
+   AADD(aCampos2,{"ESTOQUE2"	,"N"	,014,3})
+   AADD(aCampos2,{"NOTAFISCAL"	,"C"	,TAMSX3("F1_DOC")[1],0})
+   AADD(aCampos2,{"SERIE"	   	,"C"	,003,0})
+   AADD(aCampos2,{"DATAFISCAL"	,"D"	,008,0})
+   AADD(aCampos2,{"CODEMITE"	,"C"	,008,0})
+   AADD(aCampos2,{"EMITENTE"	,"C"	,050,0})
+   AADD(aCampos2,{"QUANTIDADE"	,"N"	,014,3}) 
+   AADD(aCampos2,{"TIPO"        ,"C"	,001,0})
+   AADD(aCampos2,{"LIMPA"       ,"C"	,001,0})   
+   AADD(aCampos2,{"CF"         	,"C"	,005,0})   
+   
+   cArqLmpS	:=	CriaTrab(aCampos2)
+   dbUseArea(.T.,__LocalDriver,cArqLmpS,cArqLmpS,.T.,.F.)
+   
+// IndRegua(cArqLmpS,cArqLmpS,"DTOS(DATAMOV)+PRODUTO+SERIE+NOTAFISCAL+CODEMITE",,,"Indexando Arquivo Temporario") 
+   IndRegua(cArqLmpS,cArqLmpS,"DTOS(DATAMOV)+CODVELH+SERIE+NOTAFISCAL+CODEMITE",,,"Indexando Arquivo Temporario") 
+   DbSelectArea(cArqLmpS)
+   DbClearIndex()
+   DbSetIndex(cArqLmpS+OrdBagExt())
+   dbSetOrder(1)
+   dbSelectArea(cAlias)            
+   
+   AADD(aNotas,{"NOTAFISCAL"	,"C"	,TAMSX3("F1_DOC")[1],0})
+   AADD(aNotas,{"SERIE"	   	    ,"C"	,003,0})
+   AADD(aNotas,{"CF"         	,"C"	,005,0})  
+   cArqNotas	:=	CriaTrab(aNotas)
+   dbUseArea(.T.,__LocalDriver,cArqNotas,cArqNotas,.T.,.F.)	
+   IndRegua(cArqNotas,cArqNotas,"NOTAFISCAL+SERIE",,,"Indexando Arquivo Temporario")    
+   DbSelectArea(cArqNotas)
+   DbClearIndex()
+   DbSetIndex(cArqNotas+OrdBagExt())                                                                                                            
+	
+	
+   aTotais :={}
+   dbSelectArea("SD1")
+   SD1->(dbSetOrder(3))                           
+   #IFDEF TOP
+	   lQuery     := .T.
+	   cAliasSD1  := "cSD1"
+	   aStru  	  := SD1->(dbStruct())
+ 	   cQuery 	  := "SELECT * "
+ 	   cQuery 	  += "FROM "+RetSqlName("SD1")+" "
+	   cQuery 	  += "WHERE D1_FILIAL='"+xFilial("SD1")+"' AND "
+	   cQuery 	  += "D1_DTDIGIT>='"+Dtos(MV_PAR01)+"' AND "
+	   cQuery 	  += "D1_DTDIGIT<='"+Dtos(MV_PAR02)+"' AND "
+	   cQuery     += "D_E_L_E_T_ = ' ' "
+	   cQuery     += "ORDER BY "+SqlOrder(SD1->(IndexKey()))
+	
+	   cQuery    := ChangeQuery(cQuery)
+	   dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSD1,.T.,.T.)
+	
+	   For nX := 1 To len(aStru)
+		   If aStru[nX][2] <> "C" .And. FieldPos(aStru[nX][1])<>0
+			  TcSetField(cAliasSD1,aStru[nX][1],aStru[nX][2],aStru[nX][3],aStru[nX][4])
+		   EndIf
+	   Next nX
+	   dbSelectArea(cAliasSD1)	
+   #ELSE
+	   (cAliasSD1)->(dbSeek(xFilial("SD1")+DtoS(MV_PAR01),.T.) )
+   #ENDIF    
+
+   While (cAliasSD1)->(!eof()) .and. xFilial("SD1") == (cAliasSD1)->D1_FILIAL .and. (cAliasSD1)->D1_DTDIGIT <=MV_PAR02
+      SF4->(dbSeek(xFilial("SF4")+(cAliasSD1)->D1_TES))
+      If SF4->F4_ESTOQUE == "S"
+         cNomeProd := ""
+ 	     	If SB1->(dbSeek(xFilial("SB1")+(cAliasSD1)->D1_COD))
+		      If SB2->(dbSeek(xFilial("SB2")+(cAliasSD1)->D1_COD))
+//             	  cNomeProd := SB1->B1_DESC
+               	  cNomeProd := SB1->B1_CODVELH
+            Endif   
+         Endif
+         If Empty(cNomeProd)       // Se nao tiver CODVELH ignora!! cfe Alexandre
+        	   (cAliasSD1)->(dbSkip())
+            Loop
+         Endif
+         If Alltrim(cNomeProd) <> Alltrim(mv_par13)   // Se  CODVELH diferente parametro ignora!! Cfe alexandre			 	
+        	   (cAliasSD1)->(dbSkip())
+            Loop
+         Endif
+			if alltrim(mv_par13) = "OLEO DIESEL"      
+			 	if alltrim(mv_par17) = "DIESEL METROPOL" 
+			 	   if SM0->M0_CODFIL = '01' .and. (SB1->B1_COD # "00030205" .and. ;
+   										   			  SB1->B1_COD # "00030256" .and. ;
+															  SB1->B1_COD # "00030264" )
+	   			  (cAliasSD1)->(dbSkip())  
+	   			  Loop
+	   			endif															   			   
+	   			
+			 	   if SM0->M0_CODFIL = '03' .and.  (SB1->B1_COD # "00025"    .and. ;
+															  SB1->B1_COD # "00020")
+	   			  (cAliasSD1)->(dbSkip())  
+	   			  Loop
+	   			endif															   			   
+	   			
+			 	   if SM0->M0_CODFIL = '02' .and.  (SB1->B1_COD # "00030264" )
+	   			  (cAliasSD1)->(dbSkip())  
+	   			  Loop
+	   			endif									
+	   			
+	  			endif  
+	  			
+	  			
+            if alltrim(mv_par17) = "DIESEL MARITIMO" .and. (SB1->B1_COD # "00031" .and. ;
+				   										   			   SB1->B1_COD # "00019") .and. SM0->M0_CODFIL = '03'
+  	   			  (cAliasSD1)->(dbSkip())  
+  	   			  Loop
+       		endif	    			
+
+			 	if alltrim(mv_par17) = "DIESEL INTERIOR" .and. (SB1->B1_COD # "00050166" .and. ;
+															   			   SB1->B1_COD # "00030263" ) .AND.;
+															   			   (SM0->M0_CODFIL = '01' .OR. SM0->M0_CODFIL = '02')
+                 (cAliasSD1)->(dbSkip())  
+	    			  Loop															   			   
+			   EndiF
+			   
+			 	if alltrim(mv_par17) = "DIESEL INTERIOR" .and. ( SB1->B1_COD # "00024"    .and. ;
+    														   			    SB1->B1_COD # "00008")	  .and. ;
+    														   			   SM0->M0_CODFIL = '03' 
+	      		  (cAliasSD1)->(dbSkip())  
+	    			  Loop
+	    		endif
+			 	if alltrim(mv_par17) = "DIESEL ADIT"     .and. SB1->B1_COD # "00030255" .and. SM0->M0_CODFIL = '01'  
+			 	
+  	    		  (cAliasSD1)->(dbSkip())  
+  	    		  Loop
+        		endif	
+        		if alltrim(mv_par17) = "DIESEL ADIT"     .and. ( SB1->B1_COD # "00029"    .and. ;
+ 															   			   SB1->B1_COD # "00009")   .and. ;
+															   			   SM0->M0_CODFIL = '03'  
+  	    		  (cAliasSD1)->(dbSkip())  
+  	    		  Loop
+        		endif	        		
+        	endif    			                                                                                      
+        	
+         
+	      //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+	      //≥ Filtra grupos a serem utilizados no Livro LMP ≥
+	      //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+  	      If SB1->B1_GRUPO >= mv_par03 .Or. SB1->B1_GRUPO <= mv_par04
+      	   cCodigo :=""
+            If (cAliasSD1)->D1_TIPO$"DB"
+               SA1->(dbseek(xFilial("SA1")+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA))
+               cCodigo :=SA1->A1_COD+SA1->A1_LOJA
+            Else            
+               SA2->(dbseek(xFilial("SA2")+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA))
+               cCodigo :=SA2->A2_COD+SA2->A2_LOJA
+            Endif   
+            cNome 	:=""
+            cNome	:= If((cAliasSD1)->D1_TIPO$"DB",SA1->A1_NOME,SA2->A2_NOME)
+      
+            If (cArqLmpE)->(dbseek(DTOS((cAliasSD1)->D1_DTDIGIT)+(cAliasSD1)->D1_COD+(cAliasSD1)->D1_SERIE+(cAliasSD1)->D1_DOC+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA))
+		          RecLock(cArqLmpE,.F.)
+	         Else       	
+		          RecLock(cArqLmpE,.T.)
+	         EndIf
+	         //aSaldo	 := CalcEst(SB1->B1_COD,SB2->B2_LOCAL,(cAliasSD1)->D1_EMISSAO)	  
+	         //aSaldo2   := CalcEst(SB1->B1_COD,SB2->B2_LOCAL,(cAliasSD1)->D1_EMISSAO+1)	  
+	         
+	         //****************
+	         
+	         axSaldo := 0
+	         axsaldo2 :=0
+  	         if alltrim(mv_par13) = "QUEROSENE"   
+  	            aSaldo   := CalcEst('00030157',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	 
+		         aSaldo2  := CalcEst('00030157',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)	
+	         
+	   	      axSaldo  := axSaldo + (aSaldo[1] * 5)
+  	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 5)
+  	         
+  	         	aSaldo	 := CalcEst('00030190',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT) 
+  	         	aSaldo2	 := CalcEst('00030190',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)		 	        
+  	        		
+  	        		axSaldo  := axSaldo  + aSaldo[1]  
+  	        		axSaldo2 := axSaldo2 + aSaldo2[1] 
+  
+  	            aSaldo   := CalcEst('00060040',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT) 
+		         aSaldo2  := CalcEst('00060040',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)	
+	         
+	   	      axSaldo  := axSaldo  + (aSaldo[1] * 12)
+  	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 12)
+	   	      
+  	            aSaldo   := CalcEst('00060041',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT) 	  
+		         aSaldo2  := CalcEst('00060041',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)
+	         
+	   	      axSaldo  := axSaldo  + (aSaldo[1] * 20)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 20)
+	   	      
+  	            aSaldo   := CalcEst('00060042',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT) 
+		         aSaldo2  := CalcEst('00060042',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)
+	         
+	   	      axSaldo  := axSaldo  + (aSaldo[1] * 20)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 20)
+	   	      
+  	            aSaldo   := CalcEst('00060087',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT) 
+		         aSaldo2  := CalcEst('00060087',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)
+	         
+	   	      axSaldo  := axSaldo  + (aSaldo[1]  * 200)  
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1]  * 200) 
+	   	      
+	   	      // C”DIGO ABAIXO AGRICOPEL BASE
+	   	      
+  	         	aSaldo	 := CalcEst('00007',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT) 
+  	         	aSaldo2	 := CalcEst('00007',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)		 	        
+  	        		
+  	        		axSaldo  := axSaldo  + aSaldo[1]  
+  	        		axSaldo2 := axSaldo2 + aSaldo2[1] 
+	   	      
+					cxNomePro := "QUEROSENE"
+
+				endif 
+				
+				if alltrim(mv_par13) = "OLEO DIESEL" 
+				 	if alltrim(mv_par17) = "DIESEL METROPOL" 
+				 	   if SM0->M0_CODFIL = '01'  
+				
+					   	//*******************AGRICOPEL MATRIZ********************************************  	
+		  	   	      aSaldo   := CalcEst('00030205',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+				   	   aSaldo2  := CalcEst('00030205',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+				         
+		   		      axSaldo := axSaldo + aSaldo[1]                                    
+		      		   axSaldo2 := axSaldo2 + aSaldo2[1]  
+		         
+		  	            aSaldo   := CalcEst('00030256',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+				         aSaldo2  := CalcEst('00030256',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+				         
+		   	   	   axSaldo := axSaldo + aSaldo[1]  
+	  			         axSaldo2 := axSaldo2 + aSaldo2[1]  
+  		      		   
+	  		            aSaldo   := CalcEst('00030264',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+				         aSaldo2  := CalcEst('00030264',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+		         
+			   	      axSaldo := axSaldo + aSaldo[1]  		         
+		      		   axSaldo2 := axSaldo2 + aSaldo2[1]  
+		      	   endif
+		   	   	   
+		         	//*********************************************
+		         
+			         //*************AGRICOPEL BASE*********************
+			         
+			         if SM0->M0_CODFIL = '03'  
+	  		   	      aSaldo   := CalcEst('00025',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+				         aSaldo2  := CalcEst('00025',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+		         
+			      	   axSaldo  := axSaldo 	+ aSaldo[1]  		         
+		   	      	axSaldo2 := axSaldo2 + aSaldo2[1]
+       
+	  		   	      aSaldo   := CalcEst('00020',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+			      	   aSaldo2  := CalcEst('00020',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+			         
+			   	      axSaldo  := axSaldo 	+ aSaldo[1]  		         
+				         axSaldo2 := axSaldo2 + aSaldo2[1]  	  
+				      endif                                  
+		
+			         if SM0->M0_CODFIL = '02'  				      
+				         aSaldo   := CalcEst('00030264',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+				         aSaldo2  := CalcEst('00030264',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+	         	
+	      	   	   axSaldo := axSaldo + aSaldo[1]  		         
+    	     		   	axSaldo2 := axSaldo2 + aSaldo2[1]  
+    	     		   endif
+			                  
+			         //******************FIM PRODUTOS AGRICOPEL BASE*********************//  
+			         cxNomeProX := "DIESEL METROPOL" 
+	         	    		         
+		    	   endif                                  
+				
+					if alltrim(mv_par17) = "DIESEL MARITIMO"   
+      	         if SM0->M0_CODFIL = '03'  
+				         aSaldo   := CalcEst('00031',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+				         aSaldo2  := CalcEst('00031',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+		         
+		   		      axSaldo  := axSaldo 	+ aSaldo[1]  		         
+		      		   axSaldo2 := axSaldo2 + aSaldo2[1]  
+		         
+			      	   aSaldo   := CalcEst('00019',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+				         aSaldo2  := CalcEst('00019',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+		         
+				         axSaldo  := axSaldo 	+ aSaldo[1]  		         
+		   		      axSaldo2 := axSaldo2 + aSaldo2[1]		         	 
+				
+			   	      cxNomeProX := "DIESEL MARITIMO" 
+						endif
+				  endif
+				
+					if alltrim(mv_par17) = "DIESEL INTERIOR"   				
+			         if SM0->M0_CODFIL = '01' .OR.  SM0->M0_CODFIL = '02'   
+	  	      	      aSaldo   := CalcEst('00050166',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+			      	   aSaldo2  := CalcEst('00050166',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+		         
+			         	axSaldo := axSaldo + aSaldo[1]                                    
+				         axSaldo2 := axSaldo2 + aSaldo2[1]  
+			         
+  	      		      aSaldo   := CalcEst('00030263',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+			      	   aSaldo2  := CalcEst('00030263',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+		         
+			      	   axSaldo := axSaldo + aSaldo[1]  
+			         	axSaldo2 := axSaldo2 + aSaldo2[1]  
+			        endif
+		         
+			         //***************** CODIGO ABAIXO AGRICOPEL BASE ****************//
+      	        if SM0->M0_CODFIL = '03'  
+					  		aSaldo   := CalcEst('00024',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+				         aSaldo2  := CalcEst('00024',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+		   	      
+				         axSaldo  := axSaldo  + aSaldo[1]  		         
+			      	   axSaldo2 := axSaldo2 + aSaldo2[1]  	  		                         		         
+		         
+  				         aSaldo   := CalcEst('00008',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+		   		      aSaldo2  := CalcEst('00008',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+			         
+		      		   axSaldo  := axSaldo 	+ aSaldo[1]  		         
+				         axSaldo2 := axSaldo2 + aSaldo2[1]  	  
+                  endif            		
+			         cxNomeProX := "DIESEL INTERIOR" 		         
+   	
+					endif
+					if alltrim(mv_par17) = "DIESEL ADIT"   
+	   	         if SM0->M0_CODFIL = '01'  
+	  		            aSaldo   := CalcEst('00030255',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT) 
+				         aSaldo2  := CalcEst('00030255',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)         
+		   	      
+			         	axSaldo  := axSaldo  + aSaldo[1] 
+		   	   	   axSaldo2 := axSaldo2 + aSaldo2[1]  
+		             endif
+		             
+         	       if SM0->M0_CODFIL = '03'  
+		         
+	    		         aSaldo   := CalcEst('00029',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+	   			      aSaldo2  := CalcEst('00029',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+			        
+	   		   	   axSaldo  := axSaldo	+ aSaldo[1]  		         
+         	         axSaldo2 := axSaldo2 + aSaldo2[1]  	  
+   	         	
+				         aSaldo   := CalcEst('00009',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT)	  
+				         aSaldo2  := CalcEst('00009',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)  		         
+			         
+			   	      axSaldo  := axSaldo 	+ aSaldo[1]  		         
+				         axSaldo2 := axSaldo2 + aSaldo2[1]  	  				
+				       endif
+		         
+  		   	      cxNomeProX := "DIESEL ADITIVADO" 
+					endif
+		         cxNomePro := "OLEO DIESEL" 				    
+				endif
+								
+				
+                  
+            
+            // **************** AGRICOPEL BASE ******************// 
+            if alltrim(mv_par13) = "OLEO COMB"   
+  	            aSaldo   := CalcEst('00010',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT) 
+		         aSaldo2  := CalcEst('00010',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)         
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    
+		         
+  	            aSaldo   := CalcEst('00011',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT) 
+		         aSaldo2  := CalcEst('00011',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)         
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    
+		         
+  	            aSaldo   := CalcEst('00021',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT) 
+		         aSaldo2  := CalcEst('00021',SB2->B2_LOCAL,(cAliasSD1)->D1_DTDIGIT+1)         
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    		         
+		         
+  		         cxNomePro := "OLEO COMB"
+  		      endif 
+     
+		         
+	         
+	         //****************
+	         
+	         
+	         
+	         cxCodPro  := SB1->B1_COD
+	         cxLocal   := SB2->B2_LOCAL
+				//cxNomePro := cNomeProd
+					         
+	         (cArqLmpE)->PRODUTO		:=(cAliasSD1)->D1_COD
+	         (cArqLmpE)->CODVELH		:=cxNomePro
+	         (cArqLmpE)->NOMEPROD		:=cxNomePro
+	         (cArqLmpE)->DATAMOV	 	:=(cAliasSD1)->D1_DTDIGIT
+	         (cArqLmpE)->ESTOQUE		:=axSaldo
+  	         (cArqLmpE)->ESTOQUE2		:=axSaldo2
+	         (cArqLmpE)->NOTAFISCAL	    :=(cAliasSD1)->D1_DOC
+	         (cArqLmpE)->SERIE			:=(cAliasSD1)->D1_SERIE
+	         (cArqLmpE)->DATAFISCAL	:=(cAliasSD1)->D1_DTDIGIT
+	         (cArqLmpE)->CODEMITE		:=cCodigo
+	         (cArqLmpE)->EMITENTE		:=cNome
+  	         (cArqLmpE)->CF	      	:=(cAliasSD1)->D1_CF
+	         
+	         If Alltrim((cAliasSD1)->D1_COD) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+		         (cArqLmpE)->QUANTIDADE	+= (cAliasSD1)->D1_QUANT * 12
+				ElseIf Alltrim((cAliasSD1)->D1_COD) == '00060041'
+		         (cArqLmpE)->QUANTIDADE	+= (cAliasSD1)->D1_QUANT * 20
+				ElseIf Alltrim((cAliasSD1)->D1_COD) == '00060042'
+		         (cArqLmpE)->QUANTIDADE	+= (cAliasSD1)->D1_QUANT * 20
+				ElseIf Alltrim((cAliasSD1)->D1_COD) == '00060087'
+		         (cArqLmpE)->QUANTIDADE	+= (cAliasSD1)->D1_QUANT * 200
+            Else
+		         (cArqLmpE)->QUANTIDADE	+= (cAliasSD1)->D1_QUANT 
+            EndIf
+	         (cArqLmpE)->TIPO			:=(cAliasSD1)->D1_TIPO
+	         (cArqLmpE)->(MsUnLock())
+
+/*	         nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpE)->CODVELH+DTOS((cArqLmpE)->DATAMOV)})
+	         If nPos==0
+               If (cAliasSD1)->D1_TIPO=="D"
+		            AADD(aTotais,{(cArqLmpE)->CODVELH+DTOS((cArqLmpE)->DATAMOV),(cArqLmpE)->CODVELH,(cArqLmpE)->DATAMOV,axSaldo,0,0,(cArqLmpE)->QUANTIDADE,0,0,0,0,0,0,0,0,"D"," "+(cAliasSD1)->D1_DOC+" "+(cAliasSD1)->D1_SERIE+";"})
+		         Else
+		            AADD(aTotais,{(cArqLmpE)->CODVELH+DTOS((cArqLmpE)->DATAMOV),(cArqLmpE)->CODVELH,(cArqLmpE)->DATAMOV,axSaldo,0,0,0,0,0,0,0,0,0,0,0,"N"," "})
+		         Endif   
+		         nPos :=Len(aTotais)
+	         Endif  */
+
+            /*If (cAliasSD1)->D1_TIPO=="D"
+		         If Alltrim((cAliasSD1)->D1_COD) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+			         aTotais[nPos,07]	+= (cAliasSD1)->D1_QUANT * 12
+					ElseIf Alltrim((cAliasSD1)->D1_COD) == '00060041'  
+			         aTotais[nPos,07]	+= (cAliasSD1)->D1_QUANT * 20
+					ElseIf Alltrim((cAliasSD1)->D1_COD) == '00060042'
+			         aTotais[nPos,07]	+= (cAliasSD1)->D1_QUANT * 20
+					ElseIf Alltrim((cAliasSD1)->D1_COD) == '00060087'
+			         aTotais[nPos,07]	+= (cAliasSD1)->D1_QUANT * 200
+					ElseIf Alltrim((cAliasSD1)->D1_COD) == '00030157'			         
+						aTotais[nPos,07]	+= (cAliasSD1)->D1_QUANT * 5
+	            Else
+			         aTotais[nPos,07]	+= (cAliasSD1)->D1_QUANT 
+	            EndIf
+//	             aTotais[nPos,07] +=(cAliasSD1)->D1_QUANT							   		//06.1 - Outras Entradas (justificar no campo 11 - Observacoes)
+		          aTotais[nPos,08] :=(aTotais[nPos,04]+aTotais[nPos,06]+aTotais[nPos,07])	//06.2 - Estoque Disponivel (soma dos campos 03-E. Abert; 05-Entr. Norm. e 06.1-O.Entr.)
+		          aTotais[nPos,09] :=(aTotais[nPos,13]+aTotais[nPos,14])						//06.3 - Saldos (resultado do campo 10 = soma dos campos 08 - T.Vendas e 09 - O. Saidas)
+		          aTotais[nPos,10] :=(aTotais[nPos,08]-aTotais[nPos,09])						//06.4 - Estoque Contabil de Fechamento (campo 06.2 - Est. Disp. menos 06.3 - Saidas)
+		          aTotais[nPos,11] :=axSaldo2												//06.5 - Estoque Fisico Medido
+	             aTotais[nPos,17] +=(cAliasSD1)->D1_DOC+" "+(cAliasSD1)->D1_SERIE+";"
+	         Else	     
+		          aTotais[nPos,04] :=axSaldo													//03 - Estoque de Abertura
+		          aTotais[nPos,05] :=0                    										//04 - Entradas Normais (compras recebidas)
+		         If Alltrim((cAliasSD1)->D1_COD) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+			         aTotais[nPos,06]	+= (cAliasSD1)->D1_QUANT * 12
+					ElseIf Alltrim((cAliasSD1)->D1_COD) == '00060041'
+			         aTotais[nPos,06]	+= (cAliasSD1)->D1_QUANT * 20
+					ElseIf Alltrim((cAliasSD1)->D1_COD) == '00060042'
+			         aTotais[nPos,06]	+= (cAliasSD1)->D1_QUANT * 20
+					ElseIf Alltrim((cAliasSD1)->D1_COD) == '00060087'
+			         aTotais[nPos,06]	+= (cAliasSD1)->D1_QUANT * 200
+					ElseIf Alltrim((cAliasSD1)->D1_COD) == '00030157'			         
+						aTotais[nPos,06]	+= (cAliasSD1)->D1_QUANT * 5			         
+	            Else
+			         aTotais[nPos,06]	+= (cAliasSD1)->D1_QUANT 
+	            EndIf
+//	    	       aTotais[nPos,06] +=(cAliasSD1)->D1_QUANT										//05 - Total das Entradas
+		          aTotais[nPos,08] :=(aTotais[nPos,04]+aTotais[nPos,06]+aTotais[nPos,07])		//06.2 - Estoque Disponivel (soma dos campos 03-E. Abert; 05-Entr. Norm. e 06.1-O.Entr.)
+		          aTotais[nPos,09] :=(aTotais[nPos,13]+aTotais[nPos,14])							//06.3 - Saldos (resultado do campo 10 = soma dos campos 08 - T.Vendas e 09 - O. Saidas)
+		          aTotais[nPos,10] :=(aTotais[nPos,08]-aTotais[nPos,09])							//06.4 - Estoque Contabil de Fechamento (campo 06.2 - Est. Disp. menos 06.3 - Saidas)
+		          aTotais[nPos,11] :=axSaldo2													//06.5 - Estoque Fisico Medido
+		          aTotais[nPos,13] :=0															//08 - Total das Saidas
+		          aTotais[nPos,14] :=0															//09 - Outras Saidas (justificar no campo 11 - Observacoes)
+		          aTotais[nPos,15] :=0															//10 - Total das Saidas (soma dos campos 08 e 09) 
+		          
+	          
+	         Endif   */
+	      Endif   
+	   Endif   
+	   (cAliasSD1)->(dbSkip())
+   End
+
+   dBSelectArea("SD2")
+   SD2->(dbSetOrder(5))
+   #IFDEF TOP
+	   lQuery     := .T.
+	   cAliasSD2  := "cSD2"
+	   aStru  	  := SD2->(dbStruct())
+	   cQuery 	  := "SELECT * "
+	   cQuery 	  += "FROM "+RetSqlName("SD2")+" "
+	   cQuery 	  += "WHERE D2_FILIAL='"+xFilial("SD2")+"' AND "
+	   cQuery 	  += "D2_EMISSAO>='"+Dtos(MV_PAR01)+"' AND "
+	   cQuery 	  += "D2_EMISSAO<='"+Dtos(MV_PAR02)+"' AND "                   	
+	   cQuery     += "D_E_L_E_T_ = ' ' "
+	   cQuery     += "ORDER BY "+SqlOrder(SD2->(IndexKey()))
+	
+	   cQuery := ChangeQuery(cQuery)
+	   dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSD2,.T.,.T.)
+	
+	   For nX := 1 To len(aStru)
+		   If aStru[nX][2] <> "C" .And. FieldPos(aStru[nX][1])<>0
+		      TcSetField(cAliasSD2,aStru[nX][1],aStru[nX][2],aStru[nX][3],aStru[nX][4])
+		   EndIf
+	   Next nX
+	   dbSelectArea(cAliasSD2)	
+   #ELSE
+	   (cAliasSD2)->(dbSeek(xFilial("SD2")+DtoS(MV_PAR01),.T.) )
+   #ENDIF
+
+   While (cAliasSD2)->(!eof()) .and. xFilial("SD2") == (cAliasSD2)->D2_FILIAL .and. (cAliasSD2)->D2_EMISSAO <=MV_PAR02
+      SF4->(dbSeek(xFilial("SF4")+(cAliasSD2)->D2_TES))
+      If SF4->F4_ESTOQUE=="S"
+         cNomeProd :=""
+ 	      If SB1->(dbSeek(xFilial("SB1")+(cAliasSD2)->D2_COD))
+	         If SB2->(dbSeek(xFilial("SB2")+(cAliasSD2)->D2_COD))
+//             cNomeProd := SB1->B1_DESC
+               cNomeProd := SB1->B1_CODVELH
+            Endif   
+         Endif
+         If Empty(cNomeProd)          // Se nao tiver CODVELH ignora!! cfe Alexandre
+        	   (cAliasSD2)->(dbSkip())
+            Loop
+         Endif
+         If Alltrim(cNomeProd) <> Alltrim(mv_par13)    // Se  CODVELH diferente parametro ignora!! Cfe alexandre
+        	   (cAliasSD2)->(dbSkip())
+            Loop
+         Endif                                                                                                   
+  			if alltrim(mv_par13) = "OLEO DIESEL"      
+			 	if alltrim(mv_par17) = "DIESEL METROPOL" 
+			 	   if SM0->M0_CODFIL = '01' .and. (SB1->B1_COD # "00030205" .and. ;
+															   			   SB1->B1_COD # "00030256" .and. ;
+															   			   SB1->B1_COD # "00030264" )
+	   			  (cAliasSD2)->(dbSkip())  
+	   			  Loop
+	   			endif															   			   
+	   			
+			 	   if SM0->M0_CODFIL = '03' .and.  (SB1->B1_COD # "00025"    .and. ;
+															  SB1->B1_COD # "00020")
+	   			  (cAliasSD2)->(dbSkip())  
+	   			  Loop
+	   			endif															   			   
+	   			
+			 	   if SM0->M0_CODFIL = '02' .and.  (SB1->B1_COD # "00030264" )
+	   			  (cAliasSD2)->(dbSkip())  
+	   			  Loop
+	   			endif									
+	   			
+	  			endif  
+	  			
+	  			
+            if alltrim(mv_par17) = "DIESEL MARITIMO" .and. (SB1->B1_COD # "00031" .and. ;
+				   										   			   SB1->B1_COD # "00019") .and. SM0->M0_CODFIL = '03'
+  	   			  (cAliasSD2)->(dbSkip())  
+  	   			  Loop
+       		endif	    			
+
+			 	if alltrim(mv_par17) = "DIESEL INTERIOR" .and. (SB1->B1_COD # "00050166" .and. ;
+															   			   SB1->B1_COD # "00030263" ) .AND.;
+															   			   (SM0->M0_CODFIL = '01' .OR. SM0->M0_CODFIL = '02')
+                 (cAliasSD2)->(dbSkip())  
+	    			  Loop															   			   
+			   EndiF
+			   
+			 	if alltrim(mv_par17) = "DIESEL INTERIOR" .and. ( SB1->B1_COD # "00024"    .and. ;
+    														   			    SB1->B1_COD # "00008")	  .and. ;
+    														   			   SM0->M0_CODFIL = '03' 
+	      		  (cAliasSD2)->(dbSkip())  
+	    			  Loop
+	    		endif
+			 	if alltrim(mv_par17) = "DIESEL ADIT"     .and. SB1->B1_COD # "00030255" .and. SM0->M0_CODFIL = '01'  
+			 	
+  	    		  (cAliasSD2)->(dbSkip())  
+  	    		  Loop
+        		endif	
+        		if alltrim(mv_par17) = "DIESEL ADIT"     .and. ( SB1->B1_COD # "00029"    .and. ;
+															   			   SB1->B1_COD # "00009")   .and. ;
+															   			   SM0->M0_CODFIL = '03'  
+  	    		  (cAliasSD2)->(dbSkip())  
+  	    		  Loop
+        		endif	        		
+        	endif    			                                                                                      
+                        
+	      //⁄ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒø
+	      //≥ Filtra grupos a serem utilizados no Livro LMP ≥
+	      //¿ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ
+  	      If SB1->B1_GRUPO >= mv_par03 .Or. SB1->B1_GRUPO <= mv_par04
+            cCodigo :=""
+            If (cAliasSD2)->D2_TIPO$"DB"
+               SA2->(dbseek(xFilial("SA2")+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA))
+               cCodigo :=SA2->A2_COD+SA2->A2_LOJA
+            Else            
+               SA1->(dbseek(xFilial("SA1")+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA))
+               cCodigo :=SA1->A1_COD+SA1->A1_LOJA
+            Endif   
+            cNome 	:=""
+            cNome	:= If((cAliasSD2)->D2_TIPO$"DB",SA2->A2_NOME,SA1->A1_NOME)
+      
+            If (cArqLmpS)->(dbseek(DTOS((cAliasSD2)->D2_EMISSAO)+(cAliasSD2)->D2_COD+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA))
+		         RecLock(cArqLmpS,.F.)
+	         Else
+		         RecLock(cArqLmpS,.T.)
+	         EndIf
+//	         aSaldo  := CalcEst(SB1->B1_COD,SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)
+//	         aSaldo2 := CalcEst(SB1->B1_COD,SB2->B2_LOCAL,(cAliasSD1)->D1_EMISSAO+1)	  
+  				
+  				axSaldo := 0
+	         axsaldo2 :=0
+  	         if alltrim(mv_par13) = "QUEROSENE"   
+  	            aSaldo   := CalcEst('00030157',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+		         aSaldo2  := CalcEst('00030157',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)
+	         
+	   	      axSaldo  := axSaldo + (aSaldo[1] * 5)
+  	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 5)
+  	         
+  	         	aSaldo	 := CalcEst('00030190',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+  	         	aSaldo2	 := CalcEst('00030190',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)	 	        
+  	        		
+  	        		axSaldo  := axSaldo  + aSaldo[1]  
+  	        		axSaldo2 := axSaldo2 + aSaldo2[1] 
+  
+  	            aSaldo   := CalcEst('00060040',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+		         aSaldo2  := CalcEst('00060040',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)
+	         
+	   	      axSaldo  := axSaldo  + (aSaldo[1] * 12)
+  	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 12)
+	   	      
+  	            aSaldo   := CalcEst('00060041',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+		         aSaldo2  := CalcEst('00060041',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)
+	         
+	   	      axSaldo  := axSaldo  + (aSaldo[1] * 20)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 20)
+	   	      
+  	            aSaldo   := CalcEst('00060042',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+		         aSaldo2  := CalcEst('00060042',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)
+	         
+	   	      axSaldo  := axSaldo  + (aSaldo[1] * 20)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 20)
+	   	      
+  	            aSaldo   := CalcEst('00060087',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+		         aSaldo2  := CalcEst('00060087',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)
+	         
+	   	      axSaldo  := axSaldo  + (aSaldo[1]  * 200)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1]  * 200) 
+	   	      
+	   	      // C”DIGO ABAIXO AGRICOPEL BASE
+	   	      
+  	         	aSaldo   := CalcEst('00007',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO) 
+  	         	aSaldo2  := CalcEst('00007',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)		 	        
+  	        		
+  	        		axSaldo  := axSaldo  + aSaldo[1]  
+  	        		axSaldo2 := axSaldo2 + aSaldo2[1] 	   	      
+	   	      
+	  	          cxNomePro := "QUEROSENE"        
+				endif  
+				if alltrim(mv_par13) = "OLEO DIESEL"  				
+					if alltrim(mv_par17) = "DIESEL METROPOL"  
+					   if SM0->M0_CODFIL = '01'
+	  		            aSaldo   := CalcEst('00030205',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+				         aSaldo2  := CalcEst('00030205',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+			   	      axSaldo := axSaldo + aSaldo[1]                                    
+		   	   	   axSaldo2 := axSaldo2 + aSaldo2[1]  		
+		         
+	  	      	      aSaldo   := CalcEst('00030256',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+			      	   aSaldo2  := CalcEst('00030256',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+  			   	      axSaldo2 := axSaldo2 + aSaldo2[1]  	
+  		         
+	  		            aSaldo   := CalcEst('00030264',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+				         aSaldo2  := CalcEst('00030264',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+			   	      axSaldo := axSaldo + aSaldo[1]  		         
+			      	   axSaldo2 := axSaldo2 + aSaldo2[1]   		         
+			         endif 
+			         
+			         if SM0->M0_CODFIL = '03'	   	      
+
+		  	            aSaldo   := CalcEst('00025',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+				         aSaldo2  := CalcEst('00025',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  		         
+		   		      axSaldo2 := axSaldo2 + aSaldo2[1] 		         
+		         
+
+  	         		   aSaldo   := CalcEst('00020',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+			      	   aSaldo2  := CalcEst('00020',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+			         
+				         axSaldo := axSaldo + aSaldo[1]  		         
+			      	   axSaldo2 := axSaldo2 + aSaldo2[1] 		          
+                  endif
+                  
+                  if SM0->M0_CODFIL = '02'
+  	  		            aSaldo   := CalcEst('00030264',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+				         aSaldo2  := CalcEst('00030264',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+			   	      axSaldo := axSaldo + aSaldo[1]  		         
+			      	   axSaldo2 := axSaldo2 + aSaldo2[1]   		         
+			         endif                 
+  			         cxNomeProX := "DIESEL METROPOL"
+ 					endif
+				
+					if alltrim(mv_par17) = "DIESEL MARITIMO"  
+						if SM0->M0_CODFIL = '02'					   
+	  	   	         aSaldo   := CalcEst('00031',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+			   	      aSaldo2  := CalcEst('00031',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  		         
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 				
+		         
+      	
+  	      		      aSaldo   := CalcEst('00019',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+			      	   aSaldo2  := CalcEst('00019',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		      	   
+			         	axSaldo := axSaldo + aSaldo[1]  		         
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 		         
+		         
+		  		         cxNomeProX := "DIESEL MARITIMO"				
+		  		      endif
+  		         				
+					endif				                           
+				
+					if alltrim(mv_par17) = "DIESEL INTERIOR"  
+					   if SM0->M0_CODFIL = '01' .or. SM0->M0_CODFIL = '02'
+	  	         	   aSaldo   := CalcEst('00050166',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+				         aSaldo2  := CalcEst('00050166',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  		         
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 				
+
+
+  	      		      aSaldo   := CalcEst('00030263',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+			      	   aSaldo2  := CalcEst('00030263',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  		         
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 		         
+                  endif
+                  
+                  if SM0->M0_CODFIL = '03'
+	 	      	      aSaldo   := CalcEst('00024',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+			         	aSaldo2  := CalcEst('00024',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+			      	   
+				         axSaldo := axSaldo + aSaldo[1]  		         
+			   	      axSaldo2 := axSaldo2 + aSaldo2[1] 		         
+		         
+
+	  	      	      aSaldo   := CalcEst('00008',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+			      	   aSaldo2  := CalcEst('00008',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  		         
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 		         
+		                  
+                  endif
+  			   	      cxNomeProX := "DIESEL INTERIOR"		         				
+					endif				                        
+
+					if alltrim(mv_par17) = "DIESEL ADIT"  
+					   if SM0->M0_CODFIL = '01'
+	  		            aSaldo   := CalcEst('00030255',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+				         aSaldo2  := CalcEst('00030255',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+			   	      axSaldo := axSaldo + aSaldo[1]  		         
+		   	   	   axSaldo2 := axSaldo2 + aSaldo2[1] 				
+		            endif   
+						if SM0->M0_CODFIL = '03'
+		  	            aSaldo   := CalcEst('00029',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+				         aSaldo2  := CalcEst('00029',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  		         
+		   	   	   axSaldo2 := axSaldo2 + aSaldo2[1] 		         
+         	
+
+	  	      	      aSaldo   := CalcEst('00009',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)	  
+			      	   aSaldo2  := CalcEst('00009',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)  		         
+			         
+				         axSaldo := axSaldo + aSaldo[1]  		         
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 		         
+                   endif
+		         
+  			         cxNomeProX := "DIESEL ADITIVADO"		         
+					endif				                                 
+		         cxNomePro := "OLEO DIESEL" 				    					
+				endif
+				
+            // **************** AGRICOPEL BASE ******************// 
+            if alltrim(mv_par13) = "OLEO COMB"   
+  	            aSaldo   := CalcEst('00010',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO)
+		         aSaldo2  := CalcEst('00010',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)         
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    
+		         
+  	            aSaldo   := CalcEst('00011',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO) 
+		         aSaldo2  := CalcEst('00011',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)      
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    
+		         
+  	            aSaldo   := CalcEst('00021',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO) 
+		         aSaldo2  := CalcEst('00021',SB2->B2_LOCAL,(cAliasSD2)->D2_EMISSAO+1)       
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    		         
+		         
+  		         cxNomePro := "OLEO COMB"
+  		      endif 
+            
+
+          	 (cArqLmpS)->PRODUTO	:=(cAliasSD2)->D2_COD
+	         (cArqLmpS)->CODVELH	:=cxNomePro//SB1->B1_CODVELH
+	         (cArqLmpS)->NOMEPROD	:=cxNomePro
+	         (cArqLmpS)->DATAMOV	:=(cAliasSD2)->D2_EMISSAO
+	         (cArqLmpS)->ESTOQUE	:=axSaldo  
+	         (cArqLmpS)->ESTOQUE2	:=axSaldo2  	         
+	         (cArqLmpS)->NOTAFISCAL	:=(cAliasSD2)->D2_DOC
+	         (cArqLmpS)->SERIE		:=(cAliasSD2)->D2_SERIE
+	         (cArqLmpS)->DATAFISCAL	:=(cAliasSD2)->D2_EMISSAO
+	         (cArqLmpS)->CODEMITE	:=cCodigo
+	         (cArqLmpS)->EMITENTE	:=cNome
+
+	         If Alltrim((cAliasSD2)->D2_COD) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+		         (cArqLmpS)->QUANTIDADE	+= (cAliasSD2)->D2_QUANT * 12
+				ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060041'
+		         (cArqLmpS)->QUANTIDADE	+= (cAliasSD2)->D2_QUANT * 20
+				ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060042'
+		         (cArqLmpS)->QUANTIDADE	+= (cAliasSD2)->D2_QUANT * 20
+				ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060087'
+		         (cArqLmpS)->QUANTIDADE	+= (cAliasSD2)->D2_QUANT * 200 
+				ElseIf Alltrim((cAliasSD2)->D2_COD) == '00030157'			         
+						aTotais[nPos,07]	+= (cAliasSD2)->D2_QUANT * 5		         
+            Else
+		         (cArqLmpS)->QUANTIDADE	+= (cAliasSD2)->D2_QUANT 
+            EndIf
+//            (cArqLmpS)->QUANTIDADE	+=(cAliasSD2)->D2_QUANT
+	         (cArqLmpS)->TIPO		   :=(cAliasSD2)->D2_TIPO
+	         (cArqLmpS)->(MsUnLock())
+
+
+
+	         /*nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpS)->CODVELH+DTOS((cArqLmpS)->DATAMOV)})
+	         If nPos==0
+		         If Alltrim((cAliasSD2)->D2_COD) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+			         nQUANT	+= (cAliasSD2)->D2_QUANT * 12
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060041'
+			         nQUANT	+= (cAliasSD2)->D2_QUANT * 20
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060042'
+			         nQUANT	+= (cAliasSD2)->D2_QUANT * 20
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060087'
+			         nQUANT	+= (cAliasSD2)->D2_QUANT * 200 
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00030157'			         
+					   nQUANT	+= (cAliasSD2)->D2_QUANT * 5
+	            Else
+			         nQUANT	+= (cAliasSD2)->D2_QUANT 
+	            EndIf
+               If (cAliasSD2)->D2_TIPO=="D"
+//		            AADD(aTotais,{(cArqLmpS)->PRODUTO+DTOS((cArqLmpS)->DATAMOV),(cArqLmpS)->PRODUTO,(cArqLmpS)->DATAMOV,aSaldo[1],0,0,0,0,0,0,0,0,0,(cAliasSD2)->D2_QUANT,0,"D","Notas Fiscais : "+(cAliasSD2)->D2_DOC+" "+(cAliasSD2)->D2_SERIE+";"})
+		            AADD(aTotais,{(cArqLmpS)->CODVELH+DTOS((cArqLmpS)->DATAMOV),(cArqLmpS)->CODVELH,(cArqLmpS)->DATAMOV,axSaldo,0,0,0,0,0,0,0,0,0,nQUANT,0,"D"," "+(cAliasSD2)->D2_DOC+" "+(cAliasSD2)->D2_SERIE+";"})
+               Else   
+//		            AADD(aTotais,{(cArqLmpS)->PRODUTO+DTOS((cArqLmpS)->DATAMOV),(cArqLmpS)->PRODUTO,(cArqLmpS)->DATAMOV,aSaldo[1],0,0,0,0,0,0,0,0,0,0,0,"N","Notas Fiscais : "})
+		            AADD(aTotais,{(cArqLmpS)->CODVELH+DTOS((cArqLmpS)->DATAMOV),(cArqLmpS)->CODVELH,(cArqLmpS)->DATAMOV,axSaldo,0,0,0,0,0,0,0,0,0,0,0,"N"," "})
+		         Endif   
+		         nPos :=Len(aTotais)
+	         Endif
+
+            If (cAliasSD2)->D2_TIPO=="D"
+		         If Alltrim((cAliasSD2)->D2_COD) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+			         aTotais[nPos,14]	+= (cAliasSD2)->D2_QUANT * 12
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060041'
+			         aTotais[nPos,14]	+= (cAliasSD2)->D2_QUANT * 20
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060042'
+			         aTotais[nPos,14]	+= (cAliasSD2)->D2_QUANT * 20
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060087'
+			         aTotais[nPos,14]	+= (cAliasSD2)->D2_QUANT * 200 
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00030157'
+			         aTotais[nPos,14]	+= (cAliasSD2)->D2_QUANT * 5			         
+	            Else
+			         aTotais[nPos,14]	+= (cAliasSD2)->D2_QUANT 
+	            EndIf
+//	     	      aTotais[nPos,14]+=(cAliasSD2)->D2_QUANT									//09 - Outras Saidas (justificar no campo 11 - Observacoes)
+	            aTotais[nPos,15]:=(aTotais[nPos,13]+aTotais[nPos,14])					//10 - Total das Saidas (soma dos campos 08 e 09)
+	            aTotais[nPos,10]:=(aTotais[nPos,08]-aTotais[nPos,09])					//06.4 - Estoque Contabil de Fechamento (campo 06.2 - Est. Disp. menos 06.3 - Saidas)
+	     	      aTotais[nPos,17]+=(cAliasSD2)->D2_DOC+" "+(cAliasSD2)->D2_SERIE+";"
+	         Else	
+	            aTotais[nPos,04]:=axSaldo												//03 - Estoque de Abertura
+		         If Alltrim((cAliasSD2)->D2_COD) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+			         aTotais[nPos,13]	+= (cAliasSD2)->D2_QUANT * 12
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060041'
+			         aTotais[nPos,13]	+= (cAliasSD2)->D2_QUANT * 20
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060042'
+			         aTotais[nPos,13]	+= (cAliasSD2)->D2_QUANT * 20
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00060087'
+			         aTotais[nPos,13]	+= (cAliasSD2)->D2_QUANT * 200
+					ElseIf Alltrim((cAliasSD2)->D2_COD) == '00030157'
+			         aTotais[nPos,13]	+= (cAliasSD2)->D2_QUANT * 5			         
+	            Else
+			         aTotais[nPos,13]	+= (cAliasSD2)->D2_QUANT 
+	            EndIf
+//	            aTotais[nPos,13]+=(cAliasSD2)->D2_QUANT									//08 - Total das Saidas
+	            aTotais[nPos,15]:=(aTotais[nPos,13]+aTotais[nPos,14])					//10 - Total das Saidas (soma dos campos 08 e 09)
+	            aTotais[nPos,09]:=(aTotais[nPos,13]+aTotais[nPos,14])					//06.3 - Saldos (resultado do campo 10 = soma dos campos 06 - T.Vendas e 09 - O. Saidas)
+	            aTotais[nPos,10]:=(aTotais[nPos,08]-aTotais[nPos,09])					//06.4 - Estoque Contabil de Fechamento (campo 06.2 - Est. Disp. menos 06.3 - Saidas)
+	         Endif  */ 
+	      Endif   
+	   Endif   
+	   (cAliasSD2)->( dbSkip())
+   End
+
+   (cArqLmpE)->(Dbgotop())
+   (cArqLmpS)->(Dbgotop())     
+	cxLocal := "01"   
+
+   dDataArq := MV_PAR01    
+  	While Dtos(dDataArq) <= Dtos(MV_PAR02)  
+	   //alert((cArqLmpE)->DATAMOV) 
+      nContx :=1
+	   If (cArqLmpE)->(!dbseek(DTOS(dDataArq)))
+  	      //alert("AEWW")
+  	                      
+  	      While nContx <= 30 
+  	         RecLock(cArqLmpE,.T.)  
+  	         
+	         axSaldo  := 0    
+	         axSaldo2 := 0 
+	         
+  	         if alltrim(mv_par13) = "QUEROSENE"   
+  	            aSaldo   := CalcEst('00030157',cxLocal,dDataArq)	  
+		         aSaldo2  := CalcEst('00030157',cxLocal,dDataArq+1)
+	         
+	   	      axSaldo  := axSaldo  + (aSaldo[1] * 5)
+  	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 5)
+  	         
+  	         	aSaldo	 := CalcEst('00030190',cxLocal,dDataArq)	  
+  	         	aSaldo2	 := CalcEst('00030190',cxLocal,dDataArq+1)	 	        
+  	        		
+  	        		axSaldo   := axSaldo + aSaldo[1]  
+  	        		axSaldo2  := axSaldo2 + aSaldo2[1]
+  
+  	            aSaldo   := CalcEst('00060040',cxLocal,dDataArq)	  
+		         aSaldo2  := CalcEst('00060040',cxLocal,dDataArq+1)
+	         
+	   	      axSaldo  := axSaldo + (aSaldo[1] * 12)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 12)	   	      
+	   	      
+  	            aSaldo   := CalcEst('00060041',cxLocal,dDataArq)	  
+		         aSaldo2  := CalcEst('00060041',cxLocal,dDataArq+1)
+	         
+	   	      axSaldo  := axSaldo  + aSaldo[1] * 20
+	   	      axSaldo2 := axSaldo2 + aSaldo2[1] * 20	   	      
+	   	      
+  	            aSaldo   := CalcEst('00060042',cxLocal,dDataArq)	  
+		         aSaldo2  := CalcEst('00060042',cxLocal,dDataArq+1)
+	         
+	   	      axSaldo  := axSaldo + (aSaldo[1] * 20)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 20)	   	      
+	   	      
+  	            aSaldo   := CalcEst('00060087',cxLocal,dDataArq)	  
+		         aSaldo2  := CalcEst('00060087',cxLocal,dDataArq+1)
+	         
+	   	      axSaldo := axSaldo + (aSaldo[1]  * 200)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1]  * 200)     
+	   	      
+				   // C”DIGO ABAIXO AGRICOPEL BASE
+	   	      
+  	         	aSaldo   := CalcEst('00007',cxLocal,dDataArq) 
+  	         	aSaldo2  := CalcEst('00007',cxLocal,dDataArq+1)		 	        
+  	        		
+  	        		axSaldo  := axSaldo  + aSaldo[1]  
+  	        		axSaldo2 := axSaldo2 + aSaldo2[1] 		   	      
+	   	      
+	   	      cxNomePro := "QUEROSENE"  
+	   	      
+
+				endif     
+				if alltrim(mv_par13) = "OLEO DIESEL"   				
+					if alltrim(mv_par17) = "DIESEL METROPOL"   				
+					   if SM0->M0_CODFIL = '01'
+	  		            aSaldo   := CalcEst('00030205',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00030205',cxLocal,dDataArq+1)  		         
+			         
+		   		      axSaldo := axSaldo + aSaldo[1]  
+		      		   axSaldo2 := axSaldo2 + aSaldo2[1] 		         
+		         	
+		  	            aSaldo   := CalcEst('00030256',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00030256',cxLocal,dDataArq+1)  		         
+			         
+				         axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+		         
+	  	      	      aSaldo   := CalcEst('00030264',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00030264',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 	 
+				      endif
+		   	      
+		   	      if SM0->M0_CODFIL = '03'
+		  	            aSaldo   := CalcEst('00025',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00025',cxLocal,dDataArq+1)  		         
+		         
+			   	      axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 				         	         		         
+		         
+  	         		   aSaldo   := CalcEst('00020',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00020',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 				         	         		         		         
+				      endif
+				      
+						if SM0->M0_CODFIL = '02'                
+	  	      	      aSaldo   := CalcEst('00030264',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00030264',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 	 	
+						endif
+  	  		  	      cxNomeProX := "DIESEL METROPOL"        		         		        
+					endif                                              
+				
+					if alltrim(mv_par17) = "DIESEL MARITIMO"   				
+						if SM0->M0_CODFIL = '02'                					   
+  		            	aSaldo   := CalcEst('00031',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00031',cxLocal,dDataArq+1)  		         
+			         
+		   		      axSaldo := axSaldo + aSaldo[1]  
+			      	   axSaldo2 := axSaldo2 + aSaldo2[1] 				         	         		         				
+				                                                                                                
+	  	      	      aSaldo   := CalcEst('00019',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00019',cxLocal,dDataArq+1)  		         
+		         	
+				         axSaldo := axSaldo + aSaldo[1]  
+		   		      axSaldo2 := axSaldo2 + aSaldo2[1] 				         	         		        
+				         
+  	   	   		   cxNomeProX := "DIESEL MARITIMO"        		         		        		           
+		   	      endif   
+					endif
+				
+				
+					if alltrim(mv_par17) = "DIESEL INTERIOR"   				
+						if SM0->M0_CODFIL = '01' .OR. SM0->M0_CODFIL = '02'                				                							
+
+	  	   	         aSaldo   := CalcEst('00050166',cxLocal,dDataArq)	  
+			   	      aSaldo2  := CalcEst('00050166',cxLocal,dDataArq+1)  		         
+				         
+		      		   axSaldo := axSaldo + aSaldo[1]  
+			         	axSaldo2 := axSaldo2 + aSaldo2[1] 				         	         		         				
+		         
+		  	            aSaldo   := CalcEst('00030263',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00030263',cxLocal,dDataArq+1)  		         
+			         
+		   		      axSaldo := axSaldo + aSaldo[1]  
+			      	   axSaldo2 := axSaldo2 + aSaldo2[1] 				         	         		         		         
+                  endif
+                  
+  						if SM0->M0_CODFIL = '03'                				
+   	         	   aSaldo   := CalcEst('00024',cxLocal,dDataArq)	  
+   			         aSaldo2  := CalcEst('00024',cxLocal,dDataArq+1)  		         
+		         	
+	   		         axSaldo := axSaldo + aSaldo[1]  
+	  	   	         axSaldo2 := axSaldo2 + aSaldo2[1] 				         	         		         		         
+		    	      
+  	         		   aSaldo   := CalcEst('00008',cxLocal,dDataArq)	  
+		   	      	aSaldo2  := CalcEst('00008',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 				         	      
+				      endif
+				      
+  	   		      cxNomeProX := "DIESEL INTERIOR"        		         		        
+				
+					endif				
+				
+					if alltrim(mv_par17) = "DIESEL ADIT"   				
+						if SM0->M0_CODFIL = '01'                				
+  		            	aSaldo   := CalcEst('00030255',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00030255',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+			   	      axSaldo2 := axSaldo2 + aSaldo2[1] 				         	         		         
+			   	    endif
+			   	    
+  						if SM0->M0_CODFIL = '03'                				
+	  	         	   aSaldo   := CalcEst('00029',cxLocal,dDataArq)	  
+			         	aSaldo2  := CalcEst('00029',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+			   	      axSaldo2 := axSaldo2 + aSaldo2[1] 				         	         		         
+      		
+  	      	   	   aSaldo   := CalcEst('00009',cxLocal,dDataArq)	  
+			      	   aSaldo2  := CalcEst('00009',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 				         	         		         		         
+				      endif
+      		
+  	   		      cxNomeProX := "DIESEL ADITIVADO"        		         		        				
+					endif				                       
+		         cxNomePro := "OLEO DIESEL" 				    
+				endif
+	         
+            if alltrim(mv_par13) = "OLEO COMB"   
+  	            aSaldo   := CalcEst('00010',cxLocal,dDataArq)
+		         aSaldo2  := CalcEst('00010',cxLocal,dDataArq+1)         
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    
+		         
+  	            aSaldo   := CalcEst('00011',cxLocal,dDataArq) 
+		         aSaldo2  := CalcEst('00011',cxLocal,dDataArq+1)      
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    
+		         
+  	            aSaldo   := CalcEst('00021',cxLocal,dDataArq) 
+		         aSaldo2  := CalcEst('00021',cxLocal,dDataArq+1)       
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    		         
+		         
+  		         cxNomePro := "OLEO COMB"
+  		      endif                 
+
+	  	      (cArqLmpE)->DATAMOV	 	:=dDataArq 	       
+  	         (cArqLmpE)->ESTOQUE		:=axSaldo
+            (cArqLmpE)->ESTOQUE2		:=axSaldo2
+            (cArqLmpE)->LIMPA 		:="S"       
+            (cArqLmpE)->CODVELH		:=cxNomePro
+	         (cArqLmpE)->NOMEPROD		:=cxNomePro         
+	         RecLock(cArqLmpE,.F.)               
+		      nContx +=1
+		   end   
+  	   endif             
+  	   dDataArq+=1 
+   end
+   
+   dDataArq := MV_PAR01
+   While Dtos(dDataArq) <= Dtos(MV_PAR02)  
+	   //alert((cArqLmpE)->DATAMOV) 
+      nContx :=1
+	   If (cArqLmpS)->(!dbseek(DTOS(dDataArq)))
+  	      //alert("AEWW")
+  	                      
+  	      While nContx <= 30 
+  	         RecLock(cArqLmpS,.T.)
+	         axSaldo  := 0    
+	         axSaldo2 := 0 
+	         
+  	         if alltrim(mv_par13) = "QUEROSENE"   
+  	            aSaldo   := CalcEst('00030157',cxLocal,dDataArq)	  
+		         aSaldo2  := CalcEst('00030157',cxLocal,dDataArq+1)
+	         
+	   	      axSaldo  := axSaldo  + (aSaldo[1] * 5)
+  	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 5)
+  	         
+  	         	aSaldo	 := CalcEst('00030190',cxLocal,dDataArq)	  
+  	         	aSaldo2	 := CalcEst('00030190',cxLocal,dDataArq+1)	 	        
+  	        		
+  	        		axSaldo   := axSaldo + aSaldo[1]  
+  	        		axSaldo2  := axSaldo2 + aSaldo2[1]
+  
+  	            aSaldo   := CalcEst('00060040',cxLocal,dDataArq)	  
+		         aSaldo2  := CalcEst('00060040',cxLocal,dDataArq+1)
+	         
+	   	      axSaldo  := axSaldo + (aSaldo[1] * 12)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 12)	   	      
+	   	      
+  	            aSaldo   := CalcEst('00060041',cxLocal,dDataArq)	  
+		         aSaldo2  := CalcEst('00060041',cxLocal,dDataArq+1)
+	         
+	   	      axSaldo  := axSaldo  + aSaldo[1] * 20
+	   	      axSaldo2 := axSaldo2 + aSaldo2[1] * 20	   	      
+	   	      
+  	            aSaldo   := CalcEst('00060042',cxLocal,dDataArq)	  
+		         aSaldo2  := CalcEst('00060042',cxLocal,dDataArq+1)
+	         
+	   	      axSaldo  := axSaldo + (aSaldo[1] * 20)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1] * 20)	   	      
+	   	      
+  	            aSaldo   := CalcEst('00060087',cxLocal,dDataArq)	  
+		         aSaldo2  := CalcEst('00060087',cxLocal,dDataArq+1)
+	         
+	   	      axSaldo := axSaldo + (aSaldo[1]  * 200)
+	   	      axSaldo2 := axSaldo2 + (aSaldo2[1]  * 200) 
+	   	      
+				   // C”DIGO ABAIXO AGRICOPEL BASE	   	      
+	   	      
+  	         	aSaldo   := CalcEst('00007',cxLocal,dDataArq) 
+  	         	aSaldo2  := CalcEst('00007',cxLocal,dDataArq+1)		 	        
+  	        		
+  	        		axSaldo  := axSaldo  + aSaldo[1]  
+  	        		axSaldo2 := axSaldo2 + aSaldo2[1] 		   	      	   	      
+	   	      
+               cxNomePro := "QUEROSENE"        
+				endif                                  
+
+				if alltrim(mv_par13) = "OLEO DIESEL"   				
+					if alltrim(mv_par17) = "DIESEL METROPOL"   				
+ 						if SM0->M0_CODFIL = '01'                				
+		  	            aSaldo   := CalcEst('00030205',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00030205',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+   	   	   	   axSaldo2 := axSaldo2 + aSaldo2[1] 		         				
+   	   	      
+  		      	      aSaldo   := CalcEst('00030256',cxLocal,dDataArq)	  
+			      	   aSaldo2  := CalcEst('00030256',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+			   	      axSaldo2 := axSaldo2 + aSaldo2[1] 		            	         
+			      	   
+	  	   	         aSaldo   := CalcEst('00030264',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00030264',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+			   	      axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+			   	   endif
+						if SM0->M0_CODFIL = '03'                							   	   
+	  	         	   aSaldo   := CalcEst('00025',cxLocal,dDataArq)	  
+			         	aSaldo2  := CalcEst('00025',cxLocal,dDataArq+1)  		         
+		   	      
+			      	   axSaldo := axSaldo + aSaldo[1]  
+					      axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+		         
+	  	   	         aSaldo   := CalcEst('00020',cxLocal,dDataArq)	  
+			   	      aSaldo2  := CalcEst('00020',cxLocal,dDataArq+1)  		         
+		      	   
+				         axSaldo := axSaldo + aSaldo[1]  
+		   	      	axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+		   	      endif
+  						if SM0->M0_CODFIL = '02'                				
+	  	   	         aSaldo   := CalcEst('00030264',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00030264',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+			   	      axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+		   	      endif
+
+						cxNomeProX := "DIESEL METROPOL"		         		         		
+					endif				                        
+				
+					if alltrim(mv_par17) = "DIESEL MARITIMO"   				
+  						if SM0->M0_CODFIL = '03'                				
+					
+				         aSaldo   := CalcEst('00031',cxLocal,dDataArq)	  
+   	      	      aSaldo2  := CalcEst('00031',cxLocal,dDataArq+1)  		         
+		      	   
+				         axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 		         
+			         
+	  	      	      aSaldo   := CalcEst('00019',cxLocal,dDataArq)	  
+			      	   aSaldo2  := CalcEst('00019',cxLocal,dDataArq+1)  		         
+			         
+			   	      axSaldo := axSaldo + aSaldo[1]  
+			      	   axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+		        	         
+							cxNomeProX := "DIESEL MARITIMO"		         				
+					   endif					
+					endif				
+         	
+					if alltrim(mv_par17) = "DIESEL INTERIOR"   				
+  						if SM0->M0_CODFIL = '01' .or.  SM0->M0_CODFIL = '02'                				
+		  	            aSaldo   := CalcEst('00050166',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00050166',cxLocal,dDataArq+1)  		         
+				         
+		   		      axSaldo := axSaldo + aSaldo[1]  
+		      		   axSaldo2 := axSaldo2 + aSaldo2[1] 		         				
+               	
+	  	         	   aSaldo   := CalcEst('00030263',cxLocal,dDataArq)	  
+			         	aSaldo2  := CalcEst('00030263',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+			   	      axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+			   	   endif
+
+  						if SM0->M0_CODFIL = '03'                				
+		  	            aSaldo   := CalcEst('00024',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00024',cxLocal,dDataArq+1)  		         
+			         
+				         axSaldo := axSaldo + aSaldo[1]  
+	   			      axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+		         
+  		      	      aSaldo   := CalcEst('00008',cxLocal,dDataArq)	  
+			      	   aSaldo2  := CalcEst('00008',cxLocal,dDataArq+1)  		         
+		   	      
+			      	   axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+			         endif         
+		         
+						cxNomeProX := "DIESEL INTERIOR"		         
+				
+					endif				
+
+					if alltrim(mv_par17) = "DIESEL ADIT"   				
+  						if SM0->M0_CODFIL = '01'                				
+	  	      	      aSaldo   := CalcEst('00030255',cxLocal,dDataArq)	  
+			         	aSaldo2  := CalcEst('00030255',cxLocal,dDataArq+1)  		         
+			         
+				         axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 		         				
+				      endif
+  						if SM0->M0_CODFIL = '03'                						   	      
+		         	   aSaldo   := CalcEst('00029',cxLocal,dDataArq)	  
+				         aSaldo2  := CalcEst('00029',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+		   		      axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+			         
+  	         		   aSaldo   := CalcEst('00009',cxLocal,dDataArq)	  
+		         		aSaldo2  := CalcEst('00009',cxLocal,dDataArq+1)  		         
+		         
+				         axSaldo := axSaldo + aSaldo[1]  
+				         axSaldo2 := axSaldo2 + aSaldo2[1] 		         		         
+				       endif
+			         
+		   	       cxNomeProX := "DIESEL ADITIVADO"
+		      	  		         
+					endif				                       
+		         cxNomePro := "OLEO DIESEL" 				    
+				endif
+				
+           
+        // **************** AGRICOPEL BASE ******************// 
+            if alltrim(mv_par13) = "OLEO COMB"   
+  	            aSaldo   := CalcEst('00010',cxLocal,dDataArq)
+		         aSaldo2  := CalcEst('00010',cxLocal,dDataArq+1)         
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    
+		         
+  	            aSaldo   := CalcEst('00011',cxLocal,dDataArq) 
+		         aSaldo2  := CalcEst('00011',cxLocal,dDataArq+1)      
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    
+		         
+  	            aSaldo   := CalcEst('00021',cxLocal,dDataArq) 
+		         aSaldo2  := CalcEst('00021',cxLocal,dDataArq+1)       
+		         
+		         axSaldo  := axSaldo  + aSaldo[1] 
+		         axSaldo2 := axSaldo2 + aSaldo2[1]    		         
+		         
+  		         cxNomePro := "OLEO COMB"
+  		      endif             
+
+	  	      (cArqLmpS)->DATAMOV	 	:=dDataArq 	       
+            (cArqLmpS)->ESTOQUE		:=axSaldo
+            (cArqLmpS)->ESTOQUE2		:=axSaldo2
+            (cArqLmpS)->LIMPA 		:="S"       
+            (cArqLmpS)->CODVELH		:=cxNomePro
+	         (cArqLmpS)->NOMEPROD		:=cxNomePro       
+
+	         RecLock(cArqLmpS,.F.)  
+		      nContx +=1
+		   end
+              
+  	   endif             
+  	   dDataArq+=1 
+   end   
+   
+    
+   
+   //==================================================
+
+  (cArqLmpE)->(Dbgotop())
+  (cArqLmpS)->(Dbgotop())   
+  
+//  alert('Entrada')
+  
+  While (!(cArqLmpE)->(Eof()))
+  		nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpE)->CODVELH+DTOS((cArqLmpE)->DATAMOV)})
+	   If nPos==0
+	   	If (cArqLmpE)->TIPO=="D"
+	   		AADD(aTotais,{(cArqLmpE)->CODVELH+DTOS((cArqLmpE)->DATAMOV),(cArqLmpE)->CODVELH,(cArqLmpE)->DATAMOV,(cArqLmpE)->ESTOQUE,0,0,(cArqLmpE)->QUANTIDADE,0,0,0,0,0,0,0,0,"D"," "+(cArqLmpE)->NOTAFISCAL+" "+(cArqLmpE)->SERIE+";"})
+   		else
+   			AADD(aTotais,{(cArqLmpE)->CODVELH+DTOS((cArqLmpE)->DATAMOV),(cArqLmpE)->CODVELH,(cArqLmpE)->DATAMOV,(cArqLmpE)->ESTOQUE,0,0,0,0,0,0,0,0,0,0,0,"N"," "})
+   		Endif   
+   	   nPos :=Len(aTotais)
+   	Endif    
+   	
+  			if ((cArqLmpE)->CF = '1659'     .OR. (cArqLmpE)->CF = '2659' .OR. (cArqLmpE)->CF = '1661' .OR. (cArqLmpE)->CF = '2661' ;
+			   .OR. (cArqLmpE)->CF = '1411' .OR. (cArqLmpE)->CF = '2411' .OR. (cArqLmpE)->CF = '1662' .OR. (cArqLmpE)->CF = '2662')
+  		   	
+	   		If Alltrim((cArqLmpE)->PRODUTO) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+   				aTotais[nPos,07]	+= (cArqLmpE)->QUANTIDADE //* 12
+   			ElseIf  Alltrim((cArqLmpE)->PRODUTO) == '00060041'  
+   				aTotais[nPos,07]	+= (cArqLmpE)->QUANTIDADE //* 20
+	   		ElseIf Alltrim((cArqLmpE)->PRODUTO) == '00060042'
+   				aTotais[nPos,07]	+= (cArqLmpE)->QUANTIDADE //* 20
+   			ElseIf Alltrim((cArqLmpE)->PRODUTO) == '00060087'
+   				aTotais[nPos,07]	+= (cArqLmpE)->QUANTIDADE //* 200
+	   		ElseIf Alltrim((cArqLmpE)->PRODUTO) == '00030157'			         
+   				aTotais[nPos,07]	+= (cArqLmpE)->QUANTIDADE //* 5
+	   		Else
+   				aTotais[nPos,07]	+= (cArqLmpE)->QUANTIDADE 
+   			EndIf
+   		
+
+         aTotais[nPos,08] :=(aTotais[nPos,04]+aTotais[nPos,06]+aTotais[nPos,07])	//06.2 - Estoque Disponivel (soma dos campos 03-E. Abert; 05-Entr. Norm. e 06.1-O.Entr.)
+         aTotais[nPos,09] :=(aTotais[nPos,13]+aTotais[nPos,14])						//06.3 - Saldos (resultado do campo 10 = soma dos campos 08 - T.Vendas e 09 - O. Saidas)
+         aTotais[nPos,10] :=(aTotais[nPos,08]-aTotais[nPos,09])						//06.4 - Estoque Contabil de Fechamento (campo 06.2 - Est. Disp. menos 06.3 - Saidas)
+         aTotais[nPos,11] :=(cArqLmpE)->ESTOQUE2											//06.5 - Estoque Fisico Medido
+         //aTotais[nPos,17] +=(cArqLmpE)->NOTAFISCAL+" "+(cArqLmpE)->SERIE+";"
+
+		Else	     
+			aTotais[nPos,04] := (cArqLmpE)->ESTOQUE													//03 - Estoque de Abertura
+			aTotais[nPos,05] := 0                    							 			//04 - Entradas Normais (compras recebidas)
+			If Alltrim((cArqLmpE)->PRODUTO) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+				aTotais[nPos,06]	+= (cArqLmpE)->QUANTIDADE //* 12
+			ElseIf Alltrim((cArqLmpE)->PRODUTO) == '00060041'
+				aTotais[nPos,06]	+= (cArqLmpE)->QUANTIDADE //* 20
+			ElseIf Alltrim((cArqLmpE)->PRODUTO) == '00060042'
+				aTotais[nPos,06]	+= (cArqLmpE)->QUANTIDADE //* 20
+			ElseIf Alltrim((cArqLmpE)->PRODUTO) == '00060087'
+				aTotais[nPos,06]	+=(cArqLmpE)->QUANTIDADE //* 200
+			ElseIf Alltrim((cArqLmpE)->PRODUTO) == '00030157'			         
+				aTotais[nPos,06]	+= (cArqLmpE)->QUANTIDADE //* 5			         
+	      Else
+		      aTotais[nPos,06]	+= (cArqLmpE)->QUANTIDADE 
+		  EndIf
+//	     aTotais[nPos,06] +=(cAliasSD1)->D1_QUANT										//05 - Total das Entradas
+//			aTotais[nPos,17] +=(cArqLmpE)->NOTAFISCAL+" "+(cArqLmpE)->SERIE+";"
+		  aTotais[nPos,08] :=(aTotais[nPos,04]+aTotais[nPos,06]+aTotais[nPos,07])		//06.2 - Estoque Disponivel (soma dos campos 03-E. Abert; 05-Entr. Norm. e 06.1-O.Entr.)
+		  aTotais[nPos,09] :=(aTotais[nPos,13]+aTotais[nPos,14])							//06.3 - Saldos (resultado do campo 10 = soma dos campos 08 - T.Vendas e 09 - O. Saidas)
+		  aTotais[nPos,10] :=(aTotais[nPos,08]-aTotais[nPos,09])							//06.4 - Estoque Contabil de Fechamento (campo 06.2 - Est. Disp. menos 06.3 - Saidas)
+		  aTotais[nPos,11] := (cArqLmpE)->ESTOQUE2													//06.5 - Estoque Fisico Medido
+		  aTotais[nPos,13] :=0											 	  					//08 - Total das Saidas
+		  aTotais[nPos,14] :=0												  					//09 - Outras Saidas (justificar no campo 11 - Observacoes)
+		  aTotais[nPos,15] :=0	  											  					//10 - Total das Saidas (soma dos campos 08 e 09) 	         
+     endif
+  	  (cArqLmpE)->(Dbskip())
+
+   //================================================== 
+  end                                                  
+  
+
+//  alert('SAIDA')  
+  
+  While (!(cArqLmpS)->(Eof()))
+  		nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpS)->CODVELH+DTOS((cArqLmpS)->DATAMOV)})
+  		If nPos==0
+  		 	If Alltrim((cArqLmpS)->PRODUTO) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+		 		nQUANT	+= (cArqLmpS)->QUANTIDADE //* 12
+			ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00060041'
+			   nQUANT	+= (cArqLmpS)->QUANTIDADE //* 20
+			ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00060042'
+	         nQUANT	+= (cArqLmpS)->QUANTIDADE //* 20
+			ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00060087'
+	         nQUANT	+= (cArqLmpS)->QUANTIDADE //* 200 
+			ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00030157'			         
+			   nQUANT	+= (cArqLmpS)->QUANTIDADE //* 5
+         Else
+	         nQUANT	+= (cArqLmpS)->QUANTIDADE
+         EndIf
+         If  (cArqLmpS)->TIPO=="D"
+//	   	   AADD(aTotais,{(cArqLmpS)->PRODUTO+DTOS((cArqLmpS)->DATAMOV),(cArqLmpS)->PRODUTO,(cArqLmpS)->DATAMOV,aSaldo[1],0,0,0,0,0,0,0,0,0,(cAliasSD2)->D2_QUANT,0,"D","Notas Fiscais : "+(cAliasSD2)->D2_DOC+" "+(cAliasSD2)->D2_SERIE+";"})
+		      AADD(aTotais,{(cArqLmpS)->CODVELH+DTOS((cArqLmpS)->DATAMOV),(cArqLmpS)->CODVELH,(cArqLmpS)->DATAMOV,(cArqLmpS)->ESTOQUE,0,0,0,0,0,0,0,0,0,nQUANT,0,"D"," "+(cArqLmpS)->NOTAFISCAL+" "+(cArqLmpS)->SERIE+";"})
+         Else   
+//		      AADD(aTotais,{(cArqLmpS)->PRODUTO+DTOS((cArqLmpS)->DATAMOV),(cArqLmpS)->PRODUTO,(cArqLmpS)->DATAMOV,aSaldo[1],0,0,0,0,0,0,0,0,0,0,0,"N","Notas Fiscais : "})
+		      AADD(aTotais,{(cArqLmpS)->CODVELH+DTOS((cArqLmpS)->DATAMOV),(cArqLmpS)->CODVELH,(cArqLmpS)->DATAMOV,axSaldo,0,0,0,0,0,0,0,0,0,0,0,"N"," "})
+		   Endif   
+		   nPos :=Len(aTotais)
+		Endif
+		
+		If (cArqLmpS)->TIPO=="D"
+			If Alltrim((cArqLmpS)->PRODUTO) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+			         aTotais[nPos,14]	+= (cArqLmpS)->QUANTIDADE // * 12
+					ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00060041'
+			         aTotais[nPos,14]	+= (cArqLmpS)->QUANTIDADE // * 20
+					ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00060042'
+			         aTotais[nPos,14]	+= (cArqLmpS)->QUANTIDADE // * 20
+					ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00060087'
+			         aTotais[nPos,14]	+= (cArqLmpS)->QUANTIDADE // * 200 
+					ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00030157'
+			         aTotais[nPos,14]	+= (cArqLmpS)->QUANTIDADE // * 5			         
+	            Else
+			         aTotais[nPos,14]	+= (cArqLmpS)->QUANTIDADE 
+	            EndIf
+//	     	      aTotais[nPos,14]+=(cAliasSD2)->D2_QUANT									//09 - Outras Saidas (justificar no campo 11 - Observacoes)
+	            aTotais[nPos,15]:=(aTotais[nPos,13]+aTotais[nPos,14])					//10 - Total das Saidas (soma dos campos 08 e 09)
+	            aTotais[nPos,10]:=(aTotais[nPos,08]-aTotais[nPos,09])					//06.4 - Estoque Contabil de Fechamento (campo 06.2 - Est. Disp. menos 06.3 - Saidas)
+	     	      //aTotais[nPos,17]+="TESTE SAIIIIIIIIDA "//(cArqLmpS)->NOTAFISCAL+" "+(cArqLmpS)->SERIE+";"
+	         Else	
+	            aTotais[nPos,04]:=(cArqLmpS)->ESTOQUE												//03 - Estoque de Abertura
+		         If Alltrim((cArqLmpS)->PRODUTO) == '00060040'   // Cfe Alexandre multiplicar cfe abaixo 09/06/2005
+			         aTotais[nPos,13]	+= (cArqLmpS)->QUANTIDADE // * 12
+					ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00060041'
+			         aTotais[nPos,13]	+= (cArqLmpS)->QUANTIDADE //* 20
+					ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00060042'
+			         aTotais[nPos,13]	+= (cArqLmpS)->QUANTIDADE //* 20
+					ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00060087'
+			         aTotais[nPos,13]	+= (cArqLmpS)->QUANTIDADE //* 200
+					ElseIf Alltrim((cArqLmpS)->PRODUTO) == '00030157'
+			         aTotais[nPos,13]	+= (cArqLmpS)->QUANTIDADE //* 5			         
+	            Else
+			         aTotais[nPos,13]	+= (cArqLmpS)->QUANTIDADE 
+	            EndIf
+//	            aTotais[nPos,13]+=(cAliasSD2)->D2_QUANT									//08 - Total das Saidas
+	            aTotais[nPos,15]:=(aTotais[nPos,13]+aTotais[nPos,14])					//10 - Total das Saidas (soma dos campos 08 e 09)
+	            aTotais[nPos,09]:=(aTotais[nPos,13]+aTotais[nPos,14])					//06.3 - Saldos (resultado do campo 10 = soma dos campos 06 - T.Vendas e 09 - O. Saidas)
+	            aTotais[nPos,10]:=(aTotais[nPos,08]-aTotais[nPos,09])					//06.4 - Estoque Contabil de Fechamento (campo 06.2 - Est. Disp. menos 06.3 - Saidas)
+	         Endif  
+				(cArqLmpS)->(Dbskip())
+  end
+  //MsgRun("Fim , Aguarde...","")     
+  alert('Processo ConcluÌdo!')
+   
+	cTermS := "S"    
+	cTermE := "S" 
+	
+   (cArqLmpE)->(Dbgotop())
+   (cArqLmpS)->(Dbgotop())     
+	
+   While (!(cArqLmpE)->(Eof()) .or. !(cArqLmpS)->(Eof()))
+      nLin :=0             
+      obs := ""
+      While .T.
+         aLay :=Array(29)
+         LayOutLmp(@aLay,1)  
+
+         (cArqLmpE)->(dbseek(cChave)) 
+	      cChave      := ""
+         dData 	  	:= (cArqLmpE)->DATAMOV
+//       cProduto	   := (cArqLmpE)->PRODUTO
+         cCodVelh    := (cArqLmpE)->CODVELH
+         nCont		   := 0
+         
+//         IF dDataAnt <> dData .and. cTermS == "S"
+//           cTermE := "S"
+//         endif
+
+//	      While DTOS((cArqLmpE)->DATAMOV)==DTOS(dData) .AND. (cArqLmpE)->PRODUTO==cProduto
+	      While DTOS((cArqLmpE)->DATAMOV)==DTOS(dData) .AND. (cArqLmpE)->CODVELH==cCodVelh 
+//	         nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpE)->PRODUTO+DTOS((cArqLmpE)->DATAMOV)})
+//	         nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpE)->CODVELH+DTOS((cArqLmpE)->DATAMOV)})
+            If ( nLin == 0 )
+	            @ nLin,000 PSAY aValImp(Limite)
+	            nLin++
+	            nFolha ++
+	            FmtLin(,aLay[01],,,@nLin)
+	            FmtLin(,aLay[02],,,@nLin)
+	            FmtLin(,aLay[03],,,@nLin)
+	            FmtLin(,aLay[04],,,@nLin)
+	            FmtLin(,aLay[05],,,@nLin)
+	            FmtLin(,aLay[05],,,@nLin) // Repete para posicionar linhas
+	            FmtLin(,aLay[05],,,@nLin) // Repete para posicionar linhas
+	            FmtLin(,aLay[05],,,@nLin) // Repete para posicionar linhas
+	            FmtLin(,aLay[05],,,@nLin) // Repete para posicionar linhas
+	            FmtLin(,aLay[05],,,@nLin) // Repete para posicionar linhas 
+  	       
+	            if cTermS == "N"    
+	               if trim(SUBS((cArqLmpE)->NOMEPROD,1,45)) == "OLEO DIESEL"	               
+               		FmtLin({mv_par17,dDataAnt,StrZero(nFolha,5)},aLay[06],,,@nLin)  //GLOMER
+              		else 
+               		FmtLin({SUBS((cArqLmpE)->NOMEPROD,1,45),dDataAnt,StrZero(nFolha,5)},aLay[06],,,@nLin)  //GLOMER               	
+                  endif 
+                 	(cArqLmpE)->(Dbskip(-1))   
+            	   FmtLin(,aLay[07],,,@nLin) 
+               	FmtLin({Transform((cArqLmpE)->ESTOQUE,"@E 9999,999.999")},aLay[08],,,@nLin)    
+               	nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpE)->CODVELH+DTOS((cArqLmpE)->DATAMOV)})
+						(cArqLmpE)->(Dbskip())               	
+	            else  
+                  if trim(SUBS((cArqLmpE)->NOMEPROD,1,45)) == "OLEO DIESEL"	       
+    	            	FmtLin({mv_par17,(cArqLmpE)->DATAMOV,StrZero(nFolha,5)},aLay[06],,,@nLin)
+    	            else                                                                                               
+     	            	FmtLin({SUBS((cArqLmpE)->NOMEPROD,1,45),(cArqLmpE)->DATAMOV,StrZero(nFolha,5)},aLay[06],,,@nLin)
+     	            endif
+                  FmtLin(,aLay[07],,,@nLin) 
+     	            FmtLin({Transform((cArqLmpE)->ESTOQUE,"@E 9999,999.999")},aLay[08],,,@nLin)    
+     	            nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpE)->CODVELH+DTOS((cArqLmpE)->DATAMOV)})
+	            endif
+
+
+//	            xEstoque2 :=(cArqLmpE)->ESTOQUE
+	            FmtLin(,aLay[09],,,@nLin)
+	            FmtLin(,aLay[10],,,@nLin)
+	            FmtLin(,aLay[11],,,@nLin)
+	         Endif
+		      If (cArqLmpE)->TIPO <> "D" .and. cTermS == "S"
+		         if (cArqLmpE)->LIMPA <> "S" //.AND. ((cArqLmpE)->CF <> '1659' .OR. (cArqLmpE)->CF <> '2659') 
+						if ((cArqLmpE)->CF = '1659' .OR. (cArqLmpE)->CF = '2659' .OR. (cArqLmpE)->CF = '1661' .OR. (cArqLmpE)->CF = '2661' ;
+							   .OR. (cArqLmpE)->CF = '1411' .OR. (cArqLmpE)->CF = '2411' .OR.  (cArqLmpE)->CF = '1662' .OR. (cArqLmpE)->CF = '2662')
+				         FmtLin({,,,,"0,000",},aLay[12],,,@nLin) 
+				      else
+		               FmtLin({(cArqLmpE)->CF + '  ' + (cArqLmpE)->NOTAFISCAL,(cArqLmpE)->SERIE,(cArqLmpE)->DATAMOV,(cArqLmpE)->EMITENTE,Transform((cArqLmpE)->QUANTIDADE,"@E 9999,999.999")},aLay[12],,,@nLin)
+		            endif       
+		        
+	               cTemEnt := "S"
+	            else                                   
+                  FmtLin({,,,,"0,000",},aLay[12],,,@nLin) 
+                  cTemEnt := "N"
+           		endif
+            else
+               FmtLin({,,,,"0,000",},aLay[12],,,@nLin)
+            Endif   
+            nCont++ 
+                                
+				if ((cArqLmpE)->CF = '1659' .OR. (cArqLmpE)->CF = '2659' .OR. (cArqLmpE)->CF = '1661' .OR. (cArqLmpE)->CF = '2661' ;
+				   .OR. (cArqLmpE)->CF = '1411' .OR. (cArqLmpE)->CF = '2411' .OR.  (cArqLmpE)->CF = '1662' .OR. (cArqLmpE)->CF = '2662')
+	            If (cArqNotas)->(dbseek((cArqLmpE)->NOTAFISCAL+(cArqLmpE)->SERIE))
+			         RecLock(cArqNotas,.F.)
+	   	      Else
+		   	      RecLock(cArqNotas,.T.)
+	         	EndIf
+				   (cArqNotas)->NOTAFISCAL  :=(cArqLmpE)->NOTAFISCAL
+    			   (cArqNotas)->SERIE       :=(cArqLmpE)->SERIE
+  				   (cArqNotas)->CF          :=(cArqLmpE)->CF    
+	            RecLock(cArqLmpS,.F.)  			
+				endif  
+				
+			   if cTermS == "S"
+	         	(cArqLmpE)->(Dbskip())  	         	
+				end  
+				
+//          cChave :=(cArqLmpE)->(DTOS(DATAMOV))+(cArqLmpE)->PRODUTO+(cArqLmpE)->SERIE+(cArqLmpE)->NOTAFISCAL+(cArqLmpE)->CODEMITE
+            cChave :=(cArqLmpE)->(DTOS(DATAMOV))+(cArqLmpE)->CODVELH+(cArqLmpE)->SERIE+(cArqLmpE)->NOTAFISCAL+(cArqLmpE)->CODEMITE
+            If nCont>30
+               cTermE := "N"
+               exit         
+            else
+	            cTermE := "S"
+            Endif
+         End
+ 	      While nLin < 49
+            FmtLin(,cLin,,,@nLin)
+         End
+
+         FmtLin(,aLay[15],,,@nLin)
+         FmtLin(,aLay[15],,,@nLin) // Repete para posicionar linhas
+         FmtLin(,aLay[15],,,@nLin) // Repete para posicionar linhas
+         FmtLin(,aLay[15],,,@nLin) // Repete para posicionar linhas
+         FmtLin(,aLay[15],,,@nLin) // Repete para posicionar linhas
+         FmtLin(,aLay[15],,,@nLin) // Repete para posicionar linhas
+//         FmtLin(,aLay[15],,,@nLin) // Repete para posicionar linhas
+//         FmtLin(,aLay[15],,,@nLin) // Repete para posicionar linhas
+//         FmtLin(,aLay[15],,,@nLin) // Repete para posicionar linhas
+//         FmtLin(,aLay[15],,,@nLin) // Repete para posicionar linhas
+//         FmtLin(,aLay[15],,,@nLin) // Repete para posicionar linhas
+
+ 			If nPos > 0
+	         FmtLin({Transform(aTotais[nPos,6],"@E 9999,999.999")},aLay[14],,,@nLin)
+	      Else   
+	         FmtLin({Transform(0,"@E 9999,999.999")},aLay[14],,,@nLin)
+	      Endif   
+	           
+//       FmtLin(,aLay[15],,,@nLin) // Comentario para posicionar linhas
+//     	FmtLin(,aLay[16],,,@nLin) // Comentario para posicionar linhas
+ 	      FmtLin(,aLay[17],,,@nLin)
+
+         If nPos > 0 
+  	         FmtLin({Transform(aTotais[nPos,7],"@E 9999,999.999")},aLay[18],,,@nLin)
+  	      Else   
+  	         FmtLin({Transform(0,"@E 9999,999.999")},aLay[18],,,@nLin)
+  	      Endif   
+	      FmtLin(,aLay[19],,,@nLin)
+         If nPos > 0
+	         FmtLin({Transform(aTotais[nPos,08],"@E 9999,999.999")},aLay[20],,,@nLin)
+	      Else   
+	         FmtLin({Transform(0,"@E 9999,999.999")},aLay[20],,,@nLin)
+	      Endif   
+	      FmtLin(,aLay[21],,,@nLin)
+//	      nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpS)->CODVELH+DTOS((cArqLmpS)->DATAMOV)})
+         If nPos > 0
+	         FmtLin({Transform(aTotais[nPos,15],"@E 9999,999.999")},aLay[22],,,@nLin)
+	      Else   
+	         FmtLin({Transform(0,"@E 9999,999.999")},aLay[22],,,@nLin)
+	      Endif   
+	      FmtLin(,aLay[23],,,@nLin)
+			If nPos > 0
+		      FmtLin({Transform(aTotais[nPos,10],"@E 9999,999.999")},aLay[24],,,@nLin)
+		   Else   
+	   	   FmtLin({Transform(0,"@E 9999,999.999")},aLay[24],,,@nLin)
+	   	Endif   
+	      FmtLin(,aLay[25],,,@nLin)
+			If nPos > 0
+		      FmtLin({Transform(aTotais[nPos,11],"@E 9999,999.999")},aLay[26],,,@nLin)
+		   Else
+		      //FmtLin({Transform(xEstoque2,"@E 9999,999.999")},aLay[26],,,@nLin)
+		      FmtLin({Transform(0,"@E 9999,999.999")},aLay[26],,,@nLin)
+		   Endif   
+	      FmtLin(,aLay[27],,,@nLin)
+			If nPos > 0
+		      FmtLin({Transform((aTotais[nPos,11]-aTotais[nPos,10]),"@E 9999,999.999")},aLay[28],,,@nLin)
+		   Else   
+		      FmtLin({Transform(0,"@E 9999,999.999")},aLay[28],,,@nLin)
+		   Endif   
+	      FmtLin(,aLay[29],,,@nLin)
+         nLin := 0
+         SetPrc(1,1) // Impede salto de pagina automatica qdo impresso em matricial
+         nPosEnt := nPos
+         Exit
+      End
+      
+      nLin :=0
+      While .T.
+         aLay :=Array(26)
+ 	      LayOutLmp(@aLay,2)
+         (cArqLmpS)->(dbseek(cChave2))   
+	      cChave2     := ""
+         dData 	   := (cArqLmpS)->DATAMOV
+//       cProduto		:= (cArqLmpS)->PRODUTO
+         cCodVelh		:= (cArqLmpS)->CODVELH
+         nCont       := 0
+         nLin	      := 0
+         nTotSai 	   := 0
+//       While DTOS((cArqLmpS)->DATAMOV)==DTOS(dData) .AND. (cArqLmpS)->PRODUTO==cProduto
+         While DTOS((cArqLmpS)->DATAMOV)==DTOS(dData) .AND. (cArqLmpS)->CODVELH==cCodVelh
+//          nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpS)->PRODUTO+DTOS((cArqLmpS)->DATAMOV)})
+		      nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpS)->CODVELH+DTOS((cArqLmpS)->DATAMOV)})
+ 	  	      If ( nLin == 0 )
+		         @ nLin,000 PSAY aValImp(Limite)
+		         nLin++
+	            nFolha ++
+		         FmtLin(,aLay[01],,,@nLin)
+		         FmtLin(,aLay[02],,,@nLin)
+		         FmtLin(,aLay[03],,,@nLin)
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+		         FmtLin(,aLay[03],,,@nLin) // Repete para posicionar linhas
+	            FmtLin({StrZero(nFolha,5)},aLay[04],,,@nLin)
+		         FmtLin(,aLay[05],,,@nLin)
+		         FmtLin(,aLay[06],,,@nLin)
+	         Endif
+		      If (cArqLmpS)->TIPO <> "D" //.and. cTermE == "S"
+		         if(cArqLmpS)->LIMPA <> "S"
+	               FmtLin({(cArqLmpS)->NOTAFISCAL,(cArqLmpS)->SERIE,(cArqLmpS)->DATAMOV,(cArqLmpS)->EMITENTE,Transform((cArqLmpS)->QUANTIDADE,"@E 9999,999.999")},aLay[07],,,@nLin)
+	            else
+                  FmtLin({,,,,"0,000"},aLay[07],,,@nLin)
+	            endif
+//            else                         
+  //					FmtLin({"SAIDASSSS",,,"0.000"},aLay[07],,,@nLin)
+            Endif   
+            nCont++
+            If nPos > 0 
+	            If aTotais[nPos,16]<>"D"
+                  nTotSai +=(cArqLmpS)->QUANTIDADE
+               Endif         
+            Endif       
+  //          if cTermE == "S"
+            	(cArqLmpS)->(Dbskip())
+  //          Endif
+        //    cChave2 :=(cArqLmpS)->(DTOS(DATAMOV))+(cArqLmpS)->PRODUTO+(cArqLmpS)->SERIE+(cArqLmpS)->NOTAFISCAL+(cArqLmpS)->CODEMITE
+            cChave2 :=(cArqLmpS)->(DTOS(DATAMOV))+(cArqLmpS)->CODVELH+(cArqLmpS)->SERIE+(cArqLmpS)->NOTAFISCAL+(cArqLmpS)->CODEMITE  
+            If nCont> 30 //36 
+        			cTermS := "N"
+        			dDataAnt := (cArqLmpS)->DATAMOV
+               Exit         
+ 				Else 
+  				   cTermS := "S" 
+            Endif
+         End
+         
+         While nLin < 58
+            FmtLin(,cLin,,,@nLin)
+         Enddo  
+         FmtLin(,aLay[08],,,@nLin)
+         FmtLin({Transform(nTotSai,"@E 9999,999.999")},aLay[09],,,@nLin)
+         FmtLin(,aLay[10],,,@nLin)
+         If nPos > 0
+            FmtLin({Transform(aTotais[nPos,14],"@E 9999,999.999")},aLay[11],,,@nLin)
+         Else   
+            FmtLin({Transform(0,"@E 9999,999.999")},aLay[11],,,@nLin)
+         Endif   
+         FmtLin(,aLay[12],,,@nLin)
+         If nPos > 0
+	         FmtLin({Transform(aTotais[nPos,14]+nTotSai,"@E 9999,999.999")},aLay[13],,,@nLin)
+	      Else   
+            FmtLin({Transform(0+nTotSai,"@E 9999,999.999")},aLay[13],,,@nLin)
+         Endif   
+         FmtLin(,aLay[14],,,@nLin)
+         FmtLin(,aLay[15],,,@nLin)
+         FmtLin(,aLay[16],,,@nLin)
+         FmtLin(,aLay[16],,,@nLin) // Repete para posicionar linha
+         FmtLin(,aLay[16],,,@nLin) // Repete para posicionar linha
+//        	nPos:=Ascan(aTotais,{ |x| x[1]==(cArqLmpE)->CODVELH+DTOS((cArqLmpE)->DATAMOV)})  
+         obs  := ""
+         obs1 := ""
+         obs2 := ""
+         
+         (cArqNotas)->(Dbgotop())   
+			While (!(cArqNotas)->(Eof()))
+				if (cArqNotas)->CF = '1659' .OR. (cArqNotas)->CF = '2659'
+			   	obs1 += (cArqNotas)->NOTAFISCAL + "  " + (cArqNotas)->SERIE + ";"
+			   endif
+			   if	(cArqNotas)->CF = '1661' .OR. (cArqNotas)->CF = '2661'.OR. ;
+				   (cArqNotas)->CF = '1411' .OR. (cArqNotas)->CF = '2411' .OR.  (cArqNotas)->CF = '1662' .OR. (cArqNotas)->CF = '2662'
+			   	obs2 += (cArqNotas)->NOTAFISCAL + "  " + (cArqNotas)->SERIE + ";"				   
+				endif
+				(cArqNotas)->(Dbskip())			    
+			                                                              
+			end     
+			
+          
+         If !empty(obs1) .or. !empty(obs2)//nPos > 0
+            if !empty(obs1) 
+               obs := "06.1(TRANSF)=" + obs1
+            endif                           
+            if !empty(obs2) 
+               obs := obs + "   06.1(DEV)=" + obs2
+            endif
+            
+           
+/*	         FmtLin({SUBS(aTotais[nPos,17],001,74)},aLay[17],,,@nLin)
+            FmtLin({SUBS(aTotais[nPos,17],075,74)},aLay[18],,,@nLin)
+            FmtLin({SUBS(aTotais[nPos,17],148,74)},aLay[19],,,@nLin)
+            FmtLin({SUBS(aTotais[nPos,17],222,74)},aLay[20],,,@nLin)
+            FmtLin({SUBS(aTotais[nPos,17],296,74)},aLay[21],,,@nLin)
+            FmtLin({SUBS(aTotais[nPos,17],370,74)},aLay[22],,,@nLin)
+            FmtLin({SUBS(aTotais[nPos,17],444,74)},aLay[23],,,@nLin)
+            FmtLin({SUBS(aTotais[nPos,17],518,74)},aLay[24],,,@nLin)
+            FmtLin({SUBS(aTotais[nPos,17],592,74)},aLay[25],,,@nLin) */    
+  
+  	         FmtLin({SUBS(obs,001,74)},aLay[17],,,@nLin)
+            FmtLin({SUBS(obs,075,74)},aLay[18],,,@nLin)
+            FmtLin({SUBS(obs,148,74)},aLay[19],,,@nLin)
+            FmtLin({SUBS(obs,222,74)},aLay[20],,,@nLin)
+            FmtLin({SUBS(obs,296,74)},aLay[21],,,@nLin)
+            FmtLin({SUBS(obs,370,74)},aLay[22],,,@nLin)
+            FmtLin({SUBS(obs,444,74)},aLay[23],,,@nLin)
+            FmtLin({SUBS(obs,518,74)},aLay[24],,,@nLin)
+            FmtLin({SUBS(obs,592,74)},aLay[25],,,@nLin)
+         Else
+	         FmtLin({""},aLay[17],,,@nLin)
+            FmtLin({""},aLay[18],,,@nLin)
+            FmtLin({""},aLay[19],,,@nLin)
+            FmtLin({""},aLay[20],,,@nLin)
+            FmtLin({""},aLay[21],,,@nLin)
+            FmtLin({""},aLay[22],,,@nLin)
+            FmtLin({""},aLay[23],,,@nLin)
+            FmtLin({""},aLay[24],,,@nLin)
+            FmtLin({""},aLay[25],,,@nLin)
+         Endif                                         
+         
+	      (cArqNotas)->(Dbgotop()) 	   
+		   
+      	While (!(cArqNotas)->(Eof()))
+
+    	   	RecLock(cArqNotas,.F.)
+    	   	dbDelete()
+				MsUnlOCK()
+				(cArqNotas)->(Dbskip())			    
+			end
+		         
+	            
+         FmtLin(,aLay[26],,,@nLin)
+         nLin := 0
+         SetPrc(1,1) // Impede salto de pagina automatica qdo impresso em matricial
+         Exit
+      End
+   End
+
+   dbSelectArea(cArqLmpE)
+   dbCloseArea()
+   Ferase(cArqLmpE+".DBF")
+   Ferase(cArqLmpE+OrdBagExt())
+	
+   dbSelectArea(cArqLmpS)
+   dbCloseArea()
+   Ferase(cArqLmpS+".DBF")
+   Ferase(cArqLmpS+OrdBagExt())
+   
+   dbSelectArea(cArqNotas)
+   dbCloseArea()
+   Ferase(cArqNotas+".DBF")
+   Ferase(cArqNotas+OrdBagExt())
+	
+   #IFDEF TOP
+      dbSelectArea(cAliasSD2)
+	  dbCloseArea()
+	  dbSelectArea(cAliasSD1)
+	  dbCloseArea()
+   #ENDIF    
+
+ElseIf mv_par05 == 2   
+
+   cMesAno := STRZERO(MONTH(MV_PAR01),2)+'/'+STRZERO(YEAR(MV_PAR01),4)            
+
+   aLay :=Array(55)
+   LayOutLmp(@aLay,3)
+   FmtLin(,aLay[01],,,@nLin)
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[01],,,@nLin) // Repete para posicionar linha
+   FmtLin({cMesAno,MV_PAR13},aLay[02],,,@nLin)
+   FmtLin(,aLay[03],,,@nLin)
+   FmtLin({Transform(MV_PAR14,"@E 9,999,999"),Transform(MV_PAR15,"@E 9,999,999")},aLay[04],,,@nLin)
+   FmtLin(,aLay[05],,,@nLin)
+   FmtLin(,aLay[06],,,@nLin)
+   FmtLin(,aLay[07],,,@nLin)
+   FmtLin(,aLay[08],,,@nLin)
+   FmtLin(,aLay[09],,,@nLin)
+   FmtLin(,aLay[10],,,@nLin)
+   FmtLin(,aLay[11],,,@nLin)
+   FmtLin(,aLay[12],,,@nLin)
+   FmtLin(,aLay[13],,,@nLin)
+//   FmtLin(,aLay[14],,,@nLin) 
+//   FmtLin(,aLay[15],,,@nLin)
+//   FmtLin(,aLay[16],,,@nLin)
+//   FmtLin(,aLay[17],,,@nLin)
+//   FmtLin(,aLay[18],,,@nLin)
+//   FmtLin(,aLay[19],,,@nLin)
+//   FmtLin(,aLay[20],,,@nLin)
+   FmtLin({SM0->M0_NOMECOM},aLay[21],,,@nLin)
+   FmtLin(,aLay[22],,,@nLin)
+   FmtLin({SM0->M0_ENDENT},aLay[23],,,@nLin)
+   FmtLin(,aLay[24],,,@nLin)
+   FmtLin({SM0->M0_CIDENT,SM0->M0_ESTENT},aLay[25],,,@nLin)
+   FmtLin(,aLay[26],,,@nLin)
+   FmtLin({Transform(SM0->M0_CGC,"@R 99.999.999/9999-99")},aLay[27],,,@nLin)
+   FmtLin(,aLay[28],,,@nLin)
+   FmtLin({Transform(SM0->M0_INSC,"@R 999.999.999.999")},aLay[29],,,@nLin)
+   FmtLin(,aLay[30],,,@nLin)
+   FmtLin({mv_par10},aLay[31],,,@nLin)
+   FmtLin(,aLay[32],,,@nLin)
+   FmtLin({Transform(Val(mv_par07),"@E 999,999,999,999")},aLay[33],,,@nLin)
+   FmtLin(,aLay[34],,,@nLin)
+   FmtLin(,aLay[35],,,@nLin)
+   FmtLin(,aLay[36],,,@nLin)
+//   FmtLin(,aLay[37],,,@nLin)
+   FmtLin({mv_par08},aLay[38],,,@nLin)
+   FmtLin(,aLay[39],,,@nLin)
+   FmtLin(,aLay[40],,,@nLin)
+   FmtLin(,aLay[41],,,@nLin)
+   FmtLin(,aLay[42],,,@nLin)
+   FmtLin(,aLay[43],,,@nLin)
+   FmtLin(,aLay[44],,,@nLin)
+   FmtLin(,aLay[45],,,@nLin)
+   FmtLin(,aLay[46],,,@nLin)
+   FmtLin(,aLay[47],,,@nLin)
+   FmtLin(,aLay[48],,,@nLin)
+   FmtLin(,aLay[49],,,@nLin)
+   FmtLin(,aLay[50],,,@nLin)
+   FmtLin(,aLay[51],,,@nLin)
+   FmtLin(,aLay[52],,,@nLin)
+   FmtLin(,aLay[53],,,@nLin)
+   FmtLin(,aLay[54],,,@nLin)
+   FmtLin(,aLay[55],,,@nLin)
+   SetPrc(1,1) // Impede salto de pagina automatica qdo impresso em matricial
+ElseIf mv_par05 == 3
+   aLay :=Array(55)
+   LayOutLmp(@aLay,4)
+   FmtLin(,aLay[01],,,@nLin)
+   FmtLin(,aLay[02],,,@nLin)
+   FmtLin(,aLay[03],,,@nLin)
+   FmtLin(,aLay[04],,,@nLin)
+   FmtLin(,aLay[05],,,@nLin)
+   FmtLin(,aLay[06],,,@nLin)
+   FmtLin(,aLay[07],,,@nLin)
+   FmtLin(,aLay[08],,,@nLin)
+   FmtLin(,aLay[09],,,@nLin)
+   FmtLin(,aLay[10],,,@nLin)
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin(,aLay[10],,,@nLin) // Repete para posicionar linha
+   FmtLin({Transform((MV_PAR15-MV_PAR14+1),"@E 9,999,999"),Transform(MV_PAR14,"@E 9,999,999"),Transform(MV_PAR15,"@E 9,999,999")},aLay[11],,,@nLin)
+   FmtLin(,aLay[12],,,@nLin)
+   FmtLin(,aLay[13],,,@nLin)
+   FmtLin(,aLay[14],,,@nLin)
+   FmtLin(,aLay[15],,,@nLin)
+   FmtLin(,aLay[16],,,@nLin)
+   FmtLin(,aLay[17],,,@nLin)
+   FmtLin(,aLay[18],,,@nLin)
+//   FmtLin(,aLay[19],,,@nLin)
+//   FmtLin(,aLay[20],,,@nLin)
+   FmtLin({SM0->M0_NOMECOM},aLay[21],,,@nLin)
+   FmtLin(,aLay[22],,,@nLin)
+   FmtLin({SM0->M0_ENDENT},aLay[23],,,@nLin)
+   FmtLin(,aLay[24],,,@nLin)
+   FmtLin({SM0->M0_CIDENT,SM0->M0_ESTENT},aLay[25],,,@nLin)
+   FmtLin(,aLay[26],,,@nLin)
+   FmtLin(,aLay[27],,,@nLin)
+   FmtLin(,aLay[28],,,@nLin)
+//   FmtLin(,aLay[29],,,@nLin)
+//   FmtLin(,aLay[30],,,@nLin)
+//   FmtLin(,aLay[31],,,@nLin)
+//   FmtLin(,aLay[32],,,@nLin)
+//   FmtLin(,aLay[33],,,@nLin)
+//   FmtLin(,aLay[34],,,@nLin)
+//   FmtLin(,aLay[35],,,@nLin)
+//   FmtLin(,aLay[36],,,@nLin)
+//   FmtLin(,aLay[37],,,@nLin)
+//   FmtLin(,aLay[38],,,@nLin)
+//   FmtLin(,aLay[39],,,@nLin)
+//   FmtLin(,aLay[40],,,@nLin)
+//   FmtLin(,aLay[41],,,@nLin)
+//   FmtLin(,aLay[42],,,@nLin)
+//   FmtLin(,aLay[43],,,@nLin)
+//   FmtLin(,aLay[44],,,@nLin)
+//   FmtLin(,aLay[45],,,@nLin)
+//   FmtLin(,aLay[46],,,@nLin)
+   FmtLin({mv_par09},aLay[47],,,@nLin)
+   FmtLin(,aLay[48],,,@nLin)
+   FmtLin(,aLay[49],,,@nLin)
+   FmtLin(,aLay[50],,,@nLin)
+   FmtLin(,aLay[51],,,@nLin)
+   FmtLin(,aLay[52],,,@nLin)
+   FmtLin(,aLay[53],,,@nLin)
+   FmtLin(,aLay[54],,,@nLin)
+   FmtLin(,aLay[55],,,@nLin)
+   SetPrc(1,1) // Impede salto de pagina automatica qdo impresso em matricial
+Endif
+
+
+Return
+
+
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒø±±
+±±≥FunáÖo    ≥ LayOutLMP() ≥ Autor ≥ Edstron E. Correia ≥ Data ≥29/04/02≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÖo ≥ Lay-Out do Livro de Movimentacao de Produtos             ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥ Uso      ≥ MATX907                                                  ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+/*/
+
+Static Function LayOutLmp(aLay,nTipo)
+If nTipo==1
+   aLay[01] :=" "
+   aLay[02] :=" "
+   aLay[03] :=" " // acrescentada linha
+   aLay[04] :=" " // acrescentada linha
+   aLay[05] :=" " // acrescentada linha
+   aLay[06] :="                     #############################################                               ##/##/##            ##### " // 01 02
+   aLay[07] :=" "
+   aLay[08] :="                                                                                                                     ############  " // 03
+   aLay[09] :=" "
+   aLay[10] :=" "
+   aLay[11] :=" "
+   aLay[12] :="   ##########       #####        ##########     #####################################################                ##############  " // detalhe
+   aLay[13] :=" "
+   aLay[14] :="                                                                                                                     ##############  " // 05
+   aLay[15] :=" "
+   aLay[16] :=" "
+   aLay[17] :=" "
+   aLay[18] :="                                                                                                                     ##############  " // 06.1
+   aLay[19] :=" "
+   aLay[20] :="                                                                                                                     ##############  " // 06.2
+   aLay[21] :=" "
+   aLay[22] :="                                                                                                                     ##############  " // 06.3
+   aLay[23] :=" "
+   aLay[24] :="                                                                                                                     ##############  " // 06.4
+   aLay[25] :=" "
+   aLay[26] :="                                                                                                                     ##############  " // 06.5
+   aLay[27] :=" "
+   aLay[28] :="                                                                                                                     ##############  " // 06.6
+   aLay[29] :=" "
+ElseIf nTipo==2
+   aLay[01] :=" "
+   aLay[02] :=" "
+   aLay[03] :=" "
+   aLay[04] :="                                                                                                                     ##### " // 07   
+   aLay[05] :=" "
+   aLay[06] :=" "
+   aLay[07] :="   ##########       #####        ##########     #####################################################                ##############  " // Detalhe
+   aLay[08] :=" "
+   aLay[09] :="                                                                                                                     ##############  " // 08
+   aLay[10] :=" "
+   aLay[11] :="                                                                                                                     ##############  " // 09
+   aLay[12] :=" "
+   aLay[13] :="                                                                                                                     ##############  " // 10
+   aLay[14] :=" "
+   aLay[15] :=" "
+   aLay[16] :=" "
+   aLay[17] :="  ##########################################################################                                  " // 11
+   aLay[18] :="  ##########################################################################                                  " // 11
+   aLay[19] :="  ##########################################################################                                  " // 11
+   aLay[20] :="  ##########################################################################                                  " // 11
+   aLay[21] :="  ##########################################################################                                  " // 11
+   aLay[22] :="  ##########################################################################                                  " // 11
+   aLay[23] :="  ##########################################################################                                  " // 11
+   aLay[24] :="  ##########################################################################                                  " // 11
+   aLay[25] :="  ##########################################################################                                  " // 11
+   aLay[26] :=" "
+ElseIf nTipo==3
+   aLay[01] :="                                                                                                              "
+   aLay[02] :="                                      #######                                                      ############### "
+   aLay[03] :="                                                                                                              "
+   aLay[04] :="                                 ####             ####                                                        "
+   aLay[05] :="                                                                                                              "
+   aLay[06] :="                                                                                                              "
+   aLay[07] :="                                                                                                              "
+   aLay[08] :="                                                                                                              "
+   aLay[09] :="                                                                                                              "
+   aLay[10] :="                                                                                                              "
+   aLay[11] :="                                                                                                              "
+   aLay[12] :="                                                                                                              "
+   aLay[13] :="                                                                                                              "
+   aLay[14] :="                                                                                                              "
+   aLay[15] :="                                                                                                              "
+   aLay[16] :="                                                                                                              "
+   aLay[17] :="                                                                                                              "
+   aLay[18] :="                                                                                                              "
+   aLay[19] :="                                                                                                              "
+   aLay[20] :="                                                                                                              "
+   aLay[21] :="                               ########################################                                       "
+   aLay[22] :="                                                                                                              "
+   aLay[23] :="                               ##############################                                                 "
+   aLay[24] :="                                                                                                              "
+   aLay[25] :="                               ####################                                            ##             "
+   aLay[26] :="                                                                                                              "
+   aLay[27] :="                                                                 ####################                         "
+   aLay[28] :="                                                                                                              "
+   aLay[29] :="                                  ###############                                                             "
+   aLay[30] :="                                                                                                              "
+   aLay[31] :="                                  ##################                                                          "
+   aLay[32] :="                                                                                                              "
+   aLay[33] :="                                                      ###############                                         "
+   aLay[34] :="                                                                                                              "
+   aLay[35] :="                                                                                                              "
+   aLay[36] :="                                                                                                              "
+   aLay[37] :="                                                                                                              "
+   aLay[38] :="                                                            ##/##/##                                          "
+   aLay[39] :="                                                                                                              "
+   aLay[40] :="                                                                                                              "
+   aLay[41] :="                                                                                                              "
+   aLay[42] :="                                                             												              "
+   aLay[43] :="                                                                                                              "
+   aLay[44] :="                                                                                                              "
+   aLay[45] :="                                                                                                              "
+   aLay[46] :="                                                                                                              "
+   aLay[47] :="                                                      																		  "
+   aLay[48] :="                                                                                                              "
+   aLay[49] :="                                                                                                              "
+   aLay[50] :="                                                                                                              "
+   aLay[51] :="                                                                                                              "
+   aLay[52] :="                                                                                                              "
+   aLay[53] :="                                                                                                              "
+   aLay[54] :="                                                                                                              "
+   aLay[55] :="                                                                                                              "
+ElseIf nTipo==4
+   aLay[01] :="                                                                                                              "
+   aLay[02] :="                                                                                                              "
+   aLay[03] :="                                                                                                              "
+   aLay[04] :="                                                                                                              "
+   aLay[05] :="                                                                                                              "
+   aLay[06] :="                                                                                                              "
+   aLay[07] :="                                                                                                              "
+   aLay[08] :="                                                                                                              "
+   aLay[09] :="                                                                                                              "
+   aLay[10] :="                                                                                                              "
+   aLay[11] :="                               ####                                               ####             ####       "
+   aLay[12] :="                                                                                                              "
+   aLay[13] :="                                                                                                              "
+   aLay[14] :="                                                                                                              "
+   aLay[15] :="                                                                                                              "
+   aLay[16] :="                                                                                                              "
+   aLay[17] :="                                                                                                              "
+   aLay[18] :="                                                                                                              "
+   aLay[19] :="                                                                                                              "
+   aLay[20] :="                                                                                                              "
+   aLay[21] :="                               ########################################                                       "
+   aLay[22] :="                                                                                                              "
+   aLay[23] :="                               ##############################                                                 "
+   aLay[24] :="                                                                                                              "
+   aLay[25] :="                               ####################                                            ##             "
+   aLay[26] :="                                                                                                              "
+   aLay[27] :="                                                                                                              "
+   aLay[28] :="                                                                                                              "
+   aLay[29] :="                                                                                                              "
+   aLay[30] :="                                                                                                              "
+   aLay[31] :="                                                                                                              "
+   aLay[32] :="                                                                                                              "
+   aLay[33] :="                                                                                                              "
+   aLay[34] :="                                                                                                              "
+   aLay[35] :="                                                                                                              "
+   aLay[36] :="                                                                                                              "
+   aLay[37] :="                                                                                                              "
+   aLay[38] :="                                                                                                              "
+   aLay[39] :="                                                                                                              "
+   aLay[40] :="                                                                                                              "
+   aLay[41] :="                                                                                                              "
+   aLay[42] :="                                                                                                              "
+   aLay[43] :="                                                                                                              "
+   aLay[44] :="                                                                                                              "
+   aLay[45] :="                                                                                                              "
+   aLay[46] :="                                                                                                              "
+   aLay[47] :="                              Jaragua do Sul (SC),          ##/##/##                                          "
+   aLay[48] :="                                                                                                              "
+   aLay[49] :="                                                                                                              "
+   aLay[50] :="                                                                                                              "
+   aLay[51] :="                                                                                                              "
+   aLay[52] :="                                                                                                              "
+   aLay[53] :="			                                            "
+   aLay[54] :="			                                            "
+   aLay[55] :="                                                                                                              "
+Endif
+Return(Nil)
+
+/*/
+‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹‹
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±⁄ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¬ƒƒƒƒƒƒ¬ƒƒƒƒƒƒƒƒƒƒø±±
+±±≥Funcao    ≥AjustaSX1 ≥ Autor ≥Andreia dos Santos     ≥ Data ≥12/02/2001≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥DescriáÖo ≥Acerta o arquivo de perguntas                               ≥±±
+±±√ƒƒƒƒƒƒƒƒƒƒ≈ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒ¥±±
+±±≥Retorno   ≥Nenhum                                                      ≥±±
+±±¿ƒƒƒƒƒƒƒƒƒƒ¡ƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒƒŸ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂﬂ
+/*/
+
+STATIC FUNCTION AjustaSx1()
+Local cAlias	:=	Alias()
+
+PutSx1("MTX907","01",STR0001,STR0001,STR0001,"mv_ch1","D",08,0,0,"G","","","","","mv_par01","","","","","","","","","","","","","","")
+PutSx1("MTX907","02",STR0002,STR0002,STR0002,"mv_ch2","D",08,0,0,"G","","","","","mv_par02","","","","","","","","","","","","","","")
+PutSx1("MTX907","03",STR0003,STR0003,STR0003,"mv_ch3","C",04,0,0,"G","","","","","mv_par03","","","","","","","","","","","","","","")
+PutSx1("MTX907","04",STR0004,STR0004,STR0004,"mv_ch4","C",04,0,0,"G","","","","","mv_par04","","","","","","","","","","","","","","")
+PutSx1("MTX907","05",STR0005,STR0005,STR0005,"mv_ch5","N",01,0,1,"C","","","","","mv_par05",STR0006,STR0006,STR0006,"",STR0007,STR0007,STR0007,STR0008,STR0008,STR0008,"","","","")
+PutSx1("MTX907","06",STR0009,STR0009,STR0009,"mv_ch6","C",10,0,0,"G","","","","","mv_par06","","","","","","","","","","","","","","")
+PutSx1("MTX907","07",STR0010,STR0010,STR0010,"mv_ch7","C",15,0,0,"G","","","","","mv_par07","","","","","","","","","","","","","","")
+PutSx1("MTX907","08",STR0011,STR0011,STR0011,"mv_ch8","D",08,0,0,"G","","","","","mv_par08","","","","","","","","","","","","","","")
+PutSx1("MTX907","09",STR0012,STR0012,STR0012,"mv_ch9","D",08,0,0,"G","","","","","mv_par09","","","","","","","","","","","","","","")
+PutSx1("MTX907","10",STR0013,STR0013,STR0013,"mv_cha","C",18,0,0,"G","","","","","mv_par10","","","","","","","","","","","","","","")
+PutSx1("MTX907","13","Cod Velho ?","Cod Velho ?","Cod Velho ?","mv_chd","C",15,0,0,"G","","","","","mv_par13","","","","","","","","","","","","","","")
+PutSx1("MTX907","14","Numerado de  ?","Numerado de  ?","Numerado de  ?","mv_che","N",07,0,0,"G","","","","","mv_par14","","","","","","","","","","","","","","")
+PutSx1("MTX907","15","Numerado ate ?","Numerado ate ?","Numerado ate ?","mv_chf","N",07,0,0,"G","","","","","mv_par15","","","","","","","","","","","","","","")
+PutSx1("MTX907","16","N˙mero Folha ?","N˙mero Folha ?","N˙mero Folha ?","mv_ch16","N",05,0,1,"G","","","","","mv_par16","","","","","","","","","","","","","","")
+PutSx1("MTX907","17","Cod. Diesel ?","Cod. Diesel ?","Cod. Diesel ?","mv_chg","C",15,0,0,"G","","","","","mv_par17","","","","","","","","","","","","","","")
+
+dbSelectArea(cAlias)
+Return

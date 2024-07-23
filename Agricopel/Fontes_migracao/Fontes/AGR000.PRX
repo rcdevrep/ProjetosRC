@@ -1,0 +1,88 @@
+/*SIGAVILLE  - CLIENTE : AGRICOPEL / POSTO MIME
+-------------------------------------------------------------------------------
+		    (DOCUMENTAÇÃO DOS PROGRAMAS ESPECIFICOS)
+-------------------------------------------------------------------------------
+PROGRAMA  DESCRIÇÃO                                                     MODULO
+-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
+MT010INC  Ponto de entrada após a inclusão do produto utilizado para    SIGAFAT
+		    replicar o produto cadastrado para outras filiais.                  
+-------------------------------------------------------------------------------
+MT010ALT  Ponto de entrada após a alteração do produto utilizado para   SIGAFAT
+			replicar o produto cadastrado para outras filiais.                      
+-------------------------------------------------------------------------------
+MATA020 Ponto de entrada com a função de possibilitar a replica dos         SIGAFAT
+			fornecedores para outras filiais.                                                       
+-------------------------------------------------------------------------------
+MATA030 Substituido pelo MA030TOK.                                                                              SIGAFAT
+-------------------------------------------------------------------------------
+VALINSC Programa validador da inscricao estadual - Clientes             SIGAFAT
+-------------------------------------------------------------------------------
+SF1100I TELA DE COMPLEMENTO PARA NF DE ENTRADA
+-------------------------------------------------------------------------------
+MA030TOK        Ponto de entrada com a função de possibilitar a replica dos     SIGAFAT
+			clientes para outras filiais.                                                           SIGAFAT
+-------------------------------------------------------------------------------
+MSD2460  Ponto de entrada com a função de gerar as movimentações de             SIGAFAT
+			produtos resultantes.                                                                           SIGAFAT
+-------------------------------------------------------------------------------
+MSD2520  Ponto de entrada com a função de gerar as movimentações de             SIGAFAT
+			produtos resultantes.                                                                           SIGAFAT
+-------------------------------------------------------------------------------
+SF2460I  Ponto de entrada para calcular o ICMS SUBSTITUTO, e gravar no  SIGAFAT
+		 cadastro de itens nota fiscal.
+
+
+AGR001    Impressao de duplicatas                                               SIGAFAT
+-------------------------------------------------------------------------------
+AGR002    Rdmake chamado pelo pontos de entrada MT010INC e MT010ALT         SIGAFAT
+		    Com a função de possibilitar a replica dos produtos para      
+		    Outras filiais.                                                                                         
+-------------------------------------------------------------------------------
+AGR003  Gera arquivo texto para emissao de boleto                        
+-------------------------------------------------------------------------------
+AGR005  Impressao Nota Fiscal Saida / Entrada. (Agricopel-Filial II)
+-------------------------------------------------------------------------------
+AGR007  Impressao Nota Fiscal Saida / Entrada. (Mime)
+-------------------------------------------------------------------------------
+AGR008  Relatorio de Tabela de Precos (Sr. Paulo)
+-------------------------------------------------------------------------------
+AGR009  Relatorio de Clientes (Srta. Alessandra).
+-------------------------------------------------------------------------------
+AGR010  Impressao Nota Fiscal Saida / Entrada. (Agricopel-Matriz)
+-------------------------------------------------------------------------------
+AGR011  Relacao de Clientes que nao compraram em um periodo (Sr. Paulo)
+-------------------------------------------------------------------------------
+AGR012  Prestacao Contas Vendas do Dia  (Sr. Lauro)
+-------------------------------------------------------------------------------
+AGR014  Resumo Vendas por Filial (Sr. Paulo)             
+-------------------------------------------------------------------------------
+AGR015  Programa utilizada no gatilho U5_CLIENTE tela Atendimento CALLCENTER.
+-------------------------------------------------------------------------------
+AGR017  Impressao Nota Fiscal Saida / Entrada. (Agricopel-Pien)   
+-------------------------------------------------------------------------------
+AGR019  Relatorio Previsao de Comissao Sr. Adelar                 
+-------------------------------------------------------------------------------
+AGR020  Programa para Recodificacao Cadastro de Produtos
+-------------------------------------------------------------------------------
+AGR021  ???????????
+-------------------------------------------------------------------------------
+AGR022  Programa para Depuracao do SC9.
+-------------------------------------------------------------------------------
+AGR214  Relatorio de Regra de Descontos (Adelar)
+-------------------------------------------------------------------------------
+AGR244  Relatorio de Faturamento X Cliente  (Adelar)
+        Neste Relatorio foi incluido os parametros de vendedor inicial / final
+        e quebra pagina por vendedor.
+-------------------------------------------------------------------------------
+AGR245  Programa para manutencao de Romaneio.
+AGR246  Programa para impressao do Romaneio.
+AGR247  Programa para impressao do conhecimento de frete.
+-------------------------------------------------------------------------------
+AGR248  Programa chamado para filtrar as condicoes de pagamento do call center.
+-------------------------------------------------------------------------------
+TMKCBPRO Ponto de entrada para mostrar botao com Dados Adicionais do Cliente
+		   no Call Center.  Valdecir.
+-------------------------------------------------------------------------------		   
+
+*/

@@ -1,0 +1,3722 @@
+#INCLUDE "FIVEWIN.CH"
+#INCLUDE "MATA940.CH"
+#DEFINE INCLUIR 1
+#DEFINE ALTERAR 2
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³MATA940   ³ Autor ³Nereu Humberto Jr      ³ Data ³12.12.2002³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Preparacao do meio-magnetico para o Sintegra - CONV 69/02   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Nenhum                                                      ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+User Function MATA940X()
+
+Local aAreaMt940:= GetArea()
+Local cTitulo	:=	STR0001 //"SINTEGRA"
+Local cText1	:=	STR0002 //"Esta rotina tem como objetivo gerar o arquivo pre-formatado no formato do "
+Local cText2	:=	STR0003 //"Convenio ICMS 69/02, conforme os parametros solicitados. "
+Local cText3    := ""
+Local cNorma    := ""
+Local cDest     := ""
+Local cDir      := ""
+Local cPerg		:= "MTA940"
+Local nOpcA		:= 0
+Local aSays		:= {}
+Local aButtons	:= {}
+Local oDlg
+Local nOpc	  	:=1	
+
+
+Private cFilA940  :=""
+Private _aTotal[100]
+Private aReturn :=	{STR0009, 1,STR0010, 2, 2, 1, "",1 } //"Zebrado"###"Administra‡„o"
+
+AjustaSx1()
+Pergunte(cPerg,.F.)
+
+While .T.
+
+	AADD(aSays,OemToAnsi( cText1 ) )
+	AADD(aSays,OemToAnsi( cText2 ) )
+	AADD(aButtons, {17,.T.,{|| A940Filtro(nOpc,@cFilA940,"SF3") } } )
+	AADD(aButtons, { 1,.T.,{|o| nOpca:= 1,o:oWnd:End()}} )
+	AADD(aButtons, { 2,.T.,{|o| o:oWnd:End() }} )
+	AADD(aButtons, { 5,.T.,{|| Pergunte(cPerg,.T. ) } } )
+	FormBatch( cTitulo, aSays, aButtons )
+       
+	Do Case
+	   Case nOpca ==1
+  	 	    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Preparacao do inicio de processamento do arquivo pre-formatado          ³
+		  	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			cNorma := AllTrim(MV_PAR03)+".INI"
+			cDest  := AllTrim(MV_PAR04)
+			cDir   := Alltrim(MV_PAR13)
+
+			Processa({||ProcNorma(cNorma,cDest,cDir)})
+
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Reabre os Arquivos do Modulo desprezando os abertos pela Normativa      ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			dbCloseAll()
+			OpenFile(SubStr(cNumEmp,1,2))
+	   Case nOpca==3
+			Pergunte(cPerg,.t.)
+			Loop
+	EndCase
+	Exit
+EndDo
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Restaura area                                                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+RestArea(aAreaMt940)
+
+Return(.T.)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³SINTEGRA  ³ Autor ³ Nereu Humberto Jr     ³ Data ³12.12.2002³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Processamento dos documentos fiscais - CONV 69/02           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Nenhum                                                      ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function Sintegra(dDtIni,dDtFim,cNrLivro,cEstDest,nListEst,lReg88,cArqMag,cFilA940)
+
+Local aAreaSint := GetArea()
+Local lListEst  := IIF(nListEst==1,.T.,.F.)
+Local lQuery    := .F.
+Local lValido   := .T.
+Local lFirst    := .T.
+Local lCupom    := .T.	
+Local nItem     := 0
+Local nX        := 0
+Local nI        := 0
+Local nAliqICM  := 0
+Local nPosAliq  := 0
+Local nAliqIte  := 0
+Local nBRetido  := 0
+Local nRedBase  := 0
+Local cSitTrib  := ""
+Local cSeek     := ""
+Local cCNPJ     := ""
+Local cIE       := ""
+Local cAliasSD1 := "SD1"
+Local cAliasSD2 := "SD2"
+Local cAliasSF1 := "SF1"
+Local cAliasSF2 := "SF2"
+Local cAliasSF3 := "SF3"
+Local cAliasSF6 := "SF6"
+Local cAliasSFI := "SFI"
+Local cChave    := ""
+Local cChaveAux := ""
+Local cChaveAux2:= ""
+Local cCfoAux	:= ""
+Local cQuery    := ""
+Local cNcm      := ""
+Local cProd     := ""
+Local cArq050   := ""
+Local cArq051   := ""
+Local cArq053   := ""
+Local cArq054   := ""
+Local cArq060M  := ""
+Local cArq060A  := ""
+Local cArq060D  := ""
+Local cArq060I  := ""
+Local cArq060R  := ""
+Local cArq061   := ""
+Local cArq061I  := ""	//Resumo Mensal por Item
+Local cArq070   := ""
+Local cArq071   := ""
+Local cArq074   := ""
+Local cArq075   := ""
+Local cArq076   := ""
+Local cArq077   := ""
+Local cArq056   := ""
+Local cArq088   := ""
+Local cCpVlPisEn:= ""
+Local cCpVlPisSa:= ""
+Local aArray71  := ""
+Local nValPis   := 0
+Local nPsVlPisEn:= 0
+Local nPsVlPisSa:= 0
+Local aArrayF3  := {}
+Local aStru050  := {}
+Local aStru051  := {}
+Local aStru053  := {}
+Local aStru054  := {}
+Local aStru055  := {}
+Local aStru060M := {}
+Local aStru060A := {}
+Local aStru060D := {}
+Local aStru060I := {}
+Local aStru060R := {}
+Local aStru061  := {}
+Local aStru061I := {}	//Resumo Mensal por Item
+Local aStru070  := {}
+Local aStru071  := {}
+Local aStru074  := {}
+Local aStru075  := {}
+Local aStru076  := {}
+Local aStru077  := {}
+Local aStru088  := {}
+Local aStru090  := {}
+Local aStruSF3  := {}
+Local aStru056  := {}
+Local cSintegra := GetNewPar("MV_SINTEG","")
+Local cCfoSint  := ""   
+Local lMtaTIP71 := ExistBlock("MTATIP71")
+Local lMt940fil := ExistBlock("MT940FIL")
+Local cD1_Di    := GetNewPar("MV_DI","") 
+Local cD1_DtDi  := GetNewPar("MV_DTDI","")
+Local cDi 		:= ""
+Local dDtdi     := ""
+Local cRazSoc	:= ""
+Local lSef		:= .F.
+Local lSintegMG	:= .F.
+Local nR50Obs	:= 0
+Local lConv76	:= .F.	//Aplica Convenio no.76
+Local lReg61I	:= .F.	//Gera Registro 61I (Convenio 76)
+Local lNfProd	:= .F.	//Gera NF Produtor - Mod. 4 (Convenio 76)
+Local nVlaTot	:= 0
+Local lMta56S	:= ExistBlock("MTA56S")
+Local lMta56E	:= ExistBlock("MTA56E")
+Local cCfopPR	:= GetNewPar("MV_CFOPPR","")
+
+Default lReg88  := .F.
+Default cArqMag	:= ""
+Default cFilA940:= ""
+
+Private aRetCfp := {}
+
+Private cTranspCGC:= ""  // Alterado de variavel local para Private para alimentar via MTATIP71 Deco/Vilmar Microsiga 07/10/2005
+Private cTranspIns:= ""  // Alterado de variavel local para Private para alimentar via MTATIP71 Deco/Vilmar Microsiga 07/10/2005
+Private cTranspEst:=	""  // Alterado de variavel local para Private para alimentar via MTATIP71 Deco/Vilmar Microsiga 07/10/2005
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica se foi passado o parametro cArqMag (Arquivo Magnetico)         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If !Empty(cArqMag)
+	Do Case
+		Case Upper(Alltrim(cArqMag)) == "SEF"		//SEF de Pernambuco
+			lSef		:= .T.
+			aRetCfp		:= RetCfp()
+			_aTotal[02]	:= aRetCfp[1][1]
+		Case Upper(Alltrim(cArqMag)) == "SINTEGMG"	//Sintegra de Minas Gerais - Registro 88A
+			If SF3->(FieldPos("F3_NFEMP")) > 0
+				lSintegMG := .T.
+			Endif
+		Case Upper(Alltrim(cArqMag)) == "CONV76"	//Novo Convenio 76/03
+			lConv76	:= IIf(Year(mv_par01)>2003.And.Year(mv_par02)>2003,.T.,.F.)
+			lReg61I	:= IIf(mv_par17==2.And.lConv76,.T.,.F.)	//Gera Registro 61I (Convenio 76)
+			lNfProd	:= IIf(mv_par18==2.And.lConv76,.T.,.F.)	//Gera NF Produtor - Mod. 4 (Convenio 76)
+	EndCase
+Endif
+
+If Empty(cSintegra)
+    cCfoSint := "173/273/174/274/191/291/391/192/292/197/297/397/198/298/591/691/592/692/595/695"
+    cCfoSint += "1406/2406/1407/2407/1551/1556/2551/2556/3551/3556/1552/1557/2552/2557/5551/6551/7551"
+	cCfoSint += "5552/5557/6552/6557/5553/5556/6553/6556/7553/7556"   
+Else
+    cCfoSint :=cSintegra
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Criacao os arquivos de trabalho                                         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 050 - Notas Fiscais Modelo 1/1A (ICMS)                         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru050,{"A50_CNPJ"	,"C",014,0})
+AADD(aStru050,{"A50_IE"		,"C",014,0})
+AADD(aStru050,{"A50_EMISS"	,"D",008,0})
+AADD(aStru050,{"A50_UF"		,"C",002,0})
+AADD(aStru050,{"A50_MODELO"	,"C",002,0})
+AADD(aStru050,{"A50_SERIE"	,"C",003,0})
+AADD(aStru050,{"A50_NFISC"	,"C",TAMSX3("F3_NFISCAL")[1],0})
+AADD(aStru050,{"A50_CFOP"	,"C",004,0})
+AADD(aStru050,{"A50_EMIT"	,"C",001,0})
+AADD(aStru050,{"A50_VALTOT"	,"N",013,2})
+AADD(aStru050,{"A50_BSICM"	,"N",013,2})
+AADD(aStru050,{"A50_VALICM"	,"N",013,2})
+AADD(aStru050,{"A50_ISENTO"	,"N",013,2})
+AADD(aStru050,{"A50_OUTRAS"	,"N",013,2})
+AADD(aStru050,{"A50_ALQICM"	,"N",005,2})
+AADD(aStru050,{"A50_SITUAC"	,"C",001,0})
+AADD(aStru050,{"A50_DESPES"	,"N",014,2})
+AADD(aStru050,{"A50_CLIENT","C",006,0})
+AADD(aStru050,{"A50_LOJA"	,"C",002,0})
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Campos referentes a SEF-PE                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru050,{"A50_CODIGO"	,"C",006,0})	//Codigo Cliente e/ou Fornecedor
+AADD(aStru050,{"A50_NOME"	,"C",035,0})	//Nome/Denominacao/Razao Social
+AADD(aStru050,{"A50_DTOPER"	,"D",008,0})	//Data da Operacao
+AADD(aStru050,{"A50_TOTNF"	,"N",014,2})	//Vlr. Total da NF 
+AADD(aStru050,{"A50_TBSICM"	,"N",014,2})	//Base de Calc. do ICMS Total
+AADD(aStru050,{"A50_TVALIC"	,"N",014,2})	//Montante Total do Imposto
+AADD(aStru050,{"A50_TISENT"	,"N",014,2})	//Oper./Prest. Isentas ou Nao Trib. - Total
+AADD(aStru050,{"A50_TOUTRA"	,"N",014,2})	//Valor Total que nao confira deb. ou cred. do ICMS
+AADD(aStru050,{"A50_OBSERV"	,"C",070,0})	//Observacao
+AADD(aStru050,{"A50_OBS"	,"N",005,0})	//Sequencial
+
+cArq050	:=	CriaTrab(aStru050)
+dbUseArea(.T.,__LocalDriver,cArq050,"R50")
+IndRegua("R50",cArq050,"DTOS(A50_EMISS)") 
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 051 - Nota Fiscal ( IPI )                                      ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru051,{"A51_CNPJ"	,"C",014,0})
+AADD(aStru051,{"A51_IE"		,"C",014,0})
+AADD(aStru051,{"A51_EMISS"	,"D",008,0})
+AADD(aStru051,{"A51_UF"		,"C",002,0})
+AADD(aStru051,{"A51_SERIE"	,"C",003,0})
+AADD(aStru051,{"A51_NFISC"	,"C",006,0})
+AADD(aStru051,{"A51_CFOP"	,"C",004,0})
+AADD(aStru051,{"A51_VALTOT"	,"N",014,2})
+AADD(aStru051,{"A51_VALIPI"	,"N",014,2})
+AADD(aStru051,{"A51_ISENTA"	,"N",014,2})
+AADD(aStru051,{"A51_OUTRAS"	,"N",014,2})
+AADD(aStru051,{"A51_SITUAC"	,"C",001,0})
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Campos referentes a SEF-PE                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru051,{"A51_BASIPI","N",014,2})	//Base de Calc. do IPI
+
+cArq051	:=	CriaTrab(aStru051)
+dbUseArea(.T.,__LocalDriver,cArq051,"R51")
+IndRegua("R51",cArq051,"Dtos(A51_EMISS)")
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 053 - Nota Fiscal Subst. Tributaria                            ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru053,{"A53_CNPJ"	,"C",014,0})
+AADD(aStru053,{"A53_IE"		,"C",014,0})
+AADD(aStru053,{"A53_EMISS"	,"D",008,0})
+AADD(aStru053,{"A53_UF"		,"C",002,0})
+AADD(aStru053,{"A53_MODELO"	,"C",002,0})
+AADD(aStru053,{"A53_SERIE"	,"C",003,0})
+AADD(aStru053,{"A53_NFISC"	,"C",006,0})
+AADD(aStru053,{"A53_CFOP"	,"C",004,0})
+AADD(aStru053,{"A53_EMIT"	,"C",001,0})
+AADD(aStru053,{"A53_BRICMS"	,"N",014,2})
+AADD(aStru053,{"A53_VALRET"	,"N",014,2})
+AADD(aStru053,{"A53_DESPES"	,"N",014,2})
+AADD(aStru053,{"A53_SITUAC"	,"C",001,0})
+
+cArq053	:=	CriaTrab(aStru053)
+dbUseArea(.T.,__LocalDriver,cArq053,"R53")
+IndRegua("R53",cArq053,"DTOS(A53_EMISS)")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 054 - Itens do documento fiscal                                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru054,{"A54_CNPJ"	,"C",014,0})
+AADD(aStru054,{"A54_MODELO"	,"C",002,0})
+AADD(aStru054,{"A54_SERIE"	,"C",003,0})
+AADD(aStru054,{"A54_NFISC"	,"C",006,0})
+AADD(aStru054,{"A54_CFOP"	,"C",004,0})
+AADD(aStru054,{"A54_CST"	,"C",003,0})
+AADD(aStru054,{"A54_NUMITE"	,"C",003,0})
+AADD(aStru054,{"A54_PRODUT"	,"C",014,0})
+AADD(aStru054,{"A54_QUANT"	,"N",014,3})
+AADD(aStru054,{"A54_VALPRO"	,"N",014,2})
+AADD(aStru054,{"A54_VALDES"	,"N",014,2})
+AADD(aStru054,{"A54_BSICM"	,"N",014,2})
+AADD(aStru054,{"A54_BRICMS"	,"N",014,2})
+AADD(aStru054,{"A54_VALIPI"	,"N",014,2})
+AADD(aStru054,{"A54_ALQICM"	,"N",005,2})
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Campos referentes a SEF-PE                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru054,{"A54_IE"		,"C",014,0})
+AADD(aStru054,{"A54_EMISS"	,"D",008,0})	//Dt. Emissao ou Recebimento
+AADD(aStru054,{"A54_UF"		,"C",002,0})
+AADD(aStru054,{"A54_APUR"	,"N",002,0})	//Cod. Apuracao PRODEPE/FUNCRESCE
+AADD(aStru054,{"A54_INDESP"	,"N",002,0})	//Indicar Especial
+//
+AADD(aStru054,{"A54_VALICM"	,"N",014,2})	//Indicar Especial
+AADD(aStru054,{"A54_ICMRET"	,"N",014,2})	//Indicar Especial
+
+cArq054	:=	CriaTrab(aStru054)
+dbUseArea(.T.,__LocalDriver,cArq054,"R54")
+IndRegua("R54",cArq054,"A54_CNPJ+A54_SERIE+A54_NFISC+A54_NUMITE")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Arquivo do Registro tipo 55 - Guia Nacional de Recolhimento de Tributos Estaduais³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru055,{"A55_CNPJ"	,"C",014,0})
+AADD(aStru055,{"A55_IE"		,"C",014,0})
+AADD(aStru055,{"A55_DATPAG"	,"D",008,0})
+AADD(aStru055,{"A55_UFSUBS"	,"C",002,0})
+AADD(aStru055,{"A55_UFFAV"	,"C",002,0})
+AADD(aStru055,{"A55_BANCO"	,"C",003,0})
+AADD(aStru055,{"A55_AGENC"	,"C",004,0})
+AADD(aStru055,{"A55_NUMERO"	,"C",020,0})
+AADD(aStru055,{"A55_VALOR"	,"N",014,2})
+AADD(aStru055,{"A55_VENCTO"	,"D",008,0})
+AADD(aStru055,{"A55_MESANO"	,"C",006,0})
+AADD(aStru055,{"A55_CONVEN"	,"C",030,0})
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Campos referentes a SEF-PE                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru055,{"X78_VLRDAE"	,"N",014,2})
+AADD(aStru055,{"X78_RECDAE"	,"C",004,0})
+AADD(aStru055,{"X78_PERFIS"	,"C",006,0})
+AADD(aStru055,{"X78_DTVECT"	,"D",008,0})
+
+cArq055	:=	CriaTrab(aStru055)
+dbUseArea(.T.,__LocalDriver,cArq055,"R55")
+IndRegua("R55",cArq055,"DTOS(A55_DATPAG)") 
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 56 (Operacoes com veiculos automotores novos) para ser alimentado através de um ponto de entrada.³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+aAdd (aStru056, {"A56_CNPJ",	"C",	014,	0})
+aAdd (aStru056, {"A56_MODELO",	"N",	002,	0})
+aAdd (aStru056, {"A56_SERIE",	"C",	003,	0})
+aAdd (aStru056, {"A56_NUMERO",	"C",	006,	0})
+aAdd (aStru056, {"A56_CFOP",	"C",	004,	0})
+aAdd (aStru056, {"A56_CST",		"N",	003,	0})
+aAdd (aStru056, {"A56_NRIT",	"N",	003,	0})
+aAdd (aStru056, {"A56_PROD",	"C",	014,	0})
+aAdd (aStru056, {"A56_OPER",	"N",	001,	0})
+aAdd (aStru056, {"A56_CNPJC",	"N",	014,	0})
+aAdd (aStru056, {"A56_ALQIPI",	"N",	005,	2})
+aAdd (aStru056, {"A56_CHASSI",	"C",	017,	0})
+//
+cArq056	:=	CriaTrab (aStru056)
+dbUseArea (.T.,__LocalDriver, cArq056, "R56")
+IndRegua ("R56", cArq056, "A56_CNPJ+A56_NUMERO+A56_SERIE+A56_CFOP+A56_PROD")
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 060 - ECF(Mestre do equipamento)                               ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru060M,{"M60_EMISS"	,"D",008,0})
+AADD(aStru060M,{"M60_NUMFAB","C",020,0})
+AADD(aStru060M,{"M60_PDV"	,"C",003,0})
+AADD(aStru060M,{"M60_MODELO","C",002,0})
+AADD(aStru060M,{"M60_NUMINI","C",006,0})
+AADD(aStru060M,{"M60_NUMFIM","C",006,0})
+AADD(aStru060M,{"M60_REDUCZ","C",006,0})
+AADD(aStru060M,{"M60_CRO"	,"N",003,0})
+AADD(aStru060M,{"M60_VENDA"	,"N",016,2})
+AADD(aStru060M,{"M60_GERAL"	,"N",016,2})
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Campos referentes a SEF-PE                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru060M,{"M60_GTINI"	,"N",014,2})	//Grande Total Inicial
+AADD(aStru060M,{"M60_VLIQ"	,"N",014,2})	//Venda Liquida
+AADD(aStru060M,{"M60_ICMSD"	,"N",014,2})	//ICMS Debitado
+AADD(aStru060M,{"M60_OBS"	,"N",005,0})	//Observacao-Sequencial
+
+cArq060M :=	CriaTrab(aStru060M)
+dbUseArea(.T.,__LocalDriver,cArq060M,"M60")
+IndRegua("M60",cArq060M,"DTOS(M60_EMISS)+M60_PDV")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 060A - ECF(Analitico)                                          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru060A,{"A60_EMISS"	,"D",008,0})
+AADD(aStru060A,{"A60_NUMFAB","C",020,0})
+AADD(aStru060A,{"A60_SITTRI","C",004,0})
+AADD(aStru060A,{"A60_VALOR"	,"N",014,2})
+
+cArq060A	:=	CriaTrab(aStru060A)
+dbUseArea(.T.,__LocalDriver,cArq060A,"A60")
+IndRegua("A60",cArq060A,"DTOS(A60_EMISS)+A60_NUMFAB+A60_SITTRI")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 060D - ECF ( Resumo Diario )                                   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru060D,{"D60_EMISS"	,"D",008,0})
+AADD(aStru060D,{"D60_NUMFAB","C",020,0})
+AADD(aStru060D,{"D60_CODPRO","C",014,0})
+AADD(aStru060D,{"D60_QUANT" ,"N",013,3})
+AADD(aStru060D,{"D60_VALOR" ,"N",016,2})
+AADD(aStru060D,{"D60_BSICM" ,"N",016,2})
+AADD(aStru060D,{"D60_SITTRI","C",004,0})
+AADD(aStru060D,{"D60_VLICM" ,"N",013,2})
+cArq060D	:=	CriaTrab(aStru060D)
+dbUseArea(.T.,__LocalDriver,cArq060D,"D60")
+IndRegua("D60",cArq060D,"DTOS(D60_EMISS)+D60_CODPRO")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 060I - ECF ( Itens do documento )                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru060I,{"I60_EMISS" ,"D",008,0})
+AADD(aStru060I,{"I60_NUMFAB","C",020,0})
+AADD(aStru060I,{"I60_MODELO","C",002,0})
+AADD(aStru060I,{"I60_COO"   ,"C",006,0})
+AADD(aStru060I,{"I60_ITEM"  ,"C",003,0})
+AADD(aStru060I,{"I60_CODPRO","C",014,0})
+AADD(aStru060I,{"I60_QUANT" ,"N",013,3})
+AADD(aStru060I,{"I60_VLUNI" ,"N",013,3})
+AADD(aStru060I,{"I60_VALOR" ,"N",013,2})
+AADD(aStru060I,{"I60_BSICM" ,"N",012,2})
+AADD(aStru060I,{"I60_SITTRI","C",004,0})
+AADD(aStru060I,{"I60_VLICM" ,"N",012,0})
+cArq060I	:=	CriaTrab(aStru060I)
+dbUseArea(.T.,__LocalDriver,cArq060I,"I60")
+IndRegua("I60",cArq060I,"DTOS(I60_EMISS)+I60_CODPRO")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 060R - ECF ( Resumo Mensal )                                   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru060R,{"R60_MESANO","C",006,0})
+AADD(aStru060R,{"R60_CODPRO","C",014,0})
+AADD(aStru060R,{"R60_QUANT" ,"N",013,3})
+AADD(aStru060R,{"R60_VALOR" ,"N",016,2})
+AADD(aStru060R,{"R60_BSICM" ,"N",016,2})
+AADD(aStru060R,{"R60_SITTRI","C",004,0})
+cArq060R	:=	CriaTrab(aStru060R)
+dbUseArea(.T.,__LocalDriver,cArq060R,"R60")
+IndRegua("R60",cArq060R,"R60_MESANO+R60_CODPRO+R60_SITTRI")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Arquivo do Registro tipo 61 - Docs.Fiscais nao emitidos por ECF ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru061,{"A61_EMISS"	,"D",008,0})
+AADD(aStru061,{"A61_MODELO"	,"C",002,0})
+AADD(aStru061,{"A61_SERIE"	,"C",003,0})
+AADD(aStru061,{"A61_SUBSER"	,"C",002,0})
+AADD(aStru061,{"A61_NUMINI"	,"C",006,0})
+AADD(aStru061,{"A61_NUMFIM"	,"C",006,0})
+AADD(aStru061,{"A61_VALTOT"	,"N",014,2})
+AADD(aStru061,{"A61_BSICM"	,"N",014,2})
+AADD(aStru061,{"A61_VALICM"	,"N",014,2})
+AADD(aStru061,{"A61_ISENTA"	,"N",014,2})
+AADD(aStru061,{"A61_OUTRAS"	,"N",014,2})
+AADD(aStru061,{"A61_ALQICM"	,"N",005,2})
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Campos referentes a SEF-PE                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru061,{"A61_LANCCO"	,"C",012,0})	//Numero de Lanc. Contabil
+AADD(aStru061,{"A61_CFOP"	,"C",004,0})
+AADD(aStru061,{"A61_OBS"	,"N",005,0})	//Observacao-Sequencial
+
+cArq061	:=	CriaTrab(aStru061)
+dbUseArea(.T.,__LocalDriver,cArq061,"R61")
+IndRegua("R61",cArq061,"DTOS(A61_EMISS)")
+
+//Ú Convenio 76/2003 ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Arquivo do Registro Tipo 61 Subtipo "R" - Resumo Mensal por Item de NF's ³
+//³nao emitidos por ECF                                                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru061I,{"I61_MESANO"	,"C",006,0})	//Mes e Ano de Emissao "MMAAAA"
+AADD(aStru061I,{"I61_CODPRO"	,"C",014,0})	//Codigo do Produto do Informante
+AADD(aStru061I,{"I61_QUANT"		,"N",013,3})	//Qtde. Acum. do Prod. Vendida no Mes
+AADD(aStru061I,{"I61_VLBRUT"	,"N",016,2})	///Vlr. Bruto Acum. na Venda do Prod. no Mes
+AADD(aStru061I,{"I61_BCICMS"	,"N",016,2})	//Base de Calculo do ICMS do Vlr. Acum. no Mes
+AADD(aStru061I,{"I61_ALIQ"		,"N",005,2})	//Aliquota do ICMS do Prod.
+
+cArq061I := CriaTrab(aStru061I)
+dbUseArea(.T.,__LocalDriver,cArq061I,"I61")
+IndRegua("I61",cArq061I,"I61_CODPRO+STR(I61_ALIQ,5,2)") 
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 070 - Documento de Conhecimento de Transporte                  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru070,{"A70_CNPJ"	,"C",014,0})
+AADD(aStru070,{"A70_IE"		,"C",014,0})
+AADD(aStru070,{"A70_EMISS"	,"D",008,0})
+AADD(aStru070,{"A70_UF"		,"C",002,0})
+AADD(aStru070,{"A70_MODELO"	,"C",002,0})
+AADD(aStru070,{"A70_SERIE"	,"C",001,0})
+AADD(aStru070,{"A70_SUBSER"	,"C",002,0})
+AADD(aStru070,{"A70_NFISC"	,"C",006,0})
+AADD(aStru070,{"A70_CFOP"	,"C",004,0})
+AADD(aStru070,{"A70_VALTOT"	,"N",015,2})
+AADD(aStru070,{"A70_BSICM"	,"N",015,2})
+AADD(aStru070,{"A70_VALICM"	,"N",015,2})
+AADD(aStru070,{"A70_ISENTA"	,"N",015,2})
+AADD(aStru070,{"A70_OUTRAS"	,"N",015,2})
+AADD(aStru070,{"A70_CIfFOB"	,"C",001,0})
+AADD(aStru070,{"A70_SITUAC"	,"C",001,0})
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Campos referentes a SEF-PE                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru070,{"A70_NOME"	,"C",035,0})	//Nome/Denominacao/Razao Social
+AADD(aStru070,{"A70_DTOP"	,"D",008,0})	//Dt. Operacao
+AADD(aStru070,{"A70_LANCC"	,"C",012,0})	//Numero de Lanc. Contabil
+AADD(aStru070,{"A70_ALQICM"	,"N",005,2})	//Aliquota de ICMS
+AADD(aStru070,{"A70_OBS"	,"N",005,0})	//Observacao-Sequencial
+
+cArq070	:=	CriaTrab(aStru070)
+dbUseArea(.T.,__LocalDriver,cArq070,"R70")
+IndRegua("R70",cArq070,"DTOS(A70_EMISS)")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 071 - Complemento do Conhecimento de Transporte                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru071,{"A71_CGCTOM"	,"C",014,0})
+AADD(aStru071,{"A71_IETOM"	,"C",014,0})
+AADD(aStru071,{"A71_DTCONH"	,"D",008,0})
+AADD(aStru071,{"A71_UFTOM"	,"C",002,0})
+AADD(aStru071,{"A71_MODCON"	,"C",002,0})
+AADD(aStru071,{"A71_SERCON"	,"C",001,0})
+AADD(aStru071,{"A71_SUBCON"	,"C",002,0})
+AADD(aStru071,{"A71_NUMCON"	,"C",006,0})
+AADD(aStru071,{"A71_UFREM"	,"C",002,0})
+AADD(aStru071,{"A71_CGCREM"	,"C",014,0})
+AADD(aStru071,{"A71_IEREM"	,"C",014,0})
+AADD(aStru071,{"A71_DTNOTA"	,"D",008,0})
+AADD(aStru071,{"A71_MODNOT"	,"C",002,0})
+AADD(aStru071,{"A71_SERNOT"	,"C",003,0})
+AADD(aStru071,{"A71_NUMNOT"	,"C",006,0})
+AADD(aStru071,{"A71_VALNOT"	,"N",014,2})
+
+cArq071	:=	CriaTrab(aStru071)
+dbUseArea(.T.,__LocalDriver,cArq071,"R71")
+IndRegua("R71",cArq071,"DTOS(A71_DTCONH)")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 074 - Registro de Inventario                                   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If mv_par10 == 2  // Cria a estrutura quando nao for gerar inventario para nao dar problema no INI
+	
+	AADD(aStru074,{"A74_DTINVE"	,"D",008,0})
+	AADD(aStru074,{"A74_PRODUT"	,"C",014,0})
+	AADD(aStru074,{"A74_QUANT"	,"N",013,3})
+	AADD(aStru074,{"A74_CUSTO"	,"N",013,2})
+	AADD(aStru074,{"A74_SITUAC"	,"C",001,0})
+	AADD(aStru074,{"A74_CNPJ"	,"C",014,0})
+	AADD(aStru074,{"A74_IE"  	,"C",014,0})
+	AADD(aStru074,{"A74_UF"  	,"C",002,0})
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Campos referentes a SEF-PE                                              ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	AADD(aStru074,{"A74_OBS"	,"N",005,0})
+
+	cArq074  :=	CriaTrab(aStru074)
+	dbUseArea(.T.,__LocalDriver,cArq074,"R74")
+	IndRegua("R74",cArq074,"DTOS(A74_DTINVE)")
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 075 - Relacao de Produtos e Servicos                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru075,{"A75_DTAINI"	,"D",008,0})
+AADD(aStru075,{"A75_DTAFIM"	,"D",008,0})
+AADD(aStru075,{"A75_PROD"	,"C",014,0})
+AADD(aStru075,{"A75_CODNCM"	,"C",008,0})
+AADD(aStru075,{"A75_DESCR"	,"C",053,0})
+AADD(aStru075,{"A75_UM"		,"C",006,0})
+AADD(aStru075,{"A75_SITTRI"	,"C",003,0})
+AADD(aStru075,{"A75_ALQIPI"	,"N",005,2})
+AADD(aStru075,{"A75_ALQICM"	,"N",005,2})
+AADD(aStru075,{"A75_REDBSE"	,"N",006,2})
+AADD(aStru075,{"A75_BRICMS"	,"N",014,2})
+
+cArq075	  :=	CriaTrab(aStru075)
+dbUseArea(.T.,__LocalDriver,cArq075,"R75")
+IndRegua("R75",cArq075,"DTOS(A75_DTAINI)+DTOS(A75_DTAFIM)+A75_PROD+A75_CODNCM+A75_UM")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 076 - Nota Fiscal Servico de Comunicacao/Telecomunicacao (mod.21/mod.22) ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru076,{"A76_CNPJ"	,"C",014,0})
+AADD(aStru076,{"A76_IE"		,"C",014,0})
+AADD(aStru076,{"A76_MODELO"	,"C",002,0})
+AADD(aStru076,{"A76_SERIE"	,"C",002,0})
+AADD(aStru076,{"A76_SUBSER"	,"C",002,0})
+AADD(aStru076,{"A76_NFISC"	,"C",006,0})
+AADD(aStru076,{"A76_CFOP"	,"C",004,0})
+AADD(aStru076,{"A76_TIPREC"	,"C",001,0})
+AADD(aStru076,{"A76_EMISS"	,"D",008,0})
+AADD(aStru076,{"A76_UF"		,"C",002,0})
+AADD(aStru076,{"A76_VALTOT"	,"N",013,2})
+AADD(aStru076,{"A76_BRICMS"	,"N",013,2})
+AADD(aStru076,{"A76_VALICM"	,"N",012,2})
+AADD(aStru076,{"A76_ISENTA"	,"N",012,2})
+AADD(aStru076,{"A76_OUTRAS"	,"N",012,2})
+AADD(aStru076,{"A76_ALQICM"	,"N",005,2})
+AADD(aStru076,{"A76_SITUAC"	,"C",001,0})
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Campos referentes a SEF-PE                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru076,{"A76_CODIGO"	,"C",006,0})	//Codigo Cliente e/ou Fornecedor
+AADD(aStru076,{"A76_LOJA"	,"C",002,0})	//Loja
+AADD(aStru076,{"A76_TVLTOT"	,"N",013,2})	//Valor Total
+AADD(aStru076,{"A76_TBICMS"	,"N",013,2})	//Base de Calculo do ICMS Total
+AADD(aStru076,{"A76_TOTICM"	,"N",012,2})	//Valor do ICMS Total
+AADD(aStru076,{"A76_TISENT"	,"N",012,2})	//Prest. Isentas ou Nao Trib. - Total
+AADD(aStru076,{"A76_TOUTRA"	,"N",012,2})	//Outras - Total
+AADD(aStru076,{"A76_OBS"	,"N",005,0})	//Observacao-Sequencia
+
+cArq076	:=	CriaTrab(aStru076)
+dbUseArea(.T.,__LocalDriver,cArq076,"R76")
+IndRegua("R76",cArq076,"DTOS(A76_EMISS)")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Registro 077 - Servicos de Comunicacao de Telecomunicacao                         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru077,{"A77_CNPJ"	,"C",014,0})
+AADD(aStru077,{"A77_MODELO"	,"C",002,0})
+AADD(aStru077,{"A77_SERIE"	,"C",002,0})
+AADD(aStru077,{"A77_SUBSER"	,"C",002,0})
+AADD(aStru077,{"A77_NFISC"	,"C",006,0})
+AADD(aStru077,{"A77_CFOP"	,"C",004,0})
+AADD(aStru077,{"A77_TIPREC"	,"C",001,0})
+AADD(aStru077,{"A77_NUMITE"	,"C",003,0})
+AADD(aStru077,{"A77_PRODUT"	,"C",011,0})
+AADD(aStru077,{"A77_QUANT"	,"N",013,3})
+AADD(aStru077,{"A77_VALPRO"	,"N",012,2})
+AADD(aStru077,{"A77_VALDES"	,"N",012,2})
+AADD(aStru077,{"A77_BSICM"	,"N",012,2})
+AADD(aStru077,{"A77_ALQICM"	,"N",005,2})
+AADD(aStru077,{"A77_CNPJMF"	,"C",014,0})
+AADD(aStru077,{"A77_CODTER"	,"C",010,0})
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Campos referentes a SEF-PE                                              ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru077,{"A77_IE"		,"C",014,0})
+AADD(aStru077,{"A77_DTEMIS"	,"D",008,0})	//Dt. Emissao ou Recebimento
+AADD(aStru077,{"A77_UF"		,"C",002,0})	
+
+cArq077	:=	CriaTrab(aStru077)
+dbUseArea(.T.,__LocalDriver,cArq077,"R77")
+IndRegua("R77",cArq077,"A77_PRODUT")
+
+If lReg88
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Registro 088 - Detalhe GT (Polo Gas Quimico e Termogeracao de Energia Eletrica a Gas)³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	AADD(aStru088,{"A88_TIPO"	,"N",002,0})
+	AADD(aStru088,{"A88_SUBTIP" ,"C",002,0})
+	AADD(aStru088,{"A88_TIPINF"	,"C",001,0})
+	AADD(aStru088,{"A88_INSEST"	,"C",014,0})
+	AADD(aStru088,{"A88_DTEMIS"	,"D",008,0})
+	AADD(aStru088,{"A88_UF"	    ,"C",002,0})
+	AADD(aStru088,{"A88_MODELO"	,"C",002,0})
+	AADD(aStru088,{"A88_SERIE"	,"C",002,0})
+	AADD(aStru088,{"A88_NTFISC"	,"C",006,0})
+	AADD(aStru088,{"A88_VALPRO"	,"N",013,2})
+	AADD(aStru088,{"A88_VALICM"	,"N",013,2})
+	AADD(aStru088,{"A88_DECLIM"	,"N",010,0})
+	AADD(aStru088,{"A88_DTDI"	,"D",008,0})
+	AADD(aStru088,{"A88_DESCPR"	,"C",043,0})
+	
+	cArq088	:=	CriaTrab(aStru088)
+	dbUseArea(.T.,__LocalDriver,cArq088,"R88")
+	IndRegua("R88",cArq088,"A88_NTFISC+A88_SERIE")
+Endif
+   
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Arquivo do Registro tipo 90 - Totalizador do Arquivo                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+AADD(aStru090,{"A90_REGS"	,"C",126,0})
+
+cArq090	:=	CriaTrab(aStru090)
+dbUseArea(.T.,__LocalDriver,cArq090,"R90")
+IndRegua("R90",cArq090,"LEFT(A90_REGS,10)") 
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Processamento dos documentos Fiscais                                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea("SF3")
+dbSetOrder(1)
+ProcRegua(LastRec())
+#IFDEF TOP
+    If TcSrvType()<>"AS/400"
+	    lQuery := .T.
+		cAliasSF3 := "SF3_SINTEGRA"
+		aStruSF3  := SF3->(dbStruct())
+		cQuery := "SELECT * "
+		cQuery += "FROM "+RetSqlName("SF3")+" "
+		cQuery += "WHERE F3_FILIAL='"+xFilial("SF3")+"' AND "
+		cQuery += "F3_ENTRADA>='"+Dtos(dDtIni)+"' AND "
+		cQuery += "F3_ENTRADA<='"+Dtos(dDtFim)+"' AND "	
+		cQuery += "F3_CFO NOT LIKE '000%' AND F3_CFO NOT LIKE '999%' AND "
+		If cNrLivro <> "*"
+			cQuery += "F3_NRLIVRO ='"+ cNrLivro +"' AND "
+		EndIf	
+		If !Empty(cEstDest)
+			If lListEst
+				cQuery += "F3_ESTADO ='"+ cEstDest+"' AND "
+			Else
+				cQuery += "F3_ESTADO <>'"+ cEstDest+"' AND "
+			EndIf
+		EndIf			
+		If mv_par11 == 1 	//Entrada
+			cQuery	+=	"(F3_CFO LIKE '1%' OR F3_CFO LIKE '2%' OR F3_CFO LIKE '3%') AND "
+		Elseif mv_par11 == 2 				//Saida
+			cQuery	+=	"(F3_CFO LIKE '5%' OR F3_CFO LIKE '6%' OR F3_CFO LIKE '7%') AND "
+		Endif            	
+		cQuery += "F3_TIPO NOT IN('S') AND "
+		If mv_par05 == 4
+			cQuery += "F3_TIPO = 'D' AND "
+			cQuery += "F3_CFO < '5' AND "
+		Endif
+		cQuery += "D_E_L_E_T_ = ' ' "
+		cQuery += "ORDER BY "+SqlOrder(SF3->(IndexKey()))
+	
+		cQuery := ChangeQuery(cQuery)
+		dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSF3)
+	
+		For nX := 1 To len(aStruSF3)
+			If aStruSF3[nX][2] <> "C" .And. FieldPos(aStruSF3[nX][1])<>0
+				TcSetField(cAliasSF3,aStruSF3[nX][1],aStruSF3[nX][2],aStruSF3[nX][3],aStruSF3[nX][4])
+			EndIf
+		Next nX
+		dbSelectArea(cAliasSF3)	
+	Else
+#ENDIF
+	    cIndex    := CriaTrab(NIL,.F.)
+	    cCondicao := 'F3_FILIAL=="'+xFilial("SF3")+'".And.'
+	   	cCondicao += 'DTOS(F3_ENTRADA)>="'+DTOS(dDtIni)+'".And.DTOS(F3_ENTRADA)<="'+DTOS(dDtFim)+'" '
+		cCondicao += '.And. !Substr(F3_CFO,1,3)$"999/000" '
+	    If cNrLivro <> "*"
+		    cCondicao += '.And.F3_NRLIVRO ="'+ cNrLivro +'" '
+	   	EndIf	
+	    If !Empty(cEstDest)
+		    If lListEst
+			    cCondicao += '.And. F3_ESTADO ="'+ cEstDest+'" '
+	  		Else
+			    cCondicao += '.And. F3_ESTADO <> "'+ cEstDest+'" '
+		    EndIf
+	    EndIf			
+	   	If mv_par11 == 1 	//Entrada
+			cCondicao += '.And. SubStr(F3_CFO,1,1)$"1,2,3"'
+		Elseif mv_par11 == 2 				//Saida
+			cCondicao += '.And. SubStr(F3_CFO,1,1)$"5,6,7"'
+		Endif            	
+	    cCondicao += '.And. F3_TIPO <> "S" '
+	    If mv_par05 == 4
+	 	    cCondicao += '.And. F3_TIPO = "D" '
+		    cCondicao += '.And. Substr(F3_CFO,1,1) < "5" '
+	    Endif
+	    IndRegua(cAliasSF3,cIndex,SF3->(IndexKey()),,cCondicao)
+	    nIndex := RetIndex("SF3")
+		#IFNDEF TOP
+			dbSetIndex(cIndex+OrdBagExt())
+		#ENDIF
+		dbSelectArea("SF3")
+	    dbSetOrder(nIndex+1)
+	
+	    dbSelectArea(cAliasSF3)
+	    ProcRegua(LastRec())
+	    dbGoTop()
+#IFDEF TOP
+	Endif    
+#ENDIF
+
+If Empty(cFilA940)
+	bFiltro := { || .T. }
+Else
+	cFilA940 := "{ || " + cFilA940 + " }"
+	bFiltro := &(cFilA940)
+Endif
+While (cAliasSF3)->(!Eof()) 
+
+	IncProc(STR0004) //"Preparando Base de Dados 1/2"
+    
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica filtro	³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If	! Eval(bFiltro) 
+		dbSkip()
+		Loop
+	EndIf
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica a transportadora ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If !Empty(mv_par14) .And. SubStr((cAliasSF3)->F3_CFO,1,1) >= "5"
+		If SF2->( MsSeek(F3Filial("SF2",cAliasSF3)+(cAliasSF3)->F3_NFISCAL+(cAliasSF3)->F3_SERIE+(cAliasSF3)->F3_CLIEFOR+(cAliasSF3)->F3_LOJA))
+		    If SF2->F2_TRANSP <> mv_par14
+		    	(cAliasSF3)->(dbSkip())
+		    	Loop
+		    Endif
+		Endif
+	Endif	
+
+	If lMt940Fil
+		If !Execblock("MT940FIL" ,.f.,.f.)
+	    	(cAliasSF3)->(dbSkip())
+	    	Loop
+		Endif
+	Endif
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Verifica o cliente/fornecedor                                          ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If (SubStr((cAliasSF3)->F3_CFO,1,1)>="5" .And. (cAliasSF3)->F3_TIPO$"BD") .Or.;
+	   (SubStr((cAliasSF3)->F3_CFO,1,1)<"5" .And. !(cAliasSF3)->F3_TIPO$"BD")
+		
+		dbSelectArea("SA2")
+		dbSetOrder(1)
+		MsSeek(F3Filial("SA2",cAliasSF3)+(cAliasSF3)->F3_CLIEFOR+(cAliasSF3)->F3_LOJA)				
+		cRazSoc		:=	SA2->A2_NOME
+		cCNPJ 		:=	A940CNPJ(SA2->A2_CGC,SA2->A2_TIPO)
+		cIE   		:=	A940IE(SA2->A2_INSCR)
+		cTranspCGC	:=	SA2->A2_CGC
+		cTranspIns	:=	aRETDIG(SA2->A2_INSCR,.t.,(cAliasSF3)->F3_ESTADO)
+		cTranspEst	:=	SA2->A2_EST
+	Else
+		dbSelectArea("SA1")
+		dbSetOrder(1)				
+		MsSeek(F3Filial("SA1",cAliasSF3)+(cAliasSF3)->F3_CLIEFOR+(cAliasSF3)->F3_LOJA)
+		cRazSoc		:=	SA1->A1_NOME		
+		cCNPJ 		:=	A940CNPJ(SA1->A1_CGC,SA1->A1_TIPO)			
+		cIE   		:=	A940IE(SA1->A1_INSCR)
+		cTranspCGC	:=	SA1->A1_CGC
+		cTranspIns	:=	aRETDIG(SA1->A1_INSCR,.t.,(cAliasSF3)->F3_ESTADO)
+		cTranspEst	:=	SA1->A1_EST
+	EndIf
+
+	dbSelectArea(cAliasSF3)
+	cChave := (cAliasSF3)->F3_NFISCAL+(cAliasSF3)->F3_SERIE+(cAliasSF3)->F3_CLIEFOR+(cAliasSF3)->F3_LOJA
+	Aadd(aArrayF3, {(cAliasSF3)->F3_NFISCAL	,;	//01
+	(cAliasSF3)->F3_SERIE		,;	//02
+	(cAliasSF3)->F3_CLIEFOR		,;	//03
+	(cAliasSF3)->F3_LOJA		,;	//04
+	(cAliasSF3)->F3_CFO			,;	//05
+	(cAliasSF3)->F3_TIPO		,;	//06
+	(cAliasSF3)->F3_ESPECIE		,;	//07
+	(cAliasSF3)->F3_ALIQICM		,;	//08
+	(cAliasSF3)->F3_PDV			,;	//09
+	(cAliasSF3)->F3_ENTRADA		,;	//10
+	(cAliasSF3)->F3_ICMSRET		,;	//11
+	(cAliasSF3)->F3_ISENICM		,;	//12
+	(cAliasSF3)->F3_DTCANC		,;	//13
+	(cAliasSF3)->F3_CODISS		,;	//14
+	(cAliasSF3)->F3_OUTRICM		,;	//15
+	(cAliasSF3)->F3_VALICM		,;	//16
+	(cAliasSF3)->F3_VALCONT		,;	//17
+	(cAliasSF3)->F3_EMISSAO		,;	//18
+	(cAliasSF3)->F3_BASEICM		,;	//19
+	(cAliasSF3)->F3_OBSERV		,;	//20
+	(cAliasSF3)->F3_FORMUL		,;	//21
+	(cAliasSF3)->F3_ESTADO		,;	//22
+	(cAliasSF3)->F3_DESPESA		,;	//23
+	(cAliasSF3)->F3_FORMULA		,;	//24
+	(cAliasSF3)->F3_VALIPI		,;	//25
+	(cAliasSF3)->F3_ISENIPI		,;	//26
+	(cAliasSF3)->F3_OUTRIPI		,;	//27
+	(cAliasSF3)->F3_BASEIPI    ,;  //28
+	(cAliasSF3)->F3_BASERET})		//29	
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Implementacao do Sintegra MG - Registro 88A       ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lSintegMG
+		Aadd(aArrayF3[Len(aArrayF3)],(cAliasSF3)->F3_NFEMP)	//Nota de Empenho
+	Endif
+		
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Executa funcoes do arquivo magnetico                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If lSef					//SEF de Pernambuco
+		Sef("1",cAliasSF3)	//Executa a SEF DURANTE o While do SF3
+	Endif
+	dbSkip()
+	
+	If cChave <> (cAliasSF3)->F3_NFISCAL+(cAliasSF3)->F3_SERIE+(cAliasSF3)->F3_CLIEFOR+(cAliasSF3)->F3_LOJA
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Monta Registro Tipo 54 e Registro Tipo 75 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If (Empty(aArrayF3[1][7]) .Or. IIf(lSef.Or.lConv76,AModNot(aArrayF3[1][7])$"01/06/21/22"+IIf(lNfProd,"/02/04",""),AModNot(aArrayF3[1][7])$"01/21/22")) .And. aArrayF3[1][6] <> "L" .And. (Empty(cCfopPR) .Or. !(Alltrim(aArrayF3[1][5])$cCfopPR))
+
+			If substr(aArrayF3[1][5],1,1)<"5"
+			    SF1->( dbSetOrder(1) )
+				SF1->( MsSeek(F3Filial("SF1",cAliasSF3)+aArrayF3[1][1]+aArrayF3[1][2]+aArrayF3[1][3]+aArrayF3[1][4]))
+
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Registro adicional para Frete,Seguro e Outras Despesas       ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If SF1->(!Eof()) 
+					For nI := 1 to 5
+						If nI == 4
+							aRelImp	   := MaFisRelImp("MT100",{ "SF1" })
+							nPsVlPisEn := 0
+							nValPis    := 0
+							If !Empty( nScanPis := aScan(aRelImp,{|x| x[1]=="SF1" .And. x[3]=="NF_VALPS2"} ) )
+								cCpVlPisEn := aRelImp[nScanPis,2]
+								nPsVlPisEn := SF1->(FieldPos(cCpVlPisEn))
+							EndIf 	
+							If !Empty( nPsVlPisEn ) 
+								nValPis := SF1->( FieldGet( nPsVlPisEn ) )
+							EndIf
+						Endif
+						If (nI == 1 .And. SF1->F1_FRETE > 0) .Or.;
+						   (nI == 2 .And. SF1->F1_SEGURO > 0) .Or.;
+						   (nI == 3 .And. SF1->F1_DESPESA > 0) .Or.;
+						   (nI == 4 .And. nValPis > 0) .Or.;
+						   (nI == 5 .And. SF1->F1_TIPO $ "CI")
+							dbSelectArea("R54")
+							If !MsSeek(cCNPJ+aArrayF3[1][2]+aArrayF3[1][1]+IIf(nI==1,"991",If(nI==2,"992",If(nI==3,"999",If(nI==4,"993","997")))))
+								RecLock("R54",.T.)
+								R54->A54_CNPJ    := cCNPJ
+								R54->A54_MODELO  := AModNot(aArrayF3[1][7])
+								R54->A54_SERIE   := aArrayF3[1][2]
+								R54->A54_NFISC   := aArrayF3[1][1]
+								R54->A54_CFOP    := aArrayF3[1][5]
+								R54->A54_CST     := "000"
+								R54->A54_NUMITE  := IIf(nI==1,"991",If(nI==2,"992",If(nI==3,"999",If(nI==4,"993","997")))) //Numero do Item (991-Frete;992 -Seguro;999-Outras despesas acessorias;993-PIS/COFINS;997-Compl.Preco/ICMS)
+								R54->A54_QUANT   := IIf(lSef,1,0)
+
+								If lSef
+									If R54->A54_NUMITE $ "991/992/993/999"
+										R54->A54_CFOP	:= "0000"									
+									Else
+										R54->A54_PRODUT  := SefProd54(aArrayF3,cAliasSF3)
+									Endif
+								Endif
+								
+								R54->A54_VALPRO  := IIf(nI==1,SF1->F1_FRETE,If(nI==2,SF1->F1_SEGURO,If(nI==3,SF1->F1_DESPESA,If(nI==4,nValPis,SF1->F1_VALBRUT))))
+								R54->A54_VALDES  := R54->A54_VALPRO
+								
+								If lSef
+                                	R54->A54_ALQICM  := aArrayF3[1][8]
+								Else
+                                	R54->A54_ALQICM  := IIf(nI==4,aArrayF3[1][8],0)
+								Endif
+								
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³ Implementacao do SEF PE                           ³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								R54->A54_IE	  	:= 	cIE
+								R54->A54_EMISS 	:= 	SF1->F1_DTDIGIT
+								R54->A54_UF  	:= 	cTranspEst
+								R54->A54_APUR  	:= 	0	//PRODEPE/FUNCRESCE
+								R54->A54_INDESP	:=	0
+								MsUnlock()
+							EndIf
+					    Endif
+					Next	   
+				EndIf
+
+				SD1->( dbSetOrder(1))
+
+				#IFDEF TOP
+				    If TcSrvType()<>"AS/400"
+					    cAliasSD1 := "a940ASD1"
+						aStru  := SD1->(dbStruct())
+						cQuery := "SELECT * "
+						cQuery += "FROM "+RetSqlName("SD1")+" "
+						cQuery += "WHERE D1_FILIAL='"+F3Filial("SD1",cAliasSF3)+"' AND "
+						cQuery += "D1_DOC='"+aArrayF3[1][1]+"' AND "
+						cQuery += "D1_SERIE='"+aArrayF3[1][2]+"' AND "
+						cQuery += "D1_FORNECE='"+aArrayF3[1][3]+"' AND "
+						cQuery += "D1_LOJA='"+aArrayF3[1][4]+"' AND "
+						cQuery += "D1_CF NOT IN('000','999','0000','9999') AND "
+						cQuery += "D_E_L_E_T_ = ' ' "
+						cQuery += "ORDER BY "+SqlOrder(SD1->(IndexKey()))
+		
+						cQuery := ChangeQuery(cQuery)
+						dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSD1,.T.,.T.)
+		
+						For nX := 1 To len(aStru)
+							If aStru[nX][2] <> "C" .And. FieldPos(aStru[nX][1])<>0
+								TcSetField(cAliasSD1,aStru[nX][1],aStru[nX][2],aStru[nX][3],aStru[nX][4])
+							EndIf
+						Next nX
+						dbSelectArea(cAliasSD1)
+					Else
+				#ENDIF
+				   		(cAliasSD1)->( MsSeek(F3Filial("SD1",cAliasSF3)+aArrayF3[1][1]+aArrayF3[1][2]+aArrayF3[1][3]+aArrayF3[1][4]))
+				#IFDEF TOP
+					EndIf
+				#ENDIF
+
+				nItem	:= 1
+			   	 	
+			    While (cAliasSD1)->(!Eof()).And. (cAliasSD1)->D1_FILIAL +(cAliasSD1)->D1_DOC + (cAliasSD1)->D1_SERIE+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA==;
+				    F3Filial("SD1",cAliasSF3)+aArrayF3[1][1]+aArrayF3[1][2]+aArrayF3[1][3]+aArrayF3[1][4]
+				    
+				    If !lQuery .And. Left((cAliasSD1)->D1_CF,3) $ "000/999"
+					    (cAliasSD1)->(dbSkip())	
+					    Loop
+				    Endif
+
+					SF4->(MsSeek(F3Filial("SF4",cAliasSF3)+(cAliasSD1)->D1_TES))
+					If SF4->F4_LFICM <> "N" .And. (cAliasSD1)->D1_TOTAL > 0
+
+						SB1->(MsSeek(F3Filial("SB1",cAliasSF3)+(cAliasSD1)->D1_COD))
+						nPosAliq := 0
+						nAliqIte := 0
+						cSitTrib := ""
+						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³Processo utilizado para atribuir os valores de Base de Icms e³
+						//³Aliquota de Icms ao Registro 54 conforme Registro 50.        ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ					 
+						A940LoadPro("E",@cNcm,@cProd,(cAliasSD1)->D1_TEC)
+			        	If ! ALLTRIM((cAliasSD1)->D1_CF) $ cCfoSint
+						    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³Monta Registro Tipo 75³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+							nAliqICM	:= SuperGETMV("MV_ICMPAD")
+							nBRetido	:=(cAliasSD1)->D1_BRICMS/(cAliasSD1)->D1_QUANT
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³Situacao Tributaria ³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+							If Empty((cAliasSD1)->D1_CLASFIS)
+							  	If SF4->(Fieldpos("F4_SITTRIB"))>0
+								    cSitTrib 	:= 	aFISFill(Num2Chr(Val(Substr(SB1->B1_ORIGEM,1,1)+SF4->F4_SITTRIB),3,0),3)
+						   		Else
+							        If len(alltrim(SB1->B1_ORIGEM)) ==2
+										cSitTrib 	:=  SB1->B1_ORIGEM+"0"
+									Else	
+									    cSitTrib 	:= 	aFISFill(Num2Chr(Val(Substr(SB1->B1_ORIGEM,1,1)+Substr(SB1->B1_CLASFIS,1,1)+"0"),3,0),3)
+							        EndIf
+								EndIf	
+							Else
+								cSitTrib 	:= 	aFISFill(Num2Chr(Val((cAliasSD1)->D1_CLASFIS),3,0),3)
+							EndIf
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³% de Reducao do ICMS nas Operacoes Internas³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+							nRedBase :=0
+							If SF4->F4_BASEICM >=100
+								nRedBase :=0
+							ElseIf SF4->F4_BASEICM > 0
+							    nRedBase :=	(100-SF4->F4_BASEICM)
+							Else
+							    nRedBase :=	SF4->F4_BASEICM
+							EndIf		
+							
+							If Empty((cAliasSD1)->D1_TEC)
+	 				    		If len(alltrim(SB1->B1_COD))>14
+		                            cSeek	:=(dtos(dDtIni)+dtos(dDtFim)+PADR(cProd,14)+PADR(cNcm,8)+SB1->B1_UM+space(4))
+							    Else						
+	               		            cSeek	:=(dtos(dDtIni)+dtos(dDtFim)+Substr(SB1->B1_COD,1,14)+PADR(cNcm,8)+SB1->B1_UM+space(4))
+					    		EndIf						
+							Else
+	       		                cSeek	:=(dtos(dDtIni)+dtos(dDtFim)+PADR(cProd,14)+Substr(cNcm,1,8)+(cAliasSD1)->D1_UM+space(4))
+							Endif
+							
+							RecLock("R54",.T.)
+							R54->A54_CNPJ	:=	cCNPJ
+							R54->A54_MODELO	:=	AModNot(aArrayF3[1][7])
+							R54->A54_SERIE 	:=	(cAliasSD1)->D1_SERIE
+							R54->A54_NFISC 	:=	(cAliasSD1)->D1_DOC
+							R54->A54_CFOP	:=	(cAliasSD1)->D1_CF
+							R54->A54_CST   	:=	cSitTrib
+							R54->A54_NUMITE	:=	StrZero(nItem,3)
+							R54->A54_PRODUT	:=	cProd
+							R54->A54_QUANT 	:=	Iif(SF1->F1_TIPO$"C#P#I" .and. (cAliasSD1)->D1_QUANT == 0 ,1,(cAliasSD1)->D1_QUANT)
+							R54->A54_VALPRO	:=	(cAliasSD1)->D1_TOTAL
+							R54->A54_VALDES	:=	(cAliasSD1)->D1_VALDESC
+							R54->A54_VALICM	:=	(cAliasSD1)->D1_VALICM
+							R54->A54_ICMRET	:=	(cAliasSD1)->D1_ICMSRET
+							
+							If lSef
+								If SF4->F4_LFICM $ "IONZ" .And. Empty(SF4->F4_BASEICM)
+									R54->A54_BSICM  +=	0
+								Else
+									R54->A54_BSICM  +=	(cAliasSD1)->D1_BASEICM
+								Endif
+								R54->A54_BRICMS +=	(cAliasSD1)->D1_BRICMS
+							Else
+								R54->A54_BSICM  +=	(cAliasSD1)->D1_BASEICM
+								R54->A54_BRICMS +=	(cAliasSD1)->D1_BRICMS
+							Endif
+
+							R54->A54_VALIPI	:=	(cAliasSD1)->D1_VALIPI
+							nAliqIte  := (cAliasSD1)->D1_PICM
+							If !SF4->F4_ISS $ "N "
+								nAliqIte  := 0
+							ElseIf SF4->F4_LFICM $ "IO" .And. nRedBase > 0 .And. SF4->F4_CONSUMO == "S"
+								nAliqIte  := 0
+							ElseIf 	SF4->F4_LFICM $ "IO" .And. nRedBase == 0
+								nAliqIte  := 0
+							Endif
+							nPosAliq := Ascan(aArrayF3,{|x| x[8]==nAliqIte})
+							R54->A54_ALQICM	:=	IIf(nPosAliq > 0,aArrayF3[nPosAliq][8],0)
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³ Implementacao do SEF PE                           ³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+							R54->A54_IE	  	:= 	cIE
+							R54->A54_EMISS	:= 	SF1->F1_DTDIGIT
+							R54->A54_UF 	:= 	cTranspEst
+							R54->A54_APUR  	:=	0	//PRODEPE/FUNCRESCE
+							R54->A54_INDESP	:=	0
+							MsUnlock()
+							//
+							If (lMta56E)
+						        Execblock("MTA56E",.F.,.F., {cAliasSD1, StrZero(nItem,3)})
+							EndIf
+							//
+							If R75->(!dbSeek(cSeek))
+					    	   RecLock("R75",.T.)
+							   R75->A75_DTAINI	:=	dDTIni
+							   R75->A75_DTAFIM	:=	dDTFim
+							   A940LoadPro("E",@cNcm,@cProd,(cAliasSD1)->D1_TEC)
+							   R75->A75_PROD	:=cProd
+							   R75->A75_CODNCM	:=cNcm
+							   If !Empty((cAliasSD1)->D1_TEC)
+							      R75->A75_DESCR	:=	(cAliasSD1)->D1_COD
+								  R75->A75_UM    	:=	(cAliasSD1)->D1_UM
+								  R75->A75_ALQIPI	:=	(cAliasSD1)->D1_IPI
+							   Else
+								  R75->A75_DESCR	:=	SB1->B1_DESC
+								  R75->A75_UM    	:=	SB1->B1_UM
+								  R75->A75_ALQIPI	:=	SB1->B1_IPI
+							   EndIf
+							   R75->A75_ALQICM	:=	nAliqICM
+
+								If lSef
+									If (cAliasSD1)->D1_ICMSRET > 0		//Substituicao Tributaria
+										R75->A75_BRICMS :=	nBRetido
+									Else
+										R75->A75_BRICMS :=	0
+									Endif
+								Else
+									R75->A75_BRICMS	:=	nBRetido  	//Base do Retido
+								Endif
+
+							   R75->A75_SITTRI	:=	cSitTrib
+							   R75->A75_REDBSE	:= nRedBase		//Reducao da Base do ICMS
+							   MsUnlock()							 
+						    Endif
+						    nItem ++
+						Endif   
+
+				        If lReg88      
+		                   If (SF4->(Fieldpos("F4_ICMSDIF"))>0 .And. SF4->F4_ICMSDIF=="1")				        
+						      //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						      //³ Verifica Fornecedor/Cliente                                            ³
+						      //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						      If (SubStr((cAliasSD1)->D1_CF,1,1)<"5" .And. (cAliasSD1)->D1_TIPO$"BD") .Or.; 
+							     (SubStr((cAliasSD1)->D1_CF,1,1)>="5" .And. (cAliasSD1)->D1_TIPO$"BD") 
+	   					         dbSelectArea("SA1")
+							     dbSetOrder(1)				
+							     SA1->(MsSeek(F3Filial("SA1",cAliasSF3)+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA))
+	   				          Else
+							     dbSelectArea("SA2")
+							     dbSetOrder(1)
+							     SA2->(MsSeek(F3Filial("SA2",cAliasSF3)+(cAliasSD1)->D1_FORNECE+(cAliasSD1)->D1_LOJA))					
+						      EndIf
+						               
+						      If (Subs((cAliasSD1)->D1_CF,1,1)=="3") .And. !Empty(cD1_Di) .And. !Empty(cD1_Dtdi)
+							     cDi   := cD1_Di
+							     dDtdi := cD1_Dtdi							  
+						      Else
+							     cDi   := ""   
+							     dDtdi := ""
+						      Endif  
+				      
+				  		      RecLock("R88",.T.)
+						      R88->A88_TIPINF := Iif((Subs((cAliasSD1)->D1_CF,1,1)<>"3"),"A","C")
+						      R88->A88_INSEST := Iif((cAliasSD1)->D1_TIPO$"DB",SA1->A1_INSCR,SA2->A2_INSCR)
+						      R88->A88_DTEMIS := (cAliasSD1)->D1_EMISSAO
+						      R88->A88_UF     := Iif((cAliasSD1)->D1_TIPO$"DB",SA1->A1_EST,SA2->A2_EST)     
+						      R88->A88_MODELO := AModNot((cAliasSF3)->F3_ESPECIE)
+						      R88->A88_SERIE  := Alltrim(Subs((cAliasSD1)->D1_SERIE,1,2))
+						      R88->A88_NTFISC := (cAliasSD1)->D1_DOC 
+						      R88->A88_VALPRO := (cAliasSD1)->D1_TOTAL
+						      R88->A88_VALICM := (cAliasSD1)->D1_VALICM                           
+						      R88->A88_DECLIM := If(Empty(cDi),0,(cAliasSD1)->&cDi)
+						      R88->A88_DTDI   := If(Empty(dDtdi),CTOD("//"),(cAliasSD1)->&dDtDi)
+						      R88->A88_DESCPR := SB1->B1_DESC 
+						      MsUnlock()
+						   Endif   
+						Endif   
+				    Endif
+				    (cAliasSD1)->(dbSkip())
+				EndDo
+        		If lQuery
+				    dbSelectArea(cAliasSD1)
+					dbCloseArea()
+			    Endif
+			Else
+	    		SF2->( dbSetOrder(1) )
+				SF2->( MsSeek(F3Filial("SF2",cAliasSF3)+aArrayF3[1][1]+aArrayF3[1][2]+aArrayF3[1][3]+aArrayF3[1][4]))
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Registro adicional para Frete,Seguro e Outras Despesas       ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If SF2->(!Eof()) 
+				    For nI := 1 to 5
+						If nI == 4
+							aRelImp2   := MaFisRelImp("MT100",{ "SF2" })
+							nPsVlPisSa := 0
+							nValPis    := 0
+							If !Empty( nScanPis := aScan(aRelImp2,{|x| x[1]=="SF2" .And. x[3]=="NF_VALPS2"} ) )
+								cCpVlPisSa := aRelImp2[nScanPis,2]
+								nPsVlPisSa := SF2->(FieldPos(cCpVlPisSa))
+							EndIf 	
+							If !Empty( nPsVlPisSa ) 
+								nValPis := SF2->( FieldGet( nPsVlPisSa ) )
+							EndIf
+						Endif
+			    		If (nI == 1 .And. SF2->F2_FRETE > 0) .Or.;
+			    		   (nI == 2 .And. SF2->F2_SEGURO > 0) .Or.;
+						   (nI == 3 .And. SF2->F2_DESPESA > 0) .Or.;
+						   (nI == 4 .And. nValPis > 0) .Or.;
+   						   (nI == 5 .And. SF2->F2_TIPO $ "CI")
+						
+							If !(AModNot(aArrayF3[1][7])$"02/06/21/22")
+								dbSelectArea("R54")
+								If !MsSeek(cCNPJ+aArrayF3[1][2]+aArrayF3[1][1]+IIf(nI==1,"991",If(nI==2,"992",If(nI==3,"999",If(nI==4,"993","997")))))
+									RecLock("R54",.T.)
+									R54->A54_CNPJ	:=	cCNPJ
+									R54->A54_MODELO :=	AModNot(aArrayF3[1][7])	
+									R54->A54_SERIE  :=	aArrayF3[1][2]
+									R54->A54_NFISC  :=	aArrayF3[1][1]
+									R54->A54_CFOP	:=	aArrayF3[1][5]
+									R54->A54_CST    := "000"
+									R54->A54_NUMITE := IIf(nI==1,"991",If(nI==2,"992",If(nI==3,"999",If(nI==4,"993","997")))) //Numero do Item (991-Frete;992 -Seguro;999-Outras despesas acessorias;993-PIS/COFINS;997-Compl.Preco/ICMS)
+									R54->A54_QUANT  := IIf(lSef,1,0)
+	
+									If lSef 
+										If R54->A54_NUMITE $ "991/992/993/999"
+											R54->A54_CFOP 	:= "0000"
+										Else
+											R54->A54_PRODUT	:= SefProd54(aArrayF3,cAliasSF3)
+										Endif
+									Endif
+	
+									R54->A54_VALPRO := IIf(nI==1,SF2->F2_FRETE,If(nI==2,SF2->F2_SEGURO,If(nI==3,SF2->F2_DESPESA,If(nI==4,nValPis,SF2->F2_VALBRUT))))
+									R54->A54_VALDES := R54->A54_VALPRO
+	
+									If lSef
+	                                	R54->A54_ALQICM  := aArrayF3[1][8]
+									Else
+	                                	R54->A54_ALQICM  := IIf(nI==4,aArrayF3[1][8],0)
+									Endif
+	
+									//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+									//³ Implementacao do SEF PE                           ³
+									//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+									R54->A54_IE	  	:= 	cIE
+									R54->A54_EMISS	:= 	SF2->F2_EMISSAO
+									R54->A54_UF 	:= 	cTranspEst
+									R54->A54_APUR  	:= 	0	//PRODEPE/FUNCRESCE
+									R54->A54_INDESP	:=	0
+									MsUnlock()
+								Endif	  
+							Endif
+					    Endif
+					Next
+				EndIf
+
+				SD2->( dbSetOrder(3) )
+
+				#IFDEF TOP
+  				     If TcSrvType()<>"AS/400"
+	  				     cAliasSD2 := "a940ASD2"
+						 aStru  := SD2->(dbStruct())
+						 cQuery := "SELECT * "
+						 cQuery += "FROM "+RetSqlName("SD2")+" "
+						 cQuery += "WHERE D2_FILIAL='"+F3Filial("SD2",cAliasSF3)+"' AND "
+						 cQuery += "D2_DOC='"+aArrayF3[1][1]+"' AND "
+						 cQuery += "D2_SERIE='"+aArrayF3[1][2]+"' AND "
+						 cQuery += "D2_CLIENTE='"+aArrayF3[1][3]+"' AND "
+						 cQuery += "D2_LOJA='"+aArrayF3[1][4]+"' AND "
+						 cQuery += "D2_CF NOT IN('000','999','0000','9999') AND "
+						 cQuery += "D_E_L_E_T_ = ' ' "
+						 cQuery += "ORDER BY "+SqlOrder(SD2->(IndexKey()))
+	            	
+						 cQuery := ChangeQuery(cQuery)
+						 dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSD2,.T.,.T.)
+	
+						 For nX := 1 To len(aStru)
+							 If aStru[nX][2] <> "C" .And. FieldPos(aStru[nX][1])<>0
+								 TcSetField(cAliasSD2,aStru[nX][1],aStru[nX][2],aStru[nX][3],aStru[nX][4])
+							 EndIf
+						 Next nX
+						 dbSelectArea(cAliasSD2)
+					 Else
+				#ENDIF
+					 	 (cAliasSD2)->( MsSeek(F3Filial("SD2",cAliasSF3)+aArrayF3[1][1]+aArrayF3[1][2]+aArrayF3[1][3]+aArrayF3[1][4]))
+				#IFDEF TOP
+					 EndIf
+				#ENDIF
+			   
+				nItem	:= 1
+
+			    While (cAliasSD2)->(!Eof()).And. (cAliasSD2)->D2_FILIAL+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA== ;
+					F3Filial("SD2",cAliasSF3)+aArrayF3[1][1]+aArrayF3[1][2]+aArrayF3[1][3]+aArrayF3[1][4]
+					
+					If !lQuery .And. Left((cAliasSD2)->D2_CF,3) $ "000/999"
+					    (cAliasSD2)->(dbSkip())	
+					    Loop
+				    Endif
+
+					SF4->(MsSeek(F3Filial("SF4",cAliasSF3)+(cAliasSD2)->D2_TES))
+
+					If SF4->F4_LFICM <> "N" .And. (cAliasSD2)->D2_TOTAL > 0 
+
+						SB1->(MsSeek(F3Filial("SB1",cAliasSF3)+(cAliasSD2)->D2_COD))
+						nPosAliq := 0
+						nAliqIte := 0
+						cSitTrib := ""
+					    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³Processo utilizado para atribuir os valores de Base de Icms e³
+						//³Aliquota de Icms ao Registro 54 conforme Registro 50.        ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ					 
+						A940LoadPro("S",@cNcm,@cProd)
+			        	If ! ALLTRIM((cAliasSD2)->D2_CF) $ cCfoSint
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³Monta Registro Tipo 75³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+							nAliqICM	:= SuperGETMV("MV_ICMPAD")
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³Situacao Tributaria ³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+							If Empty((cAliasSD2)->D2_CLASFIS)
+							    If SF4->(Fieldpos("F4_SITTRIB"))>0
+								    cSitTrib 	:= 	aFISFill(Num2Chr(Val(Substr(SB1->B1_ORIGEM,1,1)+SF4->F4_SITTRIB),3,0),3)
+								Else
+								    If len(alltrim(SB1->B1_ORIGEM)) ==2
+									    cSitTrib	:= SB1->B1_ORIGEM+"0"
+								    Else	
+								        cSitTrib	:=	aFISFill(Num2Chr(Val(Substr(SB1->B1_ORIGEM,1,1)+Substr(SB1->B1_CLASFIS,1,1)+"0"),3,0),3)
+								    EndIf
+								EndIf	
+							Else
+							    cSitTrib	:=	aFISFill(Num2Chr(Val((cAliasSD2)->D2_CLASFIS),3,0),3)
+						    EndIf
+							//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+							//³% de Reducao do ICMS nas Operacoes Internas³
+							//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+							nRedBase := 0
+				    		If SF4->F4_BASEICM >=100
+								nRedBase :=0
+							ElseIf SF4->F4_BASEICM > 0
+							    nRedBase :=	(100-SF4->F4_BASEICM)
+							Else
+							    nRedBase :=	SF4->F4_BASEICM
+						    Endif
+
+						    cSeek	:= (dtos(dDtIni)+dtos(dDtFim)+PADR(cProd,14)+PADR(cNcm,8)+SB1->B1_UM+space(4))
+							
+							If !(AModNot(aArrayF3[1][7])$"02/06/21/22")
+								RecLock("R54",.T.)
+								R54->A54_CNPJ	:=	cCNPJ
+								R54->A54_MODELO	:=	AModNot(aArrayF3[1][7])
+								R54->A54_SERIE	:=	(cAliasSD2)->D2_SERIE
+								R54->A54_NFISC	:=	(cAliasSD2)->D2_DOC
+								R54->A54_CFOP	:=	(cAliasSD2)->D2_CF
+								R54->A54_CST   	:=  cSitTrib
+								R54->A54_NUMITE	:=	StrZero(nItem,3)
+								R54->A54_PRODUT	:=	cProd
+								R54->A54_QUANT	:=	Iif(SF2->F2_TIPO$"C#P#I" .and. (cAliasSD2)->D2_QUANT == 0 ,1,(cAliasSD2)->D2_QUANT)
+								R54->A54_VALPRO	:=	(cAliasSD2)->D2_TOTAL+(cAliasSD2)->D2_DESCON
+								R54->A54_VALDES	:=	(cAliasSD2)->D2_DESCON
+								R54->A54_VALICM	:=	(cAliasSD2)->D2_VALICM
+								R54->A54_ICMRET	:=	(cAliasSD2)->D2_ICMSRET
+	
+								If lSef
+									If SF4->F4_LFICM $ "IONZ" .And. Empty(SF4->F4_BASEICM)
+										R54->A54_BSICM  +=	0
+									Else
+										R54->A54_BSICM  +=	(cAliasSD2)->D2_BASEICM
+									Endif
+									R54->A54_BRICMS +=	(cAliasSD2)->D2_BRICMS
+								Else
+									R54->A54_BSICM  +=	(cAliasSD2)->D2_BASEICM
+									R54->A54_BRICMS +=	(cAliasSD2)->D2_BRICMS
+								Endif
+								
+								R54->A54_VALIPI	:=  (cAliasSD2)->D2_VALIPI
+								nAliqIte  := (cAliasSD2)->D2_PICM
+								If !SF4->F4_ISS $ "N "
+									nAliqIte  := 0
+								ElseIf SF4->F4_LFICM $ "IO" .And. nRedBase > 0 .And. SF4->F4_CONSUMO == "S"
+									nAliqIte  := 0
+								ElseIf 	SF4->F4_LFICM $ "IO" .And. nRedBase == 0
+									nAliqIte  := 0
+								Endif
+								nPosAliq := Ascan(aArrayF3,{|x| x[8]==nAliqIte})
+								R54->A54_ALQICM	:=	IIf(nPosAliq > 0,aArrayF3[nPosAliq][8],0)
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³ Implementacao do SEF PE                           ³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								R54->A54_IE	  	:= 	cIE
+								R54->A54_EMISS	:= 	SF2->F2_EMISSAO
+								R54->A54_UF 	:= 	cTranspEst
+								R54->A54_APUR  	:= 	0	//PRODEPE/FUNCRESCE
+								R54->A54_INDESP	:=	0
+								MsUnlock()
+								//
+								If (lMta56S)
+							        Execblock("MTA56S",.F.,.F., {cAliasSD2, StrZero(nItem,3)})
+								EndIf
+							Endif
+							//
+							If !(R75->(dbSeek(cSeek)))
+								RecLock("R75",.T.)
+								R75->A75_DTAINI	:=	dDTIni
+								R75->A75_DTAFIM	:=	dDTFim
+								A940LoadPro("S",@cNcm,@cProd)
+								R75->A75_PROD  	:=  cProd
+		       					R75->A75_CODNCM	:=  cNcm
+								R75->A75_DESCR	:=	SB1->B1_DESC
+								R75->A75_UM    	:=	SB1->B1_UM
+								R75->A75_ALQIPI	:=	SB1->B1_IPI
+								R75->A75_ALQICM	:=	nAliqICM
+								
+								If lSef
+									If (cAliasSD2)->D2_ICMSRET > 0		//Substituicao Tributaria
+										R75->A75_BRICMS :=	NoRound((cAliasSD2)->D2_BRICMS/(cAliasSD2)->D2_QUANT)
+									Else
+										R75->A75_BRICMS :=	0
+									Endif
+								Else
+									R75->A75_BRICMS	:=	(cAliasSD2)->D2_BRICMS
+								Endif								
+								
+								R75->A75_SITTRI	:=	cSitTrib
+								R75->A75_REDBSE	:= nRedBase		//Reducao da Base do ICMS
+								MsUnlock()
+							Endif	
+							
+					   		If AModNot(aArrayF3[1][7]) $ "21,22" .And. aArrayF3[1][6] <> "L" //Notas Fiscais de Comunicacao/Telecomunicacao
+						   		RecLock("R77",.T.)
+								R77->A77_CNPJ  	:=	cCNPJ
+								R77->A77_MODELO	:=	AModNot(aArrayF3[1][7])
+								R77->A77_SERIE	:=	Substr((cAliasSD2)->D2_SERIE,1,1)
+								R77->A77_SUBSER	:=  Substr((cAliasSD2)->D2_SERIE,2,2)
+								R77->A77_NFISC	:=	(cAliasSD2)->D2_DOC  
+								R77->A77_CFOP	:=	(cAliasSD2)->D2_CF   
+								R77->A77_TIPREC	:= "1"
+								R77->A77_NUMITE	:= StrZero(nItem,3)
+								R77->A77_PRODUT	:= Left(cProd,11)
+								R77->A77_QUANT	:= Iif(SF2->F2_TIPO$"C#P#I" .and. (cAliasSD2)->D2_QUANT == 0 ,1,(cAliasSD2)->D2_QUANT)
+								R77->A77_VALPRO	:= (cAliasSD2)->D2_TOTAL+(cAliasSD2)->D2_DESCON
+								R77->A77_VALDES	:= (cAliasSD2)->D2_DESCON
+								R77->A77_BSICM	:= (cAliasSD2)->D2_BASEICM
+								R77->A77_ALQICM	:= (cAliasSD2)->D2_PICM
+								R77->A77_CNPJMF	:= SM0->M0_CGC
+								R77->A77_CODTER	:= (cAliasSD2)->D2_CLIENTE
+								//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+								//³ Implementacao do SEF PE                           ³
+								//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+								R77->A77_IE		:=	cIE
+								R77->A77_DTEMIS	:=	SF2->F2_EMISSAO
+								R77->A77_UF		:=	SF2->F2_EST
+								MsUnlock()
+		            		Endif
+							nItem ++
+						Endif
+	 		    	
+						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³ Implementacao do Convenio no.76 - 10.10.2003      ³
+						//³ Grava Registro I61 - Resumo Mensal por Item       ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						If lReg61I
+							// NF Produtor; NF Venda a Consumidor	
+				        	If AModNot(SF2->F2_ESPECIE)$"02/04"	.And. !(SF2->F2_TIPO$"C#P#I")
+								If I61->(dbSeek(PADR(cProd,14)+Str((cAliasSD2)->D2_PICM,5,2)))
+									RecLock("I61",.F.)
+								Else
+									RecLock("I61",.T.)
+									I61->I61_MESANO	:= StrZero(Month((cAliasSD2)->D2_EMISSAO),2)+StrZero(Year((cAliasSD2)->D2_EMISSAO),4)	//Mes e Ano de Emissao "MMAAAA"
+									I61->I61_CODPRO	:= cProd	//Codigo do Produto do Informante
+									I61->I61_ALIQ	:= (cAliasSD2)->D2_PICM		//Aliquota do ICMS do Prod.
+								Endif
+								I61->I61_QUANT		+= (cAliasSD2)->D2_QUANT	//Qtde. Acum. do Prod. Vendida no Mes
+								I61->I61_VLBRUTO	+= (cAliasSD2)->D2_TOTAL+(cAliasSD2)->D2_DESCON	///Vlr. Bruto Acum. na Venda do Prod. no Mes
+								I61->I61_BCICMS		+= (cAliasSD2)->D2_BASEICM	//Base de Calculo do ICMS do Vlr. Acum. no Mes
+								MsUnlock()
+							Endif
+						Endif
+		 		    	
+	 		    	Endif
+	 		    	(cAliasSD2)->(dbSkip())
+		 	    EndDo
+			    If lQuery
+	    		    dbSelectArea(cAliasSD2)
+				    dbCloseArea()
+		        EndIf 
+		    EndIf	
+		Endif
+	    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	    //³Monta Registro Tipo 61³
+	    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	    If Val(Subs(AllTrim(aArrayF3[1][5]),1,1))>=5
+        	If lSef
+	        	If AModNot(aArrayF3[1][7]) $ "02,13,14,15,16" .And. aArrayF3[1][6] <> "L" // NF Produtor; NF venda a consumidor
+					If R61->(!MsSeek(dTos(aArrayF3[1][18])+aArrayF3[1][2]+strzero(aArrayF3[1][8],5,2)))
+					    RecLock("R61",.T.)
+						R61->A61_EMISS	:= 	aArrayF3[1][18]
+						R61->A61_MODELO :=	AModNot(aArrayF3[1][7])
+						R61->A61_SERIE	:=	aArrayF3[1][2]
+						R61->A61_NUMINI	:=	aArrayF3[1][1]
+						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³ Implementacao do SEF PE                           ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						R61->A61_LANCCO	:=	Space(12)
+						R61->A61_CFOP	:=	aArrayF3[1][5]
+						R61->A61_OBS	:=	0
+					Else
+					    RecLock("R61",.F.)
+					EndIf		
+					R61->A61_NUMFIM	:=	aArrayF3[1][1]
+					R61->A61_VALTOT	+=	aArrayF3[1][17]
+					R61->A61_BSICM	+=	aArrayF3[1][19]
+					R61->A61_VALICM	+=	aArrayF3[1][16]
+					R61->A61_ISENTA	+= 	aArrayF3[1][12]
+					R61->A61_OUTRAS	+= 	aArrayF3[1][15]
+					R61->A61_ALQICM := 	aArrayF3[1][8]
+					MsUnlock()
+				EndIf
+			Else
+	        	If (IIf(lConv76,AModNot(aArrayF3[1][7])$"02/13/14/15/16"+IIf(lNfProd,"/04",""),AModNot(aArrayF3[1][7])$"02/04/07/13/14/15/16/21")) .And. ;
+	        		aArrayF3[1][6] <> "L" // NF Produtor; NF venda a consumidor
+					If R61->(!MsSeek(dTos(aArrayF3[1][18])+aArrayF3[1][2]+strzero(aArrayF3[1][8],5,2)))
+					    RecLock("R61",.T.)
+						R61->A61_EMISS	:= 	aArrayF3[1][18]
+						R61->A61_MODELO :=	AModNot(aArrayF3[1][7])
+						R61->A61_SERIE	:=	aArrayF3[1][2]
+						R61->A61_NUMINI	:=	aArrayF3[1][1]
+					Else
+					    RecLock("R61",.F.)
+					EndIf		
+					R61->A61_NUMFIM	:=	aArrayF3[1][1]
+					R61->A61_VALTOT	+=	aArrayF3[1][17]
+					R61->A61_BSICM	+=	aArrayF3[1][19]
+					R61->A61_VALICM	+=	aArrayF3[1][16]
+					R61->A61_ISENTA	+= 	aArrayF3[1][12]
+					R61->A61_OUTRAS	+= 	aArrayF3[1][15]
+					R61->A61_ALQICM := 	aArrayF3[1][8]
+					MsUnlock()
+				EndIf
+			Endif
+		Endif  
+      //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+      //³Monta Registro Tipo 71 atraves de ponto de entrada³
+      //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+      //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	   //³Somente gera registro tipo 71 para      ³
+	   //³emitentes de conhecimento de transporte.³
+	   //³Portanto somente Notas Fiscais de Saida.³
+	   //³Devera gerar registros no arquivo       ³
+	   //³R71 em funcao do registro lido no       ³
+	   //³arquivo SF3.                            ³
+  	   //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	   If Substr(aArrayF3[1][5],1,1) >= "5" .And. aArrayF3[1][6] <> "L"    // Colocado geracao 71 antes do 70
+		   If lMtaTIP71                                                     // devido fonte ser antigo
+		      aArray71 := aClone(aArrayF3)                                 // cfe Deco/Vilmar Microsiga 07/10/2005
+		      Execblock("MTATIP71",.F.,.F.,{,aArray71})
+		   EndIf
+	   EndIf
+    	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Monta Registro Tipo 70³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If (AModNot(aArrayF3[1][7])$"01/07/08/09/10/11") .And. aArrayF3[1][6]<>"L"
+			If lSef .And. !Empty(aArrayF3[1][13]) .And. AModNot(aArrayF3[1][7])<>"01"
+				RecLock("R70",.T.)
+				R70->A70_EMISS	:=	aArrayF3[1][10]
+				R70->A70_MODELO	:=	AModNot(aArrayF3[1][7])
+				R70->A70_SERIE	:=	Substr(aArrayF3[1][2],1,1)
+				R70->A70_SUBSER	:=  Substr(aArrayF3[1][2],2,2)
+				R70->A70_NFISC	:=	aArrayF3[1][1]
+				R70->A70_SITUAC	:=	"S"
+				MsUnlock()
+			Else
+				If AModNot(aArrayF3[1][7])<>"01" .Or. ;
+					(AModNot(aArrayF3[1][7])=="01" .And. Alltrim(aArrayF3[1][5])$cCfopPR)
+					RecLock("R70",.T.)
+		    		R70->A70_CNPJ	:= 	cTranspCGC
+				    R70->A70_IE		:=	cTranspIns
+					R70->A70_EMISS	:=	aArrayF3[1][10]
+					R70->A70_UF		:=	cTranspEst
+					R70->A70_MODELO	:=	AModNot(aArrayF3[1][7])
+					R70->A70_SERIE	:=	Substr(aArrayF3[1][2],1,1)
+					R70->A70_SUBSER	:=  Substr(aArrayF3[1][2],2,2)
+					R70->A70_NFISC	:=	aArrayF3[1][1]
+					R70->A70_CFOP	:=	aArrayF3[1][5]
+					R70->A70_VALTOT	:=	aArrayF3[1][17]
+					R70->A70_BSICM	:=	aArrayF3[1][19]
+					R70->A70_VALICM	:=	aArrayF3[1][16]
+					R70->A70_ISENTA	:=	aArrayF3[1][12]
+					R70->A70_OUTRAS	:=	aArrayF3[1][15]
+					R70->A70_CIfFOB	:=	"1"// Sempre CIf
+					R70->A70_SITUAC	:=	IIf(("CANCELAD"$aArrayF3[1][20] .Or.!empty(aArrayF3[1][13])),"S","N")
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³Implementacao do SEF PE                                    ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					R70->A70_NOME	:=	cRazSoc
+					R70->A70_DTOP	:=	aArrayF3[1][10]
+					R70->A70_ALQICM	:=	aArrayF3[1][8]
+					MsUnlock()
+				Endif
+			Endif
+		EndIf
+
+	    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	    //³Monta Registro Tipo 71 atraves de ponto de entrada³
+	    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	    //³Somente gera registro tipo 71 para      ³
+	    //³emitentes de conhecimento de transporte.³
+	    //³Portanto somente Notas Fiscais de Saida.³
+	    //³Devera gerar registros no arquivo       ³
+	    //³R71 em funcao do registro lido no       ³
+	    //³arquivo SF3.                            ³
+  	    //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//	    If Substr(aArrayF3[1][5],1,1) >= "5" .And. aArrayF3[1][6] <> "L"    // Colocado geracao 71 antes do 70
+//		    If lMtaTIP71                                                     // devido fonte ser antigo
+//		        aArray71 := aClone(aArrayF3)                                 // cfe Deco/Vilmar Microsiga 07/10/2005
+//		        Execblock("MTATIP71",.F.,.F.,{,aArray71})
+//		    EndIf
+//	    EndIf
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Monta Registro Tipo 76³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+   		If AModNot(aArrayF3[1][7]) $ "21,22" .And. aArrayF3[1][6] <> "L" .And. Substr(aArrayF3[1][5],1,1) >= "5" //Notas Fiscais de Comunicacao/Telecomunicacao
+			If lSef .And. !Empty(aArrayF3[1][13])
+	   			RecLock("R76",.T.)
+				R76->A76_MODELO	:=	AModNot(aArrayF3[1][7])
+				R76->A76_SERIE	:=	Substr(aArrayF3[1][2],1,1)
+				R76->A76_SUBSER	:=	Substr(aArrayF3[1][2],2,2)
+				R76->A76_NFISC	:=	aArrayF3[1][1]
+				R76->A76_EMISS	:=	aArrayF3[1][10]
+				R76->A76_SITUAC	:=	"S"
+				MsUnlock()
+			Else			
+	   			RecLock("R76",.T.)
+				R76->A76_CNPJ  	:=	cCNPJ
+				R76->A76_IE		:=  cIE
+				R76->A76_MODELO	:=	AModNot(aArrayF3[1][7])
+				R76->A76_SERIE	:=	Substr(aArrayF3[1][2],1,1)
+				R76->A76_SUBSER	:=  Substr(aArrayF3[1][2],2,2)
+				R76->A76_NFISC	:=	aArrayF3[1][1]
+				R76->A76_CFOP	:=	aArrayF3[1][5]
+				R76->A76_TIPREC	:= "1"
+				R76->A76_EMISS	:=	aArrayF3[1][10]
+				R76->A76_UF		:=	cTranspEst
+				R76->A76_VALTOT	:=	aArrayF3[1][17]
+				R76->A76_BRICMS	:=	aArrayF3[1][19]
+				R76->A76_VALICM	:=	aArrayF3[1][16]
+				R76->A76_ISENTA	:=	aArrayF3[1][12]
+				R76->A76_OUTRAS	:=	aArrayF3[1][15]
+				R76->A76_ALQICM	:=	aArrayF3[1][8]
+				R76->A76_SITUAC	:=	IIf(("CANCELAD"$aArrayF3[1][20] .Or.!empty(aArrayF3[1][13])),"S","N")
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³Implementacao do SEF PE                                    ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				R76->A76_CODIGO	:=	aArrayF3[1][3]
+				R76->A76_LOJA	:=	aArrayF3[1][4]
+				MsUnlock()
+			Endif
+   		Endif
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Gravacao do registro 50                                                ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		For nI := 1 To Len(aArrayF3)
+			If (Empty(aArrayF3[nI][7]) .Or.;
+		    	AModNot(aArrayF3[nI][7])$"01/06/21/22"+IIf(lNfProd,"/04","")) .And.;
+		    	aArrayF3[nI][6] <> "L" .And. (Empty(cCfopPR) .Or. !(Alltrim(aArrayF3[nI][5])$cCfopPR))
+
+			    If !((lSef.Or.lConv76) .And. AModNot(aArrayF3[nI][7])$"06/21/22" .And. Left(aArrayF3[nI][5],1)>="5")
+				    If (cChaveAux == aArrayF3[nI][24] .Or. nI==1) .Or. (cCfoAux<>aArrayF3[nI][05]) .Or. (cChaveAux2 <> aArrayF3[nI][08])
+				    	If lSef .And. !Empty(aArrayF3[nI][13])
+				    		If nI==1
+							    RecLock("R50",.T.)
+							    R50->A50_EMISS  :=	aArrayF3[nI][10]
+								R50->A50_MODELO :=  AModNot(aArrayF3[nI][7])
+								R50->A50_SERIE  :=	aArrayF3[nI][2]
+								R50->A50_NFISC  :=	aArrayF3[nI][1]
+								R50->A50_SITUAC :=	"S"
+								MsUnlock()
+							Endif
+					    Else
+						    RecLock("R50",.T.)
+						    R50->A50_CNPJ   := cCNPJ
+						    R50->A50_IE     :=	cIE
+						    R50->A50_EMISS  :=	aArrayF3[nI][10]
+						    R50->A50_UF     :=	aArrayF3[nI][22]
+							R50->A50_MODELO :=  AModNot(aArrayF3[nI][7])
+							R50->A50_SERIE  :=	aArrayF3[nI][2]
+							R50->A50_NFISC  :=	aArrayF3[nI][1]
+							R50->A50_CFOP   :=	aArrayF3[nI][5]
+							R50->A50_EMIT   :=	IIf(aArrayF3[nI][21]=="S".Or.SubStr(aArrayF3[nI][5],1,1)>="5","P","T")
+							R50->A50_ALQICM :=	aArrayF3[nI][8]
+							R50->A50_SITUAC :=	IIf(("CANCELAD"$aArrayF3[nI][20] .Or.!Empty(aArrayF3[nI][13])),"S","N")
+							R50->A50_CLIENT :=	aArrayF3[nI][3]
+							R50->A50_LOJA   :=	aArrayF3[nI][4]
+
+							If lSef .And. !Empty(aArrayF3[nI][20])
+								If nI == 1
+									R50->A50_OBS	:= ++nR50Obs
+									R50->A50_OBSERV	:= aArrayF3[nI][20]									
+								ElseIf nI > 1
+									R50->A50_OBS	:= nR50Obs
+								Endif
+							Endif
+							MsUnlock()
+				    	Endif
+					Endif	
+					RecLock("R50",.F.)
+			    	If !(lSef .And. !Empty(aArrayF3[nI][13]))
+			    		nValTot	:=	0
+				    	If (Left (aArrayF3[nI][5], 1)>="5")
+				    		SF2->(DbSetOrder (1))
+							If (SF2->(DbSeek (xFilial ("SF2")+aArrayF3[nI][1]+aArrayF3[nI][2]+aArrayF3[nI][3]+aArrayF3[nI][4])))
+								If (SF2->F2_TIPO$"/I/P/C/")
+									nValTot	:=	aArrayF3[nI][16]
+								Else
+									nValTot	:=	aArrayF3[nI][17]
+								EndIf
+							Else
+								nValTot	:=	aArrayF3[nI][17]
+							EndIf
+						Else
+				    		SF1->(DbSetOrder (1))
+							If (SF1->(DbSeek (xFilial ("SF1")+aArrayF3[nI][1]+aArrayF3[nI][2]+aArrayF3[nI][3]+aArrayF3[nI][4])))
+								If (SF1->F1_TIPO$"/I/P/C/")
+									nValTot	:=	aArrayF3[nI][16]
+								Else
+									nValTot	:=	aArrayF3[nI][17]
+								EndIf
+							Else
+								nValTot	:=	aArrayF3[nI][17]
+							EndIf
+						EndIf
+						//
+						R50->A50_VALTOT +=	nValTot
+						R50->A50_BSICM  +=	aArrayF3[nI][19]
+						R50->A50_VALICM +=	aArrayF3[nI][16]
+						R50->A50_ISENTO +=	aArrayF3[nI][12]
+						R50->A50_OUTRAS +=	aArrayF3[nI][15]
+						R50->A50_DESPES +=	aArrayF3[nI][23]
+						//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+						//³ Implementacao do SEF PE                                     ³
+						//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+						R50->A50_CODIGO	:= aArrayF3[nI][3]
+						R50->A50_LOJA	:= aArrayF3[nI][4]
+						R50->A50_NOME	:= cRazSoc
+
+						If lSef .And. Left(aArrayF3[nI][5],1)<"5"
+							R50->A50_DTOPER	:= aArrayF3[nI][18]		//F3_EMISSAO
+						Endif
+					Endif
+					MsUnlock()				
+				Endif
+								
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Implementacao do Sintegra MG - Registro Tipo 88A            ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If lSintegMG
+					If !Empty(aArrayF3[nI][Len(aArrayF3[nI])])	//NF de Empenho
+						GravaMG88A(aArrayF3,cCNPJ,cIE,cChaveAux,cCfoAux,cChaveAux2,nI)
+					Endif
+				Endif
+				
+				//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+				//³ Gravacao do registro 51                                                ³
+				//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+				If (Empty(aArrayF3[nI][7]) .Or. AModNot(aArrayF3[nI][7])=="01") .And.;
+						(aArrayF3[nI][25]+aArrayF3[nI][26]+aArrayF3[nI][27])>0 .And. aArrayF3[nI][6] <> "L"
+
+			       If !(lSef .And. !Empty(aArrayF3[nI][13]))
+					   If (nI==1 .Or. cCfoAux<>aArrayF3[nI][05]) .Or. R51->(Eof())
+						  RecLock("R51",.T.)
+						  R51->A51_CNPJ		:=	cCNPJ
+						  R51->A51_IE		:=	cIE
+						  R51->A51_EMISS	:=	aArrayF3[nI][10]
+						  R51->A51_UF		:=	aArrayF3[nI][22]
+						  R51->A51_SERIE	:=	aArrayF3[nI][02]
+						  R51->A51_NFISC	:=	aArrayF3[nI][01]
+						  R51->A51_CFOP		:=	aArrayF3[nI][05]
+					      R51->A51_SITUAC	:= IIf(("CANCELAD"$aArrayF3[nI][20] .Or.!empty(aArrayF3[nI][13])),"S","N")
+					   Endif
+	   				   RecLock("R51",.F.)
+					   R51->A51_VALTOT	+=	aArrayF3[nI][17]
+					   R51->A51_VALIPI	+=	aArrayF3[nI][25]
+					   R51->A51_ISENTA	+=	aArrayF3[nI][26]
+					   R51->A51_OUTRAS	+=	aArrayF3[nI][27]
+					   //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					   //³ Implementacao do SEF PE                                     ³
+					   //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					   R51->A51_BASIPI	+=	aArrayF3[nI][28]				   
+					   MsUnlock()
+					EndIf
+				Endif
+			EndIf
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Gravacao do registro 53                                                ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If 	(aArrayF3[nI][29]+aArrayF3[nI][11]) > 0 .And.;
+				aArrayF3[nI][06] <> "L" .And. !(AModNot(aArrayF3[nI][07])$"07#08#09#10#11")
+		
+				If !(lSef .And. !Empty(aArrayF3[nI][13]))
+					If (nI==1 .Or. cCfoAux<>aArrayF3[nI][05]) .Or. R53->(Eof())
+						RecLock("R53",.T.)
+						R53->A53_CNPJ  	:=	cCNPJ
+						R53->A53_IE		:=  cIE
+						R53->A53_EMISS	:=	aArrayF3[nI][10]
+						R53->A53_UF		:=	aArrayF3[nI][22]
+						R53->A53_MODELO	:=	AModNot(aArrayF3[nI][07])
+						R53->A53_SERIE	:=	aArrayF3[nI][02]
+						R53->A53_NFISC	:=	aArrayF3[nI][01]
+						R53->A53_CFOP	:=	aArrayF3[nI][05]
+						R53->A53_EMIT   :=	IIf(aArrayF3[nI][21]=="S".Or.SubStr(aArrayF3[nI][05],1,1)>="5","P","T")
+						R53->A53_SITUAC :=	IIf(("CANCELAD"$aArrayF3[nI][20] .Or.!empty(aArrayF3[nI][13])),"S","N")
+					Endif
+					RecLock("R53",.F.)
+					R53->A53_BRICMS +=	aArrayF3[nI][29]
+					R53->A53_VALRET +=	aArrayF3[nI][11]
+					R53->A53_DESPES +=	aArrayF3[nI][23]
+					MsUnlock()
+				Endif
+			EndIf	
+			cChaveAux  := aArrayF3[nI][24]
+			cChaveAux2 := aArrayF3[nI][08]
+			cCfoAux    := aArrayF3[nI][05]
+		Next
+		aArrayF3  := {}
+		cChaveAux := ""
+		cChaveAux2:= ""		
+		cCfoAux   := ""
+	Endif
+	dbSelectArea(cAliasSF3)
+EndDo		
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Executa funcoes do arquivo magnetico                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lSef					//SEF de Pernambuco
+	Sef("2",cAliasSF3)	//Executa a SEF no final do While do SF3
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Verifica se a UF do parametro e a mesma da empresa corrente  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ		
+If !Empty(cEstDest) .And. SM0->M0_ESTENT <> cEstDest
+    lCupom := .F.	//Se o estado for diferente do parametro nao pode ser gerado os registros tipo 60
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Monta Registro Tipo 60³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ		
+If Select("SFI")!=0 .And. mv_par05 <> 4 .And. lCupom .And. mv_par11 <> 1
+	dbSelectArea(cAliasSFI)              
+	dbSetOrder(1)
+	#IFDEF TOP
+	    If TcSrvType()<>"AS/400"
+		    cAliasSFI:= "A940aSFI"
+		  	lQuery   := .T.
+			aStruSFI := SFI->(dbStruct())		
+			cQuery := "SELECT * "
+			cQuery += "FROM "
+			cQuery += RetSqlName("SFI") + " SFI ,"
+			cQuery += "WHERE "
+			cQuery += "SFI.FI_FILIAL = '"+xFilial("SFI")+"' AND "
+			cQuery += "SFI.FI_DTMOVTO>='"+Dtos(dDtIni)+"' AND "
+			cQuery += "SFI.FI_DTMOVTO<='"+Dtos(dDtFim)+"' AND "
+			cQuery += "SFI.D_E_L_E_T_ = ' ' "
+			cQuery += "ORDER BY "+SqlOrder(SFI->(IndexKey()))
+			
+			cQuery := ChangeQuery(cQuery)
+		    	
+			dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSFI)
+			
+			For nSFI := 1 To Len(aStruSFI)
+				If aStruSFI[nSFI][2] <> "C" .and.  FieldPos(aStruSFI[nSFI][1]) > 0
+					TcSetField(cAliasSFI,aStruSFI[nSFI][1],aStruSFI[nSFI][2],aStruSFI[nSFI][3],aStruSFI[nSFI][4])
+				EndIf
+			Next nSFI
+		Else
+	#ENDIF	
+			dbSelectArea(cAliasSFI)
+			cIndex := CriaTrab(,.F.)
+			cKey := IndexKey()	
+			cFilter := 'FI_FILIAL == "'+xFilial("SFI")+'" .And. (Dtos(FI_DTMOVTO) >= "'+Dtos(dDtIni)+'" .And. Dtos(FI_DTMOVTO) <= "'+Dtos(dDtFim)+'")'
+			IndRegua(cAliasSFI,cIndex,cKey,,cFilter,"Selecionando Registros...")
+			dbGotop()
+	#IFDEF TOP
+		Endif
+	#ENDIF	
+	dbSelectArea(cAliasSFI)		
+
+	While (cAliasSFI)->(!Eof())
+		If !M60->(MsSeek(DTOS((cAliasSFI)->FI_DTMOVTO)+StrZero(Val((cAliasSFI)->FI_PDV),3)))
+			RecLock("M60",.T.)
+			M60->M60_EMISS  := (cAliasSFI)->FI_DTMOVTO
+			M60->M60_NUMFAB := (cAliasSFI)->FI_SERPDV
+			M60->M60_PDV    := STRZERO(VAL((cAliasSFI)->FI_PDV),3)
+			M60->M60_MODELO := "2D" 
+			M60->M60_NUMINI := (cAliasSFI)->FI_NUMINI
+			M60->M60_NUMFIM := (cAliasSFI)->FI_NUMFIM														
+			M60->M60_REDUCZ := (cAliasSFI)->FI_NUMREDZ
+			M60->M60_CRO   	:= IIF((cAliasSFI)->(FieldPos("FI_CRO"))>0,Val(PADR(SFI->FI_CRO,3)),0)
+			M60->M60_VENDA 	:= (cAliasSFI)->FI_VALCON+(cAliasSFI)->FI_DESC+(cAliasSFI)->FI_CANCEL+IIF((cAliasSFI)->(FieldPos("FI_ISS"))>0,(cAliasSFI)->FI_ISS,0)
+		    M60->M60_GERAL	:= (cAliasSFI)->FI_GTFINAL
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Implementacao SEF PE                             ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			M60->M60_GTINI	:= (cAliasSFI)->FI_GTINI
+			M60->M60_VLIQ	:= (cAliasSFI)->FI_VALCON
+			M60->M60_OBS	:= 0
+			MsUnlock()
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Totaliza cupons fiscais pela Situacao Tributaria             ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			If (cAliasSFI)->FI_SUBTRIB > 0
+				RecLock("A60",.T.)
+				A60->A60_EMISS	:=	(cAliasSFI)->FI_DTMOVTO
+				A60->A60_NUMFAB	:=	(cAliasSFI)->FI_SERPDV
+				A60->A60_SITTRI	:=	"F"
+				A60->A60_VALOR	:=	(cAliasSFI)->FI_SUBTRIB
+				MsUnlock()
+			EndIf
+			If (cAliasSFI)->FI_ISENTO >0
+			  	RecLock("A60",.T.)
+				A60->A60_EMISS	:=	(cAliasSFI)->FI_DTMOVTO
+				A60->A60_NUMFAB	:=	(cAliasSFI)->FI_SERPDV
+				A60->A60_SITTRI	:=	"I"
+				A60->A60_VALOR	:=	(cAliasSFI)->FI_ISENTO
+				MsUnlock()
+			EndIf
+			If (cAliasSFI)->FI_CANCEL >0
+				RecLock("A60",.T.)
+				A60->A60_EMISS	:=	(cAliasSFI)->FI_DTMOVTO
+				A60->A60_NUMFAB	:=	(cAliasSFI)->FI_SERPDV
+				A60->A60_SITTRI	:=	"CANC"
+				A60->A60_VALOR	:=	(cAliasSFI)->FI_CANCEL
+				MsUnlock()
+			EndIf         
+			If (cAliasSFI)->FI_NTRIB >0
+				RecLock("A60",.T.)
+				A60->A60_EMISS	:=	(cAliasSFI)->FI_DTMOVTO
+				A60->A60_NUMFAB	:=	(cAliasSFI)->FI_SERPDV
+				A60->A60_SITTRI	:=	"N"
+				A60->A60_VALOR	:=	(cAliasSFI)->FI_NTRIB
+				MsUnlock()
+			EndIf    
+			If (cAliasSFI)->FI_DESC >0
+				RecLock("A60",.T.)
+				A60->A60_EMISS	:=	(cAliasSFI)->FI_DTMOVTO
+				A60->A60_NUMFAB	:=	(cAliasSFI)->FI_SERPDV
+				A60->A60_SITTRI	:=	"DESC"
+				A60->A60_VALOR	:=	(cAliasSFI)->FI_DESC
+				MsUnlock()
+			EndIf
+			If (cAliasSFI)->(FieldPos("FI_ISS")) > 0 .And. (cAliasSFI)->FI_ISS >0
+				RecLock("A60",.T.)
+				A60->A60_EMISS	:=	(cAliasSFI)->FI_DTMOVTO
+				A60->A60_NUMFAB	:=	(cAliasSFI)->FI_SERPDV
+				A60->A60_SITTRI	:=	"ISS"
+				A60->A60_VALOR	:=	(cAliasSFI)->FI_ISS 
+				MsUnlock()
+			EndIf
+			aStruSFI := (cAliasSFI)->(dbStruct())
+			For nX := 1 To Len(aStruSFI)
+				If "FI_BAS"$(cAliasSFI)->(FieldName(nX))
+					If (cAliasSFI)->(FieldGet(nX))>0
+						RecLock("A60",.T.)
+						A60->A60_EMISS	:=	(cAliasSFI)->FI_DTMOVTO
+						A60->A60_NUMFAB	:=	(cAliasSFI)->FI_SERPDV
+			    		A60->A60_SITTRI	:=	aFISFill(Num2Chr(Val(SubStr((cAliasSFI)->(FieldName(nX)),7)),4),4)
+						A60->A60_VALOR	:=	(cAliasSFI)->(FieldGet(nX))
+						MsUnlock()
+					EndIf
+				EndIf
+			Next nX	
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³ Implementacao SEF PE                             ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			RecLock("M60",.F.)
+			M60->M60_ICMSD	+=	(cAliasSFI)->FI_IMPDEBT
+			MsUnlock ()
+		Endif
+		(cAliasSFI)->(dbSkip())
+	EndDo
+    If lQuery
+	    dbSelectArea(cAliasSFI)
+		dbCloseArea()
+	Else
+       	dbSelectArea("SFI")
+		RetIndex("SFI")
+		Set Filter to
+		Ferase(cIndex+OrdBagExt())
+	Endif	
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Monta Registros Tipo 60D, 60I, 60R ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Select("SFI") <> 0 .And. mv_par11 <> 1
+	dbSelectArea("SF2")	
+	dbSetOrder(1)
+	
+	dbSelectArea("SD2")
+	ProcRegua(LastRec())
+	#IFDEF TOP
+	     If TcSrvType()<>"AS/400"
+		     cAliasSD2 := "a940ASD2"
+			 aStru  := SD2->(dbStruct())
+			 cQuery := "SELECT * "
+			 cQuery += "FROM "+RetSqlName("SD2")+" "
+			 cQuery += "WHERE D2_FILIAL='"+xFilial("SD2")+"' AND "
+			 cQuery += "D2_EMISSAO>='"+Dtos(dDtIni)+"' AND "
+	         cQuery += "D2_EMISSAO<='"+Dtos(dDtFim)+"' AND "	
+			 cQuery	+= "(D2_CF LIKE '5%' OR D2_CF LIKE '6%' OR D2_CF LIKE '7%') AND "
+			 cQuery += "D2_PDV <> ' ' AND "
+			 cQuery += "D_E_L_E_T_ = ' ' "
+			 cQuery += "ORDER BY D2_FILIAL, D2_PDV, D2_EMISSAO"
+	           	
+			 cQuery := ChangeQuery(cQuery)
+			 dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSD2,.T.,.T.)
+	
+			 For nX := 1 To Len(aStru)
+				 If aStru[nX][2] <> "C" .And. FieldPos(aStru[nX][1])<>0
+					 TcSetField(cAliasSD2,aStru[nX][1],aStru[nX][2],aStru[nX][3],aStru[nX][4])
+				 EndIf
+			 Next nX
+			 dbSelectArea(cAliasSD2)
+		 Else
+	#ENDIF	
+		     cIndex2 := CriaTrab(NIL,.F.)
+			 cKey	 := 'D2_FILIAL+D2_PDV+DTOS(D2_EMISSAO)'
+			 cFilter := 'D2_FILIAL == "'+xFilial("SD2")+'" .And. (Dtos(D2_EMISSAO) >= "'+Dtos(dDtIni)+'" .And. Dtos(D2_EMISSAO) <= "'+Dtos(dDtFim)+'")'
+			 cFilter += '.And. Substr(D2_CF,1,1)$"5,6,7" .And. !Empty(D2_PDV)'
+			 IndRegua(cAliasSD2,cIndex2,cKey,,cFilter,)
+			 nIndex := RetIndex("SD2")
+			 #IFNDEF TOP
+			 	dbSetIndex(cIndex2+OrdBagExt())
+			 #ENDIF			 
+			 dbSelectArea("SD2")
+			 dbSetOrder(nIndex+1)
+	
+			 dbSelectArea(cAliasSD2)
+			 dbGotop()			 
+	#IFDEF TOP
+		 EndIf
+	#ENDIF
+
+    nItem := 1
+    nAliqICM := SuperGETMV("MV_ICMPAD")
+    While (cAliasSD2)->(!Eof()) 
+
+    	IncProc(STR0006) //Preparando Base de Dados 2/3
+       					
+       	SF4->(MsSeek(xFilial("SF4")+(cAliasSD2)->D2_TES))
+       	SB1->(MsSeek(xFilial("SB1")+(cAliasSD2)->D2_COD))
+       	
+		If SF2->(MsSeek(xFilial("SF2")+(cAliasSD2)->D2_DOC+(cAliasSD2)->D2_SERIE+(cAliasSD2)->D2_CLIENTE+(cAliasSD2)->D2_LOJA))
+		    If SF2->F2_ECF <> "S"
+		    	(cAliasSD2)->(dbSkip()) 
+		    	Loop
+		    Endif	
+		Endif
+
+		A940LoadPro("S",@cNcm,@cProd)
+	        
+   		cSitTrib := ""
+		If (cAliasSD2)->D2_ICMSRET > 0
+			cSitTrib := "F"
+		Elseif (cAliasSD2)->D2_VALISS+(cAliasSD2)->D2_BASEISS > 0
+			cSitTrib := "ISS"
+		Elseif SF4->F4_BASEICM > 0 .And. SF4->F4_CONSUMO == "S" 
+		    If SF4->F4_LFICM == "I"
+				cSitTrib := "I"
+			ElseIf SF4->F4_LFICM == "O"
+				cSitTrib := "N"
+			Endif	
+		Elseif SF4->F4_BASEICM == 0
+		    If SF4->F4_LFICM == "I"
+				cSitTrib := "I"
+			ElseIf SF4->F4_LFICM == "O"
+				cSitTrib := "N"
+			ElseIf SF4->F4_LFICM == "T"
+				cSitTrib := aFISFill(Num2Chr((cAliasSD2)->D2_PICM,4),4)
+			Endif		
+		ElseIf SF4->F4_BASEICM > 0 .And. SF4->F4_CONSUMO == "N"
+			cSitTrib := aFISFill(Num2Chr((cAliasSD2)->D2_PICM,4),4)
+		EndIf	
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Define tipo de cupom fiscal                                  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If Substr((cAliasSD2)->D2_SERIE,1,2)=="CP"
+			cEspDoc:="2C"
+		Else
+		   	cEspDoc:="2D"
+		EndIf
+        //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Monta Registro Tipo 60D e Tipo 60I³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If mv_par12 == 1
+			If D60->(MsSeek(Dtos((cAliasSD2)->D2_EMISSAO)+cProd))
+				RecLock("D60",.F.)
+				D60->D60_QUANT  += (cAliasSD2)->D2_QUANT
+				D60->D60_VALOR  += (cAliasSD2)->D2_TOTAL 
+				D60->D60_BSICM  += (cAliasSD2)->D2_BASEICM
+				D60->D60_VLICM  += (cAliasSD2)->D2_VALICM 
+				MsUnlock()
+			Else         
+				RecLock("D60",.T.)
+				D60->D60_EMISS  := (cAliasSD2)->D2_EMISSAO
+				If SFI->(MsSeek(xFilial("SFI")+Dtos((cAliasSD2)->D2_EMISSAO)+(cAliasSD2)->D2_PDV))
+					D60->D60_NUMFAB := SFI->FI_SERPDV
+				ElseIf SFI->(MsSeek(xFilial("SFI")+Dtos((cAliasSD2)->D2_EMISSAO)+Subs((cAliasSD2)->D2_PDV,2,3)))
+					D60->D60_NUMFAB := SFI->FI_SERPDV
+				Endif	
+				D60->D60_CODPRO := cProd
+				D60->D60_QUANT  := (cAliasSD2)->D2_QUANT
+				D60->D60_VALOR  := (cAliasSD2)->D2_TOTAL 
+				D60->D60_BSICM  := (cAliasSD2)->D2_BASEICM
+				D60->D60_SITTRI := cSitTrib
+				D60->D60_VLICM  := (cAliasSD2)->D2_VALICM 
+				MsUnlock()
+			Endif
+			If I60->(!MsSeek(Dtos((cAliasSD2)->D2_EMISSAO)+cProd))
+				RecLock("I60",.T.)
+				I60->I60_EMISS  := (cAliasSD2)->D2_EMISSAO
+				If SFI->(MsSeek(xFilial("SFI")+Dtos((cAliasSD2)->D2_EMISSAO)+(cAliasSD2)->D2_PDV))
+					I60->I60_NUMFAB := SFI->FI_SERPDV
+					I60->I60_COO    := SFI->FI_COO
+				ElseIf SFI->(MsSeek(xFilial("SFI")+Dtos((cAliasSD2)->D2_EMISSAO)+Subs((cAliasSD2)->D2_PDV,2,3)))
+					I60->I60_NUMFAB := SFI->FI_SERPDV
+					I60->I60_COO    := SFI->FI_COO
+				Endif	
+				I60->I60_MODELO := cEspDoc
+				I60->I60_ITEM   := StrZero(nItem,3)
+				I60->I60_CODPRO := cProd
+				I60->I60_QUANT  := (cAliasSD2)->D2_QUANT  
+
+				If lConv76
+					I60->I60_VALOR  := (cAliasSD2)->D2_TOTAL
+				Else
+					I60->I60_VLUNI  := (cAliasSD2)->D2_PRCVEN 
+				Endif
+				
+				I60->I60_BSICM  := (cAliasSD2)->D2_BASEICM
+				I60->I60_SITTRI := cSitTrib
+				I60->I60_VLICM  := (cAliasSD2)->D2_VALICM 
+				MsUnlock()
+				nItem ++
+			Else
+			    nItem := 1
+			Endif
+	    Endif
+	    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Monta Registro Tipo 60R³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		If mv_par16==1
+			cEmiss := ""
+			cEmiss := Substr(DTOS((cAliasSD2)->D2_EMISSAO),5,2)+Substr(DTOS((cAliasSD2)->D2_EMISSAO),1,4)
+			If R60->(MsSeek(cEmiss+cProd+cSitTrib))
+			    RecLock("R60",.F.)
+				R60->R60_QUANT	+=	(cAliasSD2)->D2_QUANT
+
+				If lConv76
+					R60->R60_VALOR	+=	(cAliasSD2)->D2_TOTAL
+				Else
+					R60->R60_VALOR	+=	(cAliasSD2)->D2_PRCVEN
+				Endif
+
+				R60->R60_BSICM	+=	(cAliasSD2)->D2_BASEICM
+				MsUnlock()
+			Else
+				RecLock("R60",.T.)
+				R60->R60_MESANO	:=	cEmiss
+				R60->R60_CODPRO	:=	cProd
+				R60->R60_QUANT	:=	(cAliasSD2)->D2_QUANT	
+				
+				If lConv76
+					R60->R60_VALOR	:=	(cAliasSD2)->D2_TOTAL
+				Else
+					R60->R60_VALOR	:=	(cAliasSD2)->D2_PRCVEN				
+				Endif
+								
+				R60->R60_BSICM	:=	(cAliasSD2)->D2_BASEICM
+				R60->R60_SITTRI	:=	cSitTrib
+				MsUnlock()
+			Endif
+		Endif
+		If mv_par12 == 1 .Or. mv_par16 == 1
+			//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³% de Reducao do ICMS nas Operacoes Internas³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			nRedBase := 0
+	    	If SF4->F4_BASEICM >=100
+				nRedBase :=0
+			ElseIf SF4->F4_BASEICM > 0
+			    nRedBase :=	(100-SF4->F4_BASEICM)
+			Else
+			    nRedBase :=	SF4->F4_BASEICM
+		    Endif
+   		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+			//³Situacao Tributaria ³
+			//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+			cSitTrib := ""
+			If Empty((cAliasSD2)->D2_CLASFIS)
+			    If SF4->(Fieldpos("F4_SITTRIB"))>0
+				    cSitTrib := aFISFill(Num2Chr(Val(Substr(SB1->B1_ORIGEM,1,1)+SF4->F4_SITTRIB),3,0),3)
+				Else
+				    If Len(alltrim(SB1->B1_ORIGEM)) ==2
+					    cSitTrib := SB1->B1_ORIGEM+"0"
+				    Else	
+				        cSitTrib :=	aFISFill(Num2Chr(Val(Substr(SB1->B1_ORIGEM,1,1)+Substr(SB1->B1_CLASFIS,1,1)+"0"),3,0),3)
+				    EndIf
+				EndIf	
+			Else
+			    cSitTrib :=	aFISFill(Num2Chr(Val((cAliasSD2)->D2_CLASFIS),3,0),3)
+		    EndIf
+			cSeek := (dtos(dDtIni)+dtos(dDtFim)+PADR(cProd,14)+PADR(cNcm,8)+SB1->B1_UM+space(4))
+			If !(R75->(dbSeek(cSeek)))
+				RecLock("R75",.T.)
+				R75->A75_DTAINI	:= dDTIni
+				R75->A75_DTAFIM	:= dDTFim
+				R75->A75_PROD  	:= cProd
+   			R75->A75_CODNCM	:= cNcm
+				R75->A75_DESCR	:= SB1->B1_DESC
+				R75->A75_UM    	:= SB1->B1_UM
+				R75->A75_ALQIPI	:= SB1->B1_IPI
+				R75->A75_ALQICM	:= nAliqICM
+	
+				If lSef
+					If (cAliasSD2)->D2_ICMSRET > 0		//Substituicao Tributaria
+						R75->A75_BRICMS :=	NoRound((cAliasSD2)->D2_BRICMS/(cAliasSD2)->D2_QUANT)
+					Else
+						R75->A75_BRICMS :=	0
+					Endif
+				Else
+					R75->A75_BRICMS	:= (cAliasSD2)->D2_BRICMS
+				Endif								
+	
+				R75->A75_SITTRI	:= cSitTrib
+				R75->A75_REDBSE	:= nRedBase		
+				MsUnlock()
+			Endif	
+	   	Endif
+	   	(cAliasSD2)->(dbSkip())
+	EndDo
+	If lQuery
+    	dbSelectArea(cAliasSD2)
+		dbCloseArea()
+    Else
+       	dbSelectArea("SD2")
+		RetIndex("SD2")
+		Set Filter to
+		Ferase(cIndex2+OrdBagExt())
+    EndIf 
+EndIf
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Grava Registro 75 de acordo com o registro 74 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If mv_par10 == 1
+	cNcm  := ""
+	cProd := ""
+	cSitTrib := ""
+	dbSelectArea("R74")
+	dbGoTop()
+	While R74->(!Eof())
+		SB1->(MsSeek(xFilial("SB1")+R74->CODIGO))
+		A940LoadPro("I",@cNcm,@cProd)
+   		
+   		If Len(Alltrim(SB1->B1_COD))>14
+            cSeek :=(dtos(dDtIni)+dtos(dDtFim)+PADR(cProd,14)+PADR(cNcm,8)+SB1->B1_UM+space(4))
+            RecLock("R74",.F.)
+            R74->CODIGO := cProd
+            MsUnlock()
+	    Else						
+            cSeek :=(dtos(dDtIni)+dtos(dDtFim)+Substr(SB1->B1_COD,1,14)+PADR(cNcm,8)+SB1->B1_UM+space(4))
+   		EndIf						
+   		
+        If Len(Alltrim(SB1->B1_ORIGEM)) ==2
+			cSitTrib := SB1->B1_ORIGEM+"0"
+		Else	
+		    cSitTrib :=	aFISFill(Num2Chr(Val(Substr(SB1->B1_ORIGEM,1,1)+Substr(SB1->B1_CLASFIS,1,1)+"0"),3,0),3)
+        EndIf
+        If R75->(!dbSeek(cSeek))
+			RecLock("R75",.T.)
+			R75->A75_DTAINI	:= dDTIni
+			R75->A75_DTAFIM	:= dDTFim
+			R75->A75_PROD  	:= cProd
+       	R75->A75_CODNCM	:= cNcm
+			R75->A75_DESCR	:= SB1->B1_DESC
+			R75->A75_UM    	:= SB1->B1_UM
+			R75->A75_ALQIPI	:= SB1->B1_IPI
+			R75->A75_ALQICM	:= 0
+			R75->A75_BRICMS	:= 0
+			R75->A75_SITTRI	:= cSitTrib
+			R75->A75_REDBSE	:= 0	
+			MsUnlock()        
+        Endif
+        R74->(dbSkip())
+    EndDo    
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Monta Registro Tipo 55³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If mv_par05 <> 4
+	dbSelectArea("SF6")
+	dbSetOrder(2)
+	#IFDEF TOP
+	    If TcSrvType()<>"AS/400"
+		    cAliasSF6 := "a940ASF6"
+			aStru  := SF6->(dbStruct())
+			cQuery := "SELECT * "
+			cQuery += "FROM "+RetSqlName("SF6")+" "
+			cQuery += "WHERE F6_FILIAL='"+xFilial("SF6")+"' AND "
+			cQuery += "F6_DTARREC>='"+Dtos(dDtIni)+"' AND "
+			cQuery += "F6_DTARREC<='"+Dtos(dDtFim)+"' AND "	
+			If !Empty(cEstDest)
+				If lListEst
+					cQuery += "F6_EST ='"+ cEstDest+"' AND "
+				Else
+					cQuery += "F6_EST <>'"+ cEstDest+"' AND "
+				EndIf
+			EndIf			
+			cQuery += "D_E_L_E_T_ = ' ' "
+			cQuery += "ORDER BY "+SqlOrder(SF6->(IndexKey()))
+		
+			cQuery := ChangeQuery(cQuery)
+			dbUseArea(.T.,"TOPCONN",TcGenQry(,,cQuery),cAliasSF6,.T.,.T.)
+		
+			For nX := 1 To len(aStru)
+				If aStru[nX][2] <> "C" .And. FieldPos(aStru[nX][1])<>0
+					TcSetField(cAliasSF6,aStru[nX][1],aStru[nX][2],aStru[nX][3],aStru[nX][4])
+				EndIf
+			Next nX
+			dbSelectArea(cAliasSF6)
+		Else
+	#ENDIf
+	    	(cAliasSF6)->( MsSeek(xFilial("SF6")))
+	#IFDEF TOP
+		EndIf
+	#ENDIF
+
+	lTipoImp := Iif(SF6->(Fieldpos("F6_TIPOIMP"))>0,.T.,.F.)
+	ProcRegua(LastRec())
+	While (cAliasSF6)->(!Eof()) .And. xFilial("SF6")== (cAliasSF6)->F6_FILIAL
+		IncProc(STR0005) //"Selecionando Registros..."
+		#IFNDEF TOP
+			If (cAliasSF6)->F6_DTARREC < dDtIni .Or. Iif(lListEst,((cAliasSF6)->F6_EST <> cEstDest .And. !Empty(cEstDest)),((cAliasSF6)->F6_EST==cEstDest .And. !Empty(cEstDest)))
+				(cAliasSF6)->(dbSkip())
+				Loop
+			EndIf
+			If (cAliasSF6)->F6_DTARREC > dDtFim
+				(cAliasSF6)->(dbSkip())
+				Loop
+			EndIf
+	    #ENDIf
+	    If lTipoImp
+	    	If !(cAliasSF6)->F6_TIPOIMP$"3# "
+				(cAliasSF6)->(dbSkip())
+				Loop    	
+			EndIf
+		EndIf	
+		RecLock("R55",.T.)	
+		R55->A55_CNPJ	:=	SM0->M0_CGC
+        If AllTrim((cAliasSF6)->F6_INSC)<>AllTrim(SM0->M0_INSC)
+		   R55->A55_IE		:=	ARETDIG((cAliasSF6)->F6_INSC,.t.,(cAliasSF6)->F6_EST)
+		Else
+		   R55->A55_IE		:=	ARETDIG("",.t.,(cAliasSF6)->F6_EST)
+		Endif   
+		R55->A55_DATPAG	:=	(cAliasSF6)->F6_DTARREC
+		R55->A55_UFSUBS	:=	GETMV("MV_ESTADO")
+		R55->A55_UFFAV	:=	(cAliasSF6)->F6_EST
+		R55->A55_BANCO	:=	StrZero(val((cAliasSF6)->F6_BANCO),3)
+		R55->A55_AGENC	:=	Strzero(val(Left((cAliasSF6)->F6_AGENCIA,4)),4)
+		R55->A55_NUMERO	:=	Strzero(val((cAliasSF6)->F6_NUMERO),20)
+		R55->A55_VALOR	:=	(cAliasSF6)->F6_VALOR
+		R55->A55_VENCTO	:=	(cAliasSF6)->F6_DTVENC
+		R55->A55_CONVEN	:=	(cAliasSF6)->F6_NUMCONV
+	
+		SX3->(DbSetOrder(2))
+		If SF6->(FieldPos("F6_ANOREF"))>0 .And. SX3->(MsSeek("F6_ANOREF")) .And. X3USO(SX3->X3_USADO)
+			R55->A55_MESANO	:= StrZero((cAliasSF6)->F6_MESREF,2)+StrZero((cAliasSF6)->F6_ANOREF,4)
+		Else
+			R55->A55_MESANO	:= StrZero((cAliasSF6)->F6_MESREF,2)+StrZero(Year(dDatabase),4)
+		EndIf
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Implementacao do SEF PE                                                 ³
+		//³Registro 88/78 - Detalhamento de Obrigacoes a Recolher                  ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		R55->X78_VLRDAE	:= (cAliasSF6)->F6_VALOR
+		R55->X78_RECDAE	:= (cAliasSF6)->F6_CODREC
+		R55->X78_PERFIS	:= Substr(R55->A55_MESANO,3,4)+Substr(R55->A55_MESANO,1,2)
+		R55->X78_DTVECT	:= (cAliasSF6)->F6_DTVENC
+		MsUnLock()
+
+		SX3->(DbSetOrder(1))
+		MsUnlock()
+	
+		(cAliasSF6)->( dbSkip())
+		IncProc(STR0036) //"Preparando Base de Dados - 3/3"
+	EndDo                      
+    dbSelectArea(cAliasSF6)
+	dbCloseArea()
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Executa funcoes do arquivo magnetico                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If lSef	  				//SEF de Pernambuco
+	Sef("3",cAliasSF3)	//Executa a SEF no final do processamento da funcao Sintegra()
+Endif
+
+If lQuery
+	dbSelectArea(cAliasSF3)
+	dbCloseArea()
+Else
+  	dbSelectArea("SF3")
+	RetIndex("SF3")
+	Set Filter to
+	Ferase(cIndex+OrdBagExt())
+EndIf
+
+If !lFirst
+	dbSelectArea("SD2")
+	RetIndex("SD2")
+	Set Filter to
+	Ferase(cIndex2+OrdBagExt())
+Endif
+
+RestArea(aAreaSint)
+
+Return({ {cArq050,"R50"},{cArq051,"R51"},{cArq053,"R53"},{cArq054,"R54"},{cArq055,"R55"},;
+         {cArq060M,"M60"},{cArq060A,"A60"},{cArq060D,"D60"},{cArq060I,"I60"},{cArq060R,"R60"},;
+         {cArq061,"R61"},{cArq061I,"I61"},{cArq070,"R70"},{cArq071,"R71"},IIF(mv_par10==2,{cArq074,"R74"},{"",""}),{cArq075,"R75"},{cArq076,"R76"},{cArq077,"R77"},{cArq088,"R88"},{cArq090,"R90"}, {cArq056,"R56"} })
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³A940CNPJ  ³ Autor ³Nereu Humberto Jr      ³ Data ³12.12.2002³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Valida CNPJ                                                 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ExpC1: CNPJ valido                                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpC1: CNPJ                                                 ³±±
+±±³          ³ExpC2: Tipo do Cliente/Fornecedor                           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function A940CNPJ(cCGC,cTipo)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Zera o campo de CGC para pessoas nao obrigadas a inscricao.  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ( cTipo=="X")
+	cCGC:=""
+EndIf
+
+Return(PadR(cCGC,14))
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³A940IE    ³ Autor ³Nereu Humberto Jr      ³ Data ³12.12.2002³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Valida Inscricao Estadual                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ExpC1: IE valida                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpC1: IE                                                   ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function A940IE(cInsc)
+
+Local cRet	:=	""
+Local nI	:=	1
+
+For nI:=1 To Len(cInsc)
+	If Isdigit(Subs(cInsc,nI,1)) .Or. IsAlpha(Subs(cInsc,nI,1))
+		cRet+=Subs(cInsc,nI,1)
+	Endif
+Next
+If Empty(cRet)
+	cRet:="ISENTO"
+Endif
+Return(cRet)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³A94LoadPro³ Autor ³Nereu Humberto Jr      ³ Data ³26.12.2002³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Define codigo do Produto e do NCM                           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ExpC1: .T.                                                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³ExpC1: cTipo "E" - SD1 /  "S" - SD2                         ³±±
+±±³          ³ExpC2: cNcm                                                 ³±±
+±±³          ³ExpC3: cProd                                                ³±±
+±±³          ³ExpC4: cTec - SD1->D1_TEC                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function A940LoadPro(cTipo,cNcm,cProd,cTec)
+
+If Len(alltrim(SB1->B1_COD))>14
+	cNcm  :=STRTRAN(ALLTRIM(SB1->B1_POSIPI),".","")
+	cProd :=STRTRAN(ALLTRIM(SB1->B1_POSIPI),".","")
+Else
+	cNcm  :=STRTRAN(ALLTRIM(SB1->B1_POSIPI),".","")
+	cProd :=SB1->B1_COD
+EndIf
+If cTipo == "E" .And. cTec <> NIL
+	If!Empty(cTec)
+		cNcm  :=STRTRAN(ALLTRIM(cTec),".","")
+		cProd :=STRTRAN(ALLTRIM(cTec),".","")
+	Endif	
+EndIf
+
+If Existblock("A940PRD")
+    cProd := Execblock("A940PRD",.F.,.F.,{cTipo,cNcm,cProd,cTec}) 
+EndIf
+
+Return(.T.)
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºFuncao    ³A940AREG90ºAutor  ³ Nereu Humberto Jr. º Data ³  02/01/03   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Monta registro totalizador tipo 90                         º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ MATA940                                                    º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function A940REG90()
+
+Local 	cRegistro   :=	""
+Private lGravou		:=	.F.
+
+nReg50	:=	IIF(Ascan(_aTotal[98],"R50")>0,R50->(LastRec()),0)
+nReg51	:=	IIF(Ascan(_aTotal[98],"R51")>0,R51->(LastRec()),0)
+nReg53	:=	IIF(Ascan(_aTotal[98],"R53")>0,R53->(LastRec()),0)
+nReg54	:=	IIF(Ascan(_aTotal[98],"R54")>0,R54->(LastRec()),0)
+nReg55	:=	IIF(Ascan(_aTotal[98],"R55")>0,R55->(LastRec()),0)
+nReg60	:=	IIF(Ascan(_aTotal[98],"M60")>0,M60->(LastRec()),0)
+nReg60	+=	IIF(Ascan(_aTotal[98],"A60")>0,A60->(LastRec()),0)
+nReg60	+=	IIF(Ascan(_aTotal[98],"D60")>0,D60->(LastRec()),0)
+nReg60	+=	IIF(Ascan(_aTotal[98],"I60")>0,I60->(LastRec()),0)
+nReg60	+=	IIF(Ascan(_aTotal[98],"R60")>0,R60->(LastRec()),0)
+nReg61	:=	IIF(Ascan(_aTotal[98],"R61")>0,R61->(LastRec()),0)
+nReg61	+=	IIF(Ascan(_aTotal[98],"I61")>0,I61->(LastRec()),0)
+nReg70	:=	IIF(Ascan(_aTotal[98],"R70")>0,R70->(LastRec()),0)
+nReg71	:=	IIF(Ascan(_aTotal[98],"R71")>0,R71->(LastRec()),0)
+nReg74	:=	Iif(mv_par05 == 4,0,IiF(Select("R74")>0,R74->(LastRec()),0))
+nReg75	:=	IIF(Ascan(_aTotal[98],"R75")>0,R75->(LastRec()),0)
+nReg76	:=	IIF(Ascan(_aTotal[98],"R76")>0,R76->(LastRec()),0)
+nReg77	:=	IIF(Ascan(_aTotal[98],"R77")>0,R77->(LastRec()),0)
+nReg88	:=	IIF(Ascan(_aTotal[98],"R88")>0,R88->(LastRec()),0)
+nReg56	:=	IIF(Ascan(_aTotal[98],"R56")>0,R56->(LastRec()),0)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Implementacao do SEF PE                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nReg88	+=	IIF(Ascan(_aTotal[98],"X10")>0,X10->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X15")>0,X15->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X25")>0,X25->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X30")>0,X30->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X35")>0,X35->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X60")>0,X60->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X61")>0,X61->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X74")>0,X74->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X77")>0,X77->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X78")>0,R55->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X80")>0,X80->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X82")>0,X82->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X85")>0,X85->(LastRec()),0)
+nReg88	+=	IIF(Ascan(_aTotal[98],"X89")>0,X89->(LastRec()),0)
+nReg90	:=	1
+
+cRegistro	:=	"90"												//01.Tipo
+cRegistro	+=	aFISFill(Num2Chr(Val(SM0->M0_CGC),14,0),14)   //02.CGC
+cRegistro	+=	aFISFill(ARETDIG(SM0->M0_INSC,.t.,SM0->M0_ESTENT),14) //03.Inscr. Estadual
+
+If nReg50>0
+	cRegistro	+=	"50"
+	cRegistro	+=	aFISFill(StrZero(nReg50,8),8)	// Total de Registros "50"
+EndIf
+
+If nReg51>0
+	cRegistro	+=	"51"
+	cRegistro	+=	aFISFill(StrZero(nReg51,8),8)	// Total de Registros "51"
+EndIf
+
+If nReg53>0
+	cRegistro	+=	"53"
+	cRegistro	+=	aFISFill(StrZero(nReg53,8),8)	// Total de Registros "53"
+EndIf
+
+If nReg54>0
+	cRegistro	+=	"54"
+	cRegistro	+=	aFISFill(StrZero(nReg54,8),8)	// Total de Registros "54"
+EndIf
+
+If nReg55>0
+	cRegistro	+=	"55"
+	cRegistro	+=	aFISFill(StrZero(nReg55,8),8)	// Total de Registros "55"
+EndIf
+
+If nReg56>0
+	cRegistro	+=	"56"
+	cRegistro	+=	aFISFill(StrZero(nReg56,8),8)	// Total de Registros "56"
+EndIf
+If nReg60>0
+	cRegistro	+=	"60"
+	cRegistro	+=	aFISFill(StrZero(nReg60,8),8)	// Total de Registros "60"
+EndIf
+
+If nReg61>0
+	cRegistro	+=	"61"
+	cRegistro	+=	aFISFill(StrZero(nReg61,8),8)	// Total de Registros "61"
+EndIf
+
+If nReg70>0
+	cRegistro	+=	"70"
+	cRegistro	+=	aFISFill(StrZero(nReg70,8),8)	// Total de Registros "70"
+EndIf
+
+// Imprime Reg. Tipo 90
+If Len(cRegistro)>=110
+	A940IncReg90(@cRegistro,@nReg90,(nReg71+nReg74+nReg75+nReg76+nReg77+nReg88))
+EndIf
+
+If nReg71>0
+	cRegistro	+=	"71"
+	cRegistro	+=	aFISFill(StrZero(nReg71,8),8)	// Total de Registros "71"
+EndIf
+
+// Imprime Reg. Tipo 90
+If Len(cRegistro)>=110.And.!lGravou
+	A940IncReg90(@cRegistro,@nReg90,(nReg74+nReg75+nReg76+nReg77+nReg88))
+EndIf
+
+If nReg74>0
+	cRegistro	+=	"74"
+	cRegistro	+=	aFISFill(StrZero(nReg74,8),8)	// Total de Registros "74"
+EndIf
+
+// Imprime Reg. Tipo 90
+If Len(cRegistro)>=110.And.!lGravou
+	A940IncReg90(@cRegistro,@nReg90,(nReg75+nReg76+nReg77+nReg88))
+EndIf
+
+If nReg75>0
+	cRegistro	+=	"75"
+	cRegistro	+=	aFISFill(StrZero(nReg75,8),8)	// Total de Registros "75"
+EndIf
+
+// Imprime Reg. Tipo 90
+If Len(cRegistro)>=110.And.!lGravou
+	A940IncReg90(@cRegistro,@nReg90,(nReg76+nReg77+nReg88))
+EndIf
+
+If nReg76>0
+	cRegistro	+=	"76"
+	cRegistro	+=	aFISFill(StrZero(nReg76,8),8)	// Total de Registros "76"
+EndIf
+
+// Imprime Reg. Tipo 90
+If Len(cRegistro)>=110.And.!lGravou
+	A940IncReg90(@cRegistro,@nReg90,(nReg77+nReg88))
+EndIf
+
+If nReg77>0
+	cRegistro	+=	"77"
+	cRegistro	+=	aFISFill(StrZero(nReg77,8),8)	// Total de Registros "77"
+EndIf
+
+// Imprime Reg. Tipo 90
+If Len(cRegistro)>=110.And.!lGravou
+	A940IncReg90(@cRegistro,@nReg90,nReg88)
+EndIf
+
+If nReg88 > 0
+	cRegistro += "88"
+	cRegistro	+=	aFISFill(StrZero(nReg88,8),8)	// Total de Registros "88"
+EndIf	
+
+// Imprime Reg. Tipo 90
+If (Len(cRegistro)>=110.And.!lGravou).Or.!lGravou
+	A940IncReg90(@cRegistro,@nReg90,0)
+EndIf
+
+Return()
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºFuncao ³A940IncReg90 ºAutor  ³ Nereu Humberto Jr. º Data ³  02/01/03   º±±
+±±ÌÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.  ³ Grava registros tipo 90                                       º±±
+±±º       ³                                                               º±±
+±±ÌÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso    ³ MATA940                                                       º±±
+±±ÈÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function A940IncReg90(cRegistro,nReg90,nResto)
+
+If nResto<=0.And.(125-Len(cRegistro))>8
+	// Nao possui mais registros a imprimir
+	lGravou	:=	.T.
+	cRegistro	+=	"99"
+    cRegistro	+=	AFISFill(StrZero(2+nReg90+nReg50+nReg51+nReg53+nReg54+nReg55+nReg60+nReg61+nReg70+nReg71+nReg74+nReg75+nReg76+nReg77+nReg88+nReg56,8),8)
+	cRegistro	+=	aFISFill(,(125-Len(cRegistro)))	// Brancos ate registro final	
+	cRegistro	+=	Alltrim(Str(nReg90)) 				// Nro registro tipo 90	
+	RecLock("R90",.T.)
+	R90->A90_REGS := cRegistro
+	MsUnlock()
+EndIf
+
+If (125-Len(cRegistro))<=16	// VerIfica se imprime mais um registro
+	If !lGravou
+		nReg90++				// Incrementa reg. tipo 90
+		cRegistro	+=	space(125-Len(cRegistro))
+		cRegistro	+=	Alltrim(Str(nReg90))				// Nro registro tipo 90
+		
+		RecLock("R90",.T.)
+		R90->A90_REGS := cRegistro
+		MsUnlock()
+		
+		If nResto<=0.And.(125-Len(cRegistro))<9
+			// Nao possui mais registros a imprimir
+			lGravou:=.T.
+			cRegistro	:=	"90"	// Reinicializa segundo registro 90
+			cRegistro	+=	aFISFill(Num2Chr(Val(SM0->M0_CGC),14,0),14)
+			cRegistro	+=	aFISFill(ARETDIG(SM0->M0_INSC,.T.,SM0->M0_ESTENT),14)
+			cRegistro	+=	"99"
+			cRegistro	+=	AFISFill(StrZero(2+nReg90+nReg50+nReg51+nReg53+nReg54+nReg55+nReg60+nReg61+nReg70+nReg71+nReg74+nReg75+nReg76+nReg77+nReg88+nReg56,8),8)
+			cRegistro	+=	aFISFill(,(125-Len(cRegistro)))	// Brancos ate registro final
+			cRegistro	+=	Alltrim(Str(nReg90))  				// Nro registro tipo 90
+	    
+	    	RecLock("R90",.T.)
+			R90->A90_REGS := cRegistro
+			MsUnlock()
+		Else
+			cRegistro	:=	"90"	// Reinicializa segundo registro 90
+			cRegistro	+=	aFISFill(Num2Chr(Val(SM0->M0_CGC),14,0),14)
+			cRegistro	+=	aFISFill(ARETDIG(SM0->M0_INSC,.T.,SM0->M0_ESTENT),14)
+		EndIf
+	EndIf
+EndIf
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³a940Relat   ³ Autor ³ Nereu Humberto Jr.  ³ Data ³ 02/01/03 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Imprime relatorio de conferencia                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function a940Relat(nParam)
+Local cTela:=""
+
+Titulo	:=	STR0007 //"Listagem de acompanhamento"
+cDesc1	:=	STR0008 //"Listagem de acompanhamento do arquivo pr‚-formatado."
+cDesc2	:=	""
+cDesc3	:=	""
+Tamanho	:=	"P"
+Limite	:=	80
+nTipo	:=	18
+cabec1	:=	''
+cabec2	:=	''
+cabec3	:=	''
+cbCont	:=	0
+cbtxt	:=	Space(10)
+m_pag	:=	1
+cPerg   :=	"MTA940"
+cString :=	"SF3"
+lEnd	:=	.f.
+Nomeprog:=	"MATA940"
+wnrel	:=	Nomeprog
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia controle para a funcao SETPRINT                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nLastKey:=0
+
+If nParam == 1
+	wnrel	:=	SetPrint(cString,wnrel,,Titulo,cDesc1,cDesc2,cDesc3,.F.,"",.F.)
+	If nLastKey==27
+		Return
+	EndIf
+	SetDefault(aReturn,cString)
+Endif
+
+If nLastKey==27
+	Return
+EndIf
+
+If nParam <> 1
+	RptStatus({|lEnd|A940Impr(@lEnd,wnRel,cString,Tamanho)},titulo)
+Endif	
+Return
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³a940Impr     ³Autor ³ Nereu Humberto Jr.  ³ Data ³ 02/01/03 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Chamada para impressao da listagem                          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function a940Impr(lEnd,wnRel,cString,Tamanho)
+
+Local nLin    := 0
+Local nTotReg := 0
+Local cTipo   := ""
+Local nReg50  := IIF(Ascan(_aTotal[98],"R50")>0,R50->(LastRec()),0)
+Local nReg51  := IIF(Ascan(_aTotal[98],"R51")>0,R51->(LastRec()),0)
+Local nReg53  := IIF(Ascan(_aTotal[98],"R53")>0,R53->(LastRec()),0)
+Local nReg54  := IIF(Ascan(_aTotal[98],"R54")>0,R54->(LastRec()),0)
+Local nReg55  := IIF(Ascan(_aTotal[98],"R55")>0,R55->(LastRec()),0)
+Local nReg56  := IIF(Ascan(_aTotal[98],"R56")>0,R56->(LastRec()),0)
+Local nReg61  := IIF(Ascan(_aTotal[98],"R61")>0,R61->(LastRec()),0)
+Local nReg70  := IIF(Ascan(_aTotal[98],"R70")>0,R70->(LastRec()),0)
+Local nReg71  := IIF(Ascan(_aTotal[98],"R71")>0,R71->(LastRec()),0)
+Local nReg74  := Iif(mv_par05 == 4,0,IiF(Select("R74")>0,R74->(LastRec()),0))
+Local nReg75  := IIF(Ascan(_aTotal[98],"R75")>0,R75->(LastRec()),0)
+Local nReg76  := IIF(Ascan(_aTotal[98],"R76")>0,R76->(LastRec()),0)
+Local nReg77  := IIF(Ascan(_aTotal[98],"R77")>0,R77->(LastRec()),0)
+Local nReg88  := IIF(Ascan(_aTotal[98],"R88")>0,R88->(LastRec()),0)
+Local nReg90  := R90->(LastRec())
+Local nReg60  := IIF(Ascan(_aTotal[98],"M60")>0,M60->(LastRec()),0)
+nReg60 += IIF(Ascan(_aTotal[98],"A60")>0,A60->(LastRec()),0)
+nReg60 += IIF(Ascan(_aTotal[98],"D60")>0,D60->(LastRec()),0)
+nReg60 += IIF(Ascan(_aTotal[98],"I60")>0,I60->(LastRec()),0)
+nReg60 += IIF(Ascan(_aTotal[98],"R60")>0,R60->(LastRec()),0)
+nReg61 += IIF(Ascan(_aTotal[98],"I61")>0,I61->(LastRec()),0)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Implementacao do SEF PE                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nReg88 += IIF(Ascan(_aTotal[98],"X10")>0,X10->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X15")>0,X15->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X25")>0,X25->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X30")>0,X30->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X35")>0,X35->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X60")>0,X60->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X61")>0,X61->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X74")>0,X74->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X77")>0,X77->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X78")>0,R55->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X80")>0,X80->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X82")>0,X82->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X85")>0,X85->(LastRec()),0)
+nReg88 += IIF(Ascan(_aTotal[98],"X89")>0,X89->(LastRec()),0)
+
+cabec(titulo,cabec1,cabec2,nomeprog,tamanho,nTipo)
+nLin	:=	Prow()+1
+@ nLin,00 PSAY Replic("*",80)
+nLin	+=2
+@ ++nLin,15 PSAY STR0011+Transform(SM0->M0_CGC,"@R 99.999.999/9999-99") //"C.G.C.(MF)........: "
+@ ++nLin,15 PSAY STR0012+SM0->M0_INSC //"Inscricao Estadual: "
+@ ++nLin,15 PSAY STR0013+SM0->M0_NOMECOM //"Razao Social......: "
+@ ++nLin,15 PSAY STR0014+SM0->M0_ENDENT //"Endereco..........: "
+@ ++nLin,15 PSAY "                    "+SM0->M0_CIDENT+" - "+SM0->M0_ESTENT+" - CEP: "+Transform(SM0->M0_CEPENT,"@R 99999-999")
+nLin	+=2
+@++nLin,15 PSAY STR0015+AllTrim(mv_par09)   //"Equipamento.......: " 
+@++nLin,15 PSAY STR0016+Iif (MV_PAR19==1, STR0041, STR0042)  //"Meio Magnetico....: FITA" 
+@++nLin,15 PSAY STR0017+MV_PAR20  //"Fator de Bloco....: 1/1" 
+nLin	+=2
+@ ++nLin,15 PSAY STR0018+DTOC(mv_par01)+" a "+DTOC(mv_par02) //"Periodo abrangido.: "
+nLin++
+@ ++nLin,15 PSAY STR0019+Str(1,8)	   +STR0020 //"Tipo 10...........: "###" Registro"
+@ ++nLin,15 PSAY STR0021+Str(1,8)	   +STR0020 //"Tipo 11...........: "###" Registro"
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Imprime somente itens existentes no arq. magnetico           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nReg50>0
+	@ ++nLin,15 PSAY STR0022+Str(nReg50,8)	+STR0023 //"Tipo 50...........: "###" Registro(s)"
+EndIf
+If nReg51>0
+	@ ++nLin,15 PSAY STR0024+Str(nReg51,8)	+STR0023 //"Tipo 51...........: "###" Registro(s)"
+EndIf
+If nReg53>0
+	@ ++nLin,15 PSAY STR0025+Str(nReg53,8)	+STR0023 //"Tipo 53...........: "###" Registro(s)"
+EndIf
+If nReg54>0
+	@ ++nLin,15 PSAY STR0026+Str(nReg54,8)	+STR0023 //"Tipo 54...........: "###" Registro(s)"
+EndIf
+If nReg55>0
+	@ ++nLin,15 PSAY STR0027+Str(nReg55,8)	+STR0023 //"Tipo 55...........: "###" Registro(s)"
+EndIf
+If nReg56>0
+	@ ++nLin,15 PSAY STR0043+Str(nReg56,8)	+STR0023 //"Tipo 55...........: "###" Registro(s)"
+EndIf
+If nReg60>0
+	@ ++nLin,15 PSAY STR0028+Str(nReg60,8) +STR0023 //"Tipo 60...........: "###" Registro(s)"
+EndIf
+If nReg61>0
+	@ ++nLin,15 PSAY STR0029+Str(nReg61,8)	+STR0023 //"Tipo 61...........: "###" Registro(s)"
+EndIf
+If nReg70>0
+	@ ++nLin,15 PSAY STR0030+Str(nReg70,8)	+STR0023 //"Tipo 70...........: "###" Registro(s)"
+EndIf
+If nReg71>0
+	@ ++nLin,15 PSAY STR0031+Str(nReg71,8)	+STR0023 //"Tipo 71...........: "###" Registro(s)"
+EndIf
+If nReg74>0
+	@ ++nLin,15 PSAY STR0037+Str(nReg74,8)	+STR0023 //"Tipo 74...........: "###" Registro(s)"
+EndIf
+If nReg75>0
+	@ ++nLin,15 PSAY STR0032+Str(nReg75,8)	+STR0023 //"Tipo 75...........: "###" Registro(s)"
+EndIf
+If nReg76>0
+	@ ++nLin,15 PSAY STR0038+Str(nReg76,8)	+STR0023 //"Tipo 76...........: "###" Registro(s)"
+EndIf
+If nReg77>0
+	@ ++nLin,15 PSAY STR0039+Str(nReg77,8)	+STR0023 //"Tipo 77...........: "###" Registro(s)"
+EndIf
+If nReg88>0
+	@ ++nLin,15 PSAY STR0040+Str(nReg88,8)	+STR0023 //"Tipo 88...........: "###" Registro(s)"
+EndIf
+If nReg90>0
+	@ ++nLin,15 PSAY STR0033+Str(nReg90,8)	+STR0023 //"Tipo 90...........: "###" Registros(s)"
+Endif	
+nLin++
+
+nTotReg	:=	2+nReg90+nReg50+nReg51+nReg53+nReg54+nReg55+nReg60+nReg61+nReg70+nReg71+nReg74+nReg75+nReg76+nReg77+nReg88+nReg56
+
+@ ++nLin,15 PSAY STR0034+Str(nTotReg,8)+STR0035 //"Total de registros: "###" Registros"
+nLin++
+
+If nTotReg>0
+	Roda(cbcont,cbtxt,tamanho)
+EndIf
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Spool de Impressao                                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Set Printer to
+If aReturn[5] == 1
+	dbCommitAll()
+	Ourspool(aReturn[6])
+EndIf
+
+MS_FLUSH()
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºFuncao   ³A940DelArq ºAutor  ³ Nereu Humberto Jr. º Data ³  02/01/03   º±±
+±±ÌÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.    ³ Apaga arquivos temporarios criados para gerar o arquivo     º±±
+±±º         ³ Magnetico                                                   º±±
+±±ÌÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso      ³ MATA940                                                     º±±
+±±ÈÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function a940DelArq(aDelArqs)
+Local aAreaDel := GetArea()
+Local nI := 0
+
+For nI:= 1 To Len(aDelArqs)
+	If File(aDelArqs[ni,1]+GetDBExtension())
+		dbSelectArea(aDelArqs[ni,2])
+		dbCloseArea()
+		Ferase(aDelArqs[ni,1]+GetDBExtension())
+		Ferase(aDelArqs[ni,1]+OrdBagExt())
+	Endif	
+Next
+
+RestArea(aAreaDel)
+
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Funcao    ³AjustaSX1 ³ Autor ³ Nereu Humberto Jr     ³ Data ³12.12.2002³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Cria as perguntas necesarias para o programa                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³Nenhum                                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³Nenhum                                                      ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function AjustaSX1()
+
+Local aHelpPor :={} 
+Local aHelpEng :={} 
+Local aHelpSpa :={} 
+      
+If SX1->(dbSeek("MTA94003"))
+    If "DRIVE" $ UPPER(AllTrim(SX1->X1_PERGUNT))
+        While SX1->(!Eof()) .And. SX1->X1_GRUPO == "MTA940"
+            RecLock("SX1",.F.)
+            dbDelete()
+      	    MsUnlock()
+      	    SX1->(dbSkip())
+        EndDo	
+    Endif   
+Endif         
+
+/*-----------------------MV_PAR01--------------------------*/
+Aadd( aHelpPor, "Informe a Data Inicial para a geracao   " )
+Aadd( aHelpPor, "do relatorio                            " )
+
+Aadd( aHelpEng, "Enter the initial date to be considered " )
+Aadd( aHelpEng, "in the report                           " )
+
+Aadd( aHelpSpa, "Informe la Fch.Inicial para generacion  " ) 
+Aadd( aHelpSpa, "del informe                             " ) 
+
+PutSx1( "MTA940","01","Data Inicial ?","Fch. Inicial ?","Initial Date ?","mv_ch1",;
+"D",8,0,0,"G","","","","","mv_par01","","","","","","","","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR02--------------------------*/
+Aadd( aHelpPor, "Informe a Data Final para a geracao     " )
+Aadd( aHelpPor, "do relatorio                            " )
+
+Aadd( aHelpEng, "Enter the final date to be considered   " )
+Aadd( aHelpEng, "in the report                           " )
+
+Aadd( aHelpSpa, "Informe la Fch.Final para generacion    " ) 
+Aadd( aHelpSpa, "del informe                             " ) 
+
+PutSx1( "MTA940","02","Data Final ?","Fch. Final ?","Final Date ?","mv_ch2",;
+"D",8,0,0,"G","","","","","mv_par02","","","","","","","","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR03--------------------------*/
+Aadd( aHelpPor, "Informe o nome do arquivo (.INI) a ser  " )
+Aadd( aHelpPor, "processado. Informe apenas o nome.      " )
+
+Aadd( aHelpEng, "Enter the (.INI) file name to process   " )
+Aadd( aHelpEng, "Only the name must be entered.          " )
+
+Aadd( aHelpSpa, "Informe unica y exclusiv. el nombre     " ) 
+Aadd( aHelpSpa, "del archivo (.INI) que se procesara.    " ) 
+
+PutSx1( "MTA940","03","LayOut ?","¨Layout","LayOut ?",	"mv_ch3",;
+"C",20,0,0,"G","","","","","mv_par03","","","","","","","","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR04--------------------------*/
+Aadd( aHelpPor, "Informe o nome do arquivo a ser gerado  " )
+Aadd( aHelpEng, "Enter the name of the file to generate  " )
+Aadd( aHelpSpa, "Informe el nomb.del arch. que se creara " ) 
+
+PutSx1( "MTA940","04","Arquivo Destino ?","Archivo Destino ?","Target File ?","mv_ch4",;
+"C",40,0,0,"G",	"","","","","mv_par04","","","","","","","","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR05--------------------------*/
+Aadd( aHelpPor, "Escolha a opcao que sera a finalidade   " )
+Aadd( aHelpPor, "da geracao do arquivo magnetico         " )
+
+Aadd( aHelpEng, "Select the option that represents the   " )
+Aadd( aHelpEng, "magnetic file generation`s  purpose     " )
+
+Aadd( aHelpSpa, "Elija la opcion que sera la finalidad de" ) 
+Aadd( aHelpSpa, "la generacion del archivo magnetico     " ) 
+
+PutSx1( "MTA940","05","Finalidade ?","Finalidad  ?","Purpose    ?","mv_ch5",;
+"N",1,0,0,"C","","","","","mv_par05","Normal","Normal","Normal","",;
+"Retif. Total","Rectif.Total","Total Rect.","Retif. Aditiv","Rectif.Aditiv","Add.Rectific.",;
+"Desfazimento","Deshacer","Disassembling","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR06--------------------------*/
+Aadd( aHelpPor, "Caso for fazer a apuracao relativa a um " )
+Aadd( aHelpPor, "estado especifico informe a sigla da UF " )
+
+Aadd( aHelpEng, "If you choose calculation for an specific")
+Aadd( aHelpEng, "state, please enter its abbreviation    " )
+
+Aadd( aHelpSpa, "Si va a efectuar el computo relat. a una" ) 
+Aadd( aHelpSpa, "provinc.espec., informe la sigla corresp" ) 
+                                             
+PutSx1( "MTA940","06","UF Origem/Destino ?","Prov Origen/Destino ?","Origin./Dest.State?","mv_ch6",;
+"C",2,0,0,"G","","","","","mv_par06","","","","","","","","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR07--------------------------*/
+Aadd( aHelpPor, 'Escolha a opcao "Somente a UF" caso     ' )
+Aadd( aHelpPor, 'queira listar somente a UF acima ou a   ' )
+Aadd( aHelpPor, 'opcao "Exceto a UF" caso queira excluir ' )
+Aadd( aHelpPor, 'a UF acima informada                    ' )
+
+Aadd( aHelpEng, 'Select the option "Only this St" in case' )
+Aadd( aHelpEng, 'you want to print only the state above, ' )
+Aadd( aHelpEng, 'or "Except St." to delete the state     ' )
+Aadd( aHelpEng, 'entered above                           ' )
+
+Aadd( aHelpSpa, 'Elija la opcion "Solo la Prov" si quiere' ) 
+Aadd( aHelpSpa, 'listar solamente la provincia se¤alada o' ) 
+Aadd( aHelpSpa, 'la opcion "Excepto Prov" si quiere      ' ) 
+Aadd( aHelpSpa, 'borrar la provincia se¤alada            ' ) 
+
+PutSx1( "MTA940","07","Processa UF ?","¨ Procesa Prov","Process St.?","mv_ch7",;
+"N",1,0,0,"C","","","","","mv_par07","Somente a UF","Solo la Prov.","Only this St",;
+"","Exceto a UF","Excepto Prov.","Except St.","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR08--------------------------*/
+Aadd( aHelpPor, "Informe o numero do livro a ser impresso" )
+Aadd( aHelpEng, "Enter the number of the book to print   " )
+Aadd( aHelpSpa, "Informe el num.del libro que se imprimira") 
+
+PutSx1( "MTA940","08","Numero do Livro ?","¨ Num. del libro ?","Number of the book ?","mv_ch8",;
+"C",1,0,0,"G","","","","","mv_par08","","","",	"","","","","",	"","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR09--------------------------*/
+Aadd( aHelpPor, "Informe a descricao do equipamento      " )
+Aadd( aHelpEng, "Enter the equipment description         " )
+Aadd( aHelpSpa, "Escriba la descripcion del equipo       " ) 
+
+PutSx1( "MTA940","09","Equipamento ?","¨ Equipo ?","Equipment ?","mv_ch9",;
+"C",15,0,0,"G","","","","","mv_par09","","","","","","","","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR10--------------------------*/
+Aadd( aHelpPor, "Caso deseje gerar registro tipo 74 de   " )
+Aadd( aHelpPor, "Inventario selecione a opcao Sim        " )
+
+Aadd( aHelpEng, "If you want to generate an Inventory    " )
+Aadd( aHelpEng, "type 74 record, choose Yes              " )
+
+Aadd( aHelpSpa, "Si desea generar registro tipo 74 de    " ) 
+Aadd( aHelpSpa, "inventario, seleccione la opcion Si     " ) 
+
+PutSx1( "MTA940","10","Gera Inventario ?","¨ Genera inventario?","Generate Inventory?","mv_cha",;
+"N",1,0,0,"C","","","","","mv_par10","Sim","Si","Yes","","Nao","No","No","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR11--------------------------*/
+Aadd( aHelpPor, "Escolha a movimentacao de Notas Fiscais " )
+Aadd( aHelpPor, "que sera considerada na geracao do      " )
+Aadd( aHelpPor, "arquivo.                                " )
+
+Aadd( aHelpEng, "Choose the movement of invoices that    " )
+Aadd( aHelpEng, "will be considered when generating the  " )
+Aadd( aHelpEng, "file                                    " )
+
+Aadd( aHelpSpa, "Elija el movimiento de facturas que sera" ) 
+Aadd( aHelpSpa, "considerada en la generacion del        " ) 
+Aadd( aHelpSpa, "archivo                                 " ) 
+
+PutSx1( "MTA940","11","Notas Fiscais ?","¨Facturas  ?","Invoices ?","mv_chb",;
+"N",1,0,0,"C","","","","","mv_par11","Entrada","Entrada","Inflow","","Saida","Salida","OutFlow","Ambas","Ambas","Both","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR12--------------------------*/
+Aadd( aHelpPor, "Caso deseje gerar registro tipo 60I e   " )
+Aadd( aHelpPor, "60D selecione a opcao Sim               " )
+
+Aadd( aHelpEng, "If you want to generate type 60I and    " )
+Aadd( aHelpEng, "type 60D record, choose Yes             " )
+
+Aadd( aHelpSpa, "Si desea generar registro tipo 60I e 60D" ) 
+Aadd( aHelpSpa, "seleccione la opcion Si     " ) 
+
+PutSx1( "MTA940","12","Gera Reg.60I e 60D ?","Gen. Reg.60I e 60D ?","Gen. Rec.60I e 60D ?","mv_chc",;
+"N",1,0,0,"C","","","","","mv_par12","Sim","Si","Yes","","Nao","No","No","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR13--------------------------*/
+Aadd( aHelpPor, "Escolha o drive destino a ser gerado o  " )
+Aadd( aHelpPor, "arquivo                                 " )
+
+Aadd( aHelpEng, "Escolha o drive destino a ser gerado o  " )
+Aadd( aHelpEng, "arquivo                                 " )
+
+Aadd( aHelpSpa, "Escolha o drive destino a ser gerado o  " ) 
+Aadd( aHelpSpa, "arquivo                                 " ) 
+
+PutSx1( "MTA940","13","Drive Destino ?","Drive Destino ?","Target Drive?","mv_chd",;
+"C",30,0,0,"G","","","","","mv_par13","","","","","","","","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={}
+/*-----------------------MV_PAR14--------------------------*/
+Aadd( aHelpPor, "Para filtrar somente as notas fiscais   " )
+Aadd( aHelpPor, "que sairam por uma determinada transpor-" )
+Aadd( aHelpPor, "tadora informe o codigo da mesma        " )
+
+Aadd( aHelpEng, "Para filtrar somente as notas fiscais   " )
+Aadd( aHelpEng, "que sairam por uma determinada transpor-" )
+Aadd( aHelpEng, "tadora informe o codigo da mesma        " )
+
+Aadd( aHelpSpa, "Para filtrar somente as notas fiscais   " ) 
+Aadd( aHelpSpa, "que sairam por uma determinada transpor-" ) 
+Aadd( aHelpSpa, "tadora informe o codigo da mesma        " ) 
+
+PutSx1( "MTA940","14","Transportadora ?","Transportadora ?","Transportadora ?","mv_che",;
+"C",06,0,0,"G","","SA4","","","mv_par14","","","","","","","","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+
+/*-----------------------MV_PAR15--------------------------*/
+Aadd( aHelpPor, "Data de Fechamento do Estoque           " )
+Aadd( aHelpEng, "Inventory Closing Date                  " )
+Aadd( aHelpSpa, "Fecha de Cierre del Stock               " ) 
+
+PutSx1( "MTA940","15","Data de Fechamento ?","Fecha Cierre ?","Closing Date ?","mv_chf",;
+"D",08,0,0,"G","","","","","mv_par15","","","","","","","","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR16--------------------------*/
+Aadd( aHelpPor, "Caso deseje gerar registro tipo 60R     " )
+Aadd( aHelpPor, "selecione a opcao Sim                   " )
+
+Aadd( aHelpEng, "If you want to generate type 60R choose " )
+Aadd( aHelpEng, "Yes                                     " )
+
+Aadd( aHelpSpa, "Si desea generar registro tipo 60R      " ) 
+Aadd( aHelpSpa, "seleccione la opcion Si     " ) 
+
+PutSx1( "MTA940","16","Gera Registro 60R  ?","Gen. Reg.60R       ?","Gen. Rec.60R       ?","mv_chg",;
+"N",1,0,0,"C","","","","","mv_par16","Sim","Si","Yes","","Nao","No","No","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR17--------------------------*/
+Aadd( aHelpPor, "Caso deseje gerar registro tipo 61R     " )
+Aadd( aHelpPor, "selecione a opcao Sim                   " )
+
+Aadd( aHelpEng, "If you want to generate type 61R choose " )
+Aadd( aHelpEng, "Yes                                     " )
+
+Aadd( aHelpSpa, "Si desea generar registro tipo 61R      " ) 
+Aadd( aHelpSpa, "seleccione la opcion Si     " ) 
+
+PutSx1( "MTA940","17","Gera Registro 61R  ?","Gen. Reg.61R       ?","Gen. Rec.61R       ?","mv_chh",;
+"N",1,0,0,"C","","","","","mv_par17","Nao","No","No","","Sim","Si","Yes","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+/*-----------------------MV_PAR18--------------------------*/
+Aadd( aHelpPor, "Caso deseje gerar Nota Fiscal Produtor  " )
+Aadd( aHelpPor, "selecione a opcao Sim                   " )
+
+Aadd( aHelpEng, "Caso deseje gerar Nota Fiscal Produtor  " )
+Aadd( aHelpEng, "selecione a opcao Sim                   " )
+
+Aadd( aHelpSpa, "Caso deseje gerar Nota Fiscal Produtor  " ) 
+Aadd( aHelpSpa, "selecione a opcao Sim                   " ) 
+
+PutSx1( "MTA940","18","Gera NF Produtor   ?","Gera NF Produtor   ?","Gera NF Produtor   ?","mv_chi",;
+"N",1,0,0,"C","","","","","mv_par18","Nao","No","No","","Sim","Si","Yes","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+              
+/*-----------------------MV_PAR19--------------------------*/
+Aadd( aHelpPor, "Forma do Meio magnetico a ser utilizado." )
+Aadd( aHelpEng, "Forma do Meio magnetico a ser utilizado." )
+Aadd( aHelpSpa, "Forma do Meio magnetico a ser utilizado." ) 
+
+PutSx1( "MTA940","19","Meio magnetico   ?","Meio magnetico   ?","Meio magnetico   ?","mv_chj",;
+"N",1,0,0,"C","","","","","mv_par19",STR0041,STR0041,STR0041,"",STR0042,STR0042,STR0042,"","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+
+/*-----------------------MV_PAR20--------------------------*/
+Aadd( aHelpPor, "Fator de bloco de gravacao." )
+Aadd( aHelpEng, "Fator de bloco de gravacao." )
+Aadd( aHelpSpa, "Fator de bloco de gravacao." ) 
+
+PutSx1( "MTA940","20","Fator de bloco   ?","Fator de bloco   ?","Fator de bloco   ?","mv_chk",;
+"C",10,0,0,"G","","","","","mv_par20","","","","","","","","","","","","","","","","",;
+aHelpPor,aHelpEng,aHelpSpa)
+
+aHelpPor :={} 
+aHelpEng :={} 
+aHelpSpa :={} 
+
+Return NIL
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³A940Fill     ³Autor ³ Andreia dos Santos  ³ Data ³ 07/01/00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Encaixa conteudo em espaco especificado                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function a940Fill(cConteudo,nTam)
+	
+cConteudo	:=	If(cConteudo==NIL,"",cConteudo)
+If Len(cConteudo)>nTam
+	cRetorno	:=	Substr(cConteudo,1,nTam)
+Else
+	cRetorno	:=	cConteudo+Space(nTam-Len(cConteudo))
+Endif
+	
+Return (cRetorno)
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³   A940CGC    ³Autor ³    Andreia dos Santos³Data³ 07/01/00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Retorna numero de CGC                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/                                  
+
+Static Function A940CGC(cCliFor,cCGC,cTipo)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Zera o campo de CGC para pessoas nao obrigadas a inscricao.  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If ( cTipo=="X")
+	cCGC:=""
+Endif
+
+Return(cCGC)
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³fSintReg17³ Autor ³ Gustavo G. Rueda      ³ Data ³26.06.2003³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Retorna uma string contendo o registro 17 no sintegra.      º±±
+±±º          ³Inicialmente baseado no layout de Manaus.                   º±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ExpC: Formato do registro 17 do sintegra.                   ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³														      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function fSintReg17 ()
+	Local	cString	:=	""
+	Local	cCodCliente	:=	""
+	Local	cCodLoja	:=	""
+	Local	aArea	:=	GetArea ()
+	//
+	DbSelectArea ("SF2")
+		SF2->(DbSetOrder (1))
+	If (SF2->(MsSeek (xFilial ("SF2")+R50->A50_NFISC+R50->A50_SERIE)))
+		cCodCliente	:=	SF2->F2_CLIENTE
+		cCodLoja	:=	SF2->F2_LOJA
+	Else  
+		DbSelectArea ("SF3")
+			SF3->(DbSetOrder (5))
+		SF3->(MsSeek (xFilial ("SF3")+R50->A50_SERIE+R50->A50_NFISC))
+		//
+		cCodCliente	:=	SF3->F3_CLIEFOR
+		cCodLoja	:=	SF3->F3_LOJA
+	EndIf
+	//	
+	DbSelectArea ("SA4")
+		SA4->(DbSetOrder (1))
+	SA4->(MsSeek (xFilial ("SA4")+SF2->F2_REDESP))
+	//
+	DbSelectArea ("SA1")
+		SA1->(DbSetOrder (1))
+	SA1->(MsSeek (xFilial ("SA1")+cCodCliente+cCodLoja))
+	//
+	//Dados do destinatario
+	cString	:=	"17"+StrZero (Val (SA1->A1_CGC), 14)+aFisFill (A940IE(SA1->A1_INSCR), 14)+aFisFill (SA1->A1_NOME, 40)
+	cString	+=	aFisFill (SA1->A1_END, 40)+aFisFill (SA1->A1_BAIRRO, 20)+aFisFill (SA1->A1_MUN, 20)
+	cString	+=	StrZero (Val (SA1->A1_CEP), 8)+aFisFill (SA1->A1_EST, 2)+StrZero (Val (SA1->A1_TEL), 12)
+	//
+	//Dados do redespachador
+	If (SA4->(Eof ()))
+		cString	+=	"00000000000000"+Space (134)+"00000000"+Space (02)+"000000000000"
+	Else
+		cString	+=	StrZero (Val (SA4->A4_CGC), 14)+aFisFill (SA4->A4_INSEST, 14)+aFisFill (SA4->A4_NOME, 40)
+		cString	+=	aFisFill (SA4->A4_END, 40)+aFisFill (SA4->A4_BAIRRO, 20)+aFisFill (SA4->A4_MUN, 20)
+		cString	+=	StrZero (Val (SA4->A4_CEP), 8)+aFisFill (SA4->A4_EST, 2)+StrZero (Val (SA4->A4_TEL), 12)
+	EndIf
+	//
+	RestArea (aArea)
+Return (cString)
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³fSintReg18³ Autor ³ Gustavo G. Rueda      ³ Data ³26.06.2003³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Retorna uma string contendo o registro 18 no sintegra.      º±±
+±±º          ³Inicialmente baseado no layout de Manaus.                   º±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ExpC: Formato do registro 18 do sintegra.                   ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³														      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function fSintReg18 ()
+	Local	cString	:=	""
+	Local	cCodCliente	:=	""
+	Local	cCodLoja	:=	""
+	Local	nFrete		:=	0
+	Local	aArea	:=	GetArea ()
+	//
+	DbSelectArea ("SF2")
+		SF2->(DbSetOrder (1))
+	If (SF2->(MsSeek (xFilial ("SF2")+R50->A50_NFISC+R50->A50_SERIE)))
+		cCodCliente	:=	SF2->F2_CLIENTE
+		cCodLoja	:=	SF2->F2_LOJA
+		nFrete		:=	SF2->F2_FRETE
+	Else  
+		DbSelectArea ("SF3")
+			SF3->(DbSetOrder (5))
+		SF3->(MsSeek (xFilial ("SF3")+R50->A50_SERIE+R50->A50_NFISC))
+		//
+		cCodCliente	:=	SF3->F3_CLIEFOR
+		cCodLoja	:=	SF3->F3_LOJA
+		nFrete		:=	0
+	EndIf		
+	//
+	DbSelectArea ("SA1")
+		SA1->(DbSetOrder (1))
+	SA1->(MsSeek (xFilial ("SA1")+cCodCliente+cCodLoja))
+	//
+	cString	:=	"18"
+	cString	+=	Iif (nFrete>0, StrZero (Val (SA1->A1_CGC), 14), StrZero (Val (SM0->M0_CGC), 14))
+	cString	+=	Iif (nFrete>0, aFisFill (A940IE(SA1->A1_INSCR), 14), aFisFill (SM0->M0_INSC, 14))
+	cString	+=	Iif (nFrete>0, aFisFill (SA1->A1_NOME, 40), aFisFill (SM0->M0_NOMECOM, 40))
+	cString	+=	Iif (nFrete>0, aFisFill (SA1->A1_END, 40), aFisFill (SM0->M0_ENDENT, 40))
+	cString	+=	Iif (nFrete>0, aFisFill (SA1->A1_BAIRRO, 20), aFisFill (SM0->M0_BAIRENT, 20))
+	cString	+=	Iif (nFrete>0, aFisFill (SA1->A1_MUN, 20), aFisFill (SM0->M0_CIDENT, 20))
+	cString	+=	Iif (nFrete>0, StrZero (Val (SA1->A1_CEP), 8), StrZero (Val (SM0->M0_CEPENT), 8))
+	cString	+=	Iif (nFrete>0, aFisFill (SA1->A1_EST, 2), aFisFill (SM0->M0_ESTENT, 2))
+	cString	+=	Iif (nFrete>0, StrZero (Val (SA1->A1_TEL), 12), StrZero (Val (SM0->M0_TEL), 12))
+	cString	+=	Iif (Empty (SA1->A1_ENDENT), StrZero (Val (SA1->A1_CGC), 14), StrZero (Val (SA1->A1_CGC), 14))
+	cString	+=	Iif (Empty (SA1->A1_ENDENT), aFisFill (A940IE(SA1->A1_INSCR), 14), 	aFisFill (A940IE(SA1->A1_INSCR), 14))
+	cString	+=	Iif (Empty (SA1->A1_ENDENT), aFisFill (SA1->A1_NOME, 40), 		aFisFill (SA1->A1_NOME, 40))
+	cString	+=	Iif (Empty (SA1->A1_ENDENT), aFisFill (SA1->A1_END, 40), 		aFisFill (SA1->A1_ENDENT, 40))
+	cString	+=	Iif (Empty (SA1->A1_ENDENT), aFisFill (SA1->A1_BAIRRO, 20), 	aFisFill (SA1->A1_BAIRROE, 20))
+	cString	+=	Iif (Empty (SA1->A1_ENDENT), aFisFill (SA1->A1_MUN, 20), 		aFisFill (SA1->A1_MUNE, 20))
+	cString	+=	Iif (Empty (SA1->A1_ENDENT), StrZero (Val (SA1->A1_CEP), 8), 	StrZero (Val (SA1->A1_CEPE), 8))
+	cString	+=	Iif (Empty (SA1->A1_ENDENT), aFisFill (SA1->A1_EST, 2), 	aFisFill (SA1->A1_ESTE, 2))
+	cString	+=	Iif (Empty (SA1->A1_ENDENT), StrZero (Val (SA1->A1_TEL), 12), 		StrZero (Val (SA1->A1_TEL), 12))
+	//
+	RestArea (aArea)
+Return (cString)
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³fSintReg19³ Autor ³ Gustavo G. Rueda      ³ Data ³26.06.2003³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³Retorna uma string contendo o registro 19 no sintegra.      º±±
+±±º          ³Inicialmente baseado no layout de Manaus.                   º±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Retorno   ³ExpC: Formato do registro 19 do sintegra.                   ³±±
+±±³          ³                                                            ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³														      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³   DATA   ³ Programador   ³Manutencao Efetuada                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³          ³               ³                                            ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function fSintReg19 ()
+	Local	cString	:=	""
+	Local	nAcVol	:=	0
+	Local	cAcEsp	:=	""
+	Local	cCodCliente	:=	""
+	Local	cCodLoja	:=	""
+	Local	nFrete		:=	0
+	Local	nPesoBruto	:=	0
+	Local	aArea	:=	GetArea ()
+	//
+	DbSelectArea ("SF2")
+		SF2->(DbSetOrder (1))
+	If (SF2->(MsSeek (xFilial ("SF2")+R50->A50_NFISC+R50->A50_SERIE)))
+		cCodCliente	:=	SF2->F2_CLIENTE
+		cCodLoja	:=	SF2->F2_LOJA
+		nFrete		:=	SF2->F2_FRETE
+		nPesoBruto	:=	SF2->F2_PBRUTO
+	Else  
+		DbSelectArea ("SF3")
+			SF3->(DbSetOrder (5))
+		SF3->(MsSeek (xFilial ("SF3")+R50->A50_SERIE+R50->A50_NFISC))
+		//
+		cCodCliente	:=	SF3->F3_CLIEFOR
+		cCodLoja	:=	SF3->F3_LOJA
+		nFrete		:=	0
+		nPesoBruto	:=	0
+	EndIf
+	//
+	DbSelectArea ("SA1")
+		SA1->(DbSetOrder (1))
+	SA1->(MsSeek (xFilial ("SA1")+cCodCliente+cCodLoja))
+	//
+	For nInd := 1 To 3
+		cString	:=	"SF2->F2_VOLUME"+Str (nInd, 1)
+		//
+		nAcVol	+=	&(cString)
+	Next (nInd)
+	//
+	For nInd := 1 To 3
+		cString	:=	"SF2->F2_ESPECI"+Str (nInd, 1)
+		//
+		cAcEsp	+=	&(cString)
+	Next (nInd)
+	//
+	//Dados do destinatario
+	cString	:=	"19"+StrZero (Val (SA1->A1_CGC), 14)+aFisFill (A940IE(SA1->A1_INSCR), 14)+aFisFill (R50->A50_SERIE, 3)+;
+		StrZero (Val (R50->A50_NFISC), 6)+"0"+Replace (StrZero (nPesoBruto, 9, 2), ".", "")+StrTran(StrZero (SF2->F2_VOLUME4,7,3),".","")+;
+		"0"+Replace (StrZero (R50->A50_VALTOT, 13, 2), ".", "")+"0"+Replace (StrZero (nAcVol, 8, 2),".", "")+;
+		Iif (nFrete>0, "1", "2")+aFisFill (cAcEsp, 6)
+	//
+	RestArea (aArea)
+Return (cString)
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡„o    ³A940Filtro ³ Autor ³ Edstron E. Correia    ³ Data ³ 30/09/03 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡„o ³Filtro generico para a entidade escolhida                    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³SINTEGRA                                                     ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function A940Filtro(nOpc,cFilA940,cEntidade)
+Local oWnd		 := GetWndDefault()
+Local cDesc 	 := ""
+Local lRet 		 := .F.
+Local cDescFiltro:= ""
+Local oDlgFiltro
+Local oDescFiltro
+
+cDescFiltro := IIF(!Empty(cFilA940),MontDescr(cEntidade,cFilA940),"")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Atualiza a descricao da selecao.³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+DEFINE MSDIALOG oDlgFiltro FROM  00,00 TO 200,310 TITLE "Filtro" PIXEL
+
+	@02,02 TO 75,153 LABEL "Descricao do Filtro" OF oDlgFiltro PIXEL
+	@10,05 MSGET oDescFiltro VAR cDescFiltro PICTURE "@!" SIZE 145,60 OF oDlgFiltro PIXEL COLOR CLR_RED WHEN .F.
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Filtro para a selecao dos registros da entidade³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	DEFINE SBUTTON FROM 80,55  TYPE 17 ENABLE OF oDlgFiltro ACTION (lRet:=.T.,;
+																	cFilA940  := BuildExpr(cEntidade,oWnd),;
+																	cDescFiltro := MontDescr(cEntidade,cFilA940),;
+																	oDescFiltro:Refresh()) WHEN (nOpc == INCLUIR .OR. nOpc == ALTERAR)//Monta o filtro
+																	
+	DEFINE SBUTTON FROM 80,90  TYPE 1 ENABLE OF oDlgFiltro ACTION oDlgFiltro:End() //Fecha a tela e mantem o filtro
+	
+	DEFINE SBUTTON FROM 80,125 TYPE 2 ENABLE OF oDlgFiltro ACTION (	lRet:=.F.,;
+																	cDescFiltro:="",;
+																	oDescFiltro:Refresh(),;
+																	oDlgFiltro:End())// Cancela o filtro
+																
+ACTIVATE MSDIALOG oDlgFiltro CENTERED
+
+Return(lRet,cFilA940)
+

@@ -1,0 +1,507 @@
+#INCLUDE "RWMAKE.CH"
+#INCLUDE "TOPCONN.CH"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³AGX430    ºAutor  ³Leandro             º Data ³  11/04/2010 º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³ Relatório de Vendas dos representates e suas origens       º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³                                                            º±±                      
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+User Function AGX430()
+
+	SetPrvt("aImprime")
+
+	aImprime := {}
+	cDesc1        	:= OemToAnsi("Este programa tem como objetivo, listar as")
+	cDesc2        	:= OemToAnsi("vendas dos representantes e as origens das vendas.")
+	cDesc3        	:= ""
+	cPict         	:= ""
+	nLin         	:= 80 
+	cabec1       	:= "COD REP.     DESC. REP.                              VALOR VENDIDO                              QUANTIDADE VENDIDA"
+    cabec2  	    := "     COD TEL.     DESC TEL.                               VALOR VENDIDO     % VALOR VENDIDO          QUANTIDADE VENDIDA     % QTDE VENDIDA"
+	imprime      	:= .T.
+	aOrd 			:= ""
+	lEnd            := .F.
+	lAbortPrint     := .F.
+	CbTxt           := ""
+	limite          := 132
+	tamanho         := "G"
+	nomeprog        := "AGX430"
+	nTipo           := 18
+	aReturn         := { "Zebrado", 1, "Administracao", 2, 2, 1, "", 1}
+	nLastKey        := 0
+	cbtxt        	:= Space(10)
+	cbcont       	:= 00
+	CONTFL      	:= 01
+	m_pag       	:= 01
+	wnrel       	:= "AGX430"
+	aRegistros  	:= {}
+	cPerg		    := "AGX430"
+	cString 	   	:= "SA3"
+	titulo  	    :="Vendas dos representantes e suas origens"
+    cCancel 	    := "***** CANCELADO PELO OPERADOR *****"
+	aRegistros      := {}
+
+	AADD(aRegistros,{cPerg,"01","Data Emissão De    ?","mv_ch1","D",08,0,0,"G","","MV_PAR01","","","","","","","","","","","","","","",""})
+	AADD(aRegistros,{cPerg,"02","Data Emissão Ate   ?","mv_ch2","D",08,0,0,"G","","MV_PAR02","","","","","","","","","","","","","","",""})
+	AADD(aRegistros,{cPerg,"03","Representante De   ?","mv_ch3","C",15,0,0,"G","","MV_PAR03","","","","","","","","","","","","","","","SA3"})
+	AADD(aRegistros,{cPerg,"04","Representante Ate  ?","mv_ch4","C",15,0,0,"G","","MV_PAR04","","","","","","","","","","","","","","","SA3"})
+
+	U_CriaPer(cPerg,aRegistros)
+	Pergunte(cPerg,.F.)
+
+    wnrel := SetPrint(cString,NomeProg,cPerg,titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)  
+
+	If nLastKey == 27
+	    Set Filter To
+	    Return
+	Endif
+
+	SetDefault(aReturn,cString)
+
+	If nLastKey == 27
+	    Set Filter To
+	    Return
+	Endif   
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Declaracoes de arrays                                        ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+	Processa({|| GeraDados() })
+
+    RptStatus({|| RptDetail() })  
+
+Return
+
+Static Function GeraDados()              
+         
+    If Select("ARQ_TRAB_TEMP") <> 0
+       dbSelectArea("ARQ_TRAB_TEMP")
+   	   dbCloseArea()
+    Endif         
+                
+	SetPrvt("aSeg,aSegDA1,nRecno,cFiltroUsu")               
+        
+    IncProc("Processando...")   
+       
+	aCampos := {}    
+                 
+	aTam:=TamSX3("A3_COD")
+	AADD(aCampos,{ "COD_REP"      ,"C",aTam[1],aTam[2] } )    
+	                
+	aTam:=TamSX3("A3_NREDUZ")
+	AADD(aCampos,{ "NOME_REP"     ,"C",aTam[1],aTam[2] } ) 
+	              
+	aTam:=TamSX3("A3_COD")
+	AADD(aCampos,{ "COD_TEL"      ,"C",aTam[1],aTam[2] } )    
+	                
+	aTam:=TamSX3("A3_NOME")
+	AADD(aCampos,{ "NOME_TEL"     ,"C",aTam[1],aTam[2] } ) 
+	                                          
+	aTeste := {10,2} 
+	 
+	aTam:=TamSX3("F2_VALMERC")
+	AADD(aCampos,{ "VALOR_REP"    ,"N",aTeste[1],aTeste[2] } )	                  
+
+	aTam:=TamSX3("F2_VALMERC")
+	AADD(aCampos,{ "QTDE_REP"     ,"N",aTeste[1],aTeste[2] } )	
+	
+	aTam:=TamSX3("F2_VALMERC")
+	AADD(aCampos,{ "VALOR_TEL"    ,"N",aTeste[1],aTeste[2] } )                		       
+	                   	
+	aTam:=TamSX3("F2_VALMERC")
+	AADD(aCampos,{ "P_VAL_TEL" ,"N",aTeste[1],aTeste[2] } )   
+
+	aTam:=TamSX3("F2_VALMERC")
+	AADD(aCampos,{ "QTDE_TEL"     ,"N",aTeste[1],aTeste[2] } )                		       
+	                   	
+	aTam:=TamSX3("F2_VALMERC")
+	AADD(aCampos,{ "P_QTDE_TEL","N",aTeste[1],aTeste[2] } )  	 
+	     
+	cArqTrab := CriaTrab(aCampos,.T.)
+	dbUseArea(.T.,,cArqTrab,"ARQ_TRAB_TEMP",.T.,.F.)
+            
+	IndRegua("ARQ_TRAB_TEMP",cArqTrab,"COD_REP",,,"REGUA_1")
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Busca dos produtos conforme filtro do usuário               ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	cFiltroUsu := aReturn[7]
+
+    aImprime := {} 
+
+	cQuery := "" 
+	cQuery := "  SELECT SA3.A3_COD, "
+	cQuery += "  		SA3.A3_NREDUZ, "
+
+	cQuery += "         SUM(D2_TOTAL + D2_VALIPI - D2_VALDEV) AS VL_VENDA, "
+	cQuery += "         COUNT(DISTINCT(SF2.F2_DOC)) AS QTDE_VENDA "
+
+	cQuery += "  FROM " + RetSqlName("SA3") + " AS SA3, " + RetSqlName("SF2") + " AS SF2, " 
+	cQuery += 			  RetSqlName("SF4") + " AS SF4, " + RetSqlName("SD2") + " AS SD2  " 
+
+	cQuery += "  WHERE SF2.D_E_L_E_T_ <> '*' "
+	cQuery += "    AND SF2.F2_TIPO = 'N' "     
+
+	cQuery += "    AND SF4.D_E_L_E_T_ <> '*' " 
+
+	cQuery += "    AND SF4.F4_CODIGO = SD2.D2_TES "
+	cQuery += "    AND SF4.F4_DUPLIC = 'S' "
+	cQuery += "    AND SF4.F4_ESTOQUE = 'S' "
+
+	cQuery += "    AND SD2.D2_SERIE = SF2.F2_SERIE "
+	cQuery += "    AND SD2.D2_DOC = SF2.F2_DOC "
+
+	cQuery += "    AND SD2.D_E_L_E_T_ <> '*' "
+
+	cQuery += "    AND SA3.D_E_L_E_T_ <> '*' "
+	cQuery += "    AND SA3.A3_COD = SF2.F2_VEND2 "
+
+	if AllTrim(xFilial("SD2")) <> ""
+		cQuery += "    AND SD2.D2_FILIAL = SF2.F2_FILIAL "
+	EndIf
+
+	if AllTrim(xFilial("SF4")) <> ""
+		cQuery += "    AND SF4.F4_FILIAL = SF2.F2_FILIAL "
+	EndIf
+
+	if AllTrim(xFilial("SA3")) <> ""
+		cQuery += "    AND SA3.A3_FILIAL = SF2.F2_FILIAL "
+	EndIf
+
+	cQuery += "    AND SF2.F2_EMISSAO BETWEEN '" + DTOS(MV_PAR01) + "' AND '" + DTOS(MV_PAR02) + "'"
+	cQuery += "    AND SF2.F2_VEND2 BETWEEN '" + MV_PAR03 + "' AND '" + MV_PAR04 + "'"
+
+	cQuery += "    AND SF2.F2_FILIAL IN ('02','06') "
+
+	cQuery += "  GROUP BY SA3.A3_COD, SA3.A3_NREDUZ "	 	
+	cQuery += "  ORDER BY SA3.A3_NREDUZ "
+
+    cQuery := ChangeQuery(cQuery)
+
+    If Select("QRY_REP") <> 0
+       dbSelectArea("QRY_REP")
+   	   dbCloseArea()
+    Endif
+
+	TCQuery cQuery NEW ALIAS "QRY_REP"     
+
+	dbSelectArea("QRY_REP") 
+	dbGoTop()
+	While !Eof()
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Busca do valor vendido a partir de PALM                      ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ	           	  
+
+		cQuery2 := ""
+		cQuery2 := "  SELECT SUM(D2_TOTAL + D2_VALIPI - D2_VALDEV) AS VL_VENDA, "
+		cQuery2 += "         COUNT(DISTINCT(SF2.F2_DOC)) AS QTDE_VENDA "
+		
+		cQuery2 += "  FROM " + RetSqlName("SF2") + " AS SF2, " + RetSqlName("SUA") + " AS SUA, " + RetSqlName("SC5") + " AS SC5, "
+		cQuery2 += 			   RetSqlName("SF4") + " AS SF4, " + RetSqlName("SD2") + " AS SD2  " 
+
+		cQuery2 += "  WHERE SF2.D_E_L_E_T_ <> '*' " 
+		cQuery2 += "    AND SF2.F2_TIPO = 'N' " 
+
+		cQuery2 += "    AND SF2.F2_EMISSAO BETWEEN '" + DTOS(MV_PAR01) + "' AND '" + DTOS(MV_PAR02) + "'"
+		cQuery2 += "    AND SF2.F2_VEND2 = '" + QRY_REP->A3_COD + "'"
+
+		cQuery2 += "    AND SUA.UA_NUMSC5 = SC5.C5_NUM "
+		cQuery2 += "    AND SUBSTRING(SUA.UA_NUM,1,1) IN ('P','Q','M') "
+
+		cQuery2 += "    AND SUA.D_E_L_E_T_ <> '*' "
+
+		cQuery2 += "    AND SC5.C5_NOTA = SF2.F2_DOC "
+		cQuery2 += "    AND SC5.C5_SERIE = SF2.F2_SERIE "
+
+		cQuery2 += "    AND SC5.D_E_L_E_T_ <> '*' "
+		cQuery2 += "    AND SF4.D_E_L_E_T_ <> '*' " 
+
+		cQuery2 += "    AND SF4.F4_CODIGO = SD2.D2_TES "
+		cQuery2 += "    AND SF4.F4_DUPLIC = 'S' "
+		cQuery2 += "    AND SF4.F4_ESTOQUE = 'S' "
+
+		cQuery2 += "    AND SD2.D2_SERIE = SF2.F2_SERIE "
+		cQuery2 += "    AND SD2.D2_DOC = SF2.F2_DOC "
+
+		cQuery2 += "    AND SF2.F2_FILIAL IN ('02','06') "
+
+		if AllTrim(xFilial("SUA")) <> ""
+			cQuery2 += "    AND SUA.UA_FILIAL = SF2.F2_FILIAL "
+		EndIf 
+
+		if AllTrim(xFilial("SC5")) <> ""
+			cQuery2 += "    AND SC5.C5_FILIAL = SF2.F2_FILIAL "
+		EndIf
+
+		if AllTrim(xFilial("SF4")) <> ""
+			cQuery2 += "    AND SF4.F4_FILIAL = SF2.F2_FILIAL "
+		EndIf
+
+		if AllTrim(xFilial("SD2")) <> ""
+			cQuery2 += "    AND SD2.D2_FILIAL = SF2.F2_FILIAL "
+		EndIf
+
+		cQuery2 += "    AND SD2.D_E_L_E_T_ <> '*' "
+
+	    cQuery2 := ChangeQuery(cQuery2)
+
+	    If Select("QRY_PALM") <> 0
+	       dbSelectArea("QRY_PALM")
+	   	   dbCloseArea()
+	    Endif
+
+		TCQuery cQuery2 NEW ALIAS "QRY_PALM"
+
+		dbSelectArea("QRY_PALM")
+		dbGoTop()
+
+		dbSelectArea("ARQ_TRAB_TEMP")
+		RecLock("ARQ_TRAB_TEMP",.T.)
+
+		REPLACE COD_REP			WITH  QRY_REP->A3_COD
+		REPLACE NOME_REP		WITH  QRY_REP->A3_NREDUZ
+		REPLACE VALOR_REP		WITH  Round(QRY_REP->VL_VENDA, 2)
+		REPLACE QTDE_REP		WITH  QRY_REP->QTDE_VENDA
+		REPLACE COD_TEL			WITH  'PALM'
+		REPLACE NOME_TEL		WITH  'VENDAS DE PALM'
+		REPLACE VALOR_TEL		WITH  Round(QRY_PALM->VL_VENDA, 2)
+		REPLACE P_VAL_TEL		WITH  Round((QRY_PALM->VL_VENDA / QRY_REP->VL_VENDA) * 100, 2)
+		REPLACE QTDE_TEL		WITH  Round(QRY_PALM->QTDE_VENDA, 2)
+		REPLACE P_QTDE_TEL		WITH  Round((QRY_PALM->QTDE_VENDA / QRY_REP->QTDE_VENDA) * 100, 2)
+
+		MsUnLock()
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Busca do valor vendido a partir de Televendas                ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		cQuery3 := ""                                                
+		cQuery3 := "  SELECT SF2.F2_VEND1, "
+		
+		cQuery3 += "         SUM(D2_TOTAL + D2_VALIPI - D2_VALDEV) AS VL_VENDA, "
+		cQuery3 += "         COUNT(DISTINCT(SF2.F2_DOC)) AS QTDE_VENDA "
+
+		cQuery3 += "  FROM " + RetSqlName("SF2") + " AS SF2, " + RetSqlName("SF4") + " AS SF4, " + RetSqlName("SD2") + " AS SD2  " 
+
+		cQuery3 += "  WHERE SF2.D_E_L_E_T_ <> '*' "
+		cQuery3 += "    AND SF2.F2_TIPO = 'N' "     
+
+		cQuery3 += "    AND SF2.F2_EMISSAO BETWEEN '" + DTOS(MV_PAR01) + "' AND '" + DTOS(MV_PAR02) + "'"
+		cQuery3 += "    AND SF2.F2_VEND2 = '" + QRY_REP->A3_COD + "'"
+
+		cQuery3 += "    AND SF4.D_E_L_E_T_ <> '*' " 
+
+		cQuery3 += "    AND SF4.F4_CODIGO = SD2.D2_TES "
+		cQuery3 += "    AND SF4.F4_DUPLIC = 'S' "
+		cQuery3 += "    AND SF4.F4_ESTOQUE = 'S' "
+
+		cQuery3 += "    AND SD2.D2_SERIE = SF2.F2_SERIE "
+		cQuery3 += "    AND SD2.D2_DOC = SF2.F2_DOC "
+
+		cQuery3 += "    AND SD2.D_E_L_E_T_ <> '*' "
+		
+		cQuery3 += "    AND SF2.F2_FILIAL IN ('02','06') "
+
+		if AllTrim(xFilial("SF4")) <> ""
+			cQuery3 += "    AND SF4.F4_FILIAL = SF2.F2_FILIAL "
+		EndIf
+
+		if AllTrim(xFilial("SD2")) <> ""
+			cQuery3 += "    AND SD2.D2_FILIAL = SF2.F2_FILIAL "
+		EndIf
+
+		cQuery3 += "    AND NOT EXISTS (SELECT SUA.UA_NUM
+		cQuery3 += "    			    FROM " + RetSqlName("SUA") + " AS SUA, " + RetSqlName("SC5") + " AS SC5  " 
+
+		cQuery3 += "					WHERE SUA.UA_NUMSC5 = SC5.C5_NUM "  
+		cQuery3 += "    				  AND SUBSTRING(SUA.UA_NUM,1,1) IN ('P','Q','M') "
+
+		if AllTrim(xFilial("SUA")) <> ""
+			cQuery3 += "                  AND SUA.UA_FILIAL = SF2.F2_FILIAL "
+		EndIf
+
+		cQuery3 += "    				  AND SUA.D_E_L_E_T_ <> '*' "
+
+		cQuery3 += "    				  AND SC5.C5_NOTA = SF2.F2_DOC "
+		cQuery3 += "    				  AND SC5.C5_SERIE = SF2.F2_SERIE "
+
+		if AllTrim(xFilial("SC5")) <> ""
+			cQuery3 += "                  AND SC5.C5_FILIAL = SF2.F2_FILIAL "
+		EndIf
+
+		cQuery3 += "    				  AND SC5.D_E_L_E_T_ <> '*') "	
+
+		cQuery3 += "  GROUP BY SF2.F2_VEND1 "
+		cQuery3 += "  ORDER BY SF2.F2_VEND1 "
+
+	    cQuery3 := ChangeQuery(cQuery3)
+
+	    If Select("QRY_TEL") <> 0
+	       dbSelectArea("QRY_TEL")
+	   	   dbCloseArea()
+	    Endif
+
+		TCQuery cQuery3 NEW ALIAS "QRY_TEL" 
+
+		dbSelectArea("QRY_TEL")
+		dbGoTop()
+		While !Eof()
+
+			dbSelectArea("ARQ_TRAB_TEMP")
+			RecLock("ARQ_TRAB_TEMP",.T.)
+
+			SA3->(dbSeek(xFilial("SA3")+QRY_TEL->F2_VEND1))
+
+			REPLACE COD_REP			WITH  QRY_REP->A3_COD
+			REPLACE NOME_REP		WITH  QRY_REP->A3_NREDUZ
+			REPLACE VALOR_REP		WITH  QRY_REP->VL_VENDA
+			REPLACE COD_TEL			WITH  QRY_TEL->F2_VEND1
+			REPLACE NOME_TEL		WITH  SA3->A3_NOME                                        
+			REPLACE VALOR_TEL		WITH  QRY_TEL->VL_VENDA
+			REPLACE P_VAL_TEL		WITH  Round((QRY_TEL->VL_VENDA / QRY_REP->VL_VENDA) * 100, 2)
+			REPLACE QTDE_TEL		WITH  QRY_TEL->QTDE_VENDA
+			REPLACE P_QTDE_TEL		WITH  Round((QRY_TEL->QTDE_VENDA / QRY_REP->QTDE_VENDA) * 100, 2)
+
+			MsUnLock()
+
+	        DbSelectArea("QRY_TEL")   
+        	Skip()
+		Enddo				
+		
+        DbSelectArea("QRY_REP")   
+       	Skip()		
+	EndDo
+
+Return
+
+Static Function RptDetail	
+  	titulo   := titulo
+
+	Cabec(titulo,cabec1,cabec2,nomeprog,tamanho,IIf(aReturn[4]==1,15,18))//Impressao do cabecalho
+
+	nLin 	 := 9
+	nTotVol	 := 0
+	nTotFat	 := 0  
+	RepCod   := ''
+	GruCod   := ''
+	PriVez   := 'N'  
+	dDataC   := CtoD('  /  /  ')   
+	Nota     := ''
+	Serie    := ''         
+	Usuario  := '' 
+	cUltRep  := ""
+
+	nLin 	 += 1
+
+	DbSelectArea("ARQ_TRAB_TEMP")   	
+	DbGoTop() 		                  
+	While !Eof() 
+
+		If lEnd
+			Exit
+		endif
+
+		if nLin > 55
+			Roda(0,"","P") 		
+			Cabec(titulo,cabec1,cabec2,nomeprog,tamanho,IIf(aReturn[4]==1,15,18)) //Impressao do cabecalho
+			nLin := 9			
+		EndIf
+
+		if cUltRep <> ARQ_TRAB_TEMP->COD_REP
+
+			if cUltRep <> "" 
+				nLin += 1			 
+
+				if nLin > 55
+					Roda(0,"","P") 		
+					Cabec(titulo,cabec1,cabec2,nomeprog,tamanho,IIf(aReturn[4]==1,15,18)) //Impressao do cabecalho
+					nLin := 9			
+				EndIf			
+			endif
+
+			@ nLin, 000 PSAY ARQ_TRAB_TEMP->COD_REP
+			@ nLin, 013 PSAY ARQ_TRAB_TEMP->NOME_REP
+			@ nLin, 055 PSAY Transform(ARQ_TRAB_TEMP->VALOR_REP,"@E 99,999,999.99")
+			@ nLin, 103 PSAY Transform(ARQ_TRAB_TEMP->QTDE_REP,"@E 99,999,999.99")
+
+			nLin += 1			 
+
+			if nLin > 55
+				Roda(0,"","P") 		
+				Cabec(titulo,cabec1,cabec2,nomeprog,tamanho,IIf(aReturn[4]==1,15,18)) //Impressao do cabecalho
+				nLin := 9			
+			EndIf
+
+			cUltRep := ARQ_TRAB_TEMP->COD_REP
+		endif
+
+		@ nLin,000 PSAY "--->"
+		@ nLin,005 PSAY ARQ_TRAB_TEMP->COD_TEL
+		@ nLin,018 PSAY ARQ_TRAB_TEMP->NOME_TEL
+		@ nLin,060 PSAY Transform(ARQ_TRAB_TEMP->VALOR_TEL,"@E 99,999,999.99")
+		@ nLin,080 PSAY Transform(ARQ_TRAB_TEMP->P_VAL_TEL,"@E 99,999,999.99")
+		@ nLin,108 PSAY Transform(ARQ_TRAB_TEMP->QTDE_TEL,"@E 99,999,999.99")
+		@ nLin,127 PSAY Transform(ARQ_TRAB_TEMP->P_QTDE_TEL,"@E 99,999,999.99")
+
+/*
+	 	nLin++
+
+		@ nLin,000 PSAY "--------->"
+		@ nLin,015 PSAY "NF : 999999" 
+		@ nLin,030 PSAY "Emissão NF: 04/07/2011"
+		@ nLin,055 PSAY "Atend.: 999999"
+		@ nLin,072 PSAY "Emissão Atend.: 05/07/2011"
+		@ nLin,120 PSAY "Vl Bruto: 1000,00"
+		@ nLin,140 PSAY "Vl Dev.: 100,00"
+		@ nLin,160 PSAY "Vl Liq.: 900,00"
+
+	 	nLin++
+	 	
+		@ nLin,000 PSAY "--------->"
+		@ nLin,015 PSAY "NF : 888888" 
+		@ nLin,030 PSAY "Emissão NF: 88/88/2011"
+		@ nLin,055 PSAY "Atend.: 888888"
+		@ nLin,072 PSAY "Emissão Atend.: 08/08/2011"
+		@ nLin,120 PSAY "Vl Bruto: 2000,00"
+		@ nLin,140 PSAY "Vl Dev.: 200,00"
+		@ nLin,160 PSAY "Vl Liq.: 1800,00"
+*/
+	 	nLin++
+
+		dbSelectArea("ARQ_TRAB_TEMP")
+		skip()
+	Enddo
+
+    If Select("ARQ_TRAB_TEMP") <> 0
+       dbSelectArea("ARQ_TRAB_TEMP")
+   	   dbCloseArea()
+    Endif
+
+    If Select("QRY_PALM") <> 0
+       dbSelectArea("QRY_PALM")
+   	   dbCloseArea()
+    Endif
+
+    If Select("QRY_TEL") <> 0
+       dbSelectArea("QRY_TEL")
+   	   dbCloseArea()
+    Endif
+
+	If aReturn[5] == 1
+		Set Printer To
+		Commit
+		ourspool(wnrel) //Chamada do Spool de Impressao
+	Endif
+
+	MS_FLUSH() //Libera fila de relatorios em spool   
+Return

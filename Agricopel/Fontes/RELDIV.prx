@@ -1,0 +1,448 @@
+#INCLUDE "rwmake.ch"
+#include "topconn.ch"
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³ RELDIVº Autor ³ RPS                   º Data ³  30/09/14   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescricao ³ Relatoriode divergências de estoque                        º±±
+±±º          ³ Compara SB2,SBF,SB8                                        º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ SIGAEST                                                    º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+User Function RELDIV
+
+	Private cDesc1         := "Este programa tem como objetivo imprimir relatorio "
+	Private cDesc2         := "de acordo com os parametros informados pelo usuario."
+	Private cDesc3         := "Diferencas de estoque         "
+	Private cPict          := ""
+	Private titulo         := "Diferencas de estoque - lote e endereço"
+
+	Private Cabec1       := "CODIGO          DESCRICAO                                                     LOCAL   LOTE              SB2(TOTAL)      SB8(LOTE)   SBF(ENDEREÇO)     ERRO"
+	Private Cabec2       := ""//                                             SB2           SB8          SBF     "
+	Private imprime      := .T.
+	Private aOrd := {}
+	Private lEnd         := .F.
+
+	Private nLin         := 80
+	Private lAbortPrint  := .F.
+	Private CbTxt        := ""
+	Private limite           := 220
+	Private tamanho          := "G"
+	Private nomeprog         := "RELDIV" 
+	Private nTipo            := 15
+	Private aReturn          := { "Zebrado", 1, "Administracao", 1, 2, 1, "", 1}
+	Private nLastKey        := 0
+	Private cPerg       := "RELDIV"
+	Private cbtxt      := Space(10)
+	Private cbcont     := 00
+	Private CONTFL     := 01
+	Private m_pag      := 01
+	Private wnrel      := "RELDIV" 
+
+	Private cString := "SB1"
+
+	dbSelectArea("SB1")
+	dbSetOrder(1)
+
+	geraPerg()
+
+	pergunte(cPerg,.F.)
+
+
+	wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
+
+	If nLastKey == 27
+		Return
+	Endif
+
+	SetDefault(aReturn,cString)
+
+	If nLastKey == 27
+		Return
+	Endif
+
+	nTipo := If(aReturn[4]==1,15,18)
+
+	RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin) },Titulo)
+Return
+
+
+Static Function RunReport(Cabec1,Cabec2,Titulo,nLin)
+	Local nOrdem
+
+	Private _prodDe    := mv_par01
+	Private _prodAte   := mv_par02
+	Private _tipoDe    := mv_par03
+	Private _tipoAte   := mv_par04
+	Private _clocalDe  := mv_par05
+	Private _clocalAte := mv_par06
+
+	//Private _invent    := (mv_par07 == 1)
+
+	dbSelectArea(cString)
+	dbSetOrder(1)
+
+	SetRegua(RecCount())
+
+	SB1->( dbSeek(xFilial('SB1')+_prodDe,.T.) )
+
+	While SB1->( !EOF() ) .AND. SB1->B1_COD <= _prodAte
+
+		If SB1->B1_TIPO < _tipoDe .OR. SB1->B1_TIPO > _tipoAte    .OR. SB1->B1_RASTRO <> 'L' .OR. SB1->B1_LOCALIZ <> 'S'  //somente rastro por lote+endereco
+			SB1->(dbSkip())
+			IncRegua()
+			LOOP
+		Endif
+
+		Analisa( SB1->B1_COD )
+		// erros
+		nLin := nLin + 1
+
+		SB1->(dbSkip())
+		IncRegua()
+	EndDo
+	SET DEVICE TO SCREEN
+	If aReturn[5]==1
+		dbCommitAll()
+		SET PRINTER TO
+		OurSpool(wnrel)
+	Endif
+	MS_FLUSH()
+Return
+//
+//
+
+Static Function cabex()
+	If nLin > 55
+		Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
+		nLin := 8
+	Endif
+Return
+
+
+//-----------------------------------
+
+Static Function Analisa(_cod)
+	Local cQuery := ''
+	Local ix
+	//1-Verificar a integridade dos saldos por almox com base na tabela sb2 (saldos por codigo de produto)
+
+	//1.1-Quantidade na tabela sb9
+	cQuery := " SELECT B2_COD, B2_QATU-B2_QACLASS B2_QATU, B2_LOCAL  FROM "+ RETSQLNAME("SB2")+" SB2"
+	cQuery += " WHERE B2_COD = '"+_cod+"' AND SB2.D_E_L_E_T_ <>'*' AND B2_LOCAL BETWEEN '"+_cLocalDe+"' AND '"+_cLocalAte+"' AND "
+	cQuery += " B2_QATU <> 0 ORDER BY B2_LOCAL "
+	MyQuery( cQuery , '_GSB2'  )
+
+	//1.2-Quantidade total por almox na tabela sbf (saldos por endereco x lote)
+	cQuery := " SELECT SUM(BF_QUANT) TT,BF_LOCAL  FROM "+ RETSQLNAME("SBF")+" SBF"
+	cQuery += " WHERE  SBF.D_E_L_E_T_ <>'*' AND BF_LOCAL BETWEEN '"+_cLocalDe+"' AND '"+_cLocalAte+"' AND "
+	cQuery += " SBF.D_E_L_E_T_ <> '*' AND BF_PRODUTO = '"+_cod+"' AND  BF_QUANT <> 0 "
+	cQuery += " GROUP BY BF_LOCAL "
+	MyQuery( cQuery , '_GSBF'  )
+
+	//1.3-Quantidade total por almox na tabela sbf (saldos por  x lote)
+	cQuery := " SELECT SUM(B8_SALDO-B8_QACLASS) TT ,B8_LOCAL  FROM "+RETSQLNAME("SB8")+" SB8"
+	cQuery += " WHERE  SB8.D_E_L_E_T_ <>'*' AND B8_LOCAL BETWEEN '"+_cLocalDe+"' AND '"+_cLocalAte+"' AND "
+	cQuery += " B8_PRODUTO = '"+_cod+"'    AND  B8_SALDO <> 0 "
+	cQuery += " GROUP BY B8_LOCAL "
+	MyQuery( cQuery , '_GSB8'  )
+
+
+	//Criar array para comparação
+	Private aCompara := {}
+	_GSB2->(dbGotop())
+	While  !_GSB2->(Eof())                         //sb2    sb8    sbf
+		AADD( aCompara, { _GSB2->B2_LOCAL,  _GSB2->B2_QATU, 0.00 , 0.00 } )
+		_GSB2->(dbSkip())
+	End
+
+	//Atualiza com dados da tabela SB8
+	_GSB8->(dbGotop())
+	While  !_GSB8->(Eof())
+		nLocal	:= ASCAN(aCompara,{|x|x[1] == _GSB8->B8_LOCAL })
+		IF nLocal <> 0
+			aCompara[nLocal, 3 ] := _GSB8->TT
+		ENDIF
+		_GSB8->(dbSkip())
+	End
+
+	//Atualiza com dados da tabela SBF
+	_GSBF->(dbGotop())
+	While  !_GSBF->(Eof())
+		nLocal	:= ASCAN(aCompara,{|x|x[1] == _GSBF->BF_LOCAL })
+		IF nLocal <> 0
+			aCompara[nLocal, 4 ] := _GSBF->TT
+		Endif
+		_GSBF->(dbSkip())
+	End
+
+	//2-Verificar a integridade dos saldos com base na tabela sb8 (saldos por codigo e lote do produto)
+
+	//2.1. Quantidade por almox x lote na tabela sbf (saldos por endereco x lote)
+	cQuery := " SELECT SUM(BF_QUANT) TT, BF_LOTECTL, BF_LOCAL  FROM "+RETSQLNAME("SBF")+" SBF"
+	cQuery += " WHERE  SBF.D_E_L_E_T_ <>'*' AND BF_LOCAL BETWEEN '"+_cLocalDe+"' AND '"+_cLocalAte+"' AND "
+	cQuery += " SBF.D_E_L_E_T_ <> '*' AND BF_PRODUTO = '"+_cod+"' AND  BF_QUANT <> 0"
+	cQuery += " GROUP BY BF_LOCAL, BF_LOTECTL "
+	MyQuery( cQuery , '_LSBF'  )
+
+
+	//2.1. Quantidade por almox x lote na tabela sb8 (saldos por x lote)
+	cQuery := " SELECT SUM(B8_SALDO-B8_QACLASS) TT ,B8_LOTECTL,B8_LOCAL   FROM "+RETSQLNAME("SB8")+" SB8"
+	cQuery += " WHERE  SB8.D_E_L_E_T_ <>'*' AND B8_LOCAL BETWEEN '"+_cLocalDe+"' AND '"+_cLocalAte+"' AND "
+	cQuery += " B8_PRODUTO = '"+_cod+"' AND  B8_SALDO <> 0 "
+	cQuery += " GROUP BY B8_LOCAL, B8_LOTECTL  "
+	MyQuery( cQuery , '_LSB8'  )
+
+	Private aCompara2 := {}
+
+	//Referencia por lote
+	_LSB8->(dbGotop())
+	While  !_LSB8->(Eof())                                     //   sb8    sbf
+		AADD( aCompara2, { _LSB8->B8_LOCAL+_LSB8->B8_LOTECTL ,  _LSB8->TT, 0.00  } )
+		_LSB8->(dbSkip())
+	End
+
+
+	//Atualiza com dados da tabela SBF
+	_LSBF->(dbGotop())
+	While  !_LSBF->(Eof())
+		nLocal	:= ASCAN(aCompara2,{|x|x[1] == _LSBF->BF_LOCAL+_LSBF->BF_LOTECTL })
+		IF nLocal <> 0
+			aCompara2[nLocal,3] := _LSBF->TT
+		ENDIF
+		_LSBF->(dbSkip())
+	End
+
+
+	lErro := .F.
+	//compara
+	For ix := 1 To Len(aCompara)
+		If aCompara[ix,2] <>  aCompara[ix,3] .OR. aCompara[ix,2] <> aCompara[ix,4] .OR. aCompara[ix,3] <>  aCompara[ix,4]
+			Cabex()
+			@ nLin,000      PSAY SB1->B1_COD
+			@ nLin,PCOL()+1 PSAY SB1->B1_DESC
+			@ nLin,PCOL()+1 PSAY aCompara[ix,1]
+
+			@ nLin,100      PSAY aCompara[ix,2] PICTURE  '@E 999,999,999.99'
+			@ nLin,PCOL()+1 PSAY aCompara[ix,3] PICTURE  '@E 999,999,999.99'
+			@ nLin,PCOL()+1 PSAY aCompara[ix,4] PICTURE  '@E 999,999,999.99'
+			@ nLin,150      PSAY '1-Erro nos saldos totais por local'
+			nlin++
+
+
+			
+			/*
+			//Trava item para inventario
+			If _invent
+				SB2->(dbSetOrder(1) )//codigo+local
+				SB2->( dbSeek(xFilial('SB2')+SB1->B1_COD+aCompara[ix,1] ) )
+				RecLock('SB2',.F.)
+				SB2->B2_DTINV   := ddatabase
+				MSUNLOCK()
+			Endif */
+
+			lErro := .T.
+		Endif
+	Next ix
+	//
+
+	For ix := 1 To Len(aCompara2)
+		If aCompara2[ix,2] <>  aCompara2[ix,3]
+			Cabex()
+			@ nLin,000      PSAY SB1->B1_COD
+			@ nLin,PCOL()+1 PSAY SB1->B1_DESC
+			@ nLin,PCOL()+1 PSAY SUBSTR(aCompara2[ix,1],1,2)+SPACE(4)+SUBSTR(aCompara2[ix,1],3)
+			@ nLin,100      PSAY 0               PICTURE  '@E 999,999,999.99'
+			@ nLin,PCOL()+1 PSAY aCompara2[ix,2] PICTURE  '@E 999,999,999.99'
+			@ nLin,PCOL()+1 PSAY aCompara2[ix,3] PICTURE  '@E 999,999,999.99'
+			@ nLin,150      PSAY '2-Erro nos saldos totais por lote'
+			nlin++
+
+			/*
+			//Trava item para inventario
+			If _invent
+			SB2->(dbSetOrder(1) )//codigo+local
+			SB2->( dbSeek(xFilial('SB2')+SB1->B1_COD+aCompara2[ix,1] ) )
+			RecLock('SB2',.F.)
+			SB2->B2_DTINV   := ddatabase
+			MSUNLOCK()
+			Endif */
+
+
+			lErro := .T.
+		Endif
+	Next ix
+	//
+	//
+	If lErro
+		Cabex()
+		@ nLin,000 PSAY REPLICATE('-',220)
+		nLin++
+	Endif
+
+Return
+
+/**
+* Transforma cQuery em cursor com os
+* dados - comunica com o Top
+*/
+Static Function MyQuery( cQuery , cursor )
+	cQuery := ChangeQuery(cQuery)
+
+	/** Mostrar a consulta  **/
+	//@ 116,090 To 416,707 Dialog oDlgMemo Title cursor
+	//@ 055,005 Get cQuery   Size 250,080  MEMO Object oMemo
+	//Activate Dialog oDlgMemo
+	IF SELECT( cursor ) <> 0
+		dbSelectArea(cursor)
+		Use
+	Endif
+
+	TCQUERY cQuery NEW ALIAS (cursor)
+Return
+
+/**
+*   Testa/Cria se existem as perguntas
+*   do grupo BOM003()
+*/
+/*Static Function geraPerg()
+	Private novo
+
+	DbSelectar('SX1')
+	DbSetOrder(1)
+
+	DbSeek('RELDIV    01')
+	novo := Eof()
+	RecLock('SX1',novo)
+	SX1->X1_GRUPO   := 'RELDIV'
+	SX1->X1_ORDEM   := '01'
+	SX1->X1_PERGUNT := 'Produto de         ?'
+	SX1->X1_VARIAVL := 'mv_ch1'
+	SX1->X1_TIPO    := 'C'
+	SX1->X1_TAMANHO := 15
+	SX1->X1_DECIMAL := 0
+	SX1->X1_PRESEL  := 1
+	SX1->X1_GSC     := 'G'
+	SX1->X1_VALID   := ''
+	SX1->X1_VAR01   := 'mv_par01'
+	SX1->X1_F3      := 'SB1'
+	MsUnlock()
+
+	DbSeek('RELDIV    02')
+	novo := Eof()
+	RecLock('SX1',novo)
+	SX1->X1_GRUPO   := 'RELDIV'
+	SX1->X1_ORDEM   := '02'
+	SX1->X1_PERGUNT := 'Produto até        ?'
+	SX1->X1_VARIAVL := 'mv_ch2'
+	SX1->X1_TIPO    := 'C'
+	SX1->X1_TAMANHO := 15
+	SX1->X1_DECIMAL := 0
+	SX1->X1_PRESEL  := 1
+	SX1->X1_GSC     := 'G'
+	SX1->X1_VALID   := ''
+	SX1->X1_VAR01   := 'mv_par02'
+	SX1->X1_F3      := 'SB1'
+	MsUnlock()
+
+	DbSeek('RELDIV    03')
+	novo := Eof()
+	RecLock('SX1',novo)
+	SX1->X1_GRUPO   := 'RELDIV'
+	SX1->X1_ORDEM   := '03'
+	SX1->X1_PERGUNT := 'Tipo de            ?'
+	SX1->X1_VARIAVL := 'mv_ch3'
+	SX1->X1_TIPO    := 'C'
+	SX1->X1_TAMANHO := 02
+	SX1->X1_DECIMAL := 0
+	SX1->X1_PRESEL  := 1
+	SX1->X1_GSC     := 'G'
+	SX1->X1_VALID   := ''
+	SX1->X1_VAR01   := 'mv_par03'
+	SX1->X1_F3      := '02'
+	MsUnlock()
+
+	DbSeek('RELDIV    04')
+	novo := Eof()
+	RecLock('SX1',novo)
+	SX1->X1_GRUPO   := 'RELDIV'
+	SX1->X1_ORDEM   := '04'
+	SX1->X1_PERGUNT := 'Tipo até           ?'
+	SX1->X1_VARIAVL := 'mv_ch4'
+	SX1->X1_TIPO    := 'C'
+	SX1->X1_TAMANHO := 02
+	SX1->X1_DECIMAL := 0
+	SX1->X1_PRESEL  := 1
+	SX1->X1_GSC     := 'G'
+	SX1->X1_VALID   := ''
+	SX1->X1_VAR01   := 'mv_par04'
+	SX1->X1_F3      := '02'
+	MsUnlock()
+
+
+	DbSeek('RELDIV    05')
+	novo := Eof()
+	RecLock('SX1',novo)
+	SX1->X1_GRUPO   := 'RELDIV'
+	SX1->X1_ORDEM   := '05'
+	SX1->X1_PERGUNT := 'Local de'
+	SX1->X1_VARIAVL := 'mv_ch5'
+	SX1->X1_TIPO    := 'C'
+	SX1->X1_TAMANHO := 02
+	SX1->X1_DECIMAL := 0
+	SX1->X1_PRESEL  := 1
+	SX1->X1_GSC     := 'G'
+	SX1->X1_VALID   := ''
+	SX1->X1_VAR01   := 'mv_par05'
+	SX1->X1_F3      := 'NNR'
+	MsUnlock()
+
+	DbSeek('RELDIV    06')
+	novo := Eof()
+	RecLock('SX1',novo)
+	SX1->X1_GRUPO   := 'RELDIV'
+	SX1->X1_ORDEM   := '06'
+	SX1->X1_PERGUNT := 'Local ate'
+	SX1->X1_VARIAVL := 'mv_ch6'
+	SX1->X1_TIPO    := 'C'
+	SX1->X1_TAMANHO := 02
+	SX1->X1_DECIMAL := 0
+	SX1->X1_PRESEL  := 1
+	SX1->X1_GSC     := 'G'
+	SX1->X1_VALID   := ''
+	SX1->X1_VAR01   := 'mv_par06'
+	SX1->X1_F3      := 'NNR'
+	MsUnlock()
+
+
+	/*
+	DbSeek('RELDIV    07')
+	novo := Eof()
+	RecLock('SX1',novo)
+	SX1->X1_GRUPO   := 'RELDIV'
+	SX1->X1_ORDEM   := '07'
+	SX1->X1_PERGUNT := 'Bloqueio inventario c/erro?'
+	SX1->X1_VARIAVL := 'mv_ch7'
+	SX1->X1_TIPO    := 'N'
+	SX1->X1_TAMANHO := 01
+	SX1->X1_DECIMAL := 0
+	SX1->X1_PRESEL  := 1
+	SX1->X1_DEF01   := 'Sim'
+	SX1->X1_DEF02   := 'Nao'
+	SX1->X1_GSC     := 'C'
+	SX1->X1_VALID   := ''
+	SX1->X1_VAR01   := 'mv_par07'
+	SX1->X1_F3      := ''
+	MsUnlock()
+	*/
+
+//Return 
+
+

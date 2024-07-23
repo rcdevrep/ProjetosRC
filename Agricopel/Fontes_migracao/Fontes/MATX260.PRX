@@ -1,0 +1,797 @@
+#INCLUDE "MATR260.CH"
+#INCLUDE "FIVEWIN.CH"
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ MATX260  ³ Autor ³ Eveli Morasco         ³ Data ³ 01/03/93 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Posicao dos Estoques                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ Generico                                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³         ATUALIZACOES SOFRIDAS DESDE A CONSTRU€AO INICIAL.             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Programador ³ Data   ³ BOPS ³  Motivo da Alteracao                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Marcelo Pim.³09/12/97³09827A³Ajuste da descricao p/ 30 caracteres.     ³±±
+±±³Fernando J. ³25/09/98³17720A³ Corre‡„o no Salto de Linhas.             ³±±
+±±³Fernando J. ³02/12/98³18752A³A fun‡„o PesqPictQT foi substituida pela  ³±±
+±±³            ³        ³      ³PesqPict.                                 ³±±
+±±³Fernando J. ³21/12/98³18920A³Possibilitar filtragem pelo usuario.      ³±±
+±±³Rodrigo Sart³08/02/99³META  ³Avaliacao da qtd empenhada prevista.      ³±±
+±±³Cesar       ³30/03/99³XXXXXX³Manutencao na SetPrint()                  ³±±
+±±³Patricia Sal³28/01/00³002121³Aumento da picture dos campos.            ³±±
+±±³Jeremias    ³09.02.00³Melhor³Validacao da comparacao dos valores e da  ³±±
+±±³            ³        ³      ³qtde quando do calculo do custo medio.    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+User Function MATX260()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local Titulo   := STR0001 //"Relacao da Posicao do Estoque"
+Local wnrel    := "MATX260"
+Local cDesc1   := STR0002 //"Este relatorio emite a posicao dos saldos e empenhos de cada  produto"
+Local cDesc2   := STR0003       //"em estoque. Ele tambem mostrara' o saldo disponivel ,ou seja ,o saldo"
+Local cDesc3   := STR0004       //"subtraido dos empenhos."
+Local cString  := "SB1"
+Local aOrd     := {OemToAnsi(STR0005),OemToAnsi(STR0006),OemToAnsi(STR0007),OemToAnsi(STR0008),OemToAnsi(STR0009)}    //" Por Codigo         "###" Por Tipo           "###" Por Descricao     "###" Por Grupo        "###" Por Almoxarifado   "
+Local lGo      := .F.
+Local lEnd     := .F.
+Local Tamanho  := "M"
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis tipo Private padrao de todos os relatorios         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+PRIVATE aReturn  := {OemToAnsi(STR0010), 1,OemToAnsi(STR0011), 2, 2, 1, "",1 }   //"Zebrado"###"Administracao"
+PRIVATE nLastKey := 0 ,cPerg := "MTX260"
+PRIVATE lCusUnif := SuperGetMV('MV_CUSFIL',.F.) //-- Identifica qdo utiliza custo por empresa
+
+Ajustasx1()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis utilizadas para parametros                                ³
+//³ mv_par01     // Aglutina por: Almoxarifado / Filial / Empresa       ³
+//³ mv_par02     // Filial de       *                                   ³
+//³ mv_par03     // Filial ate      *                                   ³
+//³ mv_par04     // almoxarifado de   *                                 ³
+//³ mv_par05     // almoxarifado ate     *                              ³
+//³ mv_par06     // codigo de       *                                   ³
+//³ mv_par07      // codigo ate      *                                  ³
+//³ mv_par08     // tipo de         *                                   ³
+//³ mv_par09     // tipo ate        *                                   ³
+//³ mv_par10     // grupo de        *                                   ³
+//³ mv_par11     // grupo ate       *                                   ³
+//³ mv_par12     // descricao de    *                                   ³
+//³ mv_par13     // descricao ate   *                                   ³
+//³ mv_par14     // imprime produtos: Todos /Positivos /Negativos       ³
+//³ mv_par15     // Saldo a considerar : Atual / Fechamento / Movimento ³
+//³ mv_par16     // Qual Moeda (1 a 5)                                  ³
+//³ mv_par17     // Aglutina por UM ?(S)im (N)ao                        ³
+//³ mv_par18     // Lista itens zerados ? (S)im (N)ao                   ³
+//³ mv_par19     // Data de Referencia (se saldo for pelo movimento)    ³
+//³ mv_par20     // Lista valores zerados ? (S)im (N)ao                 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+pergunte(cPerg,.F.)
+
+//If lCusUnif //-- Ajusta as perguntas para Custo Unificado   // Esta Variavel lCusUnif coloquei comentario por erro no Rpo R4
+//	MA260PergU()                                               // Deco 30/03/2007.
+//EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia controle para a funcao SETPRINT                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+wnrel:=SetPrint(cString,wnrel,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.F.,aOrd,,Tamanho)
+
+if nLastKey = 27
+	Set Filter to
+	Return
+Endif
+
+//If lCusUnif .And. ((mv_par01==1).Or.!(mv_par04=='**').Or.!(mv_par05=='**').Or.aReturn[8]==5) //-- Ajusta as perguntas para Custo Unificado
+//	Aviso(STR0024, STR0025+CHR(10)+CHR(13)+STR0029+CHR(10)+CHR(13)+STR0026+CHR(10)+CHR(13)+STR0027+CHR(10)+CHR(13)+STR0028, {'Ok'}) //'Custo Unificado'###'Com o parametro MV_CUSFIL ativado o preenchimento das seguintes perguntas deve ser observado:'###'Ordem de Impressao -> Todas, exceto "ARMAZEM"'###'Aglutina Por Almoxarifado/Filial/Empresa? -> Somente podem ser utilizadas as opcoes "Filial" ou "Empresa"'###'Armazem De? -> Somente "**"'###'Armazem Ate? -> Somente "**"'
+//	Set Filter to
+//	Return Nil
+//EndIf
+
+If mv_par04 == '**'
+	mv_par04 := '  '
+EndIf
+If mv_par05 == '**'
+	mv_par05 := 'zz'
+EndIf
+
+SetDefault(aReturn,cString)
+If nLastKey = 27
+	Set Filter to
+	Return
+Endif
+
+mv_par16 := If( ((mv_par16 < 1) .Or. (mv_par16 > 5)),1,mv_par16 )
+Tipo     := IIF(aReturn[4]==1,15,18)
+
+If Type("NewHead")#"U"
+	Titulo := (NewHead+" ("+AllTrim( aOrd[ aReturn[ 8 ] ] )+")")
+Else
+	Titulo += " ("+AllTrim( aOrd[ aReturn[ 8 ] ] )+")"
+EndIf
+
+cFileTRB := ""
+RptStatus( { | lEnd | cFileTRB := r260Select( @lEnd ) },Titulo+STR0023 ) //": Preparacao..."
+
+If !Empty( cFileTRB )
+	RptStatus({|lEnd| R260Imprime( @lEnd,cFileTRB,Titulo,wNRel,Tamanho,Tipo,aReturn[ 8 ] )},titulo)
+EndIf
+
+Return NIL
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³R260SELECT³ Autor ³ Ben-Hur M. Castilho   ³ Data ³ 20/11/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Preparacao do Arquivo de Trabalho p/ Relatorio             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATX260                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function R260Select( lEnd )
+Local cFileTRB := "",;
+cIndxKEY := "",;
+aSizeQT  := TamSX3( "B2_QATU" ),;
+aSizeVL  := TamSX3( "B2_VATU1"),;
+aSaldo   := {},;
+nQuant   := 0,;
+nValor   := 0,;
+nQuantR  := 0,;
+nValorR  := 0,;
+cFilOK   := cFilAnt,;
+cAl := "SB2",cQry, lExcl := .f.,aStru := {},dDataRef
+
+Local aCampos := {	{ "FILIAL","C",02,00 },;
+					{ "CODIGO","C",15,00 },;
+					{ "LOCAL ","C",02,00 },;
+					{ "TIPO  ","C",02,00 },;
+					{ "GRUPO ","C",04,00 },;
+					{ "DESCRI","C",21,00 },;
+					{ "UM    ","C",02,00 },;
+					{ "VALORR","N",aSizeVL[ 1 ]+1, aSizeVL[ 2 ] },;
+					{ "QUANTR","N",aSizeQT[ 1 ]+1, aSizeQT[ 2 ] },;
+					{ "VALOR ","N",aSizeVL[ 1 ]+1, aSizeVL[ 2 ] },;
+					{ "QUANT ","N",aSizeQT[ 1 ]+1, aSizeQT[ 2 ] } }
+
+If (mv_par01 == 1)
+	If (aReturn[ 8 ] == 5)
+		cIndxKEY := "LOCAL+"
+	Else
+		cIndxKEY := "FILIAL+"
+	EndIf
+	
+	If (mv_par17 == 1)
+		cIndxKEY += "UM+"
+	EndIf
+	
+	Do Case
+		Case (aReturn[ 8 ] == 1)
+			cIndxKEY += "CODIGO+LOCAL"
+		Case (aReturn[ 8 ] == 2)
+			cIndxKEY += "TIPO+CODIGO+LOCAL"
+		Case (aReturn[ 8 ] == 3)
+			cIndxKEY += "DESCRI+CODIGO+LOCAL"
+		Case (aReturn[ 8 ] == 4)
+			cIndxKEY += "GRUPO+CODIGO+LOCAL"
+		Case (aReturn[ 8 ] == 5)
+			cIndxKEY += "CODIGO+FILIAL"
+	EndCase
+Else
+	If (aReturn[ 8 ] == 5)
+		cIndxKEY := "LOCAL+"
+	Else
+		cIndxKEY := ""
+	EndIf
+	
+	If (mv_par17 == 1)
+		cIndxKEY += "UM+"
+	EndIf
+
+	Do Case
+		Case (aReturn[ 8 ] == 1)
+			cIndxKEY += "CODIGO+FILIAL+LOCAL"
+		Case (aReturn[ 8 ] == 2)
+			cIndxKEY += "TIPO+CODIGO+FILIAL+LOCAL"
+		Case (aReturn[ 8 ] == 3)
+			cIndxKEY += "DESCRI+CODIGO+FILIAL+LOCAL"
+		Case (aReturn[ 8 ] == 4)
+			cIndxKEY += "GRUPO+CODIGO+FILIAL+LOCAL"
+		Case (aReturn[ 8 ] == 5)
+			cIndxKEY += "CODIGO+FILIAL"
+	EndCase
+EndIf
+
+cFileTRB := CriaTrab( nil,.F. ) 
+
+DbSelectArea( 0 )
+DbCreate( cFileTRB,aCampos )
+
+DbUseArea( .F.,,cFileTRB,cFileTRB,.F.,.F. ) 
+IndRegua( cFileTRB,cFileTRB,cIndxKEY,,,OemToAnsi(STR0013))   //"Organizando Arquivo..."
+
+DbSelectArea( "SB2" )
+SetRegua( LastRec() )
+
+#IFDEF TOP
+	aStru := dbStruct()
+
+	cQuery := "SELECT * FROM " + RetSqlName("SB2")
+	cQuery += " WHERE B2_FILIAL BETWEEN '" + MV_PAR02 + "' AND '" + MV_PAR03 + "'"
+	cQuery += "   AND B2_LOCAL  BETWEEN '" + MV_PAR04 + "' AND '" + MV_PAR05 + "'"
+	cQuery += "   AND B2_COD    BETWEEN '" + MV_PAR06 + "' AND '" + MV_PAR07 + "'"
+	cQuery += "   AND D_E_L_E_T_ = ' '"
+	
+	cAl := "xxSB2"
+	cQuery := ChangeQuery(cQuery)
+		
+	dbUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), cAl, .F., .T.)
+	For ni := 1 to Len(aStru)
+		If aStru[ni,2] != 'C'
+			TCSetField(cAl, aStru[ni,1], aStru[ni,2],aStru[ni,3],aStru[ni,4])
+		Endif
+	Next
+#ELSE
+  dbSetOrder(1)
+  dbSeek(MV_PAR02+MV_PAR06+MV_PAR04,.t.)
+#ENDIF
+
+IF xFilial("SB2") != "  "
+	lExcl := .t.
+Endif
+
+While !Eof()
+   IF lExcl
+	   cFilAnt := (cAl)->B2_FILIAL
+	Endif
+	IncRegua()
+	
+	dDataRef := Iif(Empty(mv_par20),dDataBase,mv_par20)
+		
+	If ((((cAl)->B2_FILIAL >= MV_PAR02) .And. ((cAl)->B2_FILIAL <= MV_PAR03)) .And. ;
+		(((cAl)->B2_LOCAL  >= MV_PAR04) .And. ((cAl)->B2_LOCAL  <= MV_PAR05)) .And. ;
+		(((cAl)->B2_COD    >= MV_PAR06) .And. ((cAl)->B2_COD    <= MV_PAR07)))
+		
+		dbSelectArea( "SB1" )
+		dbSetOrder(1)
+		
+		If (dbSeek( xFilial()+(cAl)->B2_COD) )
+			If (((SB1->B1_TIPO  >= MV_PAR08) .And. (SB1->B1_TIPO  <= MV_PAR09)) .And. ;
+				((SB1->B1_GRUPO >= MV_PAR10) .And. (SB1->B1_GRUPO <= MV_PAR11)) .And. ;
+				((SB1->B1_DESC  >= MV_PAR12) .And. (SB1->B1_DESC  <= MV_PAR13)) .And. ;
+				((!Empty(aReturn[7]) .And. &(aReturn[7])).Or.Empty(aReturn[7])))
+
+				Do Case
+					Case (mv_par15 == 1)
+						nQuant := (cAl)->B2_QATU
+					Case (mv_par15 == 2)
+						nQuant := (cAl)->B2_QFIM
+					OtherWise
+						nQuant := (aSaldo := CalcEst( (cAl)->B2_COD,(cAl)->B2_LOCAL,dDataRef+1,(cAl)->B2_FILIAL ))[ 1 ]
+				EndCase
+
+				dbSelectArea( "SB1" )
+				If ((mv_par14 == 1)                      .Or. ;
+					((mv_par14 == 2) .And.(nQuant >= 0))  .Or. ;
+					((mv_par14 == 3) .And.(nQuant < 0)))
+					
+					Do Case
+						Case (mv_par15 == 1)
+							nValor := (cAl)->(FieldGet( FieldPos( "B2_VATU"+Str( mv_par16,1 ) ) ))
+						Case (mv_par15 == 2)
+							nValor := (cAl)->(FieldGet( FieldPos( "B2_VFIM"+Str( mv_par16,1 ) ) ))
+						OtherWise
+							nValor := aSaldo[ 1+mv_par16 ]
+					EndCase
+					
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³ Verifica se devera ser impresso itens zerados                ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					If (mv_par18==2)  .And. (QtdComp(nQuant)==QtdComp(0))
+						dbSelectArea( cAl )
+						dbSkip()
+						Loop
+					EndIf					
+	
+					//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+					//³ Verifica se devera ser impresso valores zerados              ³
+					//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+					If (mv_par21==2) .And. (QtdComp(nValor)==QtdComp(0))
+						dbSelectArea( cAl )
+						dbSkip()
+						Loop
+					EndIf
+
+//					nQuantR := (cAl)->B2_QEMP + AvalQtdPre("SB2",1,NIL,cAl) + (cAl)->B2_RESERVA + (cAl)->B2_QEMPSA
+					
+					nQuantR := 0 // Eliminado qtde empenho/reserva cfe necessidade Alexandre/Lauro - Deco 31/05/2004
+					
+//					nValorR := (QtdComp(nValor) / QtdComp(nQuant)) * QtdComp(nQuantR)
+
+               nValorR := 0 // Eliminado qtde empenho/reserva cfe necessidade Alexandre/Lauro - Deco 31/05/2004
+					
+					dbSelectArea( cFileTRB )
+					dbAppend()
+					
+					FIELD->FILIAL := (cAl)->B2_FILIAL
+					FIELD->CODIGO := (cAl)->B2_COD
+					FIELD->LOCAL  := (cAl)->B2_LOCAL
+					FIELD->TIPO   := SB1->B1_TIPO
+					FIELD->GRUPO  := SB1->B1_GRUPO
+					FIELD->DESCRI := SB1->B1_DESC
+					FIELD->UM     := SB1->B1_UM
+					FIELD->QUANTR := nQuantR
+					FIELD->VALORR := nValorR
+					FIELD->QUANT  := nQuant
+					FIELD->VALOR  := nValor
+				EndIf
+			EndIf
+		EndIf
+		
+		DbSelectArea( cAl )
+	EndIf
+	
+	DbSkip()
+EndDo
+
+cFilAnt := cFilOk
+
+#IFDEF TOP
+ dbSelectArea(cAl)
+ dbCloseArea()
+ ChkFIle("SB2",.f.)
+#Endif
+
+dbSelectArea("SB1")
+Set Filter to
+
+Return( cFileTRB )
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³R260IMPRIM³ Autor ³ Ben-Hur M. Castilho   ³ Data ³ 20/11/96 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Preparacao do Arquivo de Trabalho p/ Relatorio             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ MATX260                                                    ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function R260Imprime( lEnd,cFileTRB,cTitulo,wNRel,cTam,nTipo,nOrdem )
+
+#define DET_SIZE  13
+
+#define DET_CODE   1
+#define DET_TIPO   2
+#define DET_GRUP   3
+#define DET_DESC   4
+#define DET_UM     5
+#define DET_FL     6
+#define DET_ALMX   7
+#define DET_SALD   8
+#define DET_EMPN   9
+#define DET_DISP  10
+#define DET_VEST  11
+#define DET_VEMP  12
+#define DET_KEYV  13
+
+#define ACM_SIZE   6
+
+#define ACM_CODE   1
+#define ACM_SALD   2
+#define ACM_EMPN   3
+#define ACM_DISP   4
+#define ACM_VEST   5
+#define ACM_VEMP   6
+
+Local aPrnDET   := nil,;
+aTotUM    := nil,;
+aTotORD   := nil
+
+Local cLPrnCd   := "",;
+nInKeyV   := 0
+
+Local lPrintCAB := .F.,;
+lPrintDET := .F.,;
+lPrintTOT := .F.,;
+lPrintOUT := .F.,;
+lPrintLIN := .F.
+
+Local nTotValEst:=0,;
+nTotValEmp:=0,;
+nTotValSal:=0,;
+nTotValRPR:=0,;
+nTotValRes:=0
+
+Local cPicture  := PesqPict("SB2", If( (mv_par15 == 1),"B2_QATU","B2_QFIM" ),14 )
+Local cPicVal    := PesqPict("SB2","B2_VATU"+Str(mv_par16,1),15)
+
+Private Li    := 80,;
+M_Pag := 1
+
+cCab01 := OemToAnsi(STR0014)        //"CODIGO          TP GRUP DESCRICAO             UM FL ALM   SALDO       EMPENHO PARA     ESTOQUE      ___________V A L O R___________"
+cCab02 := OemToAnsi(STR0015)        //"                                                          EM ESTOQUE  REQ/PV/RESERVA   DISPONIVEL    EM ESTOQUE          EMPENHADO "
+//  	                                   123456789012345 12 1234 123456789012345678901 12 12 12 999,999,999.99 999,999,999.99 9999,999,999.99 9999,999,999.99 9999,999,999.99
+//      	                               0         1         2         3         4         5         6         7         8         9        10        11        12        13
+//          	                           0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
+
+DbSelectArea( cFileTRB ) ; DbGoTop()
+
+While !Eof()
+	
+	If (LastKey() == 286) ; Exit ; EndIf
+	
+	If (aPrnDET == nil)
+		
+		aPrnDET := Array( DET_SIZE )
+		
+		aPrnDET[ DET_CODE ] := FIELD->CODIGO
+		aPrnDET[ DET_TIPO ] := FIELD->TIPO
+		aPrnDET[ DET_GRUP ] := FIELD->GRUPO
+		aPrnDET[ DET_DESC ] := FIELD->DESCRI
+		aPrnDET[ DET_UM   ] := FIELD->UM
+		
+		aPrnDET[ DET_FL   ] := ""
+		aPrnDET[ DET_ALMX ] := ""
+		aPrnDET[ DET_SALD ] := 0
+		aPrnDET[ DET_EMPN ] := 0
+		aPrnDET[ DET_DISP ] := 0
+		aPrnDET[ DET_VEST ] := 0
+		aPrnDET[ DET_VEMP ] := 0
+		
+		aPrnDET[ DET_KEYV ] := ""
+	EndIf
+	
+	If (mv_par17 == 1) .And. (aTotUM == nil)
+		
+		aTotUM := { FIELD->UM,0,0,0,0,0 }
+	EndIf
+	
+	If (((nOrdem == 2) .Or. (nOrdem == 4)) .And. (aTotORD == nil))
+		
+		aTotORD := { If( (nOrdem == 2),FIELD->TIPO,FIELD->GRUPO ),0,0,0,0,0 }
+	EndIf
+	
+	Do Case
+		Case (mv_par01 == 1)
+			
+			aPrnDET[ DET_FL   ] := FIELD->FILIAL
+			aPrnDET[ DET_ALMX ] := FIELD->LOCAL
+			
+		Case ((mv_par01 == 2) .And. (aPrnDET[ DET_KEYV ] == ""))
+			
+			aPrnDET[ DET_FL   ] := FIELD->FILIAL
+			aPrnDET[ DET_ALMX ] := If( (aReturn[ 8 ] == 5),FIELD->LOCAL,"**" )
+			
+		Case ((mv_par01 == 3) .And. (aPrnDET[ DET_KEYV ] == ""))
+			
+			aPrnDET[ DET_FL   ] := "**"
+			aPrnDET[ DET_ALMX ] := If( (aReturn[ 8 ] == 5),FIELD->LOCAL,"**" )
+	EndCase
+	
+	If aPrnDET[ DET_KEYV ] == ""
+		Do Case
+			Case (mv_par01 == 1)
+				If (aReturn[ 8 ] == 5)
+					aPrnDET[ DET_KEYV ] := FIELD->LOCAL+FIELD->CODIGO+FIELD->FILIAL
+				Else
+					aPrnDET[ DET_KEYV ] := FIELD->CODIGO+FIELD->FILIAL+FIELD->LOCAL
+				Endif
+			Case (mv_par01 == 2)
+				If (aReturn[ 8 ] == 5)
+					aPrnDET[ DET_KEYV ] := FIELD->LOCAL+FIELD->CODIGO+FIELD->FILIAL
+				Else
+					aPrnDET[ DET_KEYV ] := FIELD->CODIGO+FIELD->FILIAL
+				Endif
+			Case (mv_par01 == 3)
+				If (aReturn[ 8 ] == 5)
+					aPrnDET[ DET_KEYV ] := FIELD->LOCAL+FIELD->CODIGO
+				Else
+					aPrnDET[ DET_KEYV ] := FIELD->CODIGO
+				Endif
+		EndCase
+	EndIf
+	
+	aPrnDET[ DET_SALD ] += FIELD->QUANT
+	aPrnDET[ DET_EMPN ] += FIELD->QUANTR
+	aPrnDET[ DET_DISP ] += (FIELD->QUANT-FIELD->QUANTR)
+	aPrnDET[ DET_VEST ] += FIELD->VALOR
+	aPrnDET[ DET_VEMP ] += FIELD->VALORR
+	
+	If (mv_par17 == 1)
+		
+		aTotUM[ ACM_SALD ] += FIELD->QUANT
+		aTotUM[ ACM_EMPN ] += FIELD->QUANTR
+		aTotUM[ ACM_DISP ] += (FIELD->QUANT-FIELD->QUANTR)
+		aTotUM[ ACM_VEST ] += FIELD->VALOR
+		aTotUM[ ACM_VEMP ] += FIELD->VALORR
+	EndIf
+	
+	If ((nOrdem == 2) .Or. (nOrdem == 4))
+		
+		aTotORD[ ACM_SALD ] += FIELD->QUANT
+		aTotORD[ ACM_EMPN ] += FIELD->QUANTR
+		aTotORD[ ACM_DISP ] += (FIELD->QUANT-FIELD->QUANTR)
+		aTotORD[ ACM_VEST ] += FIELD->VALOR
+		aTotORD[ ACM_VEMP ] += FIELD->VALORR
+	EndIf
+	
+	DbSkip()
+	
+	Do Case
+		Case (mv_par01 == 1)
+			If (aReturn[ 8 ] == 5)
+				lPrintDET := !(aPrnDET[ DET_KEYV ] == FIELD->LOCAL+FIELD->CODIGO+FIELD->FILIAL)
+			Else
+				lPrintDET := !(aPrnDET[ DET_KEYV ] == FIELD->CODIGO+FIELD->FILIAL+FIELD->LOCAL)
+			Endif
+		Case (mv_par01 == 2)
+			If (aReturn[ 8 ] == 5)
+				lPrintDET := !(aPrnDET[ DET_KEYV ] == FIELD->LOCAL+FIELD->CODIGO+FIELD->FILIAL)
+			Else
+				lPrintDET := !(aPrnDET[ DET_KEYV ] == FIELD->CODIGO+FIELD->FILIAL)
+			Endif
+		Case (mv_par01 == 3)
+			If (aReturn[ 8 ] == 5)
+				lPrintDET := !(aPrnDET[ DET_KEYV ] == FIELD->LOCAL+FIELD->CODIGO)
+			Else
+				lPrintDET := !(aPrnDET[ DET_KEYV ] == FIELD->CODIGO)
+			Endif
+	EndCase
+	
+//	If lCusUnif .And. lPrintDET
+//		If (mv_par18==2) .And. (QtdComp(aPrnDET[DET_SALD])==QtdComp(0))
+//			aPrnDET := Nil
+//			Loop	
+//		EndIf	
+//	EndIf
+	
+	Do Case
+		Case ((mv_par17 == 1) .And. ;
+			!(aTotUM[ ACM_CODE ] == FIELD->UM))
+			
+			lPrintTOT := .T.
+		Case (( (nOrdem == 2) .Or. (nOrdem == 4) ) .And. ;
+			!(aTotORD[ ACM_CODE ] == If( (nOrdem == 2),FIELD->TIPO,FIELD->GRUPO )))
+			
+			lPrintTOT := .T.
+	EndCase
+	
+	If lPrintDET .Or. lPrintTOT
+		
+		If (Li > 56)
+			
+			Cabec( cTitulo,cCab01,cCab02,wNRel,cTam,nTipo )
+		EndIf
+		
+		Do Case
+			Case !(aPrnDET[ DET_CODE ] == cLPrnCd)
+				
+				cLPrnCd := aPrnDET[ DET_CODE ] ; lPrintCAB := .T.
+		EndCase
+		
+		If lPrintCAB .Or. lPrintOUT
+			
+			@ Li,000 PSay aPrnDET[ DET_CODE ]
+			@ Li,016 PSay aPrnDET[ DET_TIPO ]
+			@ Li,019 PSay aPrnDET[ DET_GRUP ]
+			@ Li,024 PSay aPrnDET[ DET_DESC ]
+			@ Li,046 PSay aPrnDET[ DET_UM   ]
+			
+			lPrintCAB := .F. ; lPrintOUT := .F.
+		EndIf
+		
+		@ Li,049 PSay aPrnDET[ DET_FL   ]
+		@ Li,052 PSay aPrnDET[ DET_ALMX ]
+		@ Li,054 PSay aPrnDET[ DET_SALD ] Picture cPicture
+		@ Li,070 PSay aPrnDET[ DET_EMPN ] Picture cPicture
+		@ Li,085 PSay aPrnDET[ DET_DISP ] Picture cPicture
+		@ Li,100 PSay aPrnDET[ DET_VEST ] Picture cPicVal
+		@ Li,117 PSay aPrnDET[ DET_VEMP ] Picture cPicVal
+		
+		nTotValSal+=aPrnDET[ DET_SALD ]
+		nTotValRpr+=aPrnDET[ DET_EMPN ]
+		nTotValRes+=aPrnDET[ DET_DISP ]
+		nTotValEst+=aPrnDET[ DET_VEST ]
+		nTotValEmp+=aPrnDET[ DET_VEMP ]
+		
+		aPrnDET := nil ; Li++
+		
+		If (((nOrdem == 2) .Or. (nOrdem == 4)) .And. ;
+			!(aTotORD[ ACM_CODE ] == If( (nOrdem == 2),FIELD->TIPO,FIELD->GRUPO )))
+			
+			Li++
+			
+			@ Li,016 PSay OemToAnsi(STR0016)+If( (nOrdem == 2),OemToAnsi(STR0017),OemToAnsi(STR0018))+" : "+aTotORD[ ACM_CODE ]   //"Total do "###"Tipo"###"Grupo"
+			
+			@ Li,055 PSay aTotORD[ ACM_SALD ] Picture cPicture
+			@ Li,070 PSay aTotORD[ ACM_EMPN ] Picture cPicture
+			@ Li,085 PSay aTotORD[ ACM_DISP ] Picture cPicture
+			@ Li,100 PSay aTotORD[ ACM_VEST ] Picture cPicVal
+			@ Li,117 PSay aTotORD[ ACM_VEMP ] Picture cPicVal
+			
+			Li++
+			
+			aTotORD   := nil ; lPrintLIN := .T.
+			lPrintTOT := .F. ; lPrintOUT := .T.
+		EndIf
+		
+		If ((mv_par17 == 1) .And. ;
+			!(aTotUM[ ACM_CODE ] == FIELD->UM))
+			
+			Li++
+			
+			@ Li,016 PSay OemToAnsi(STR0019)+aTotUM[ ACM_CODE ]   //"Total Unidade Medida : "
+			@ Li,055 PSay aTotUM[ ACM_SALD ] Picture cPicture
+			@ Li,070 PSay aTotUM[ ACM_EMPN ] Picture cPicture
+			@ Li,085 PSay aTotUM[ ACM_DISP ] Picture cPicture
+			@ Li,100 PSay aTotUM[ ACM_VEST ] Picture cPicVal
+			@ Li,117 PSay aTotUM[ ACM_VEMP ] Picture cPicVal
+			
+			Li++
+			
+			aTotUM    := nil ; lPrintLIN := .T.
+			lPrintTOT := .F. ; lPrintOUT := .T.
+		EndIf
+		
+		If lPrintLIN
+			Li++ ; lPrintLIN := .F.
+		EndIf
+	EndIf
+EndDo
+
+If nTotValSal + nTotValRPR + nTotValRes + nTotValEst + nTotValEmp # 0
+	If Li > 56
+		Cabec(cTitulo,cCab01,cCab02,wnRel,cTam,nTipo)
+	EndIf
+	Li += If(mv_par17#1,1,0)
+	@ Li,016 PSay OemToAnsi(STR0020) // "Total Geral : "
+	@ Li,055 PSay nTotValSal Picture cPicture
+	@ Li,070 PSay nTotValRPR Picture cPicture
+	@ Li,085 PSay nTotValRes Picture cPicture
+	@ Li,100 PSay nTotValEst Picture cPicVal
+	@ Li,117 PSay nTotValEmp Picture cPicVal
+EndIf
+
+If (LastKey() == 286)
+	@ pRow()+1,00 PSay OemToAnsi(STR0021)     //"CANCELADO PELO OPERADOR."
+Else
+	Roda( LastRec(), OemToAnsi(STR0022),cTam )    //"Registro(s) processado(s)"
+EndIf
+
+SET DEVICE TO SCREEN
+
+MS_FLUSH()
+
+If (aReturn[ 5 ] == 1)
+	SET PRINTER TO
+	OurSpool( wNRel )
+Endif
+
+DbSelectArea( cFileTRB )  ; DbCloseArea()
+FErase( cFileTRB+GetDBExtension() ) ; FErase( cFileTRB+OrdBagExt() )
+
+DbSelectArea( "SB1" )
+
+Return( nil )
+
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ AjustaSX1³ Autor ³ Lucas                 ³ Data ³ 11/04/01 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Verifica as perguntas inclu¡ndo-as caso n„o existam        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Remito .prx                                                ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+Static Function AjustaSX1()
+Local cAlias	:= Alias()
+Local cPerg		:= "MTX260"
+Local cOrdem
+Local aRegs		:= {}
+
+AAdd(aRegs,{"Data de Referencia  ","Data de Hoy         ","Base Date           ","mv_chj","D",8,0,0,"G","","mv_par19","","","","'"+Dtoc(dDataBase)+"'","","","","","",""})
+AAdd(aRegs,{"Lista Valor Zerado ?","Muestra Val. a Cero?","Show Zeroed Values ?","mv_chk","C",1,0,2,"C","","mv_par20","Sim","Si","Yes","","","Nao","No","No","",""})
+
+dbSelectArea("SX1")
+dbSetOrder(1)
+For nX:=1 to Len(aRegs)
+	cOrdem := StrZero(nX+18,2)
+	If !(MsSeek(cPerg+cOrdem))
+		RecLock("SX1",.T.)
+		Replace X1_GRUPO		With cPerg
+		Replace X1_ORDEM		With cOrdem
+		Replace x1_pergunte	With aRegs[nx][01]
+		Replace x1_perspa		With aRegs[nx][02]
+		Replace x1_pereng		With aRegs[nx][03]
+		Replace x1_variavl	With aRegs[nx][04]
+		Replace x1_tipo		With aRegs[nx][05]
+		Replace x1_tamanho	With aRegs[nx][06]
+		Replace x1_decimal	With aRegs[nx][07]
+		Replace x1_presel		With aRegs[nx][08]
+		Replace x1_gsc			With aRegs[nx][09]
+		Replace x1_valid		With aRegs[nx][10]
+		Replace x1_var01		With aRegs[nx][11]
+		Replace x1_def01		With aRegs[nx][12]
+		Replace x1_defspa1	With aRegs[nx][13]
+		Replace x1_defeng1	With aRegs[nx][14]
+		Replace x1_cnt01		With aRegs[nx][15]
+		Replace x1_var02		With aRegs[nx][16]
+		Replace x1_def02		With aRegs[nx][17]
+		Replace x1_defspa2	With aRegs[nx][18]
+		Replace x1_defeng2	With aRegs[nx][19]
+		Replace x1_f3			With aRegs[nx][20]
+		Replace x1_grpsxg		With aRegs[nx][21]
+		MsUnlock()
+	Endif
+Next
+dbSelectArea(cAlias)
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³MA260PergUºAutor  ³Microsiga           º Data ³  01/28/03   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDesc.     ³Altera as Perguntas no SX1 para utilizacao do MV_CUSFIL     º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ AP6                                                        º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function MA260PergU()
+
+Local aAreaAnt := GetArea()
+
+If lCusUnif //-- Ajusta as perguntas para Custo Unificado
+	dbSelectArea('SX1')
+	dbSetOrder(1)
+	If dbSeek('MTX26001', .F.) .And. !(X1_PRESEL==2.Or.X1_PRESEL==3) //-- Aglutina por Filial
+		RecLock('SX1', .F.)
+		Replace X1_PRESEL With 2
+		MsUnlock()
+	EndIf
+	If dbSeek('MTX26004', .F.) .And. !(X1_CNT01=='**') //-- Armazem De **
+		RecLock('SX1', .F.)
+		Replace X1_CNT01 With '**'
+		MsUnlock()
+	EndIf
+	If dbSeek('MTX26005', .F.) .And. !(X1_CNT01=='**') //-- Armazem Ate **
+		RecLock('SX1', .F.)
+		Replace X1_CNT01 With '**'
+		MsUnlock()
+	EndIf
+EndIf	
+
+RestArea(aAreaAnt)
+
+Return Nil
