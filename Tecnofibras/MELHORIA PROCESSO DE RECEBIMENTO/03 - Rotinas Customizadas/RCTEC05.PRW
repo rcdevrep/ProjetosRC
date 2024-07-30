@@ -20,6 +20,9 @@ User Function RCTEC05()
 	oBrowse:SetAlias('SF1')
 	oBrowse:SetDescription( "Notas Pendentes Recebimento" )
 	oBrowse:SetMenuDef("RCTEC05")
+	IF EMPTY(SF1->F1_SOLICIT)
+		U_nSolicit()
+	ENDIF
 	oBrowse:AddFilter('Status',"SF1->F1_XSTATUS = 'Z' .AND. SF1->F1_STATUS <> 'A'",.T.,.T.)
 
 	//Adiciona Leganda
@@ -32,10 +35,6 @@ Return()
 Static Function MenuDef()
 
 	Local aRotina := {}
-
-	IF EMPTY(SF1->F1_SOLICIT)
-		U_nSolicit()
-	ENDIF
 
 	ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC05' OPERATION 2 ACCESS 0
 	ADD OPTION aRotina TITLE 'Receber'    ACTION 'VIEWDEF.RCTEC05' OPERATION 2 ACCESS 0
