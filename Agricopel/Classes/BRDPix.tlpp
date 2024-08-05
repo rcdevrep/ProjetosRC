@@ -1,0 +1,595 @@
+#Include "Protheus.ch"
+#INCLUDE "TOPCONN.CH"`
+#INCLUDE "FILEIO.CH"
+#include "tlpp-core.th"
+#include "tlpp-rest.th"
+#include 'tbiconn.ch'
+
+#define LF chr(10)
+
+Class BRDPix
+
+	Public Data oPagador as Object
+	Public Data oRecebedor as Object
+    Public Data cIdTransacao as Character
+    Public Data nValor as Numeric
+    Public Data cDescricao as Character
+    Public Data cUrl as Character
+    Public Data cMetodo as Character
+    Public Data cClientId as Character
+    Public Data cClientKey as Character
+    Public Data cClientSecret as Character
+
+    /*
+
+    ClientKey : 0356dec4-7cde-4d91-b6e1-77f3433665e1
+    ClientSecret: 29fbf612-aa65-4c29-987c-9ba0c76afd89
+    CHAVE PIX HOMOLOGAÇÃO: b3bdd4e4-7cdc-41c1-bd70-7842d987d79f
+
+    */
+
+	Public Method New() Constructor
+    Public Method Reset()
+	Public Method SolicitarTransferencia()
+	Public Method ConsultaTransferencia()
+
+EndClass
+
+Class BRDIntegracao
+
+    Public Data cClientId as Character
+    Public Data cErro as Character
+    Public Data cToken as Character
+    Public Data cJti as Character
+    Public Data cTime as Character
+    Public Data cSign as Character
+    Public Data bResult as Logical
+
+    Public Method New() Constructor
+    Public Method Reset()
+    Public Method Assinatura()
+    Public Method Token()
+
+EndClass
+
+Class BRDPagador
+
+	Public Data cTipoChave as Character
+	Public Data cChavePix as Character
+	Public Data cAgencia as Character
+	Public Data cConta as Character
+
+	Public Method New() Constructor
+    Public Method Reset()
+
+EndClass
+
+Class BRDRecebedor
+
+	Public Data cCpfCnpj as Character
+	Public Data cTipoChave as Character
+	Public Data cChavePix as Character
+	Public Data cAgencia as Character
+	Public Data cBanco as Character
+	Public Data cIspb as Character
+	Public Data cConta as Character
+	Public Data cDigitoConta as Character
+	Public Data cTipoConta as Character
+	Public Data cFavorecido as Character
+    Public Method Reset()
+
+	Public Method New() Constructor
+
+EndClass
+
+
+Method New() Class BRDPix
+	Local lRet := .T.
+	Local lJob := IsBlind()
+	Local _oPagador := BRDPagador() :New()
+	Local _oRecebedor := BRDRecebedor():New()
+
+    Self:cClientKey := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
+    Self:cClientSecret := "29fbf612-aa65-4c29-987c-9ba0c76afd89"
+	Self:oPagador := _oPagador
+	Self:oRecebedor := _oRecebedor
+
+    Self:cUrl := "https://qrpix-h.bradesco.com.br"
+    Self:cMetodo := "/v1/spi/solicitar-transferencia"
+
+
+Return lRet
+
+Method Reset() Class BRDPix
+	Local lRet := .T.
+	Local lJob := IsBlind()
+	Local _oPagador := BRDPagador() :New()
+	Local _oRecebedor := BRDRecebedor():New()
+
+    Self:cClientId := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
+    Self:cClientKey := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
+    Self:cClientSecret := "29fbf612-aa65-4c29-987c-9ba0c76afd89"
+	Self:oPagador := _oPagador
+	Self:oRecebedor := _oRecebedor
+
+    Self:cUrl := "https://qrpix-h.bradesco.com.br"
+    Self:cMetodo := "/v1/spi/solicitar-transferencia"
+
+    /*
+
+    ClientKey : 0356dec4-7cde-4d91-b6e1-77f3433665e1
+    ClientSecret: 29fbf612-aa65-4c29-987c-9ba0c76afd89
+    CHAVE PIX HOMOLOGAÇÃO: b3bdd4e4-7cdc-41c1-bd70-7842d987d79f
+
+    */
+
+Return lRet
+
+Method New() Class BRDPagador
+	Local lRet := .T.
+	Local lJob := IsBlind()
+
+	//SAMPLE TESTE
+
+	Self:cTipoChave := "E" //EVP
+	Self:cChavePix := "de24cbca-2c66-4372-9c16-26056b966ece"
+	Self:cAgencia := "532"
+	Self:cConta := "42281"
+
+Return lRet
+
+Method Reset() Class BRDPagador
+	Local lRet := .T.
+	Local lJob := IsBlind()
+
+	//SAMPLE TESTE
+
+	Self:cTipoChave := "" //EVP
+	Self:cChavePix := ""
+	Self:cAgencia := ""
+	Self:cConta := ""
+
+Return lRet
+
+Method New() Class BRDRecebedor
+	Local lRet := .T.
+	Local lJob := IsBlind()
+
+	Self:cCpfCnpj := "09999902291969"
+    Self:cChavePix := "de24cbca-2c66-4372-9c16-26056b966ece"
+	Self:cTipoChave := "CPFCNPJ"
+	Self:cAgencia := "3987"
+	Self:cBanco := "237"
+	Self:cIspb := "60746948"
+	Self:cConta := "200958"
+	Self:cDigitoConta := "7"
+	Self:cTipoConta := "CONTA_POUPANCA"
+	Self:cFavorecido := "FULANO DA SILVA JUNIOR"
+
+Return lRet
+
+Method Reset() Class BRDRecebedor
+	Local lRet := .T.
+	Local lJob := IsBlind()
+
+	Self:cCpfCnpj := ""
+	Self:cTipoChave := ""
+    Self:cChavePix := ""
+	Self:cAgencia := ""
+	Self:cBanco := ""
+	Self:cIspb := ""
+	Self:cConta := ""
+	Self:cDigitoConta := ""
+	Self:cTipoConta := ""
+	Self:cFavorecido := ""
+
+Return lRet
+
+Method SolicitarTransferencia() Class BRDPix
+	Local lRet := .T.
+	Local lJob := IsBlind()
+    Local jPagador := JSONObject() :New()
+    Local jRecebedor := JSONObject() :New()
+    Local jJsonPost := JSONObject() :New()
+    Local oIntegrador := BRDIntegracao():New()
+    
+    /*
+    Public Data oPagador as Object
+	Public Data oRecebedor as Object
+    Public Data cIdTransacao as Character
+    Public Data nValor as Numeric
+    Public Data cDescricao as Character
+    Public Data cUrl as Character
+    Public Data cMetodo as Character
+    Public Data cClientKey as Character
+    Public Data cClientSecret as Character
+    */
+
+    Local cClientId:= Self:cClientId
+    
+
+    Local cURL:= Self:cMetodo
+    Local cURLBase:= Self:cUrl
+    Local cToken:= ""
+    Local cHeaderRet:= ""
+    Local cErro:= ""
+    Local cJti:= ""
+    Local cConteudo:= ""
+    
+    Local cDirServ:= "\cert APIs bancos\openssl\"
+    Local lRec:= .T.
+    Local lRegistrou := .F.
+    Local aToken      	:= {} 
+    Local aHeadStr      := {} 
+    Local nCodResp:= 0
+    Public nNossoNum   := 0
+    Public oObjLog     := nil
+
+    oObjLog := LogSMS():new("APIBRD_PIX")
+    oObjLog:setFileName('\log\APIBRD\solicitartransferencia'+cEmpAnt+'_'+cFilant+'_'+dtos(date())+"_"+strtran(time(),":","")+"_"+SE2->E2_NUM+"_"+cValToChar(ThreadId())+'.txt')
+    oObjLog:eraseLog()
+    oObjLog:saveMsg(GetEnvServer())
+	
+    jPagador["tipoChave"] := Self:oPagador:cTipoChave
+    jPagador["chavePix"] := Self:oPagador:cChavePix
+
+    jRecebedor["cnpjcnpj"] := Self:oRecebedor:cCpfCnpj
+    jRecebedor["tipoChave"] := Self:oRecebedor:cTipoChave
+    jRecebedor["chavePix"] := Self:oRecebedor:cChavePix
+    jRecebedor["nomeFavorecido"] := Self:oRecebedor:cFavorecido
+
+    jJsonPost["pagador"] := jPagador:ToJson()
+    jJsonPost["recebedor"] := jRecebedor:ToJson()
+    jJsonPost["idtransacao"] := Self:cIdTransacao
+    jJsonPost["valor"] := Self:nValor
+    jJsonPost["descricao"] := Self:cDescricao
+
+    oIntegrador:Token()
+    //oIntegrador:GeraRequest()
+    cToken:= oIntegrador:cToken
+    cJti:= oIntegrador:cJti
+    cTime:= oIntegrador:cTime
+
+    cConteudo:= "POST"+LF
+    cConteudo+= cUrl+LF
+    cConteudo+= LF
+    cConteudo+= LF
+    cConteudo+= cToken+LF
+    cConteudo+= cJti+LF
+    cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-03:00'+LF
+    cConteudo+= "SHA256"
+    Memowrite(cDirServ+"request.txt",cConteudo)
+
+    oIntegrador:Assinatura()
+    //Gera a assinatura
+    cSign := oIntegrador:cSign
+
+    If Empty(cSign)
+        Return
+    Endif    
+
+    //Autorização no header
+    Aadd(aHeadStr, "Authorization: Bearer "+cToken )
+    Aadd(aHeadStr, "X-Brad-Signature: "+cSign)
+    Aadd(aHeadStr, "X-Brad-Nonce: "+cJti)
+    Aadd(aHeadStr, "X-Brad-Timestamp: "+Left(FwTimeStamp(3,date(),cTime),19)+'-03:00') 
+    Aadd(aHeadStr, "X-Brad-Algorithm: SHA256") 
+    Aadd(aHeadStr, "Access-token: "+cClientId) 
+    Aadd(aHeadStr, "Content-Type: application/json") 
+
+    //cUrl += "?numeroDocumento="+ZLA->ZLA_NUMBCO                                                                                                              +"&dataOperacao="+REPLACE(DTOC(dDataBase),'/','.')"
+
+    //Efetua o POST na API
+    cRetPost := HTTPPost(cUrlBase+cUrl, /*cGetParms*/, jJsonPost:ToJson(), /*nTimeOut*/, aHeadStr, @cHeaderRet)
+    cRetPost:= DecodeUTF8(cRetPost)
+    nCodResp:= HTTPGetStatus(cHeaderRet)
+    oObjLog:saveMsg("Envia Pré-Pagamento") 
+    oObjLog:saveMsg("**URL: "+cUrlBase+cUrl) 
+    oObjLog:saveMsg("**Body: "+cJson)  
+    oObjLog:saveMsg("**Retorno: "+Iif(cRetPost = nil,"",cRetPost)) 
+    oObjLog:saveMsg("**Cabeçalho Retorno: "+cHeaderRet) 
+
+        
+    jJsonBol := JsonObject():New()
+    jJsonBol:FromJson(cRetPost)
+
+    If nCodResp <> 200
+        If nCodResp = 401
+            cErro:= jJsonBol["message"]
+        Else
+            If jJsonBol:HasProperty("codigo")
+                cErro:= jJsonBol["codigo"]+" - "+jJsonBol["mensagem"]
+            Elseif jJsonBol:HasProperty("code")
+                cErro:= jJsonBol["code"]+" - "+jJsonBol["message"]
+            Else 
+                cErro:= "Falha ao enviar a requisicao. Codi	go: " +cvaltochar(nCodResp)+' - '+cHeaderRet
+            Endif      
+        Endif
+    Else
+        lRet:= .T.
+    Endif
+
+
+Return lRet
+
+/*
+        {
+    "pagador": {
+    "tipoChave": "EVP",
+    "chavePix": "a892d4c6-d00f-4f21-8c95-e165b3dc88ae"
+    },
+    "recebedor": {
+    "cpfCnpj": "09999902291969",
+    "tipoChave": "CPFCNPJ",
+    "chavePix": "09999902291969",
+    "nomeFavorecido": "KLEBER ADILSON"
+    },
+    "idtransacao": "TransfenciaAPI000000000000000000001",
+    "valor": "50.00",
+    "descricao": "Pagamento teste"
+    }
+*/
+
+Method ConsultaTransferencia() Class BRDPix
+	Local lRet := .T.
+	Local lJob := IsBlind()
+
+
+Return lRet
+
+
+/*
+
+Cadastro do 77777 - Fornecedor
+
+Dados do Pagador:
+"pagador": {
+        "tipoChave": "EVP",
+        "chavePix": "de24cbca-2c66-4372-9c16-26056b966ece"
+    },
+
+  "pagador": {
+        "tipoChave": "AGENCIACONTA",
+        "agencia": "532",
+        "conta": "42281"
+    },
+
+
+Dados do Recebedor:
+
+    "recebedor": {
+        "cpfCnpj": "89631141470",
+        "tipoChave": "AGENCIACONTA",
+        "agencia": "3987",
+        "banco": "237",
+        "ispb": "60746948",
+        "conta": "200958",
+        "digitoConta": "7",
+        "tipoConta": "CONTA_POUPANCA",
+        "nomeFavorecido": "FULANO DA SILVA JUNIOR"
+    },
+
+
+    "recebedor": {
+        "cpfCnpj": "89631141470",
+        "tipoChave": "EVP",
+        "chavePix": "b85f5a59-57d0-405c-aba5-90f3a47c8326",
+        "nomeFavorecido": "FULANO DA SILVA JUNIOR"
+    },
+
+
+    "recebedor": {
+        "cpfCnpj": "89631141470",
+        "tipoChave": "EVP",
+        "chavePix": "0ac2af24-de9b-4f33-aa6c-9e1bb2f619fd",
+        "nomeFavorecido": "FULANO DA SILVA JUNIOR"
+    },
+
+    "recebedor": {
+        "cpfCnpj": "09999902291969",
+        "tipoChave": "CPFCNPJ",
+        "chavePix": "09999902291969",
+        "nomeFavorecido": "FULANO DA SILVA JUNIOR"
+    },
+
+    */
+
+ // Public Method Assinatura()
+ // Public Method Token()
+
+Method New() Class BRDIntegracao
+
+    Self:cClientId := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
+    Self:cErro := ""
+    Self:cToken := ""
+    Self:cJti := ""
+    Self:cTime := ""
+    Self:cSign := ""
+    Self:bResult := .F.
+
+Return
+
+Method Token() Class BRDIntegracao
+    Local cURL := "https://qrpix-h.bradesco.com.br" //GetNewPar("AC_BRDURLA","https://proxy.api.prebanco.com.br")
+    Local aHeader := {}
+    Local cPath := "/oauth/token"
+    Local cBodyOut := ""
+    Local cErro := ""
+    Local cCabec := ""
+    Local cJWT := ""
+    Local cBody := ""
+    Local cSign := ""
+    Local cClientId := Self:cClientId
+    Local cConteudo := ""
+    Local cChave := ""
+    Local cRootServ := ""
+    Local cDirServ := "\cert APIs bancos\openssl\"
+    Local cComando1 := ""
+    Local cComando2 := ""
+    Local _cUnComp := ""
+    Local cResp := ""
+    Local cTime := Time()
+    Local cIat := FwTimeStamp(4,,cTime)
+    Local cExp := cvaltochar(val(cIat)+3600)
+    Local cJti := cvaltochar(val(cIat)*1000)
+    Local nPosHdr := 0
+    Public oDadosws := NIL
+
+    oFile := FWFileReader():New(cDirServ+"privkey_"+cEmpAnt+".txt")
+    If oFile:Open()
+        If !oFile:EoF()
+            cChave := oFile:FullRead()
+        EndIf
+        oFile:Close()
+    Else
+        oObjLog:saveMsg("Falha ao ler arquivo com a Public key.")
+
+        Self:bResult := .F.
+        Self:cErro := "Falha ao localizar o arquivo com a Public key."
+        Return .F.
+    EndIf
+
+    cCabec := '{"alg":"RS256", "typ":"JWT"}'
+    cBody := '{'
+    cBody += '"aud":"' +cURL+ '/oauth/token",'
+    cBody += '"sub":"' +cClientId+ '",'
+    cBody += '"iat":"' +cIat+ '",'
+    cBody += '"exp":"' +cExp+ '",'
+    cBody += '"jti":"' +cJti+ '",'
+    cBody += '"ver":"1.1"'
+    cBody += '}'
+    oObjLog:saveMsg("Body Assinatura: "+cBody)
+    cConteudo := Encode64(cCabec)+ '.' +Encode64(cBody)
+
+    Memowrite(cDirServ+"conteudo.txt",cConteudo)
+
+    cRootServ := GetSrvProfString ("ROOTPATH","")
+    cComando1 := "dgst -sha256 -keyform pem -sign privkey_"+cEmpAnt+".txt -out assinado.txt.sha256 conteudo.txt" //gera assinatura em sha256
+    cComando2 := "enc -base64 -in assinado.txt.sha256 -out assinado.txt.base64" //codifica em base64
+
+    If WaitRunSrv(cRootServ+cDirServ+ 'openssl.exe' +space(1)+cComando1,.T.,cRootServ+cDirServ)
+        If File(cDirServ+ 'assinado.txt.sha256' )
+            WaitRunSrv(cRootServ+cDirServ+ 'openssl.exe' +space(1)+cComando2,.T.,cRootServ+cDirServ)
+            If File(cDirServ+ 'assinado.txt.base64' )
+                //Lê arquivo gerado com assinatura
+                cSign := Memoread(cDirServ+ 'assinado.txt.base64' )
+                cSign := StrTran(cSign,"/","_")
+                cSign := StrTran(cSign,"+","-")
+                cSign := StrTran(cSign,"==","")
+                cSign := Strtran(cSign,chr(10),"")
+
+                //Apaga arquivos gerados
+                fErase(cDirServ+ 'assinado.txt.sha256' )
+                fErase(cDirServ+ 'assinado.txt.base64' )
+                fErase(cDirServ+ 'conteudo.txt' )
+            Endif
+        Endif
+    Endif
+
+    If Empty(cSign)
+        oObjLog:saveMsg("Falha ao assinar o conteudo. Erro: "+cErro)
+
+        Self:bResult := .F.
+        Self:cErro := "Falha ao assinar o conteudo."
+        Return .F.
+    Else
+        cJWT := Encode64(cCabec)+ '.' +Encode64(cBody)+ '.' +cSign
+    Endif
+
+    //Cria o cabeçalho da requisição
+    aadd(aHeader, "Content-Type: application/x-www-form-urlencoded")
+
+    cBodyOut := 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion='
+    cBodyOut := cJWT
+
+    oObjLog:saveMsg("Post: "+cUrl+cPath)
+    oObjLog:saveMsg("Body Requisição: "+cBodyOut)
+
+    oRestClient := FWRest() :New(cUrl)
+    oRestClient:setPath(cPath)
+
+    //Seta os parametros
+    oRestClient:SetPostParams(cBodyOut)
+
+    If oRestClient:Post(aHeader)
+        cResp := oRestClient:GetResult()
+    Endif
+
+    //Resposta
+    If Empty(cResp)
+        cResp := oRestClient:cResult
+        cErro := oRestClient:Getlasterror()
+        oObjLog:saveMsg("Erro: "+cErro)
+    Endif
+
+    nPosHdr := aScan(oRestClient:oResponseH:aHeaderFields,{|x| x[1] == "Content-Encoding"})
+    If nPosHdr > 0 .and. "gzip" $ oRestClient:oResponseH:aHeaderFields[nPosHdr,2]
+        If GzStrDecomp( cResp, Len(cResp), @_cUnComp )
+            cResp := _cUnComp
+        Else
+            Self:bResult := .F.
+            Self:cErro := "Erro: Falha ao descompactar a resposta."
+            oObjLog:saveMsg("Erro: Falha ao descompactar a resposta.")
+        Endif
+    Endif
+
+    oObjLog:saveMsg("Resposta: "+cResp)
+
+    If !FWJsonDeserialize(cResp,@oDadosWS)
+        Self:bResult := .F.
+        Self:cErro := "Falha ao realizar o parse do json da resposta."
+        oObjLog:saveMsg("Falha ao realizar o parse do json da resposta.")
+    Else
+        If Type("oDadosWS:token_type") == "C"
+            Self:bResult := .T.
+            Self:cErro := "Token Gerado com Sucesso!"
+            Self:cToken := oDadosWS:access_token
+            Self:cJti := cJti
+            Self:cTime := cTime
+            oObjLog:SaveMsg("Token: "+oDadosWS:access_token)
+        Else
+            Self:bResult := .F.
+            Self:cErro := "Falha ao obter o token. Erro: "+cvaltochar(oDadosWS:code)+" - "+oDadosWS:message
+            oObjLog:SaveMsg("Falha ao obter o token. Erro: "+cvaltochar(oDadosWS:code)+" - "+oDadosWS:message)
+        Endif
+    Endif
+
+Return .T.
+
+Method Assinatura() Class BRDIntegracao
+    Local cSign := ""
+    Local cComando1 := ""
+    Local cComando2 := ""
+    Local cRootServ := GetSrvProfString ("ROOTPATH","")
+    Local cDirServ := "\cert APIs bancos\openssl\"
+
+    cComando1 := "dgst -sha256 -keyform pem -sign privkey_"+cEmpAnt+".pem -out assinado.txt request.txt"
+    cComando2 := "enc -base64 -in assinado.txt -out assinado.txt.base64" //codifica em base64
+
+    If WaitRunSrv(cRootServ+cDirServ+ 'openssl.exe' +space(1)+cComando1,.T.,cRootServ+cDirServ)
+        If File(cDirServ+ 'assinado.txt' )
+            WaitRunSrv(cRootServ+cDirServ+ 'openssl.exe' +space(1)+cComando2,.T.,cRootServ+cDirServ)
+            If File(cDirServ+ 'assinado.txt.base64' )
+                //Lê arquivo gerado com assinatura
+                cSign := Memoread(cDirServ+ 'assinado.txt.base64' )
+                cSign := StrTran(cSign,"/","_")
+                cSign := StrTran(cSign,"+","-")
+                cSign := StrTran(cSign,"==","")
+                cSign := Strtran(cSign,chr(10),"")
+
+                //Apaga arquivos gerados
+                fErase(cDirServ+ 'assinado.txt' )
+                fErase(cDirServ+ 'assinado.txt.base64' )
+                fErase(cDirServ+ 'request.txt' )
+            Endif
+        Endif
+
+    Endif
+
+    If Empty(cSign)
+        oObjLog:saveMsg("Falha ao gerar a assinatura da requisicao.")
+    Endif
+
+    Self:cSign := cSign    
+
+Return .T.

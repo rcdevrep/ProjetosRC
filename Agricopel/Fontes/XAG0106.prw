@@ -270,11 +270,10 @@ ConfirmSX8()
 
 	If SE2->(dbSeek(xFilial("SE2")+QRY->(EA_PREFIXO+EA_NUM+EA_PARCELA+EA_TIPO+EA_FORNECE+EA_LOJA)))
 		If SE2->E2_SALDO > 0	
-			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-				lRec:= .F.
-				cCodigo:= ZLA->ZLA_CODIGO
-			Endif    
-			Reclock("ZLA",lRec)
+			If !ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
+				lRec:= .T.
+				//cCodigo:= ZLA->ZLA_CODIGO
+				Reclock("ZLA",lRec)
 				ZLA_FILIAL:= xFilial("ZLA")
 				ZLA_PREFIX:= SE2->E2_PREFIXO
 				ZLA_NUM:= SE2->E2_NUM
@@ -290,17 +289,18 @@ ConfirmSX8()
 				ZLA_CONTA:= SEE->EE_CONTA
 				ZLA_RECPAG:= 'P'
 				ZLA_STATUS:= '4'
-				ZLA_DATA:= dDataBase
+				ZLA_DATA:= Date()
 				ZLA_USER:= __cUserId
 				ZLA_CODIGO:= cCodigo
 				ZLA_IDCNAB:= SE2->E2_IDCNAB
 				ZLA->ZLA_FILORI:= SE2->E2_FILORIG				
-			MsUnlock()
+				MsUnlock()
+			Endif    			
 			//Cria o registro na ZLB
 			Reclock("ZLB",.T.)
 				ZLB_FILIAL:= xFilial("ZLB")
 				ZLB_CODIGO:= cCodigo
-				ZLB_DATA:= dDataBase
+				ZLB_DATA:= Date()
 				ZLB_HORA:= Time()
 				ZLB_EVENTO:= '6' //enviado para aprovação
 				ZLB_STATUS:= ZLA->ZLA_STATUS
@@ -321,8 +321,12 @@ Default oObjLog:= nil
 		ELSE
 			FWAlertError("Consulta de status somente de titulos a pagar.", "XAG0106")
 		ENDIF
-	ELSE 
-		FWAlertError("Titulo ainda não aprovado.", "XAG0106")
+	ELSE
+		IF(ZLA->ZLA_STATUS == "3")
+			FWAlertError("Já baixado.", "XAG0106")
+		ELSE
+			FWAlertError("Titulo ainda não aprovado", "XAG0106")
+		ENDIF
 	ENDIF
 return
 
@@ -400,22 +404,10 @@ If QRY->(Eof())
 	Endif
 
 	Reclock("ZLA",.F.)					
-	ZLA->ZLA_STATUS:= '5'		
+	//ZLA->ZLA_STATUS:= '5'		
 	ZLA->ZLA_DTOPER := Date()		
 	MsUnlock()
-
-	Reclock("ZLB",.T.)
-	ZLB->ZLB_FILIAL:= xFilial("ZLB")
-	ZLB_CODIGO:= ZLA->ZLA_CODIGO
-	ZLB_DATA:= dDataBase
-	ZLB_HORA:= Time()
-	ZLB_EVENTO:= '1' //Alteração boleto
-	ZLB_STATUS:= '5'
-	ZLB_USER:= __cUserId
-	ZLB_ERRO:= "Cancelado."
-	ZLB_FILORI:= ZLA->ZLA_FILORI
-	msUnlock()
-
+	
 	Return
 Endif
 
@@ -981,7 +973,7 @@ Local cCodigo := ""
 				// cTitulo+= '"cdIndCpfcnpjSacadorAvalista":0,'
 				// cTitulo+= '"nuCpfcnpjSacadorAvalista":0,'
 				// cTitulo+= '"endEletronicoSacadorAvalista":""'
-				cTitulo+= '}'
+				cTitulo+= '}' 
 				cCodigo:= GetSxENum("ZLA", "ZLA_CODIGO")
 				ConfirmSX8()
 				//Chama a API do banco
@@ -1060,7 +1052,7 @@ Local cCodigo := ""
 						cTitulo+= '    "contaPagamentoCredito": "",'
 						cTitulo+= '    "cpfBeneficiario": '+Iif(Len(Alltrim(SA2->A2_CGC)) == 14,'0', cvaltochar(val(SA2->A2_CGC)))+','
 						cTitulo+= '    "cnpjBeneficiario": '+Iif(Len(Alltrim(SA2->A2_CGC)) == 14, cvaltochar(val(SA2->A2_CGC)),'0')+','
-						cTitulo+= '    "dataTransferencia": '+cvaltochar(val((GRAVADATA(dDataBase,.F.,5))))+','
+						cTitulo+= '    "dataTransferencia": '+cvaltochar(val((GRAVADATA(Date(),.F.,5))))+','
 						cTitulo+= '    "valorTransferencia": '+cvaltochar(SE2->E2_VALOR)+','
 						cTitulo+= '    "documentoDebito": 0,'
 						cTitulo+= '    "documentoCredito": 0,'
@@ -1090,7 +1082,7 @@ Local cCodigo := ""
 							cTitulo+= '  {'
 							cTitulo+= '    "numeroDocumentoDebito": '+cvaltochar(val(SA2->A2_BANCO))+','
 							cTitulo+= '    "numeroCodigoBarras": "'+Alltrim(SE2->E2_CODBAR)+'",'
-							cTitulo+= '    "dataPagamento": '+cvaltochar(val((GRAVADATA(dDataBase,.F.,5))))+','
+							cTitulo+= '    "dataPagamento": '+cvaltochar(val((GRAVADATA(Date(),.F.,5))))+','
 							cTitulo+= '    "valorPagamento": '+cvaltochar(SE2->E2_VALOR)+','
 							cTitulo+= '    "descricaoPagamento": "",'
 							cTitulo+= '    "codigoSeuDocumento": "'+SE2->E2_IDCNAB+'",'
@@ -1123,7 +1115,7 @@ Local cCodigo := ""
 							cTitulo+= '"lancamentos": ['
 							cTitulo+= '  {'
 							cTitulo+= '    "codigoBarras": "'+Alltrim(SE2->E2_CODBAR)+'",'
-							cTitulo+= '    "dataPagamento": '+cvaltochar(val((GRAVADATA(dDataBase,.F.,5))))+','
+							cTitulo+= '    "dataPagamento": '+cvaltochar(val((GRAVADATA(Date(),.F.,5))))+','
 							cTitulo+= '    "valorPagamento": '+cvaltochar(SE2->E2_VALOR)+','
 							cTitulo+= '    "numeroDocumentoDebito": 0,'
 							cTitulo+= '    "codigoSeuDocumento": "'+SE2->E2_IDCNAB+'",'
@@ -1213,7 +1205,7 @@ Local cCodigo := ""
 						cTitulo+='"valorDaTransferencia":'+cvaltochar(SE2->E2_VALOR)+','
 						cTitulo+='"finalidadeDaTransferencia":'+cvaltochar(val(TRB->MODELO))+','
 						cTitulo+='"codigoIdentificadorDaTransferencia":"'+Alltrim(SE2->E2_IDCNAB)+'",'
-						cTitulo+='"dataMovimento":"'+StrTran(Left(FWTIMESTAMP(2,dDataBase),10),"/",".")+'",'
+						cTitulo+='"dataMovimento":"'+StrTran(Left(FWTIMESTAMP(2,Date()),10),"/",".")+'",'
 						cTitulo+='"tipoDeDoc":"",' //D=mesma titularidade E=diferente titularidade
 						cTitulo+='"tipoDeDocumentoDeBarras":"",'
 						cTitulo+='"numeroCodigoDeBarras":"",'
@@ -1253,9 +1245,9 @@ Local cCodigo := ""
 									cTitulo+='},
 									cTitulo+='"pagamentoComumRequest":{'
 									cTitulo+='"dadosSegundaLinhaExtrato":"'+SE2->E2_FILIAL+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+'",
-									cTitulo+='"dataMovimento":'+DTOS(dDataBase)+','
-									cTitulo+='"dataPagamento":'+DTOS(dDataBase)+','
-									cTitulo+='"dataVencimento":'+DTOS(dDataBase)+','
+									cTitulo+='"dataMovimento":'+DTOS(Date())+','
+									cTitulo+='"dataPagamento":'+DTOS(Date())+','
+									cTitulo+='"dataVencimento":'+DTOS(Date())+','
 									cTitulo+='"horaTransacao":'+cvaltochar(val(StrTran(Time(),":","")))+',
 									cTitulo+='"identificacaoTituloCobranca":"'+Alltrim(SE2->E2_CODBAR)+'",
 									cTitulo+='"indicadorFormaCaptura":1,'//1=codigodebarras,2=linhadigitável
@@ -1294,7 +1286,7 @@ Local cCodigo := ""
 							cTitulo+= '"codigoBarras": "'+Alltrim(SE2->E2_CODBAR)+'",'
 							//cTitulo+= '"conta":27720 ,'
 							cTitulo+= '"conta": '+cvaltochar(val(SEE->EE_CONTA))+','
-							cTitulo+= '"dataDebito": "'+Left(FwTimeStamp(3,dDataBase),10)+'",'
+							cTitulo+= '"dataDebito": "'+Left(FwTimeStamp(3,Date()),10)+'",'
 							cTitulo+= '"digitoAgencia": '+Alltrim(SEE->EE_DVAGE)+','
 							//cTitulo+= '"digitoAgencia":7,'
 							cTitulo+= '"digitoConta": "'+Alltrim(SEE->EE_DVCTA)+'",'
@@ -1337,7 +1329,7 @@ Local cCodigo := ""
 					Reclock("ZLB",.T.)
 					ZLB_FILIAL:= xFilial("ZLB")
 					ZLB_CODIGO:= ZLA->ZLA_CODIGO
-					ZLB_DATA:= dDataBase
+					ZLB_DATA:= Date()
 					ZLB_HORA:= Time()
 					ZLB_EVENTO:= '3' //Alteração boleto
 					ZLB_STATUS:= '3'
@@ -1462,7 +1454,7 @@ cQry+= "FROM "+RetSqlName("SEA")+" SEA "
 cQry+= "INNER JOIN "+RetSqlName("SE1")+" SE1 ON E1_FILIAL = '"+xFilial("SEA")+"' AND E1_PREFIXO = EA_PREFIXO AND E1_NUM = EA_NUM AND E1_PARCELA = EA_PARCELA "
 cQry+= " AND E1_TIPO = EA_TIPO AND E1_FILORIG = '"+cFilAnt+"' AND SE1.D_E_L_E_T_ = ' ' "
 cQry+= "WHERE EA_PORTADO IN "+FormatIn(cBcosAPI,"/")+" "
-cQry+= "AND EA_DATABOR = '"+dtos(dDataBase)+"' "
+cQry+= "AND EA_DATABOR = '"+dtos(Date())+"' "
 cQry+= "AND EA_TRANSF = '' "
 cQry+= "AND SEA.D_E_L_E_T_ = ' ' "
 cQry+= "ORDER BY EA_NUMBOR "
@@ -1472,7 +1464,7 @@ Endif
 TcQuery cQry New Alias "QEA"
 
 If QEA->(Eof())
-	oObjLog:saveMsg("Nenhum bordero encontrado para "+dtoc(dDataBase)) 
+	oObjLog:saveMsg("Nenhum bordero encontrado para "+dtoc(Date())) 
 	Return
 Endif
 
@@ -1650,7 +1642,7 @@ Reclock("ZLA",lRec)
     ZLA_CONTA:= SEE->EE_CONTA
     ZLA_RECPAG:= 'P'
     ZLA_STATUS:= '3'
-    ZLA_DATA:= dDataBase
+    ZLA_DATA:= Date()
     ZLA_USER:= __cUserId
     ZLA_CODIGO:= cCodigo
     ZLA_IDCNAB:= SE2->E2_IDCNAB
@@ -1664,7 +1656,7 @@ MsUnlock()
 Reclock("ZLB",.T.)
     ZLB_FILIAL:= xFilial("ZLB")
     ZLB_CODIGO:= cCodigo
-    ZLB_DATA:= dDataBase
+    ZLB_DATA:= Date()
     ZLB_HORA:= Time()
     ZLB_EVENTO:= '3' //Validação boleto
     ZLB_STATUS:= ZLA->ZLA_STATUS
@@ -1793,14 +1785,12 @@ static Function ConsBB106()
 
 			Else
 				If UPPER(jJsonList["estadoPagamento"]) = "PAGO"
-
 					If SE2->E2_SALDO > 0
 						aAdd(aRet,ctod(Transform(jJsonList["dataPagamento"],"99/99/9999")))
 						aAdd(aRet,jJsonList["valorPagamento"])
 
 						u_BaixaPag(aRet)
 					Endif
-
 				Else
 					oObjLog:saveMsg("**Sem pagamento para processar")
 				Endif
@@ -1810,8 +1800,6 @@ static Function ConsBB106()
 		Endif
 		QRY->(dbSkip())
 	End
-
-
 Return
 
 
@@ -1885,8 +1873,8 @@ ZFwK5TlBgrn9/mrRaw48cA==
 	cJson+='"digitoContaDebitada":"'+Alltrim(SEE->EE_DVCTA)+'"'
 	cJson+='},'
 	cJson+='"dadosSegundaLinhaExtrato":"'+SE2->E2_FILIAL+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+'",'
-	cJson+='"dataMovimento":'+DTOS(DDATABASE)+','
-	cJson+='"dataPagamento":'+DTOS(DDATABASE)+','
+	cJson+='"dataMovimento":'+DTOS(Date())+','
+	cJson+='"dataPagamento":'+DTOS(Date())+','
 	cJson+='"dataVencimento":'+DTOS(SE2->E2_VENCTO)+','
 	cJson+='"horaTransacao":'+cvaltochar(val(StrTran(Time(),":","")))+','
 	cJson+='"identificacaoTituloCobranca":"'+Alltrim(SE2->E2_CODBAR)+'",'
@@ -2080,8 +2068,8 @@ cTitulo+= '  },
 				ZLA_AGENCI:= SEE->EE_AGENCIA
 				ZLA_CONTA:= SEE->EE_CONTA
 				ZLA_RECPAG:= 'P'
-				ZLA_STATUS:= '2'
-				ZLA_DATA:= dDataBase
+				ZLA_STATUS:= '3'
+				ZLA_DATA:= Date()
 				ZLA_USER:= __cUserId
 				ZLA_CODIGO:= cCodigo
 				ZLA_IDCNAB:= SE2->E2_IDCNAB
@@ -2095,16 +2083,16 @@ cTitulo+= '  },
 				Reclock("ZLB",.T.)
 				ZLB_FILIAL:= xFilial("ZLB")
 				ZLB_CODIGO:= cCodigo
-				ZLB_DATA:= dDataBase
+				ZLB_DATA:= Date()
 				ZLB_HORA:= Time()
 				ZLB_EVENTO:= '5' //Validação boleto
-				ZLB_STATUS:= ZLA->ZLA_STATUS
+				ZLB_STATUS:= '3'
 				ZLB_USER:= __cUserId
 				ZLB_ERRO:= cErro
 				ZLB_FILORI:= ZLA->ZLA_FILORI
 				msUnlock()
 			ELSE
-				FWAlertError("Não foi possivel fazer a baixa. ", "AGRICOPEL")
+				//FWAlertError("Não foi possivel fazer a baixa. ", "AGRICOPEL")
 			ENDIF
 
 
@@ -2187,7 +2175,7 @@ Static Function consTEDBRD(cCodigo, cClientId)
 	Aadd(aHeadStr, "Access-token: "+cClientId)
 	Aadd(aHeadStr, "Content-Type: application/json")
 
-//cUrl += "?numeroDocumento="+ZLA->ZLA_NUMBCO                                                                                                              +"&dataOperacao="+REPLACE(DTOC(dDataBase),'/','.')"
+//cUrl += "?numeroDocumento="+ZLA->ZLA_NUMBCO                                                                                                              +"&dataOperacao="+REPLACE(DTOC(Date()),'/','.')"
 
 //Efetua o POST na API
 	cRetGet := HTTPGet(cUrlBase+cUrl, cParam, /*nTimeOut*/, aHeadStr, @cHeaderRet)
@@ -2227,7 +2215,7 @@ Static Function consTEDBRD(cCodigo, cClientId)
 	Reclock("ZLA",lRec)
 	ZLA_FILIAL:= xFilial("ZLA")
 	ZLA_STATUS:= '3'
-	ZLA_DATA:= dDataBase
+	ZLA_DATA:= Date()
 	ZLA_USER:= __cUserId
 	MsUnlock()
 
@@ -2236,7 +2224,7 @@ Static Function consTEDBRD(cCodigo, cClientId)
 	Reclock("ZLB",.T.)
 	ZLB_FILIAL:= xFilial("ZLB")
 	ZLB_CODIGO:= cCodigo
-	ZLB_DATA:= dDataBase
+	ZLB_DATA:= Date()
 	ZLB_HORA:= Time()
 	ZLB_EVENTO:= '1' //Registro boleto
 	ZLB_STATUS:= ZLA->ZLA_STATUS
