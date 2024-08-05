@@ -32,7 +32,7 @@ User Function Mt410Ace()
     Endif 
 
     //Bloqueios Filial 06
-    If cEmpant = "01" .and. cFilAnt == "06"   
+    If cEmpant = "01" .and. cFilAnt == "06" .AND. !(FWIsInCallStack("U_XAG0155")) 
         If _nOpc == 4 .or. _nOpc ==  1//Alteração 
             _cXImpre := SC5->C5_XIMPRE 
             
