@@ -14,6 +14,7 @@ Local aCores :={}
 
 	aAdd(aCores,{'F1_XSTATUS=="Z"'	,'BR_PRETO_1', 'pré classificação/pendente recebimento'})
 	aAdd(aCores,{'F1_XSTATUS=="A"'	,'DISABLE', 'Nota Classificada RCTEC05'})
+	aAdd(aCores,{'F1_XSTATUS==" " .AND. F1_STATUS == "A"','DISABLE', 'Nota Classificada'})
 	aAdd(aCores,{'Empty(F1_STATUS).And.F1_GF<>"GF"','ENABLE', 'NF Nao Classificada'})
 	aAdd(aCores,{'Empty(F1_STATUS).And.F1_GF=="GF"','BR_MARRON_OCEAN', 'NF Não Classificada com Guarda Fiscal'})
 	aAdd(aCores,{'F1_STATUS=="B"','BR_LARANJA', 'NF Bloqueada'})
