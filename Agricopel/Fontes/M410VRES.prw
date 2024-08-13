@@ -25,7 +25,7 @@ Local lRet          := .T.
 
 
 lRet := .T.
-IF (SM0->M0_CODIGO == "01" .And. Alltrim(SM0->M0_CODFIL) == "06")
+IF (SM0->M0_CODIGO == "01" .And. Alltrim(SM0->M0_CODFIL) == "06") .AND. !(FWIsInCallStack("U_XAG0155")) 
 	IF Alltrim(cXimpresso) == "S"
 		APMSGALERT("O Pedido " +cNumPv+ " se encontra impresso, para efetivar a alteração, entre em contato com setor de faturamento! ")
 		lRet := .F.  
