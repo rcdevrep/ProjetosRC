@@ -260,6 +260,8 @@ USER FUNCTION CLAS103()
 	Private lMsErroAuto := .F.
 	Private lMsHelpAuto := .T.
 
+	// BUSCA A NATUREZA DO FORNECEDOR
+	cNaturez := POSICIONE("SA2",1,xFilial("SA2")+SF1->F1_FORNECE+SF1->F1_LOJA, "A2_NATUREZ")
 	cPedido := POSICIONE("SD1",1,xFilial("SD1")+SF1->F1_DOC+SF1->F1_SERIE+SF1->F1_FORNECE+SF1->F1_LOJA, "D1_PEDIDO")
 
 	DBSELECTAREA("SD1")
@@ -289,7 +291,12 @@ USER FUNCTION CLAS103()
 		aadd(aCab,{"F1_STATUS" ,SF1->F1_STATUS,Nil})
 		aadd(aCab,{"F1_NFORIG" ,SF1->F1_NFORIG,Nil})
 		aadd(aCab,{"F1_SERORIG" ,SF1->F1_SERORIG,Nil})
-		aadd(aCab,{"E2_NATUREZ" ,"010456",Nil})
+		IF EMPTY(cNaturez)
+			cNaturez := "010102"
+			aadd(aCab,{"E2_NATUREZ" ,cNaturez,Nil})
+		ELSE
+			aadd(aCab,{"E2_NATUREZ" ,cNaturez,Nil})
+		ENDIF
 
 		//Itens
 		aItem := {}
