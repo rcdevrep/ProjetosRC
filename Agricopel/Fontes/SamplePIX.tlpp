@@ -12,7 +12,7 @@ PREPARE ENVIRONMENT EMPRESA "01" FILIAL "01" MODULO "FAT" TABLES "SF2"
 
 oPix:SolicitarTransferencia()
 
-FwAlertInfo("SAMPLES PIX", "FINAL") 
+FwAlertInfo("SAMPLES PIX", "FINAL")   
 
 return
 

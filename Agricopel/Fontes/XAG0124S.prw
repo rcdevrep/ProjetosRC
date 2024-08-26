@@ -468,13 +468,13 @@ Static Function ValidPed(lBrw,xOpc)
                             MSGINFO( " Tarefa atribuida com sucesso para "+alltrim(cNomSep))
                             cMsg := " Tarefa Atribuida para Separador "+alltrim(cNomSep)
                             //Limpa campos de Tela
-                            LimpaCampo()
-                            Return
+                          //  LimpaCampo()
+                          //  Return
                         Endif    
                     EndIf 
                 ElseIf xOPc == "B"
                     If !Empty(ValidPed->C9_XDTSEP) .AND. !(ValidPed->C9_XSTSSEP $ 'G/H')
-                        MSGSTOP( "Tarefa ja concluida por "+ValidPed->C9_XNOMSEP+" em "+dtoc(stod(ValidPed->C9_XDTSEP)), "ATENCAO" )
+                        MSGSTOP( "Tarefa ja concluida por "+alltrim(ValidPed->C9_XNOMSEP)+" em "+dtoc(stod(ValidPed->C9_XDTSEP)), "ATENCAO" )
                         //Limpa campos de Tela
                         LimpaCampo()
                         Return
@@ -507,12 +507,12 @@ Static Function ValidPed(lBrw,xOpc)
                                 MSGINFO( " Tarefa concluida com sucesso por "+cNomSep)
                                 cMsg := " Separacao concluida por: "+alltrim(cNomSep)
                                 //Limpa campos de Tela
-                                LimpaCampo()
+                                //LimpaCampo()
                             Else
                                 MSGINFO( " Divergencia informada por: "+cNomSep)
                                 cMsg := " Divergencia de Separacao informada por:"+alltrim(cNomSep)+ ' - '+cMsgDiv
                                 //Limpa campos de Tela
-                                LimpaCampo()
+                                //LimpaCampo()
                             Endif
                         Endif    
                     EndIf 
@@ -538,10 +538,10 @@ Static Function ValidPed(lBrw,xOpc)
                         If (TCSQLExec(_cQuery) < 0)
                             Return MsgStop("TCSQLError() " + TCSQLError())
                         else
-                            MSGINFO( " Tarefa atribuida com sucesso para "+cNomSep)
-                            cMsg := "Tarefa Atribuida para Conferente: "+cNomSep
+                            MSGINFO( " Tarefa atribuida com sucesso para "+alltrim(cNomSep))
+                            cMsg := "Tarefa Atribuida para Conferente: "+alltrim(cNomSep)
                             //Limpa campos de Tela
-                            LimpaCampo()
+                            //LimpaCampo()
                         Endif    
                     EndIf 
                 ElseIf xOPc == "D"
@@ -554,13 +554,15 @@ Static Function ValidPed(lBrw,xOpc)
                         MSGSTOP( "Tarefa não foi atribuida a ninguém, solicite que atribua a seu operador!", "ATENCAO" )
                         LimpaCampo()
                         Return
-                    ElseIf !Empty(ValidPed->C9_XCODCON)
-                        If alltrim(ValidPed->C9_XCODCON) <>  alltrim(cSeparad)
-                            If !(MSGYESNO( "Tarefa está atribuída para:"+cNomSep+", deseja mesmo assim confirmar? ", "ATENCAO" ))
-                                Return
-                            Endif 
-                        Endif 
                     else
+                        If !Empty(ValidPed->C9_XCODCON) 
+                            If alltrim(ValidPed->C9_XCODCON) <>  alltrim(cSeparad)
+                                If !(MSGYESNO( "Tarefa está atribuída para:"+alltrim(cNomSep)+", deseja mesmo assim confirmar? ", "ATENCAO" ))
+                                    Return
+                                Endif 
+                            Endif
+                        Endif 
+
                         _cQuery := " UPDATE "+RetSqlName('SC9')+" "
                         _cQuery += " SET C9_XDTCONF  = '" +dtos(ddatabase)+ "' "
                         _cQuery += " ,C9_XHRCONF = '" +substr(time(), 1, 5)+"' "
@@ -577,21 +579,22 @@ Static Function ValidPed(lBrw,xOpc)
                             Return MsgStop("TCSQLError() " + TCSQLError())
                         else
                             If nAcao == 1
-                                MSGINFO( " Tarefa realizada com sucesso por: "+cNomSep)
-                                cMsg := " Conferencia concluida por: "+cNomSep
+                                MSGINFO( " Tarefa realizada com sucesso por: "+alltrim(cNomSep))
+                                cMsg := " Conferencia concluida por: "+alltrim(cNomSep)
                                 //Limpa campos de Tela
-                                LimpaCampo()
+                                //LimpaCampo()
                             Else
-                                MSGINFO( " Tarefa atribuida com sucesso para "+cNomSep)
-                                cMsg := " Divergencia de conferencia informada por: "+cNomSep+ ' - '+cMsgDiv
+                                MSGINFO( " Tarefa atribuida com sucesso para "+alltrim(cNomSep))
+                                cMsg := " Divergencia de conferencia informada por: "+alltrim(cNomSep)+ ' - '+alltrim(cMsgDiv)
                                 //Limpa campos de Tela
-                                LimpaCampo()
+                                //LimpaCampo()
                             Endif 
                         Endif    
                     EndIf 
                 Endif
 
                 U_XAG0124E(cPedidoSep,cMsg,xOpc, lBrw,dDate, cTime )//(xPedidos,xMsg,xOpc, lBrw)  
+                //LimpaCampo()
              
                 //Se for conferencia do pedido, gera Nota Fiscal / Boleto e etiqueta
                 If alltrim(xOpc) == 'D'
@@ -665,7 +668,7 @@ User Function XAG0124E(xPedidos,xMsg,xOpc,lBrw, xData , xHora)
             ZC9_FILIAL := XFilial('ZC9')     
             ZC9_NUM    := substr(xPedidos[Ilog],1,6)
             ZC9_SEQ    := substr(xPedidos[Ilog],7,3)
-            ZC9_OBS    := xMsg
+            ZC9_OBS    := alltrim(xMsg)
             ZC9_ACAO   := xOpc
             ZC9_DATA   := xData
             ZC9_HORA   := xHora

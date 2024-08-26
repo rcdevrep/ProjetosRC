@@ -16,9 +16,6 @@ Class BRDPix
     Public Data cDescricao as Character
     Public Data cUrl as Character
     Public Data cMetodo as Character
-    Public Data cClientId as Character
-    Public Data cClientKey as Character
-    Public Data cClientSecret as Character
 
     /*
 
@@ -36,14 +33,16 @@ Class BRDPix
 EndClass
 
 Class BRDIntegracao
-
-    Public Data cClientId as Character
+    
     Public Data cErro as Character
     Public Data cToken as Character
     Public Data cJti as Character
     Public Data cTime as Character
     Public Data cSign as Character
     Public Data bResult as Logical
+    Public Data cClientKey as Character
+    Public Data cClientSecret as Character
+    Public Data cAuthorization as Character
 
     Public Method New() Constructor
     Public Method Reset()
@@ -89,13 +88,11 @@ Method New() Class BRDPix
 	Local _oPagador := BRDPagador() :New()
 	Local _oRecebedor := BRDRecebedor():New()
 
-    Self:cClientKey := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
-    Self:cClientSecret := "29fbf612-aa65-4c29-987c-9ba0c76afd89"
 	Self:oPagador := _oPagador
 	Self:oRecebedor := _oRecebedor
 
     Self:cUrl := "https://qrpix-h.bradesco.com.br"
-    Self:cMetodo := "/v1/spi/solicitar-transferencia"
+    
 
 
 Return lRet
@@ -106,14 +103,13 @@ Method Reset() Class BRDPix
 	Local _oPagador := BRDPagador() :New()
 	Local _oRecebedor := BRDRecebedor():New()
 
-    Self:cClientId := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
     Self:cClientKey := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
     Self:cClientSecret := "29fbf612-aa65-4c29-987c-9ba0c76afd89"
 	Self:oPagador := _oPagador
 	Self:oRecebedor := _oRecebedor
 
     Self:cUrl := "https://qrpix-h.bradesco.com.br"
-    Self:cMetodo := "/v1/spi/solicitar-transferencia"
+    Self:cMetodo := ""
 
     /*
 
@@ -132,7 +128,7 @@ Method New() Class BRDPagador
 	//SAMPLE TESTE
 
 	Self:cTipoChave := "E" //EVP
-	Self:cChavePix := "de24cbca-2c66-4372-9c16-26056b966ece"
+	Self:cChavePix := "b3bdd4e4-7cdc-41c1-bd70-7842d987d79f"
 	Self:cAgencia := "532"
 	Self:cConta := "42281"
 
@@ -186,44 +182,22 @@ Method Reset() Class BRDRecebedor
 Return lRet
 
 Method SolicitarTransferencia() Class BRDPix
-	Local lRet := .T.
-	Local lJob := IsBlind()
+	Local lRet := .T.	
     Local jPagador := JSONObject() :New()
     Local jRecebedor := JSONObject() :New()
     Local jJsonPost := JSONObject() :New()
     Local oIntegrador := BRDIntegracao():New()
-    
-    /*
-    Public Data oPagador as Object
-	Public Data oRecebedor as Object
-    Public Data cIdTransacao as Character
-    Public Data nValor as Numeric
-    Public Data cDescricao as Character
-    Public Data cUrl as Character
-    Public Data cMetodo as Character
-    Public Data cClientKey as Character
-    Public Data cClientSecret as Character
-    */
-
-    Local cClientId:= Self:cClientId
-    
-
-    Local cURL:= Self:cMetodo
-    Local cURLBase:= Self:cUrl
+    Local cURL:= ""    
     Local cToken:= ""
     Local cHeaderRet:= ""
     Local cErro:= ""
-    Local cJti:= ""
-    Local cConteudo:= ""
-    
-    Local cDirServ:= "\cert APIs bancos\openssl\"
-    Local lRec:= .T.
-    Local lRegistrou := .F.
-    Local aToken      	:= {} 
     Local aHeadStr      := {} 
     Local nCodResp:= 0
     Public nNossoNum   := 0
     Public oObjLog     := nil
+    
+    Self:cMetodo := "/v1/spi/solicitar-transferencia"
+    cURL:= Self:cUrl + Self:cMetodo
 
     oObjLog := LogSMS():new("APIBRD_PIX")
     oObjLog:setFileName('\log\APIBRD\solicitartransferencia'+cEmpAnt+'_'+cFilant+'_'+dtos(date())+"_"+strtran(time(),":","")+"_"+SE2->E2_NUM+"_"+cValToChar(ThreadId())+'.txt')
@@ -238,76 +212,46 @@ Method SolicitarTransferencia() Class BRDPix
     jRecebedor["chavePix"] := Self:oRecebedor:cChavePix
     jRecebedor["nomeFavorecido"] := Self:oRecebedor:cFavorecido
 
+    Self:nValor := 10
+
     jJsonPost["pagador"] := jPagador:ToJson()
     jJsonPost["recebedor"] := jRecebedor:ToJson()
     jJsonPost["idtransacao"] := Self:cIdTransacao
     jJsonPost["valor"] := Self:nValor
     jJsonPost["descricao"] := Self:cDescricao
 
-    oIntegrador:Token()
-    //oIntegrador:GeraRequest()
-    cToken:= oIntegrador:cToken
-    cJti:= oIntegrador:cJti
-    cTime:= oIntegrador:cTime
 
-    cConteudo:= "POST"+LF
-    cConteudo+= cUrl+LF
-    cConteudo+= LF
-    cConteudo+= LF
-    cConteudo+= cToken+LF
-    cConteudo+= cJti+LF
-    cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-03:00'+LF
-    cConteudo+= "SHA256"
-    Memowrite(cDirServ+"request.txt",cConteudo)
 
-    oIntegrador:Assinatura()
-    //Gera a assinatura
-    cSign := oIntegrador:cSign
+    IF(oIntegrador:Token())
+  
+        cToken:= oIntegrador:cToken
+        //Autorização no header
+        Aadd(aHeadStr, "Authorization: Bearer "+cToken )
+        Aadd(aHeadStr, "Content-Type: application/json") 
 
-    If Empty(cSign)
-        Return
-    Endif    
-
-    //Autorização no header
-    Aadd(aHeadStr, "Authorization: Bearer "+cToken )
-    Aadd(aHeadStr, "X-Brad-Signature: "+cSign)
-    Aadd(aHeadStr, "X-Brad-Nonce: "+cJti)
-    Aadd(aHeadStr, "X-Brad-Timestamp: "+Left(FwTimeStamp(3,date(),cTime),19)+'-03:00') 
-    Aadd(aHeadStr, "X-Brad-Algorithm: SHA256") 
-    Aadd(aHeadStr, "Access-token: "+cClientId) 
-    Aadd(aHeadStr, "Content-Type: application/json") 
-
-    //cUrl += "?numeroDocumento="+ZLA->ZLA_NUMBCO                                                                                                              +"&dataOperacao="+REPLACE(DTOC(dDataBase),'/','.')"
-
-    //Efetua o POST na API
-    cRetPost := HTTPPost(cUrlBase+cUrl, /*cGetParms*/, jJsonPost:ToJson(), /*nTimeOut*/, aHeadStr, @cHeaderRet)
-    cRetPost:= DecodeUTF8(cRetPost)
-    nCodResp:= HTTPGetStatus(cHeaderRet)
-    oObjLog:saveMsg("Envia Pré-Pagamento") 
-    oObjLog:saveMsg("**URL: "+cUrlBase+cUrl) 
-    oObjLog:saveMsg("**Body: "+cJson)  
-    oObjLog:saveMsg("**Retorno: "+Iif(cRetPost = nil,"",cRetPost)) 
-    oObjLog:saveMsg("**Cabeçalho Retorno: "+cHeaderRet) 
-
+        //HTTPSPost(cUrl, /*cGetParms*/, jJsonPost:ToJson(), /*nTimeOut*/, aHeadStr, @cHeaderRet)
+        cJson := '{"pagador": { "tipoChave": "EVP","chavePix": "b3bdd4e4-7cdc-41c1-bd70-7842d987d79f" },"recebedor": {"cpfCnpj": "09999902291969","tipoChave": "CPFCNPJ","chavePix": "09999902291969","nomeFavorecido": "FULANO DA SILVA JUNIOR"},"valor": "1.00","idtransacao": "TestesTiagoAPI35","descricao": "Pagamento teste"}'
+        aRetPost := U_RCRestSSL(cUrl, , cJson, aHeadStr )
+        nCodResp:= aRetPost[2]
+        jJsonBol := aRetPost[4]
         
-    jJsonBol := JsonObject():New()
-    jJsonBol:FromJson(cRetPost)
 
-    If nCodResp <> 200
-        If nCodResp = 401
-            cErro:= jJsonBol["message"]
+        If nCodResp <> 200
+            If nCodResp = 401
+                cErro:= jJsonBol["message"]
+            Else
+                If jJsonBol:HasProperty("codigo")
+                    cErro:= jJsonBol["codigo"]+" - "+jJsonBol["mensagem"]
+                Elseif jJsonBol:HasProperty("code")
+                    cErro:= jJsonBol["code"]+" - "+jJsonBol["message"]
+                Else 
+                    cErro:= "Falha ao enviar a requisicao. Codi	go: " +cvaltochar(nCodResp)+' - '+cHeaderRet
+                Endif      
+            Endif
         Else
-            If jJsonBol:HasProperty("codigo")
-                cErro:= jJsonBol["codigo"]+" - "+jJsonBol["mensagem"]
-            Elseif jJsonBol:HasProperty("code")
-                cErro:= jJsonBol["code"]+" - "+jJsonBol["message"]
-            Else 
-                cErro:= "Falha ao enviar a requisicao. Codi	go: " +cvaltochar(nCodResp)+' - '+cHeaderRet
-            Endif      
+            lRet:= .T.
         Endif
-    Else
-        lRet:= .T.
-    Endif
+    ENDIF
 
 
 Return lRet
@@ -399,7 +343,9 @@ Dados do Recebedor:
 
 Method New() Class BRDIntegracao
 
-    Self:cClientId := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
+    Self:cClientKey := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
+    Self:cClientSecret := "29fbf612-aa65-4c29-987c-9ba0c76afd89"
+    Self:cAuthorization := "Basic MDM1NmRlYzQtN2NkZS00ZDkxLWI2ZTEtNzdmMzQzMzY2NWUxOjI5ZmJmNjEyLWFhNjUtNGMyOS05ODdjLTliYTBjNzZhZmQ4OQ=="
     Self:cErro := ""
     Self:cToken := ""
     Self:cJti := ""
@@ -413,146 +359,23 @@ Method Token() Class BRDIntegracao
     Local cURL := "https://qrpix-h.bradesco.com.br" //GetNewPar("AC_BRDURLA","https://proxy.api.prebanco.com.br")
     Local aHeader := {}
     Local cPath := "/oauth/token"
-    Local cBodyOut := ""
-    Local cErro := ""
-    Local cCabec := ""
-    Local cJWT := ""
-    Local cBody := ""
-    Local cSign := ""
-    Local cClientId := Self:cClientId
-    Local cConteudo := ""
-    Local cChave := ""
-    Local cRootServ := ""
-    Local cDirServ := "\cert APIs bancos\openssl\"
-    Local cComando1 := ""
-    Local cComando2 := ""
-    Local _cUnComp := ""
-    Local cResp := ""
-    Local cTime := Time()
-    Local cIat := FwTimeStamp(4,,cTime)
-    Local cExp := cvaltochar(val(cIat)+3600)
-    Local cJti := cvaltochar(val(cIat)*1000)
-    Local nPosHdr := 0
-    Public oDadosws := NIL
+    Local cJson := NIL    
 
-    oFile := FWFileReader():New(cDirServ+"privkey_"+cEmpAnt+".txt")
-    If oFile:Open()
-        If !oFile:EoF()
-            cChave := oFile:FullRead()
-        EndIf
-        oFile:Close()
-    Else
-        oObjLog:saveMsg("Falha ao ler arquivo com a Public key.")
-
-        Self:bResult := .F.
-        Self:cErro := "Falha ao localizar o arquivo com a Public key."
-        Return .F.
-    EndIf
-
-    cCabec := '{"alg":"RS256", "typ":"JWT"}'
-    cBody := '{'
-    cBody += '"aud":"' +cURL+ '/oauth/token",'
-    cBody += '"sub":"' +cClientId+ '",'
-    cBody += '"iat":"' +cIat+ '",'
-    cBody += '"exp":"' +cExp+ '",'
-    cBody += '"jti":"' +cJti+ '",'
-    cBody += '"ver":"1.1"'
-    cBody += '}'
-    oObjLog:saveMsg("Body Assinatura: "+cBody)
-    cConteudo := Encode64(cCabec)+ '.' +Encode64(cBody)
-
-    Memowrite(cDirServ+"conteudo.txt",cConteudo)
-
-    cRootServ := GetSrvProfString ("ROOTPATH","")
-    cComando1 := "dgst -sha256 -keyform pem -sign privkey_"+cEmpAnt+".txt -out assinado.txt.sha256 conteudo.txt" //gera assinatura em sha256
-    cComando2 := "enc -base64 -in assinado.txt.sha256 -out assinado.txt.base64" //codifica em base64
-
-    If WaitRunSrv(cRootServ+cDirServ+ 'openssl.exe' +space(1)+cComando1,.T.,cRootServ+cDirServ)
-        If File(cDirServ+ 'assinado.txt.sha256' )
-            WaitRunSrv(cRootServ+cDirServ+ 'openssl.exe' +space(1)+cComando2,.T.,cRootServ+cDirServ)
-            If File(cDirServ+ 'assinado.txt.base64' )
-                //Lê arquivo gerado com assinatura
-                cSign := Memoread(cDirServ+ 'assinado.txt.base64' )
-                cSign := StrTran(cSign,"/","_")
-                cSign := StrTran(cSign,"+","-")
-                cSign := StrTran(cSign,"==","")
-                cSign := Strtran(cSign,chr(10),"")
-
-                //Apaga arquivos gerados
-                fErase(cDirServ+ 'assinado.txt.sha256' )
-                fErase(cDirServ+ 'assinado.txt.base64' )
-                fErase(cDirServ+ 'conteudo.txt' )
-            Endif
-        Endif
-    Endif
-
-    If Empty(cSign)
-        oObjLog:saveMsg("Falha ao assinar o conteudo. Erro: "+cErro)
-
-        Self:bResult := .F.
-        Self:cErro := "Falha ao assinar o conteudo."
-        Return .F.
-    Else
-        cJWT := Encode64(cCabec)+ '.' +Encode64(cBody)+ '.' +cSign
-    Endif
-
-    //Cria o cabeçalho da requisição
+    AAdd(aHeader, 'User-Agent: Mozilla/4.0 (compatible; Protheus ' + GetBuild() + ')' )
     aadd(aHeader, "Content-Type: application/x-www-form-urlencoded")
+    Aadd(aHeader, "Authorization: "+Self:cAuthorization)
 
-    cBodyOut := 'grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion='
-    cBodyOut := cJWT
+    cJson := 'grant_type=client_credentials'
+    cParam := ""
 
-    oObjLog:saveMsg("Post: "+cUrl+cPath)
-    oObjLog:saveMsg("Body Requisição: "+cBodyOut)
+    aRet := U_RCRestSSL(cURL+cPath, cParam, cJson, aHeader )
 
-    oRestClient := FWRest() :New(cUrl)
-    oRestClient:setPath(cPath)
+    IF((aRet[1]) .AND. aRet[3] == "05") //retorno .T.
+        Self:cToken := aRet[4]:ACCESS_TOKEN
+    ELSE // retorno .F.
+         Self:cToken := "INVALIDO"
+    ENDIF
 
-    //Seta os parametros
-    oRestClient:SetPostParams(cBodyOut)
-
-    If oRestClient:Post(aHeader)
-        cResp := oRestClient:GetResult()
-    Endif
-
-    //Resposta
-    If Empty(cResp)
-        cResp := oRestClient:cResult
-        cErro := oRestClient:Getlasterror()
-        oObjLog:saveMsg("Erro: "+cErro)
-    Endif
-
-    nPosHdr := aScan(oRestClient:oResponseH:aHeaderFields,{|x| x[1] == "Content-Encoding"})
-    If nPosHdr > 0 .and. "gzip" $ oRestClient:oResponseH:aHeaderFields[nPosHdr,2]
-        If GzStrDecomp( cResp, Len(cResp), @_cUnComp )
-            cResp := _cUnComp
-        Else
-            Self:bResult := .F.
-            Self:cErro := "Erro: Falha ao descompactar a resposta."
-            oObjLog:saveMsg("Erro: Falha ao descompactar a resposta.")
-        Endif
-    Endif
-
-    oObjLog:saveMsg("Resposta: "+cResp)
-
-    If !FWJsonDeserialize(cResp,@oDadosWS)
-        Self:bResult := .F.
-        Self:cErro := "Falha ao realizar o parse do json da resposta."
-        oObjLog:saveMsg("Falha ao realizar o parse do json da resposta.")
-    Else
-        If Type("oDadosWS:token_type") == "C"
-            Self:bResult := .T.
-            Self:cErro := "Token Gerado com Sucesso!"
-            Self:cToken := oDadosWS:access_token
-            Self:cJti := cJti
-            Self:cTime := cTime
-            oObjLog:SaveMsg("Token: "+oDadosWS:access_token)
-        Else
-            Self:bResult := .F.
-            Self:cErro := "Falha ao obter o token. Erro: "+cvaltochar(oDadosWS:code)+" - "+oDadosWS:message
-            oObjLog:SaveMsg("Falha ao obter o token. Erro: "+cvaltochar(oDadosWS:code)+" - "+oDadosWS:message)
-        Endif
-    Endif
 
 Return .T.
 
@@ -593,3 +416,5 @@ Method Assinatura() Class BRDIntegracao
     Self:cSign := cSign    
 
 Return .T.
+
+
