@@ -236,6 +236,10 @@ User Function MT100TOK()
 		lRet := lRetu .and. U_GTPE005() // CONEXAO NFE
 
 		// RC CONSULTORIA - 07/05/2024
+
+		//PEGA A NATUREZA DA TELA DE DOCUMENTO DE ENTRADA
+		cNat := MaFisRet(,"NF_NATUREZA")
+
 		IF lRet
 			IF SF1->F1_STATUS == ' ' .AND. SF1->F1_XSTATUS == ' '
 
@@ -263,11 +267,16 @@ User Function MT100TOK()
 					FWAlertSuccess("Enviado com sucesso! ", "Sucesso")
 					RETURN .F.
 				ELSE
-					IF MsgYesNo("Deseja Classificar a Nota?", "Confirma", .T.)
-						FWAlertSuccess("Classificada com Sucesso!", "Sucesso")
-						RETURN .T.
+					IF !EMPTY(cNat) 
+						IF MsgYesNo("Deseja Classificar a Nota?", "Confirma", .T.)
+							FWAlertSuccess("Classificada com Sucesso!", "Sucesso")
+							RETURN .T.
+						ELSE
+							FWAlertInfo("Nota Nao Classificada", "Cancelado")
+							RETURN .F.
+						ENDIF
 					ELSE
-						FWAlertInfo("Nota Nao Classificada", "Cancelado")
+						FWAlertInfo("Para este caso Preencha a Natureza!", "Em Branco")
 						RETURN .F.
 					ENDIF
 				ENDIF

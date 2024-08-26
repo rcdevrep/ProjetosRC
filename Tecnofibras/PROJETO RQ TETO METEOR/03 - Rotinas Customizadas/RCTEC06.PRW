@@ -25,11 +25,12 @@ User Function RCTEC06()
 	oBrowse:SetDescription( "Teto Meteor" )
 	oBrowse:SetMenuDef("RCTEC06")
 	//oBrowse:AddFilter('Status',"SF1->F1_STATUS = 'Z'",.T.,.T.)
-	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '0'}        ,'BR_MARROM'  ,'Não Iniciado/Pendente')
-	//oBrowse:addLegend({|| ZT0->ZT0_STATUS = '1'}        ,'BR_VERMELHO'  ,'Diario de Bordo Aprovado')
-	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '1'}        ,'BR_LARANJA'  ,'Setup OK')
-	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '2'}        ,'BR_AMARELO'  ,'Moldagem OK')
-	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '3'}        ,'BR_VERDE'  ,'Dureza OK')
+	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '0'}        ,'BR_VERDE'  ,'Não Iniciado/Pendente')
+	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '1'}        ,'BR_AMARELO'  ,'Setup OK')
+	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '2'}        ,'BR_LARANJA'  ,'Moldagem OK')
+	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '3'}        ,'BR_VERMELHO'  ,'Dureza 10/12min OK')
+	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '4'}        ,'BR_MARRON'  ,'Dureza 24h OK')
+	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '5'}        ,'BR_PRETO'  ,'Dureza OK')
 	oBrowse:Activate()
 	RestArea(aArea)
 
@@ -40,7 +41,7 @@ Static Function MenuDef()
 	Local aRotina := {}
 
 	ADD OPTION aRotina TITLE 'Incluir' ACTION 'U_fIncTeto' OPERATION 3 ACCESS 0
-	ADD OPTION aRotina TITLE 'Produção'    ACTION 'VIEWDEF.RCTEC06' OPERATION 2 ACCESS 0
+	ADD OPTION aRotina TITLE 'Produção'    ACTION 'VIEWDEF.RCTEC06' OPERATION 4 ACCESS 0
 	//ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC06' OPERATION 2 ACCESS 0
 
 Return(aRotina)
@@ -58,9 +59,9 @@ Static Function ModelDef()
 	// SETUP RQ 08.319 (ZT2)
 	Private oStAba2 := FWFormStruct(1,'ZT2')
 	// ACOMPANHAMENTO DE MOLDAGEM RQ 08.317 (ZT3)
-	Private oStAba3 := FWFormStruct(1,'SB1')
+	Private oStAba3 := FWFormStruct(1,'ZT3')
 	// REGISTRO DE DUREZA RQ 08.358 (ZT4)
-	Private oStAba4 := FWFormStruct(1,'SB1')
+	Private oStAba4 := FWFormStruct(1,'ZT4')
 
 	// Cria o Model
 	oModel := MPFormModel():New('PETEC06'        ,{|oModel| BeforeCMdl(oModel)},{|oModel|sfTudoOk(oModel)})
@@ -68,8 +69,8 @@ Static Function ModelDef()
 	// Associa os objetos visuais criados com as estruturas criadas, desta forma ira criar os campos conforme as estrutura.
 	oModel:addFields('MASTER' ,/*cOwner*/  ,oStMain   ,/*bLinePre*/                          ,/*bLinePost*/,/*bPreVal*/, /*bPost*/                          ,/*BLoad*/ )
 
-	oModel:AddGrid('ABA1', 'MASTER', oStAba1,/*bLinePre*/{|oModel|sfLinPre(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos(oModel)} /*bPost*/,/*BLoad*/ )
-	oModel:AddGrid('ABA2', 'MASTER', oStAba2,/*bLinePre*/{|oModel|sfLinPre(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos(oModel)} /*bPost*/,/*BLoad*/)
+	oModel:AddGrid('ABA1', 'MASTER', oStAba1,/*bLinePre*/{|oModel|sfLinPre1(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos(oModel)} /*bPost*/,/*BLoad*/ )
+	oModel:AddGrid('ABA2', 'MASTER', oStAba2,/*bLinePre*/{|oModel|sfLinPre2(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos(oModel)} /*bPost*/,/*BLoad*/)
 	oModel:AddGrid('ABA3', 'MASTER', oStAba3,/*bLinePre*/{|oModel|sfLinPre(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos(oModel)} /*bPost*/,/*BLoad*/)
 	oModel:AddGrid('ABA4', 'MASTER', oStAba4,/*bLinePre*/{|oModel|sfLinPre(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos(oModel)} /*bPost*/,/*BLoad*/)
 
@@ -80,16 +81,23 @@ Static Function ModelDef()
 	oModel:SetDescription('Teto Meteor')
 	oModel:getModel('MASTER' ):SetDescription('Master')
 	oModel:getModel('ABA1' ):SetDescription('Aba1')
+	oModel:getModel('ABA1' ):SetOptional(.T.)
+
 	oModel:getModel('ABA2' ):SetDescription('Aba2')
+	oModel:getModel('ABA2' ):SetOptional(.T.)
+
 	oModel:getModel('ABA3' ):SetDescription('Aba3')
+	oModel:getModel('ABA3' ):SetOptional(.T.)
+
 	oModel:getModel('ABA4' ):SetDescription('Aba4')
+	oModel:getModel('ABA4' ):SetOptional(.T.)
 
 	// Faz o relacionamento entre as estruturas, o fonte ira realizar as validações necessarias por este relacionamento.
 
 	oModel:SetRelation( 'ABA1'	 , { { 'ZT1_FILIAL', 'ZT0_FILIAL' } } , ZT1->( IndexKey( 2 ) ) )
 	oModel:SetRelation( 'ABA2'	 , { { 'ZT2_FILIAL', 'ZT0_FILIAL' } ,{ 'ZT2_CTETO', 'ZT0_CODIGO' } } , ZT2->( IndexKey( 1 ) ) )
-	//oModel:SetRelation( 'ABA3'	 , { { 'B1_FILIAL', 'BM_FILIAL' } ,{ 'B1_GRUPO', 'BM_GRUPO' } } , SB1->( IndexKey( 1 ) ) )
-	//oModel:SetRelation( 'ABA4'	 , { { 'B1_FILIAL', 'BM_FILIAL' } ,{ 'B1_GRUPO', 'BM_GRUPO' } } , SB1->( IndexKey( 1 ) ) )
+	oModel:SetRelation( 'ABA3'	 , { { 'ZT3_FILIAL', 'ZT0_FILIAL' } ,{ 'ZT3_CTETO', 'ZT0_CODIGO' } } , ZT3->( IndexKey( 1 ) ) )
+	oModel:SetRelation( 'ABA4'	 , { { 'ZT4_FILIAL', 'ZT0_FILIAL' } ,{ 'ZT4_CTETO', 'ZT0_CODIGO' } } , ZT4->( IndexKey( 1 ) ) )
 
 	oModel:SetVldActivate( { |oModel| sfValAtiva( oModel ) } )
 
@@ -98,22 +106,23 @@ Return oModel
 Static Function ViewDef()
 	Local oModel     := FWLoadModel('RCTEC06')
 	Local cSolicit := ""
-	Private oView	 := FWFormView():New()
-	Private oStMain  := FWFormStruct(2,'ZT0',{ |cCampo| STRUMASTER(cCampo)   })
+	Public oView	 := FWFormView():New()
+	Private oStMain  := FWFormStruct(2,'ZT0',{ |cCampo| STRUMASTER(cCampo) })
 	Private oStAba1  := FWFormStruct(2,'ZT1',{ |cCampo| STRUABA1(cCampo,1) })
 	Private oStAba2  := FWFormStruct(2,'ZT2',{ |cCampo| STRUABA2(cCampo,1) })
-	Private oStAba3 := FWFormStruct(2,'SB1',{ |cCampo| STRUDETAIL(cCampo,1) })
-	Private oStAba4 := FWFormStruct(2,'SB1',{ |cCampo| STRUDETAIL(cCampo,1) })
+	Private oStAba3 := FWFormStruct(2,'ZT3',{ |cCampo| STRUABA3(cCampo,1) })
+	Private oStAba4 := FWFormStruct(2,'ZT4',{ |cCampo| STRUABA4(cCampo,1) })
 
 	oView:SetModel(oModel)
 	// Seta a view com o model criado anteriormente
 
 	// Cria os objetos com os campos existentes nas esturturas
 	oView:AddField('VIEW_ZT0' , oStMain	,'MASTER'	) // objeto filds, ( Grids e Says )
-	oView:AddGrid('VIEW_ZT1'  , oStAba1	,'ABA1'	) // objeto grid
+	//oView:AddGrid('VIEW_ZT1'  , oStAba1	,'ABA1'	) // objeto grid
+	oView:AddGrid('VIEW_ZT1' ,oStAba1,'ABA1') // objeto grid
 	oView:AddGrid('VIEW_ZT2',oStAba2,'ABA2')
-	oView:AddGrid('VIEW_FILHO3',oStAba3,'ABA3')
-	oView:AddGrid('VIEW_FILHO4',oStAba4,'ABA4')
+	oView:AddGrid('VIEW_ZT3',oStAba3,'ABA3')
+	oView:AddGrid('VIEW_ZT4',oStAba4,'ABA4')
 
 	// CHAMADA DE FUNCOES DOS BOTOES DOS RODAPES DE CADA ABA
 	oView:AddOtherObject('VIEW_ZT0',{|oPanel|fBtnObs(oPanel)})
@@ -154,13 +163,18 @@ Static Function ViewDef()
 	oView:SetOwnerView('VIEW_ZT2', 'ITENS2')
 	oView:SetOwnerView( 'VIEW_RODAPE2'  , 'RODAPE2')
 
-	oView:SetOwnerView('VIEW_FILHO3', 'ITENS3')
-	oView:SetOwnerView('VIEW_FILHO4', 'ITENS4')
+	oView:SetOwnerView('VIEW_ZT3', 'ITENS3')
+	oView:SetOwnerView( 'VIEW_RODAPE3'  , 'RODAPE3')
+
+	oView:SetOwnerView('VIEW_ZT4', 'ITENS4')
+	oView:SetOwnerView( 'VIEW_RODAPE4'  , 'RODAPE4')
 
 	//oView:AddIncrementField( 'ABA1', 'D1_ITEM' )
 
 	//Força o fechamento da janela na confirmação
-	oView:SetCloseOnOk({||.T.})
+	//oView:SetCloseOnOk({||.T.})
+
+	//oView:SetViewAction( 'BUTTONOK' ,{ |oView| U_fRefresh( oView ) } )
 
 Return oView
 
@@ -171,6 +185,8 @@ Static Function sfValAtiva(oModel)
 	Local oModelM
 	Local oModelSD1
 	Local aSaveLines
+
+	//oModel:Refresh()
 
 Return(_lRet)
 
@@ -196,6 +212,26 @@ Static Function sfLinPre(oModel)
 	Local lRet       := .T.
 Return(lRet)
 
+Static Function sfLinPre1(oModel)
+	Local lRet       := .T.
+Return(lRet)
+
+Static Function sfLinPre2(oModel)
+	Local lRet       := .T.
+
+	IF RECLOCK("ZT2",.T.)
+		ZT2->ZT2_FILIAL := xFilial("ZT0")
+		ZT2->ZT2_CTETO := ZT0->ZT0_CODIGO
+		ZT2->ZT2_ORDEM := nOrPub
+		ZT2->ZT2_DATA := DATE()
+		MSUNLOCK()
+	ELSE
+		FWAlertError("Nao foi possivel gerar o registro","RCTEC06")
+		lRet := .F.
+	ENDIF
+
+Return(lRet)
+
 Static Function sfVldCpo(oModel,cCpo)
 
 	Local lRet	     := .T.
@@ -211,6 +247,7 @@ Return(lRet)
 
 Static Function sfLinPos(oModel)
 	Local lRet	     := .T.
+	
 Return(lRet)
 
 //Retorno de campos que serao usados ZT0
@@ -224,22 +261,6 @@ Static Function STRUMASTER(cCampo)
 	ENDCASE
 Return(lRet)
 
-//Campos usados no browse
-
-Static Function STRUDETAIL(cCampo)
-	Local lRet	:= .F.
-	DO CASE
-	CASE cCampo = "B1_COD" ; RETURN .T.
-	CASE cCampo = "B1_DESC" ; RETURN .T.
-	CASE cCampo = "B1_LOCPAD" ; RETURN .T.
-		//CASE cCampo = "D1_SEGUM" ; RETURN .T.
-		//CASE cCampo = "D1_QUANT" ; RETURN .T.
-		//CASE cCampo = "D1_VUNIT" ; RETURN .T.
-		//CASE cCampo = "D1_TOTAL" ; RETURN .T.
-		//CASE cCampo = "D1_CONTA" ; RETURN .T.
-	ENDCASE
-Return(lRet)
-
 //Retorno de campos que serao usados ZT1
 Static Function STRUABA1(cCampo)
 	Local lRet	:= .F.
@@ -247,7 +268,10 @@ Static Function STRUABA1(cCampo)
 	CASE cCampo = "ZT1_DATA" ; RETURN .T.
 	CASE cCampo = "ZT1_HINI" ; RETURN .T.
 	CASE cCampo = "ZT1_HFIM" ; RETURN .T.
-	CASE cCampo = "ZT1_APROVA" ; RETURN .T.
+	CASE cCampo = "ZT1_PRAZO" ; RETURN .T.
+	CASE cCampo = "ZT1_APROV" ; RETURN .T.
+	CASE cCampo = "ZT1_APROVD" ; RETURN .T.
+	CASE cCampo = "ZT1_USER" ; RETURN .T.
 	ENDCASE
 Return(lRet)
 
@@ -258,7 +282,76 @@ Static Function STRUABA2(cCampo)
 	CASE cCampo = "ZT2_DATA" ; RETURN .T.
 	CASE cCampo = "ZT2_ORDEM" ; RETURN .T.
 	CASE cCampo = "ZT2_TURNO" ; RETURN .T.
-	CASE cCampo = "ZT2_CAV" ; RETURN .T.
+	CASE cCampo = "ZT2_TMA" ; RETURN .T.
+	CASE cCampo = "ZT2_TMB" ; RETURN .T.
+	CASE cCampo = "ZT2_TMC" ; RETURN .T.
+	CASE cCampo = "ZT2_TMD" ; RETURN .T.
+	CASE cCampo = "ZT2_TME" ; RETURN .T.
+	CASE cCampo = "ZT2_TMF" ; RETURN .T.
+	CASE cCampo = "ZT2_TMG" ; RETURN .T.
+	CASE cCampo = "ZT2_TCMA" ; RETURN .T.
+	CASE cCampo = "ZT2_TCMB" ; RETURN .T.
+	CASE cCampo = "ZT2_TCMC" ; RETURN .T.
+	CASE cCampo = "ZT2_TCMD" ; RETURN .T.
+	CASE cCampo = "ZT2_TCME" ; RETURN .T.
+	CASE cCampo = "ZT2_TCMF" ; RETURN .T.
+	CASE cCampo = "ZT2_TCMG" ; RETURN .T.
+	CASE cCampo = "ZT2_CGCA" ; RETURN .T.
+	CASE cCampo = "ZT2_CGCB" ; RETURN .T.
+	CASE cCampo = "ZT2_CGCC" ; RETURN .T.
+	CASE cCampo = "ZT2_CGCD" ; RETURN .T.
+	CASE cCampo = "ZT2_CGCE" ; RETURN .T.
+	CASE cCampo = "ZT2_CGCF" ; RETURN .T.
+	CASE cCampo = "ZT2_CGCG" ; RETURN .T.
+	CASE cCampo = "ZT2_PESO" ; RETURN .T.
+	CASE cCampo = "ZT2_PCGC" ; RETURN .T.
+	CASE cCampo = "ZT2_PCR" ; RETURN .T.
+	CASE cCampo = "ZT2_PIR" ; RETURN .T.
+	CASE cCampo = "ZT2_NGOL" ; RETURN .T.
+	CASE cCampo = "ZT2_PLIM" ; RETURN .T.
+	CASE cCampo = "ZT2_PBV" ; RETURN .T.
+	CASE cCampo = "ZT2_TMPR" ; RETURN .T.
+	CASE cCampo = "ZT2_USER" ; RETURN .T.
+	ENDCASE
+Return(lRet)
+
+Static Function STRUABA3(cCampo)
+	Local lRet	:= .F.
+	DO CASE
+	CASE cCampo = "ZT3_CTETO" ; RETURN .T.
+	CASE cCampo = "ZT3_CAV" ; RETURN .T.
+	CASE cCampo = "ZT3_TURNO" ; RETURN .T.
+	CASE cCampo = "ZT3_DATA" ; RETURN .T.
+	CASE cCampo = "ZT3_HDES" ; RETURN .T.
+	CASE cCampo = "ZT3_LGEL" ; RETURN .T.
+	CASE cCampo = "ZT3_NGOL" ; RETURN .T.
+	CASE cCampo = "ZT3_NKPU" ; RETURN .T.
+	CASE cCampo = "ZT3_USER" ; RETURN .T.
+	ENDCASE
+Return(lRet)
+
+Static Function STRUABA4(cCampo)
+	Local lRet	:= .F.
+	DO CASE
+	CASE cCampo = "ZT4_CTETO" ; RETURN .T.
+	CASE cCampo = "ZT4_CAV" ; RETURN .T.
+	CASE cCampo = "ZT4_TURNO" ; RETURN .T.
+	CASE cCampo = "ZT4_DATA" ; RETURN .T.
+	CASE cCampo = "ZT4_DAPA" ; RETURN .T.
+	CASE cCampo = "ZT4_DAPB" ; RETURN .T.
+	CASE cCampo = "ZT4_DAPC" ; RETURN .T.
+	CASE cCampo = "ZT4_DAPD" ; RETURN .T.
+	CASE cCampo = "ZT4_DAPE" ; RETURN .T.
+	CASE cCampo = "ZT4_DAPF" ; RETURN .T.
+	CASE cCampo = "ZT4_DAPG" ; RETURN .T.
+	CASE cCampo = "ZT4_DAFA" ; RETURN .T.
+	CASE cCampo = "ZT4_DAFB" ; RETURN .T.
+	CASE cCampo = "ZT4_DAFC" ; RETURN .T.
+	CASE cCampo = "ZT4_DAFD" ; RETURN .T.
+	CASE cCampo = "ZT4_DAFE" ; RETURN .T.
+	CASE cCampo = "ZT4_DAFF" ; RETURN .T.
+	CASE cCampo = "ZT4_DAFG" ; RETURN .T.
+	CASE cCampo = "ZT4_USER" ; RETURN .T.
 	ENDCASE
 Return(lRet)
 
@@ -275,10 +368,11 @@ STATIC FUNCTION fRodape1(oPanel)
 	Local cFontPad := "Tahoma"
 	Local cFontBtn := TFont():New(cFontPad, , 2)
 
-	oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_incDiario(DTOS(Date()),TIME())},nLargBtn)
-	oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_altDiario(ZT1->ZT1_DATA,ZT1->ZT1_HINI,ZT1->ZT1_HFIM,ZT1->ZT1_PRAZO)},nLargBtn)
+	//oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_incDiario(DTOS(Date()),TIME())},nLargBtn)
+	//oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_altDiario(ZT1->ZT1_DATA,ZT1->ZT1_HINI,ZT1->ZT1_HFIM,ZT1->ZT1_PRAZO)},nLargBtn)
+	oBtnS1 := TButton():New(001,60 , "Salvar Alteracoes", oPanel, {|| U_fSalvarGrid('VIEW_ZT1')},nLargBtn)
 	oBtn5s := TButton():New(001,110 , "Realizar Checklist", oPanel, {|| U_fCheckl(Date())},nLargBtn)
-	oBtnApr := TButton():New(001,160 , "Aprovar/Desaprovar Diario", oPanel, {|| U_fAprovD()},nLargBtn)
+	oBtnApr := TButton():New(001,160 , "Aprovar Diario", oPanel, {|| U_fAprovD(Date())},nLargBtn)
 	oBtnObs := TButton():New(001,210 , "Observações Diario", oPanel, {|| U_fObservD(Date())},nLargBtn)
 
 RETURN
@@ -291,9 +385,10 @@ STATIC FUNCTION fRodape2(oPanel)
 	Local cFontPad := "Tahoma"
 	Local cFontBtn := TFont():New(cFontPad, , 2)
 
-	oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_incSetup(ZT0->ZT0_CODIGO)},nLargBtn)
-	oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_CancReceb()},nLargBtn)
-	//oBtn5s := TButton():New(001,110 , "Realizar 5S", oPanel, {|| U_CancReceb()},nLargBtn)
+	//oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_incSetup(ZT0->ZT0_CODIGO)},nLargBtn)
+	//oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_altSetup()},nLargBtn)
+	oBtnS2 := TButton():New(001,60 , "Salvar Alteracoes", oPanel, {|| U_fSalvarGrid()},nLargBtn)
+	oBtnSetup := TButton():New(001,110 , "Finalizar SETUP", oPanel, {|| U_fFinSetup(DATE())},nLargBtn)
 	//oBtnApr := TButton():New(001,160 , "Aprovar Diario", oPanel, {|| U_CancReceb()},nLargBtn)
 	//oBtnApr := TButton():New(001,210 , "Observações", oPanel, {|| fObserv()},nLargBtn)
 
@@ -307,9 +402,10 @@ STATIC FUNCTION fRodape3(oPanel)
 	Local cFontPad := "Tahoma"
 	Local cFontBtn := TFont():New(cFontPad, , 2)
 
-	//oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_ConfReceb()},nLargBtn)
-	//oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_CancReceb()},nLargBtn)
-	//oBtn5s := TButton():New(001,110 , "Realizar 5S", oPanel, {|| U_CancReceb()},nLargBtn)
+	//oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_incAcomp()},nLargBtn)
+	//oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_altAcomp()},nLargBtn)
+	oBtnS3 := TButton():New(001,60 , "Salvar Alteracoes", oPanel, {|| U_fSalvarGrid()},nLargBtn)
+	oBtnMol := TButton():New(001,110 , "Finalizar Moldagem", oPanel, {|| U_fFinMol(DATE())},nLargBtn)
 	//oBtnApr := TButton():New(001,160 , "Aprovar Diario", oPanel, {|| U_CancReceb()},nLargBtn)
 	//oBtnApr := TButton():New(001,210 , "Observações", oPanel, {|| fObserv()},nLargBtn)
 
@@ -323,11 +419,12 @@ STATIC FUNCTION fRodape4(oPanel)
 	Local cFontPad := "Tahoma"
 	Local cFontBtn := TFont():New(cFontPad, , 2)
 
-	//oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_ConfReceb()},nLargBtn)
-	//oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_CancReceb()},nLargBtn)
-	//oBtn5s := TButton():New(001,110 , "Realizar 5S", oPanel, {|| U_CancReceb()},nLargBtn)
-	//oBtnApr := TButton():New(001,160 , "Aprovar Diario", oPanel, {|| U_CancReceb()},nLargBtn)
-	//oBtnApr := TButton():New(001,210 , "Observações", oPanel, {|| fObserv()},nLargBtn)
+	//oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_incDureza()},nLargBtn)
+	//oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_altDureza()},nLargBtn)
+	oBtnS4 := TButton():New(001,60 , "Salvar Alteracoes", oPanel, {|| U_fSalvarGrid()},nLargBtn)
+	oBtnDur := TButton():New(001,110 , "Finalizar Dureza", oPanel, {|| U_fFinDureza(DATE())},nLargBtn)
+	oBtn1012 := TButton():New(001,160 , "Finalizar 10/12 Min", oPanel, {|| U_fFin1012(DATE(),ZT0->ZT0_CODIGO)},nLargBtn)
+	oBtn24 := TButton():New(001,210 , "Finalizar 24 Horas", oPanel, {|| fFin24(DATE())},nLargBtn)
 
 RETURN
 
@@ -542,460 +639,353 @@ USER FUNCTION fCheckl(dData)
 	Local cnConf := ""
 	Local cData := DTOS(dData)
 
-	IF dData != Date()
-		FWAlertError("Data de Diário Inválida, utilize o diário do dia de hoje. ", "Erro")
-		RETURN .F.
-	ENDIF
-
 	DBSELECTAREA("ZT1")
 	DBSETORDER(1)
 	IF DbSeek(cFilAnt+cData,.T.)
-		IF ZT1->ZT1_APROVA = 'S'
-			FWAlertError("Diario ja aprovado, deve-se usar a opcao de Reabertura ", "Erro")
+		IF ZT1->ZT1_APROV
+			FWAlertWarning("Checklist ja aprovado na data de hoje", "RCTEC06")
 			DBCLOSEAREA()
-			RETURN .F.
-		ELSE
-			aAdd(aPergs,ZT1->ZT1_CHK01)
-			aAdd(aPergs,ZT1->ZT1_CHK02)
-			aAdd(aPergs,ZT1->ZT1_CHK03)
-			aAdd(aPergs,ZT1->ZT1_CHK04)
-			aAdd(aPergs,ZT1->ZT1_CHK05)
-			aAdd(aPergs,ZT1->ZT1_CHK06)
-			aAdd(aPergs,ZT1->ZT1_CHK07)
-			aAdd(aPergs,ZT1->ZT1_CHK08)
-			aAdd(aPergs,ZT1->ZT1_CHK09)
-			aAdd(aPergs,ZT1->ZT1_CHK10)
-			aAdd(aPergs,ZT1->ZT1_CHK11)
-			aAdd(aPergs,ZT1->ZT1_CHK12)
-			aAdd(aPergs,ZT1->ZT1_CHK13)
-			aAdd(aPergs,ZT1->ZT1_CHK14)
-			aAdd(aPergs,ZT1->ZT1_CHK15)
-			aAdd(aPergs,ZT1->ZT1_CHK16)
-			aAdd(aPergs,ZT1->ZT1_CHK17)
-			aAdd(aPergs,ZT1->ZT1_CHK18)
-			aAdd(aPergs,ZT1->ZT1_CHK19)
-			aAdd(aPergs,ZT1->ZT1_CHK20)
-			aAdd(aPergs,ZT1->ZT1_CHK21)
-			aAdd(aPergs,ZT1->ZT1_CHK22)
-			aAdd(aPergs,ZT1->ZT1_CHK23)
-			aAdd(aPergs,ZT1->ZT1_CHK24)
-			aAdd(aPergs,ZT1->ZT1_CHK25)
-			aAdd(aPergs,ZT1->ZT1_CHK26)
-			aAdd(aPergs,ZT1->ZT1_CHK27)
-			aAdd(aPergs,ZT1->ZT1_CHK28)
-			aAdd(aPergs,ZT1->ZT1_CHK29)
-			aAdd(aPergs,ZT1->ZT1_CHK30)
-			aAdd(aPergs,ZT1->ZT1_CHK31)
+			RETURN .T.
+		ENDIF
 
-			FOR i = 1 TO Len(aPergs)
-				IF aPergs[i] == .T.
-					//Conout("Pergunta:"+i+" Conforme")
-				ELSE
-					DO CASE
-					CASE aPergs[i] == .F. ; cnConf += "Pergunta: "+cValtoChar(i)+" Não Conforme"+'\n'
-					ENDCASE
-					lPergs := .F.
-				ENDIF
-			NEXT i
-
-			IF lPergs
-				FWAlertSuccess("Checklist já está Conforme e Realizado. ", "Sucesso")
-				DBCLOSEAREA()
-				RETURN .T.
+		RECLOCK("ZT1",.F.)
+		IF !(ZT1->ZT1_CHK01)
+			IF MsgYesNo("Arrumação e Limpeza?", "Confirma", .T.)
+				ZT1->ZT1_CHK01 := .T.
 			ELSE
-				RECLOCK("ZT1",.F.)
-				IF !(ZT1->ZT1_CHK01)
-					IF MsgYesNo("Arrumação e Limpeza?", "Confirma", .T.)
-						ZT1->ZT1_CHK01 := .T.
-					ELSE
-						ZT1->ZT1_CHK01 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK02)
-					IF MsgYesNo("Resina, gel coat, catalisador, disponíveis na área e dentro do prazo validade?", "Confirma", .T.)
-						ZT1->ZT1_CHK02 := .T.
-					ELSE
-						ZT1->ZT1_CHK02 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK03)
-					IF MsgYesNo("Temperatura da resina OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK03 := .T.
-					ELSE
-						ZT1->ZT1_CHK03 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK04)
-					IF MsgYesNo("Produtos químicos (Embalagem apropriada? Identificados?)", "Confirma", .T.)
-						ZT1->ZT1_CHK04 := .T.
-					ELSE
-						ZT1->ZT1_CHK04 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK05)
-					IF MsgYesNo("Kit de ferramentas à disposição?", "Confirma", .T.)
-						ZT1->ZT1_CHK05 := .T.
-					ELSE
-						ZT1->ZT1_CHK05 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK06)
-					IF MsgYesNo("Solução de limpeza, cera e desmoldante disponíveis?", "Confirma", .T.)
-						ZT1->ZT1_CHK06 := .T.
-					ELSE
-						ZT1->ZT1_CHK06 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK07)
-					IF MsgYesNo("Manta, tecidos e reforços metálicos disponíveis?", "Confirma", .T.)
-						ZT1->ZT1_CHK07 := .T.
-					ELSE
-						ZT1->ZT1_CHK07 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK08)
-					IF MsgYesNo("Moldes limpos, conservados, sem vazamento de ar/água,abertura/fechamento funcionando?", "Confirma", .T.)
-						ZT1->ZT1_CHK08 := .T.
-					ELSE
-						ZT1->ZT1_CHK08 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK09)
-					IF MsgYesNo("Temperatura do molde / cavidade (I) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK09 := .T.
-					ELSE
-						ZT1->ZT1_CHK09 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK10)
-					IF MsgYesNo("Temperatura do molde / cavidade (II) OK? ", "Confirma", .T.)
-						ZT1->ZT1_CHK10 := .T.
-					ELSE
-						ZT1->ZT1_CHK10 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK11)
-					IF MsgYesNo("Temperatura do molde / cavidade (III) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK11 := .T.
-					ELSE
-						ZT1->ZT1_CHK11 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK12)
-					IF MsgYesNo("Temperatura do molde / cavidade (IV) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK12 := .T.
-					ELSE
-						ZT1->ZT1_CHK12 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK13)
-					IF MsgYesNo("Temperatura do molde / matriz (I) OK? ", "Confirma", .T.)
-						ZT1->ZT1_CHK13 := .T.
-					ELSE
-						ZT1->ZT1_CHK13 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK14)
-					IF MsgYesNo("Temperatura do molde / matriz (II) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK14 := .T.
-					ELSE
-						ZT1->ZT1_CHK14 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK15)
-					IF MsgYesNo("Qualidade do molde / cavidade (I) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK15 := .T.
-					ELSE
-						ZT1->ZT1_CHK15 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK16)
-					IF MsgYesNo("Qualidade do molde / cavidade (II) OK? ", "Confirma", .T.)
-						ZT1->ZT1_CHK16 := .T.
-					ELSE
-						ZT1->ZT1_CHK16 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK17)
-					IF MsgYesNo("Qualidade do molde / cavidade (III) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK17 := .T.
-					ELSE
-						ZT1->ZT1_CHK17 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK18)
-					IF MsgYesNo("Qualidade do molde / cavidade (IV) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK18 := .T.
-					ELSE
-						ZT1->ZT1_CHK18 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK19)
-					IF MsgYesNo("Qualidade do molde / matriz (I) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK19 := .T.
-					ELSE
-						ZT1->ZT1_CHK19 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK20)
-					IF MsgYesNo("Qualidade do molde / matriz (II) OK? ", "Confirma", .T.)
-						ZT1->ZT1_CHK20 := .T.
-					ELSE
-						ZT1->ZT1_CHK20 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK21)
-					IF MsgYesNo("Limpeza do molde / cavidade (I) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK21 := .T.
-					ELSE
-						ZT1->ZT1_CHK21 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK22)
-					IF MsgYesNo("Limpeza do molde / cavidade (II) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK22 := .T.
-					ELSE
-						ZT1->ZT1_CHK22 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK23)
-					IF MsgYesNo("Limpeza do molde / cavidade (III) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK23 := .T.
-					ELSE
-						ZT1->ZT1_CHK23 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK24)
-					IF MsgYesNo("Limpeza do molde / cavidade (IV) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK24 := .T.
-					ELSE
-						ZT1->ZT1_CHK24 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK25)
-					IF MsgYesNo("Limpeza do molde / matriz (I) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK25 := .T.
-					ELSE
-						ZT1->ZT1_CHK25 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK26)
-					IF MsgYesNo("Limpeza do molde / matriz (II) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK26 := .T.
-					ELSE
-						ZT1->ZT1_CHK26 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK27)
-					IF MsgYesNo("Sistema extração molde / cavidade (I) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK27 := .T.
-					ELSE
-						ZT1->ZT1_CHK27 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK28)
-					IF MsgYesNo("Sistema extração molde / cavidade (II) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK28 := .T.
-					ELSE
-						ZT1->ZT1_CHK28 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK29)
-					IF MsgYesNo("Sistema extração molde / cavidade (III) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK29 := .T.
-					ELSE
-						ZT1->ZT1_CHK29 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK30)
-					IF MsgYesNo("Sistema extração molde / cavidade (IV) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK30 := .T.
-					ELSE
-						ZT1->ZT1_CHK30 := .F.
-					ENDIF
-				ENDIF
-				IF !(ZT1->ZT1_CHK31)
-					IF MsgYesNo("Sistema extração molde / matriz (I) OK?", "Confirma", .T.)
-						ZT1->ZT1_CHK31 := .T.
-					ELSE
-						ZT1->ZT1_CHK31 := .F.
-					ENDIF
-				ENDIF
-				MSUNLOCK()
+				ZT1->ZT1_CHK01 := .F.
 			ENDIF
 		ENDIF
-		IF cnConf == ""
-			FWAlertSuccess("Checklist Finalizado com Sucesso!. ", "Sucesso")
+		IF !(ZT1->ZT1_CHK02)
+			IF MsgYesNo("Resina, gel coat, catalisador, disponíveis na área e dentro do prazo validade?", "Confirma", .T.)
+				ZT1->ZT1_CHK02 := .T.
+			ELSE
+				ZT1->ZT1_CHK02 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK03)
+			IF MsgYesNo("Temperatura da resina OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK03 := .T.
+			ELSE
+				ZT1->ZT1_CHK03 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK04)
+			IF MsgYesNo("Produtos químicos (Embalagem apropriada? Identificados?)", "Confirma", .T.)
+				ZT1->ZT1_CHK04 := .T.
+			ELSE
+				ZT1->ZT1_CHK04 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK05)
+			IF MsgYesNo("Kit de ferramentas à disposição?", "Confirma", .T.)
+				ZT1->ZT1_CHK05 := .T.
+			ELSE
+				ZT1->ZT1_CHK05 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK06)
+			IF MsgYesNo("Solução de limpeza, cera e desmoldante disponíveis?", "Confirma", .T.)
+				ZT1->ZT1_CHK06 := .T.
+			ELSE
+				ZT1->ZT1_CHK06 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK07)
+			IF MsgYesNo("Manta, tecidos e reforços metálicos disponíveis?", "Confirma", .T.)
+				ZT1->ZT1_CHK07 := .T.
+			ELSE
+				ZT1->ZT1_CHK07 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK08)
+			IF MsgYesNo("Moldes limpos, conservados, sem vazamento de ar/água,abertura/fechamento funcionando?", "Confirma", .T.)
+				ZT1->ZT1_CHK08 := .T.
+			ELSE
+				ZT1->ZT1_CHK08 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK09)
+			IF MsgYesNo("Temperatura do molde / cavidade (I) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK09 := .T.
+			ELSE
+				ZT1->ZT1_CHK09 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK10)
+			IF MsgYesNo("Temperatura do molde / cavidade (II) OK? ", "Confirma", .T.)
+				ZT1->ZT1_CHK10 := .T.
+			ELSE
+				ZT1->ZT1_CHK10 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK11)
+			IF MsgYesNo("Temperatura do molde / cavidade (III) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK11 := .T.
+			ELSE
+				ZT1->ZT1_CHK11 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK12)
+			IF MsgYesNo("Temperatura do molde / cavidade (IV) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK12 := .T.
+			ELSE
+				ZT1->ZT1_CHK12 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK13)
+			IF MsgYesNo("Temperatura do molde / matriz (I) OK? ", "Confirma", .T.)
+				ZT1->ZT1_CHK13 := .T.
+			ELSE
+				ZT1->ZT1_CHK13 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK14)
+			IF MsgYesNo("Temperatura do molde / matriz (II) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK14 := .T.
+			ELSE
+				ZT1->ZT1_CHK14 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK15)
+			IF MsgYesNo("Qualidade do molde / cavidade (I) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK15 := .T.
+			ELSE
+				ZT1->ZT1_CHK15 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK16)
+			IF MsgYesNo("Qualidade do molde / cavidade (II) OK? ", "Confirma", .T.)
+				ZT1->ZT1_CHK16 := .T.
+			ELSE
+				ZT1->ZT1_CHK16 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK17)
+			IF MsgYesNo("Qualidade do molde / cavidade (III) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK17 := .T.
+			ELSE
+				ZT1->ZT1_CHK17 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK18)
+			IF MsgYesNo("Qualidade do molde / cavidade (IV) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK18 := .T.
+			ELSE
+				ZT1->ZT1_CHK18 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK19)
+			IF MsgYesNo("Qualidade do molde / matriz (I) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK19 := .T.
+			ELSE
+				ZT1->ZT1_CHK19 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK20)
+			IF MsgYesNo("Qualidade do molde / matriz (II) OK? ", "Confirma", .T.)
+				ZT1->ZT1_CHK20 := .T.
+			ELSE
+				ZT1->ZT1_CHK20 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK21)
+			IF MsgYesNo("Limpeza do molde / cavidade (I) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK21 := .T.
+			ELSE
+				ZT1->ZT1_CHK21 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK22)
+			IF MsgYesNo("Limpeza do molde / cavidade (II) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK22 := .T.
+			ELSE
+				ZT1->ZT1_CHK22 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK23)
+			IF MsgYesNo("Limpeza do molde / cavidade (III) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK23 := .T.
+			ELSE
+				ZT1->ZT1_CHK23 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK24)
+			IF MsgYesNo("Limpeza do molde / cavidade (IV) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK24 := .T.
+			ELSE
+				ZT1->ZT1_CHK24 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK25)
+			IF MsgYesNo("Limpeza do molde / matriz (I) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK25 := .T.
+			ELSE
+				ZT1->ZT1_CHK25 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK26)
+			IF MsgYesNo("Limpeza do molde / matriz (II) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK26 := .T.
+			ELSE
+				ZT1->ZT1_CHK26 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK27)
+			IF MsgYesNo("Sistema extração molde / cavidade (I) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK27 := .T.
+			ELSE
+				ZT1->ZT1_CHK27 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK28)
+			IF MsgYesNo("Sistema extração molde / cavidade (II) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK28 := .T.
+			ELSE
+				ZT1->ZT1_CHK28 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK29)
+			IF MsgYesNo("Sistema extração molde / cavidade (III) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK29 := .T.
+			ELSE
+				ZT1->ZT1_CHK29 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK30)
+			IF MsgYesNo("Sistema extração molde / cavidade (IV) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK30 := .T.
+			ELSE
+				ZT1->ZT1_CHK30 := .F.
+			ENDIF
+		ENDIF
+		IF !(ZT1->ZT1_CHK31)
+			IF MsgYesNo("Sistema extração molde / matriz (I) OK?", "Confirma", .T.)
+				ZT1->ZT1_CHK31 := .T.
+			ELSE
+				ZT1->ZT1_CHK31 := .F.
+			ENDIF
+		ENDIF
+		MSUNLOCK()
+
+
+		aAdd(aPergs,ZT1->ZT1_CHK01)
+		aAdd(aPergs,ZT1->ZT1_CHK02)
+		aAdd(aPergs,ZT1->ZT1_CHK03)
+		aAdd(aPergs,ZT1->ZT1_CHK04)
+		aAdd(aPergs,ZT1->ZT1_CHK05)
+		aAdd(aPergs,ZT1->ZT1_CHK06)
+		aAdd(aPergs,ZT1->ZT1_CHK07)
+		aAdd(aPergs,ZT1->ZT1_CHK08)
+		aAdd(aPergs,ZT1->ZT1_CHK09)
+		aAdd(aPergs,ZT1->ZT1_CHK10)
+		aAdd(aPergs,ZT1->ZT1_CHK11)
+		aAdd(aPergs,ZT1->ZT1_CHK12)
+		aAdd(aPergs,ZT1->ZT1_CHK13)
+		aAdd(aPergs,ZT1->ZT1_CHK14)
+		aAdd(aPergs,ZT1->ZT1_CHK15)
+		aAdd(aPergs,ZT1->ZT1_CHK16)
+		aAdd(aPergs,ZT1->ZT1_CHK17)
+		aAdd(aPergs,ZT1->ZT1_CHK18)
+		aAdd(aPergs,ZT1->ZT1_CHK19)
+		aAdd(aPergs,ZT1->ZT1_CHK20)
+		aAdd(aPergs,ZT1->ZT1_CHK21)
+		aAdd(aPergs,ZT1->ZT1_CHK22)
+		aAdd(aPergs,ZT1->ZT1_CHK23)
+		aAdd(aPergs,ZT1->ZT1_CHK24)
+		aAdd(aPergs,ZT1->ZT1_CHK25)
+		aAdd(aPergs,ZT1->ZT1_CHK26)
+		aAdd(aPergs,ZT1->ZT1_CHK27)
+		aAdd(aPergs,ZT1->ZT1_CHK28)
+		aAdd(aPergs,ZT1->ZT1_CHK29)
+		aAdd(aPergs,ZT1->ZT1_CHK30)
+		aAdd(aPergs,ZT1->ZT1_CHK31)
+
+		// RODA NOVAMENTE PARA VERIFICAR SE ESTA .T.
+		FOR i = 1 TO Len(aPergs)
+			IF aPergs[i] == .T.
+				//Conout("Pergunta:"+i+" Conforme")
+				//lPergs := .T.
+			ELSE
+				DO CASE
+				CASE aPergs[i] == .F. ; cnConf += "Pergunta: "+cValtoChar(i)+" Não Conforme"+'\n'
+				ENDCASE
+				lPergs := .F.
+			ENDIF
+		NEXT i
+
+		IF lPergs
+			RECLOCK("ZT1", .F.)
+			ZT1->ZT1_APROV := .T.
+			MSUNLOCK()
+			FWAlertSuccess("Checklist Realizado com Sucesso!. ", "Sucesso")
 			DBCLOSEAREA()
+			//oView:Refresh()
 			RETURN .T.
 		ENDIF
 		DBCLOSEAREA()
 	ELSE
-		FWAlertError("Diario não encontrado, deve-se usar a opção Incluir ", "Erro")
+		FWAlertError("Diario não encontrado", "Erro")
 		DBCLOSEAREA()
 		RETURN .F.
 	ENDIF
 RETURN
 
 // FUNCAO INCLUIR DIARIO DE BORDO
-USER FUNCTION incDiario(cData,cHora)
+USER FUNCTION incDiario(dData)
 
-	//Local _cTxtLog     := ""
-	Local  cHFim 	   := ""
-	Local nPrazo := 0
-	Local cUser := UsrRetName(__cUserID)
-	Local cAprov := 'N'
-	Local _oFontCabO   := TFont():New("Arial",,14,,.T.,,,,,.F.,.F.)
-	Local _oFont    := TFont():New("Arial",,14,,.F.,,,,,.F.,.F.)
+	Local  cData := DTOS(dData)
 
 	DBSELECTAREA("ZT1")
 	DBSETORDER(1)
 	IF DbSeek(cFilAnt+cData,.T.)
-		FWAlertError("Diário já existente, use a opção de alterar", "RCTEC06")
+		FWAlertError("Diário já existente para a data de hoje", "RCTEC06")
 		DBCLOSEAREA()
 		RETURN .F.
-	ENDIF
-
-	// JANELA PRINCIPAL
-	_oDlg	:= TDialog():New(000,000,470,720,"Diario de Bordo" ,,,,,CLR_BLACK,CLR_WHITE,,,.T.)
-
-	// DATA DIARIO
-	_oSay1		:= TSay():New(005,005,{|| "Data do Diário: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet1	:= TMultiget():New(012,005,{|u| cData},_oDlg,50,010,_oFont,,,,,.T.)
-	_oMtGet1:lReadOnly := .T.
-
-	// HORA INICIO
-	_oSay2		:= TSay():New(027,005,{|| "Hora de Inicio: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet2	:= TMultiget():New(035,005,{|u| cHora},_oDlg,50,010,_oFont,,,,,.T.)
-	_oMtGet2:lReadOnly := .T.
-
-	// HORA DE FINALIZACAO
-	_oSay3		:= TSay():New(050,005,{|| "Hora de Finalização:" },_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet3	:= TMultiget():New(058,005,{|u| if(Pcount()>0,cHFim := u,cHFim)},_oDlg,50,010,_oFont,,,,,.T.)
-
-	// PRAZO PARA CONFORMIDADE (EM HORAS)
-	_oSay4		:= TSay():New(073,005,{|| "Prazo para Conformidade (Em Horas):" },_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet4	:= TMultiget():New(081,005,{|u| if(Pcount()>0,nPrazo := u,nPrazo)},_oDlg,50,010,_oFont,,,,,.T.)
-
-	// USUARIO
-	_oSay5		:= TSay():New(096,005,{|| "Hora de Inicio: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet5	:= TMultiget():New(104,005,{|u| cUser},_oDlg,50,010,_oFont,,,,,.T.)
-	_oMtGet5:lReadOnly := .T.
-
-	// APROVADO?
-	_oSay6		:= TSay():New(119,005,{|| "Diário Aprovado?: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet6	:= TMultiget():New(127,005,{|u| cAprov},_oDlg,10,010,_oFont,,,,,.T.)
-	_oMtGet6:lReadOnly := .T.
-
-	// BOTOES
-	_oBtConf	:= TButton():New(220,130,"Confirmar"  ,_oDlg,{|| (U_fSalvaD(cData,cHFim,nPrazo,cUser), _oDlg:End())},60,15,,,.F.,.T.,.F.,,.F.,,,.F.)
-	_oBtClos	:= TButton():New(220,195,"Sair"	      ,_oDlg,{|| _oDlg:End()                                  },60,15,,,.F.,.T.,.F.,,.F.,,,.F.)
-
-	_oDlg:Activate(,,,.T.,{|| .t.},,{|| .t.})
-
-RETURN
-
-USER FUNCTION altDiario(cData,cHora,cHFim,nPrazo)
-
-	// COLOCAR AQUI TRAVA PARA DIARIOS JA APROVADOS
-
-	//Local _cTxtLog     := ""
-	Local cUser := UsrRetName(__cUserID)
-	Local cAprov := 'N'
-	Local _oFontCabO   := TFont():New("Arial",,14,,.T.,,,,,.F.,.F.)
-	Local _oFont    := TFont():New("Arial",,14,,.F.,,,,,.F.,.F.)
-
-	// JANELA PRINCIPAL
-	_oDlg	:= TDialog():New(000,000,470,720,"Diario de Bordo" ,,,,,CLR_BLACK,CLR_WHITE,,,.T.)
-
-	// DATA DIARIO
-	_oSay1		:= TSay():New(005,005,{|| "Data do Diário: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet1	:= TMultiget():New(012,005,{|u| cData},_oDlg,50,010,_oFont,,,,,.T.)
-	_oMtGet1:lReadOnly := .T.
-
-	// HORA INICIO
-	_oSay2		:= TSay():New(027,005,{|| "Hora de Inicio: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet2	:= TMultiget():New(035,005,{|u| cHora},_oDlg,50,010,_oFont,,,,,.T.)
-	_oMtGet2:lReadOnly := .T.
-
-	// HORA DE FINALIZACAO
-	_oSay3		:= TSay():New(050,005,{|| "Hora de Finalização:" },_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet3	:= TMultiget():New(058,005,{|u| if(Pcount()>0,cHFim := u,cHFim)},_oDlg,50,010,_oFont,,,,,.T.)
-
-	// PRAZO PARA CONFORMIDADE (EM HORAS)
-	_oSay4		:= TSay():New(073,005,{|| "Prazo para Conformidade (Em Horas):" },_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet4	:= TMultiget():New(081,005,{|u| if(Pcount()>0,nPrazo := u,nPrazo)},_oDlg,50,010,_oFont,,,,,.T.)
-
-	// USUARIO
-	_oSay5		:= TSay():New(096,005,{|| "Hora de Inicio: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet5	:= TMultiget():New(104,005,{|u| cUser},_oDlg,50,010,_oFont,,,,,.T.)
-	_oMtGet5:lReadOnly := .T.
-
-	// APROVADO?
-	_oSay6		:= TSay():New(119,005,{|| "Diário Aprovado?: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet6	:= TMultiget():New(127,005,{|u| cAprov},_oDlg,10,010,_oFont,,,,,.T.)
-	_oMtGet6:lReadOnly := .T.
-
-	// BOTOES
-	_oBtConf	:= TButton():New(220,130,"Confirmar"  ,_oDlg,{|| (U_fSalvaDA(cData,cHFim,nPrazo,cUser), _oDlg:End())},60,15,,,.F.,.T.,.F.,,.F.,,,.F.)
-	_oBtClos	:= TButton():New(220,195,"Sair"	      ,_oDlg,{|| _oDlg:End()                                  },60,15,,,.F.,.T.,.F.,,.F.,,,.F.)
-
-	_oDlg:Activate(,,,.T.,{|| .t.},,{|| .t.})
-
-RETURN
-
-// FINCAO SALVAR DIARIO DE BORDO
-USER FUNCTION fSalvaD(cData,cHFim,nPrazo,cUser,cAprov)
-
-	IF !Empty(cData)
-
-		RecLock("ZT1", .T.)
-		ZT1->ZT1_FILIAL	:= cFilant
-		ZT1->ZT1_DATA	:= STOD(cData)
-		ZT1->ZT1_HINI	:= Time()
-		ZT1->ZT1_HFIM		:= cHFim
-		ZT1->ZT1_PRAZO	:= nPrazo
-		ZT1->ZT1_USER	:= cUser
-		ZT1->ZT1_APROVA := cAprov
-		MsUnlock()
-
-		MessageBox("Diario Registrado com Sucesso.", "RCTEC06", 0)
-
 	ELSE
-		FWAlertError("Não foi possível gravar o Diário, contate a TI", "RCTEC06")
-		RETURN .F.
+		RETURN dData
 	ENDIF
-
-RETURN .T.
-
-USER FUNCTION fSalvaDA(cData,cHFim,nPrazo,cUser,cAprov)
-
-	IF !Empty(cData)
-
-		RecLock("ZT1", .F.)
-		//ZT1->ZT1_FILIAL	:= cFilant
-		//ZT1->ZT1_DATA	:= STOD(cData)
-		//ZT1->ZT1_HINI	:= Time()
-		ZT1->ZT1_HFIM		:= cHFim
-		ZT1->ZT1_PRAZO	:= nPrazo
-		//ZT1->ZT1_USER	:= cUser
-		//ZT1->ZT1_APROVA := cAprov
-		MsUnlock()
-
-		MessageBox("Diario Registrado com Sucesso.", "RCTEC06", 0)
-
-	ELSE
-		FWAlertError("Não foi possível gravar o Diário, contate a TI", "RCTEC06")
-		RETURN .F.
-	ENDIF
-
-RETURN .T.
-
+RETURN
 
 // FUNCAO APROVAR DIARIO DE BORDO
-USER FUNCTION fAprovD()
+USER FUNCTION fAprovD(dData)
 
-// COLOCAR CONDICAO PARA DESAPROVAR TAMBEM
+	Local cAprovD := SuperGetMV("MV_APROVD", .F., " ")
+	Local cData := DTOS(dData)
+
+	IF (__cUserId $ cAprovD)
+		DBSELECTAREA("ZT1")
+		DBSETORDER(1)
+		IF DbSeek(cFilAnt+cData,.T.)
+			IF ZT1->ZT1_APROVD
+				FWAlertSuccess("Diario já Aprovado na Data de Hoje", "RCTEC06")
+				//U_fRefresh(oView)
+				RETURN .F.
+			ENDIF
+		ENDIF
+		DBCLOSEAREA()
+		IF U_fCheckl(dData)
+			IF MsgYesNo("Deseja Aprovar o Diário?", "Confirma", .T.)
+
+				DBSELECTAREA("ZT1")
+				DBSETORDER(1)
+				IF DbSeek(cFilAnt+cData,.T.)
+					RECLOCK("ZT1",.F.)
+					ZT1->ZT1_APROVD := .T.
+					MSUNLOCK()
+					FWAlertSuccess("Diario Aprovado com Sucesso", "RCTEC06")
+					RETURN .T.
+				ENDIF
+				DBCLOSEAREA()
+			ENDIF
+		ELSE
+			FWAlertError("Checklist Não Conforme - Finalize o Checklist", "RCTEC06")
+			RETURN .F.
+		ENDIF
+	ELSE
+		MSGSTOP("USUÁRIO SEM PERMISSÃO - RCTEC06")
+		RETURN .F.
+	ENDIF
 
 RETURN
 
@@ -1085,3 +1075,196 @@ USER FUNCTION fSalvaS(cCodTeto,cData,nOrdem,cTurno,cCav)
 	ENDIF
 
 RETURN .T.
+
+USER FUNCTION fRefresh(oView)
+
+	oView:Refresh()
+
+RETURN
+
+USER FUNCTION fGOrdem(cTeto)
+
+	Public nOrPub 
+
+	DBSELECTAREA("ZT2")
+	DBSETORDER(1)
+	DBSEEK(xFilial("ZT2")+cTeto)
+	DBGOBOTTOM()
+
+	nOrPub  := (ZT2->ZT2_ORDEM)+1
+	
+RETURN nOrPub 
+
+USER FUNCTION fValTemp(nValor)
+
+	IF (nValor>=48.0 .AND. nValor<=52.0)
+		lRet := .T.
+	ELSE
+		lRet := .F.
+		MSGINFO("Utilize Valores entre: 48.0 <-> 52.0")
+	ENDIF
+RETURN lRet
+
+USER FUNCTION fValGel(nValor)
+
+	IF (nValor>=0.4 .AND. nValor<=0.6)
+		lRet := .T.
+	ELSE
+		lRet := .F.
+		MSGINFO("Utilize Valores entre: 0.4 <-> 0.6")
+	ENDIF
+RETURN lRet
+
+USER FUNCTION fFinSetup(dData)
+
+	Local cData := DTOS(dData)
+
+	DBSELECTAREA("ZT1")
+	DBSETORDER(1)
+
+	IF DBSEEK(xFilial("ZT0")+cData)
+		IF ZT1->ZT1_APROVD
+			IF ZT0->ZT0_STATUS = '0'
+				IF MsgYesNo("Deseja Finalizar o SETUP?", "Confirma", .T.)
+					RECLOCK("ZT0",.F.)
+					ZT0->ZT0_STATUS := '1'
+					MSUNLOCK()
+					FWAlertSuccess("SETUP Finalizado com Sucesso!","RCTEC06")
+					DBCLOSEAREA()
+					RETURN .T.
+				ENDIF
+			ELSE
+				FWAlertError("Verifique o Status do Teto","RCTEC06")
+				DBCLOSEAREA()
+				RETURN .F.
+			ENDIF
+
+		ELSE
+			FWAlertError("Diário de Bordo não aprovado","RCTEC06")
+			DBCLOSEAREA()
+			RETURN .F.
+		ENDIF
+	ELSE
+		FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
+		DBCLOSEAREA()
+		RETURN .F.
+	ENDIF
+RETURN .F.
+
+USER FUNCTION fFinMol(dData)
+
+	Local cData := DTOS(dData)
+
+	DBSELECTAREA("ZT1")
+	DBSETORDER(1)
+
+	IF DBSEEK(xFilial("ZT0")+cData)
+		IF ZT1->ZT1_APROVD
+			IF ZT0->ZT0_STATUS = '1'
+				IF MsgYesNo("Deseja Finalizar a Moldagem?", "Confirma", .T.)
+					RECLOCK("ZT0",.F.)
+					ZT0->ZT0_STATUS := '2'
+					MSUNLOCK()
+					FWAlertSuccess("Moldagem Finalizada com Sucesso!","RCTEC06")
+					RETURN .T.
+				ENDIF
+			ELSE
+				FWAlertError("Verifique o Status do Teto","RCTEC06")
+				DBCLOSEAREA()
+				RETURN .F.
+			ENDIF
+		ELSE
+			FWAlertError("Diário de Bordo não aprovado","RCTEC06")
+			DBCLOSEAREA()
+			RETURN .F.
+		ENDIF
+	ELSE
+		FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
+		DBCLOSEAREA()
+		RETURN .F.
+	ENDIF
+RETURN .F.
+
+USER FUNCTION fFinDureza(dData)
+
+	Local cData := DTOS(dData)
+
+	DBSELECTAREA("ZT1")
+	DBSETORDER(1)
+
+	IF DBSEEK(xFilial("ZT0")+cData)
+		IF ZT1->ZT1_APROVD
+			IF ZT0->ZT0_STATUS = '2'
+				IF MsgYesNo("Deseja Finalizar a Dureza?", "Confirma", .T.)
+					RECLOCK("ZT0",.F.)
+					ZT0->ZT0_STATUS := '3'
+					MSUNLOCK()
+					FWAlertSuccess("Dureza Finalizada com Sucesso!","RCTEC06")
+					RETURN .T.
+				ENDIF
+			ELSE
+				FWAlertError("Verifique o Status do Teto","RCTEC06")
+				DBCLOSEAREA()
+				RETURN .F.
+			ENDIF
+		ELSE
+			FWAlertError("Diário de Bordo não aprovado","RCTEC06")
+			DBCLOSEAREA()
+			RETURN .F.
+		ENDIF
+	ELSE
+		FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
+		DBCLOSEAREA()
+		RETURN .F.
+	ENDIF
+RETURN .F.
+
+USER FUNCTION fFin1012(dData,cTeto)
+	Local cData := DTOS(dData)
+	Local c1012 := "Dureza Apos 10/12 Minutos "
+
+	DBSELECTAREA("ZT1")
+	DBSETORDER(1)
+
+	IF DBSEEK(xFilial("ZT0")+cData)
+		IF ZT1->ZT1_APROVD
+			DBCLOSEAREA()
+
+			DBSELECTAREA("ZT4")
+			DBSETORDER(1)
+
+			IF DBSEEK(xFilial("ZT0")+cTeto)
+				IF !EMPTY(ZT4->ZT4_DAPA) .OR. !EMPTY(ZT4->ZT4_DAPC) .OR. !EMPTY(ZT4->ZT4_DAPD) .OR. !EMPTY(ZT4->ZT4_DAPE) .OR. !EMPTY(ZT4->ZT4_DAPF) .OR. !EMPTY(ZT4->ZT4_DAPG)
+
+				ELSE
+					FWAlertError("Preencha todos os pontos (Dureza Apos 10/12 Min.)","RCTEC06")
+					DBCLOSEAREA()
+					RETURN .F.
+				ENDIF
+			ELSE
+				FWAlertError("Registro de Dureza nao encontrado","RCTEC06")
+				DBCLOSEAREA()
+				RETURN .F.
+			ENDIF
+		ELSE
+			FWAlertError("Diário de Bordo não aprovado","RCTEC06")
+			DBCLOSEAREA()
+			RETURN .F.
+		ENDIF
+	ELSE
+		FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
+		DBCLOSEAREA()
+		RETURN .F.
+	ENDIF
+
+	
+
+RETURN
+
+USER FUNCTION fSalvarGrid(cView)
+
+	If Type( 'oView' ) != "U"
+        oView:Refresh(cView)
+    EndIf
+
+RETURN
