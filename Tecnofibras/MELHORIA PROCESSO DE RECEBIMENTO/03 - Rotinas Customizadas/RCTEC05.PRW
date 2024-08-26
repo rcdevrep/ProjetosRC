@@ -442,7 +442,12 @@ USER FUNCTION DEL103()
 		aadd(aCab,{"F1_MOEDA" ,SF1->F1_MOEDA,Nil})
 		aadd(aCab,{"F1_TXMOEDA" ,SF1->F1_TXMOEDA,Nil})
 		aadd(aCab,{"F1_STATUS" ,SF1->F1_STATUS,Nil})
-		aadd(aCab,{"E2_NATUREZ" ,"010456",Nil})
+		IF EMPTY(cNaturez)
+			cNaturez := "010102"
+			aadd(aCab,{"E2_NATUREZ" ,cNaturez,Nil})
+		ELSE
+			aadd(aCab,{"E2_NATUREZ" ,cNaturez,Nil})
+		ENDIF
 
 		//Itens
 		aItem := {}
