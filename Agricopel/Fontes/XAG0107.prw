@@ -105,7 +105,7 @@ Local cUrlListar    := ""
 Local cAPIKey       := ""
 Local cToken        := ""
 Local cErro         := ""
-Local cConvenio     := Alltrim(Posicione("SEE",1,xFilial("SEE")+ZLA->ZLA_BANCO+ZLA->ZLA_AGENCI+ZLA->ZLA_CONTA+'API',"EE_CODEMP"))//GetNewPar("MV_XCONVBB","3128557")
+Local cConvenio     := Alltrim(Posicione("SEE",1,xFilial("SEE")+ZLA->ZLA_BANCO+ZLA->ZLA_AGENCI+ZLA->ZLA_CONTA+'REC',"EE_CODEMP"))//GetNewPar("MV_XCONVBB","3128557")
 Local i             := 0
 Local aRet          := {}
 Local aHeadStr      := {} 
@@ -394,7 +394,7 @@ Local aBaixa:= {}
 Private lMsErroAuto:= .F.
 
 //Localiza o banco para baixa
-SEE->(dbSeek(xFilial("SEE")+ZLA->ZLA_BANCO+ZLA->ZLA_AGENCI+ZLA->ZLA_CONTA+'API'))
+SEE->(dbSeek(xFilial("SEE")+ZLA->ZLA_BANCO+ZLA->ZLA_AGENCI+ZLA->ZLA_CONTA+'REC'))
 
 aBaixa := {}
 Aadd(aBaixa, {"E1_FILIAL" 	 , SE1->E1_FILIAL 	,nil})
@@ -465,7 +465,7 @@ Local cHeaderRet:= ""
 Local cCodResp:= ""
 Local cRetPatch:= ""
 Local cErro:= ""
-Local cConvenio     := Alltrim(Posicione("SEE",1,xFilial("SEE")+ZLA->ZLA_BANCO+ZLA->ZLA_AGENCI+ZLA->ZLA_CONTA+'API',"EE_CODEMP"))//GetNewPar("MV_XCONVBB","3128557")
+Local cConvenio     := Alltrim(Posicione("SEE",1,xFilial("SEE")+ZLA->ZLA_BANCO+ZLA->ZLA_AGENCI+ZLA->ZLA_CONTA+'REC',"EE_CODEMP"))//GetNewPar("MV_XCONVBB","3128557")
 Local i:= 0
 Local aHeadStr      := {} 
 Private oObjLog     := nil
@@ -560,7 +560,7 @@ Local cHeaderRet:= ""
 Local cCodResp:= ""
 Local cRetPost:= ""
 Local cErro:= ""
-Local cConvenio     := Alltrim(Posicione("SEE",1,xFilial("SEE")+ZLA->ZLA_BANCO+ZLA->ZLA_AGENCI+ZLA->ZLA_CONTA+'API',"EE_CODEMP"))//GetNewPar("MV_XCONVBB","3128557")
+Local cConvenio     := Alltrim(Posicione("SEE",1,xFilial("SEE")+ZLA->ZLA_BANCO+ZLA->ZLA_AGENCI+ZLA->ZLA_CONTA+'REC',"EE_CODEMP"))//GetNewPar("MV_XCONVBB","3128557")
 Local i:= 0
 Local aHeadStr      := {} 
 Private oObjLog     := nil
@@ -1012,7 +1012,8 @@ cQry+= "From "+RetSQLName("ZLA")+" ZLA "
 cQry+= "Inner Join "+RetSQLName("SE2")+" SE2 on E2_FILIAL = '"+xFilial("SE2")+"' "
 cQry+= " AND E2_PREFIXO = ZLA_PREFIX AND E2_NUM = ZLA_NUM AND E2_PARCELA = ZLA_PARCEL "
 cQry+= " AND E2_TIPO = ZLA_TIPO AND E2_FORNECE = ZLA_CLIFOR AND E2_LOJA = ZLA_LOJA "
-cQry+= " AND E2_SALDO > 0 AND SE2.D_E_L_E_T_ = ' ' "
+//cQry+= " AND E2_SALDO > 0 AND SE2.D_E_L_E_T_ = ' ' "
+cQry+= " AND SE2.D_E_L_E_T_ = ' ' "
 cQry+= "Inner Join "+RetSQLName("SEA")+" SEA on EA_FILIAL = '"+xFilial("SEA")+"' "
 cQry+= " AND EA_NUMBOR = ZLA_NUMBOR AND EA_PREFIXO = E2_PREFIXO AND EA_NUM = E2_NUM "
 cQry+= " AND EA_PARCELA = E2_PARCELA AND EA_TIPO = E2_TIPO AND EA_FORNECE = E2_FORNECE AND EA_LOJA = E2_LOJA "

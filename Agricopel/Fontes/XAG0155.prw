@@ -90,6 +90,13 @@ User Function XAG0155()
 		dbSelectArea("SC5")
 		SC5->(dbSetOrder(1))
 		IF SC5->(MsSeek( cFilAnt + cPedido ))
+
+
+			//CASO PEDIDO ESTEJA LIBERADO (CANCELAR A LIBERAÇÃO)
+
+			
+			a460Estorna()
+
 				
             Ma410Resid(cAlias,nReg,nOpc,lAutomato)
 			    

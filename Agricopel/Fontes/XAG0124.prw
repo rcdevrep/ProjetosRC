@@ -129,6 +129,15 @@ Static Function CriaTrb()
         cQuery += " AND  NOT( C9_BLEST = '10' AND C9_BLCRED = '10' ) "
      Endif
 
+    If alltrim(MV_PAR17)  <> '' .AND. alltrim(MV_PAR17)  <> ':' .AND. alltrim(MV_PAR17)  <> '00:00'//Hora de 
+        cQuery += " AND  C9_XHREDI >= '"+alltrim(MV_PAR17)+"' "
+    Endif 
+
+    If alltrim(MV_PAR18)  <> '' .AND. alltrim(MV_PAR18)  <> ':' //Hora ate
+        cQuery += " AND  C9_XHREDI <= '"+alltrim(MV_PAR18)+"' "
+    Endif 
+
+
     cQuery += " AND C9_BLEST IN (' ', 'ZZ','10')  AND  C9_BLCRED IN (' ', 'ZZ','10') "
     cQuery += " AND (C9_PRODUTO  NOT LIKE '%801' OR C9_PRODUTO IN ('49067801','49167801') ) "
     cQuery += " AND SC9.D_E_L_E_T_ = '' "
@@ -163,9 +172,9 @@ Static Function CriaTrb()
     cArqInd := CriaTrab(Nil,.F.)
     
    // cChave := "A1_FILIAL+A1_COD+A1_LOJA"
-    cChave := "C9_FILIAL+C9_PEDIDO+C9_XSREDI"
+    cChave := "C9_PEDIDO+C9_XSREDI"
     IndRegua(cAlias,cArqInd,cChave,,,"Indexando Registros...")
-
+    
     dbSelectArea( cAlias )
     dbGotop()
 Return
@@ -261,6 +270,11 @@ Static Function sfTela()
     oBrowseSC9:SetAmbiente(.F.) // Desabilita a utilização da funcionalidade Ambiente no Browse
     oBrowseSC9:SetWalkThru(.F.) // Desabilita a utilização da funcionalidade Walk-Thru no Browse
     oBrowseSC9:SetColumns(aColumns)
+
+   // aOrder :={  'Pedido'  , 1 , 'C'  , 6  ,  0 , 'Pedido' ,  } 
+    _aSeek               := {{ "Pedido", {{"Pedido","C",6,0,"",,}} }} //"Nota de Empenho"#"Nota de Empenho"
+
+    oBrowseSC9:SetSeek(.T.,_aSeek)
 
     // Ativa o Browse
     oBrowseSC9:Activate()
@@ -514,7 +528,9 @@ Static Function AtuSX1()
     aAdd( aDados, {'XAG0124','14','Data Entrega ate','Entrega ate','Entrega ate','mv_che','D',8,0,0,'G','','MV_PAR14','','','','','','','','','','','','','','','','','','','','','','','','','','','','','',''} )
     aAdd( aDados, {'XAG0124','15','Status','Status  ','Status ','mv_chf','C',1,0,0,'C','','MV_PAR15','Todos','','','','','Sem Mapa','','','','','Pendente Sep.','','','','','Pendente Conf.','','','','','Conferidos','','','','','','','','',''} )
     aAdd( aDados, {'XAG0124','16','Mostra Faturados','Mostra Faturados  ','Mostra Faturados ','mv_chg','C',1,0,0,'C','','MV_PAR16','Sim','','','','','Não','','','','','','','','','','','','','','','','','','','','','','','',''} )
-
+    aAdd( aDados, {'XAG0124','17','Hora Mapa de' ,'Hora Mapa de','Hora Mapa de'  ,  'mv_chh','C',5,0,0,'G','','MV_PAR17','','','','','','','','','','','','','','','','','','','','','','','','','','','','','99:99',''} )
+    aAdd( aDados, {'XAG0124','18','Hora Mapa ate' ,'Hora Mapa ate','Hora Mapa ate',  'mv_chi','C',5,0,0,'G','','MV_PAR18','','','','','','','','','','','','','','','','','','','','','','','','','','','','','99:99',''} )
+  
 
     dbSelectArea( "SX1" )
     SX1->( dbSetOrder( 1 ) )
@@ -567,6 +583,9 @@ Static Function MenuDef()
     aAdd( _aRotina, { 'Parametros(F12)'		, 'msAguarde( { || U_XAG0124P() }, "Parametros, Aguarde...") ' , 0, 2, 0, NIL } )
     aAdd( _aRotina, { 'Log Separacao  '		, 'msAguarde( { || U_XAG0124L() }, "Log de separação Aguarde...") ' , 0, 2, 0, NIL } )
     aAdd( _aRotina, { 'Imprimir Mapa  '		, 'msAguarde( { || U_XAG0123(  , .F. ,  ,  MV_PAR07 ,  MV_PAR08 , "" ,.T.),U_XAG0124D()  }, "Imprimindo Mapa de Separacao...") ' , 0, 2, 0, NIL } )
+    aAdd( _aRotina, { 'Data/hora Mapa Auto'	, 'msAguarde( { || U_XAG0124I("D") }, "Abrindo Configuração...") ' , 0, 2, 0, NIL } )
+    aAdd( _aRotina, { 'Alterar Imp.Padrao'	, 'msAguarde( { || U_XAG0124I("A") }, "Abrindo Configuração...") ' , 0, 2, 0, NIL } )
+   
    
                                                     //                  (xPedidos,xAuto,xDatabase,xLocalde,xlocalate,xPrinter,Lbrw)
 
@@ -613,7 +632,7 @@ Return oModel
 User Function XAG0124L(lBrw)
 
    	Local oBrowse
-    Local cPedPosic := ""
+    //Local cPedPosic := ""
 	Private oProcess  := NIL
 	Private cCadastro := "LOG de Separacao"
 	PRIVATE aRotina:= {{"Pesquisar","AxPesqui",0,1},;
@@ -627,9 +646,12 @@ User Function XAG0124L(lBrw)
    
     If MSGYESNO( 'Exibir Log apenas do pedido posicionado? ', 'Posicionado' )
         If alltrim(XAG0124->C9_XSREDI) <> ''
-            oBrowse:SetFilterDefault("ZC9_FILIAL+ZC9_NUM+ZC9_SEQ $ '"+XAG0124->C9_FILIAL+ XAG0124->C9_PEDIDO+XAG0124->C9_XSREDI+"'")// .AND. DTOS(ZDB_DATA) >= DDATABASE ")
+           // oBrowse:SetFilterDefault("ZC9_FILIAL+ZC9_NUM+ZC9_SEQ $ '"+XAG0124->C9_FILIAL+ XAG0124->C9_PEDIDO+XAG0124->C9_XSREDI+"'")// .AND. DTOS(ZDB_DATA) >= DDATABASE ")
+           oBrowse:SetFilterDefault("ZC9_FILIAL == '"+XAG0124->C9_FILIAL+"' .AND. ZC9_NUM == '"+XAG0124->C9_PEDIDO+"' .AND. ZC9_SEQ == '"+XAG0124->C9_XSREDI+"' ")// .AND. DTOS(ZDB_DATA) >= DDATABASE ")
+            
         Else
-            oBrowse:SetFilterDefault("ZC9_FILIAL+ZC9_NUM $ '"+XAG0124->C9_FILIAL+ XAG0124->C9_PEDIDO+"'")
+            //oBrowse:SetFilterDefault("ZC9_FILIAL+ZC9_NUM $ '"+XAG0124->C9_FILIAL+ XAG0124->C9_PEDIDO+"'")
+            oBrowse:SetFilterDefault("ZC9_FILIAL == '"+XAG0124->C9_FILIAL+"' .AND. ZC9_NUM == '"+ XAG0124->C9_PEDIDO+"' ")
         Endif 
     Endif
     
@@ -709,3 +731,130 @@ User Function XAG0124B()
     ACTIVATE MSDIALOG oDlgMain CENTERED
 
 Return
+
+//Validações no cadastro do operador
+User Function XAG0124O(xCampo)
+    
+    Default xCampo := 'CB1_XMATRI'
+    Local cProxCod := "000001"
+
+    //Não deixa inserir uma matricula já cadastrada
+    If alltrim(xCampo) == 'CB1_XMATRI'
+
+        //Busca quantas Sequencias tem de pedidos disponiveis
+        _cQuery := " SELECT * "
+        _cQuery += "  FROM "+RetSqlName('CB1')+" (NOLOCK)"
+        _cQuery += "  WHERE CB1_FILIAL = '"+xFilial('CB1')+"' AND CB1_CODOPE <> '"+alltrim(M->CB1_CODOPE)+"'"
+        _cQuery += "  AND CB1_XMATRI = '"+alltrim(M->CB1_XMATRI)+ "' AND D_E_L_E_T_ = '' "
+        
+
+        If (Select("XAG0124O") <> 0)
+            dbSelectArea("XAG0124O")
+            dbCloseArea()
+        Endif
+
+        TCQuery _cQuery NEW ALIAS "XAG0124O"
+
+        If  XAG0124O->(!Eof())
+            MsgAlert( "Ja existe operador cadastrado com essa matricula: "+alltrim(XAG0124O->CB1_CODOPE)+" - "+alltrim(XAG0124O->CB1_NOME))
+            If (Select("XAG0124O") <> 0)
+                dbSelectArea("XAG0124O")
+                dbCloseArea()
+            Endif
+            Return .F.
+        Else
+            Return .T.
+        Endif 
+
+        If (Select("XAG0124O") <> 0)
+            dbSelectArea("XAG0124O")
+            dbCloseArea()
+        Endif
+
+    Elseif alltrim(xCampo) == 'CB1_CODOPE'
+
+         //Busca quantas Sequencias tem de pedidos disponiveis
+        _cQuery := " SELECT MAX(CB1_CODOPE) AS ULTCOD "
+        _cQuery += "  FROM "+RetSqlName('CB1')+" (NOLOCK) "
+        _cQuery += "  WHERE CB1_FILIAL = '"+xFilial('CB1')+"' AND D_E_L_E_T_ = '' "
+        
+
+        If (Select("XAG0124O") <> 0)
+            dbSelectArea("XAG0124O")
+            dbCloseArea()
+        Endif
+
+        TCQuery _cQuery NEW ALIAS "XAG0124O"
+
+        If  XAG0124O->(!Eof())
+            //MsgAlert( "Ja existe operador cadastrado com essa matricula: "+alltrim(XAG0124O->CB1_CODOPE)+" - "+alltrim(XAG0124O->CB1_NOME))
+            cProxCod := Soma1(XAG0124O->ULTCOD)
+            If (Select("XAG0124O") <> 0)
+                dbSelectArea("XAG0124O")
+                dbCloseArea()
+            Endif
+        Endif 
+
+        Return cProxCod
+
+    Endif 
+
+    If (Select("XAG0124O") <> 0)
+        dbSelectArea("XAG0124O")
+        dbCloseArea()
+    Endif
+
+Return
+
+//Alteração de impressora padrao de mapa agendado
+User Function XAG0124I(xOpcImp)
+
+    Default xOpcImp := 'A'
+
+    Local oDlgImp
+    Local oButIconf
+    //Local oButICanc
+    Local oGetImp
+    Local cGetImp := space(100)
+    Local oSayImp
+    Local lConfirm := .F.
+    Local cImpOld := ""
+    
+    If xOpcImp == 'A'
+        cImpOld := alltrim(GetMV( "MV_XPRMAPA" ))
+        cGetImp :=  cImpOld + space(60 - len(cImpOld))
+
+        DEFINE MSDIALOG oDlgImp TITLE "Alterar impressora padrão Mapa " FROM 000, 000  TO 150, 400 COLORS 0, 16777215 PIXEL
+
+            @ 016, 087 MSGET oGetImp VAR cGetImp SIZE 100, 010 OF oDlgImp COLORS 0, 16777215 PIXEL
+            @ 018, 023 SAY oSayImp PROMPT "Caminho Impressora:" SIZE 060, 007 OF oDlgImp COLORS 0, 16777215 PIXEL
+            @ 051, 148 BUTTON oButIconf PROMPT "Confirmar" ACTION(lConfirm := .T.,oDlgImp:END()) SIZE 037, 012 OF oDlgImp PIXEL
+            //DEFINE SBUTTON FROM 051, 148 TYPE 1 ACTION ACTION(lConfirm := .T.,oDlgImp:END()) ENABLE OF oDlgImp
+            @ 051, 098 BUTTON oButICanc PROMPT "Cancelar"  ACTION(lConfirm := .F.,oDlgImp:END()) SIZE 037, 012 OF oDlgImp PIXEL
+            //DEFINE SBUTTON FROM 051, 098  TYPE 2 ACTION (lConfirm := .F.,oDlgImp:End()) ENABLE OF oDlgImp
+
+        ACTIVATE MSDIALOG oDlgImp
+
+        If lConfirm
+            If alltrim(cImpOld) <> alltrim(cGetImp)
+                If MsgYesNo('Deseja realmente alterar a impressora de mapa Automatico de '+cImpOld+ 'para '+cGetImp+'? ', 'Atenção')
+                    Conout('XAG0124 - Impressora padrao alterada de ' +cImpOld+ ' para '+cGetImp+' pelo usuario '+__cUserID )
+                    SETMV("MV_XPRMAPA",alltrim(cGetImp) )
+                Endif 
+            Endif 
+        Endif 
+    Else
+
+        cGetImp :=   alltrim(GetMV( "MV_XULTMAP"))
+        cGetImp :=   dtoc(stod(substr(cGetImp, 1,8)))+ ' - '+substr(cGetImp, 9,9)
+
+        DEFINE MSDIALOG oDlgImp TITLE "Ultima Execução do Mapa Automatico" FROM 000, 000  TO 150, 400 COLORS 0, 16777215 PIXEL
+
+            @ 016, 087 MSGET oGetImp VAR cGetImp WHEN .F. SIZE 100, 010 OF oDlgImp COLORS 0, 16777215 PIXEL
+            @ 018, 023 SAY oSayImp PROMPT "Data - Horario:" SIZE 060, 007 OF oDlgImp COLORS 0, 16777215 PIXEL
+            @ 051, 148 BUTTON oButIconf PROMPT "Fechar" ACTION(oDlgImp:END()) SIZE 037, 012 OF oDlgImp PIXEL
+    
+        ACTIVATE MSDIALOG oDlgImp
+
+    Endif 
+  Return
