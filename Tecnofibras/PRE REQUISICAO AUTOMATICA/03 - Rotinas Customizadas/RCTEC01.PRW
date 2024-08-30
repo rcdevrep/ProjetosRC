@@ -20,6 +20,6 @@ USER FUNCTION RCTEC01()
         aRecSCP    := {}
 
         //FUNCAO PADRAO PARA GERAR AS PRE REQUISICOES
-        MaSAPreReq(.F.,.T.,,.F.,.F.,.T.,'01','01',.F.,.F.,'1',.T.,.F.,@aRecSCP,.F.)
+        A106PreReq(.F.,.T.,,.F.,.F.,.T.,'01','01',.F.,.F.,'1',.T.,.F.,@aRecSCP,.F.)
 
 RETURN
