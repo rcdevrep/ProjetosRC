@@ -1,5 +1,5 @@
 #INCLUDE "TOTVS.CH"
-User Function XAG156()
+User Function XAG0156()
 
 	Local oComprovante := FINComprovantes():New()
 	Local cContaDebito := " "
@@ -39,7 +39,7 @@ User Function XAG156()
 	Endif
 
 	IF(cModelo != "MANUAL")
-		IF(EMPTY(SE2->E2_CODBAR) .AND. )
+		IF(EMPTY(SE2->E2_CODBAR))
 			cModelo := "TED"
 		ELSE
 			cModelo := "BOLETO"

@@ -91,7 +91,7 @@ Method New() Class BRDPix
 	Self:oPagador := _oPagador
 	Self:oRecebedor := _oRecebedor
 
-    Self:cUrl := "https://qrpix-h.bradesco.com.br"
+    Self:cUrl := "https://qrpix.bradesco.com.br"
     
 
 
@@ -103,12 +103,13 @@ Method Reset() Class BRDPix
 	Local _oPagador := BRDPagador() :New()
 	Local _oRecebedor := BRDRecebedor():New()
 
-    Self:cClientKey := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
-    Self:cClientSecret := "29fbf612-aa65-4c29-987c-9ba0c76afd89"
+    Self:cClientKey := SuperGetMv("AG_PIXKEY", ,"8e035687-9f2b-4b8a-871b-6f71b8670423")
+    Self:cClientSecret := SuperGetMv("AG_PIXSEC", ,"65fa8a4f-2b70-43bb-a5ac-1d42457e58da")
 	Self:oPagador := _oPagador
 	Self:oRecebedor := _oRecebedor
 
-    Self:cUrl := "https://qrpix-h.bradesco.com.br"
+    Self:cUrl := "https://qrpix.bradesco.com.br"
+    //URL HOMOLOG Self:cUrl := "https://qrpix-h.bradesco.com.br"
     Self:cMetodo := ""
 
     /*
@@ -127,10 +128,10 @@ Method New() Class BRDPagador
 
 	//SAMPLE TESTE
 
-	Self:cTipoChave := "E" //EVP
-	Self:cChavePix := "b3bdd4e4-7cdc-41c1-bd70-7842d987d79f"
-	Self:cAgencia := "532"
-	Self:cConta := "42281"
+	Self:cTipoChave := "C" //EVP
+	Self:cChavePix := "81632093000411"
+	Self:cAgencia := "2693"
+	Self:cConta := "52922"
 
 Return lRet
 
@@ -207,17 +208,15 @@ Method SolicitarTransferencia() Class BRDPix
     jPagador["tipoChave"] := Self:oPagador:cTipoChave
     jPagador["chavePix"] := Self:oPagador:cChavePix
 
-    jRecebedor["cnpjcnpj"] := Self:oRecebedor:cCpfCnpj
+    jRecebedor["cpfcnpj"] := Self:oRecebedor:cCpfCnpj
     jRecebedor["tipoChave"] := Self:oRecebedor:cTipoChave
     jRecebedor["chavePix"] := Self:oRecebedor:cChavePix
     jRecebedor["nomeFavorecido"] := Self:oRecebedor:cFavorecido
 
-    Self:nValor := 10
-
     jJsonPost["pagador"] := jPagador:ToJson()
     jJsonPost["recebedor"] := jRecebedor:ToJson()
     jJsonPost["idtransacao"] := Self:cIdTransacao
-    jJsonPost["valor"] := Self:nValor
+    jJsonPost["valor"] := cvaltochar(Self:nValor)
     jJsonPost["descricao"] := Self:cDescricao
 
 
@@ -230,10 +229,22 @@ Method SolicitarTransferencia() Class BRDPix
         Aadd(aHeadStr, "Content-Type: application/json") 
 
         //HTTPSPost(cUrl, /*cGetParms*/, jJsonPost:ToJson(), /*nTimeOut*/, aHeadStr, @cHeaderRet)
-        cJson := '{"pagador": { "tipoChave": "EVP","chavePix": "b3bdd4e4-7cdc-41c1-bd70-7842d987d79f" },"recebedor": {"cpfCnpj": "09999902291969","tipoChave": "CPFCNPJ","chavePix": "09999902291969","nomeFavorecido": "FULANO DA SILVA JUNIOR"},"valor": "1.00","idtransacao": "TestesTiagoAPI35","descricao": "Pagamento teste"}'
-        aRetPost := U_RCRestSSL(cUrl, , cJson, aHeadStr )
-        nCodResp:= aRetPost[2]
-        jJsonBol := aRetPost[4]
+        //cJson := '{"pagador": { "tipoChave": "EVP","chavePix": "b3bdd4e4-7cdc-41c1-bd70-7842d987d79f" },"recebedor": {"cpfCnpj": "09999902291969","tipoChave": "CPFCNPJ","chavePix": "09999902291969","nomeFavorecido": "FULANO DA SILVA JUNIOR"},"valor": "1.00","idtransacao": "TestesTiagoAPI35","descricao": "Pagamento teste"}'
+        cJson := '{'
+        cJson += '"pagador": {'
+        cJson += '"tipoChave": "'+jPagador["tipoChave"]+'",'
+        cJson += '"chavePix": "'+jPagador["chavePix"]+'"'
+        cJson += '},'
+        cJson += '"recebedor": {'
+        cJson += '"cpfCnpj": "'+jRecebedor["cpfcnpj"]+'",'
+        cJson += '"tipoChave": "'+jRecebedor["tipoChave"]+'",'
+        cJson += '"chavePix": "'+jRecebedor["chavePix"]+'",'
+        cJson += '"nomeFavorecido": "'+jRecebedor["nomeFavorecido"]+'"'
+        cJson += '},'
+        cJson += '"valor": "'+str(jJsonPost["valor"])+'",'
+        cJson += '"idtransacao": "'+jJsonPost["idtransacao"]+'",'
+        cJson += '"descricao": "'+jJsonPost["descricao"]+'"'
+        cJson += '}'
         
 
         If nCodResp <> 200
@@ -356,7 +367,7 @@ Method New() Class BRDIntegracao
 Return
 
 Method Token() Class BRDIntegracao
-    Local cURL := "https://qrpix-h.bradesco.com.br" //GetNewPar("AC_BRDURLA","https://proxy.api.prebanco.com.br")
+    Local cURL := "https://qrpix.bradesco.com.br" //GetNewPar("AC_BRDURLA","https://proxy.api.prebanco.com.br")
     Local aHeader := {}
     Local cPath := "/oauth/token"
     Local cJson := NIL    

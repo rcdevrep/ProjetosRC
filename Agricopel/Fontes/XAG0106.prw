@@ -763,7 +763,7 @@ static function Confirmar
 Local cBcosAPI := ""
 Local bAprovou := .F.
 
-oProcess := MsNewProcess():New({|| fExemplo2(oProcess)}, "Processando...", "Aguarde...", .T.)
+oProcess := MsNewProcess():New({|| ConfTransacao(oProcess)}, "Processando...", "Aguarde...", .T.)
 oProcess:Activate()
   
 IF(bAprovou)
@@ -772,7 +772,7 @@ Endif
 
 Return
 
-Static Function fExemplo2(oObj)
+Static Function ConfTransacao(oObj)
     Local aArea  := GetArea()
     Local nAtual := 0
     Local nTotal := 0
@@ -1007,6 +1007,7 @@ Local nQtd := 0
 Local cTitulo:= ""
 Local lAuto := isBlind()
 Local cCodigo := ""
+Local oPix := BRDPix():New()
 
 	
 		If SE2->(dbSeek(xFilial("SE2")+TRB->(PREFIXO+NUMERO+PARCELA+TIPO+FORNECE+LOJA)))
@@ -1182,52 +1183,66 @@ Local cCodigo := ""
 					//Transferencias
 					If TRB->MODELO $ "01/03/41/43"
 						lTransferencia:= .T.
-						oObj:IncRegua2("Efetuando TED")   
+
+						IF(!EMPTY(SA2->A2_PIXTP) .AND. !EMPTY(SA2->A2_PIXCHAV)) // se o fornecedor possui PIX
+
+							oPix:oRecebedor:cCpfCnpj := SA2->A2_CGC
+							oPix:oRecebedor:cTipoChave := SA2->A2_PIXTP
+							oPix:oRecebedor:cChavePix := SA2->A2_PIXCHAV
+							oPix:oRecebedor:cFavorecido	:= SA2->A2_NOME
+
+							oPix:cIdTransacao := Alltrim(SE2->E2_IDCNAB)
+							oPix:nValor := SE2->E2_VALOR
+							oPix:cDescricao := "PAGAMENTO FORNECEDOR AGRICOPEL"																		
+
+							oPix:SolicitarTransferencia()
 
 
-						cTitulo:='{'
-						cTitulo+='"identificadorDoTipoDeTransferencia":1,' //diferente titularidade
-						cTitulo+='"agenciaRemetente":'+cvaltochar(val(SEE->EE_AGENCIA))+','
-						cTitulo+='"bancoDestinatario":'+cvaltochar(val(SA2->A2_BANCO))+','
-						cTitulo+='"agenciaDestinatario":'+cvaltochar(val(SA2->A2_AGENCIA))+','
-						cTitulo+='"contaRemetenteComDigito":'+cvaltochar(val(SEE->EE_CONTA))+cvaltochar(val(SEE->EE_DVCTA))+','
-						cTitulo+='"tipoContaRemetente":"CC",' //CC=Conta corrente - PP=Poupança
-						cTitulo+='"tipoDePessoaRemetente":"J",'
-						If !Empty(SA2->A2_DVCTA)
-							cDigCta:= Alltrim(SA2->A2_DVCTA)
-							cConta:= cvaltochar(val(SA2->A2_NUMCON))
-						Else
-							nPosDig:= At("-",SA2->A2_NUMCON)
-							If nPosDig > 0
-								cDigCta:= Alltrim(Substr(SA2->A2_NUMCON,nPosDig))
-								cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,nPosDig-1)))
+						ELSE // SE FOR TED entra por aqui.
+							oObj:IncRegua2("Efetuando TED")   
+							cTitulo:='{'
+							cTitulo+='"identificadorDoTipoDeTransferencia":1,' //diferente titularidade
+							cTitulo+='"agenciaRemetente":'+cvaltochar(val(SEE->EE_AGENCIA))+','
+							cTitulo+='"bancoDestinatario":'+cvaltochar(val(SA2->A2_BANCO))+','
+							cTitulo+='"agenciaDestinatario":'+cvaltochar(val(SA2->A2_AGENCIA))+','
+							cTitulo+='"contaRemetenteComDigito":'+cvaltochar(val(SEE->EE_CONTA))+cvaltochar(val(SEE->EE_DVCTA))+','
+							cTitulo+='"tipoContaRemetente":"CC",' //CC=Conta corrente - PP=Poupança
+							cTitulo+='"tipoDePessoaRemetente":"J",'
+							If !Empty(SA2->A2_DVCTA)
+								cDigCta:= Alltrim(SA2->A2_DVCTA)
+								cConta:= cvaltochar(val(SA2->A2_NUMCON))
 							Else
-								cDigCta:= Right(Alltrim(SA2->A2_NUMCON),1)
-								cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,Len(Alltrim(SA2->A2_NUMCON))-1)))
+								nPosDig:= At("-",SA2->A2_NUMCON)
+								If nPosDig > 0
+									cDigCta:= Alltrim(Substr(SA2->A2_NUMCON,nPosDig))
+									cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,nPosDig-1)))
+								Else
+									cDigCta:= Right(Alltrim(SA2->A2_NUMCON),1)
+									cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,Len(Alltrim(SA2->A2_NUMCON))-1)))
+								Endif
 							Endif
-						Endif
-						cTitulo+='"contaDestinatario":'+cConta+cDigCta+','
-						cTitulo+='"tipoDeContaDestinatario":"CC",
-						cTitulo+='"tipodePessoaDestinatario":"'+Iif(Len(Alltrim(SA2->A2_CGC)) == 14,'J','F')+'",'
-						cTitulo+='"numeroInscricao":"'+Iif(Len(Alltrim(SA2->A2_CGC))==14,Left(SA2->A2_CGC,8),Left(SA2->A2_CGC,9))+'",'
-						cTitulo+='"numeroFilial":"'+Substr(Alltrim(SA2->A2_CGC),9,4)+'",
-						cTitulo+='"numeroControle":"'+Right(Alltrim(SA2->A2_CGC),2)+'",'
-						cTitulo+='"nomeClienteDestinatario":"'+U_RemCarEsp(Alltrim(SA2->A2_NOME))+'",'
-						cTitulo+='"valorDaTransferencia":'+cvaltochar(SE2->E2_VALOR)+','
-						cTitulo+='"finalidadeDaTransferencia":'+cvaltochar(val(TRB->MODELO))+','
-						cTitulo+='"codigoIdentificadorDaTransferencia":"'+Alltrim(SE2->E2_IDCNAB)+'",'
-						cTitulo+='"dataMovimento":"'+StrTran(Left(FWTIMESTAMP(2,dDataBase),10),"/",".")+'",'
-						cTitulo+='"tipoDeDoc":"",' //D=mesma titularidade E=diferente titularidade
-						cTitulo+='"tipoDeDocumentoDeBarras":"",'
-						cTitulo+='"numeroCodigoDeBarras":"",'
-						cTitulo+='"canalPagamento":0,'
-						cTitulo+='"valorMulta":0,'
-						cTitulo+='"valorJuro":0,'
-						cTitulo+='"valorDescontoOuAbatimento":0,'
-						cTitulo+='"valorOutrosAcrescimos":0,'
-						cTitulo+='"indicadorDda":"N"'
-						cTitulo+='}'
-
+							cTitulo+='"contaDestinatario":'+cConta+cDigCta+','
+							cTitulo+='"tipoDeContaDestinatario":"CC",
+							cTitulo+='"tipodePessoaDestinatario":"'+Iif(Len(Alltrim(SA2->A2_CGC)) == 14,'J','F')+'",'
+							cTitulo+='"numeroInscricao":"'+Iif(Len(Alltrim(SA2->A2_CGC))==14,Left(SA2->A2_CGC,8),Left(SA2->A2_CGC,9))+'",'
+							cTitulo+='"numeroFilial":"'+Substr(Alltrim(SA2->A2_CGC),9,4)+'",
+							cTitulo+='"numeroControle":"'+Right(Alltrim(SA2->A2_CGC),2)+'",'
+							cTitulo+='"nomeClienteDestinatario":"'+U_RemCarEsp(Alltrim(SA2->A2_NOME))+'",'
+							cTitulo+='"valorDaTransferencia":'+cvaltochar(SE2->E2_VALOR)+','
+							cTitulo+='"finalidadeDaTransferencia":'+cvaltochar(val(TRB->MODELO))+','
+							cTitulo+='"codigoIdentificadorDaTransferencia":"'+Alltrim(SE2->E2_IDCNAB)+'",'
+							cTitulo+='"dataMovimento":"'+StrTran(Left(FWTIMESTAMP(2,dDataBase),10),"/",".")+'",'
+							cTitulo+='"tipoDeDoc":"",' //D=mesma titularidade E=diferente titularidade
+							cTitulo+='"tipoDeDocumentoDeBarras":"",'
+							cTitulo+='"numeroCodigoDeBarras":"",'
+							cTitulo+='"canalPagamento":0,'
+							cTitulo+='"valorMulta":0,'
+							cTitulo+='"valorJuro":0,'
+							cTitulo+='"valorDescontoOuAbatimento":0,'
+							cTitulo+='"valorOutrosAcrescimos":0,'
+							cTitulo+='"indicadorDda":"N"'
+							cTitulo+='}'
+						ENDIF
 						//Boletos
 					Elseif TRB->MODELO $ "30/31"
 						If !Empty(SE2->E2_CODBAR)
