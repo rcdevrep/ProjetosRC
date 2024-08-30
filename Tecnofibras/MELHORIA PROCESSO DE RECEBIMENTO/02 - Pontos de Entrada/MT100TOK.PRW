@@ -280,17 +280,19 @@ User Function MT100TOK()
 						RETURN .F.
 					ENDIF
 				ENDIF
-			ELSEIF SF1->F1_XSTATUS = 'Z'
+			ENDIF
+			//ELSEIF SF1->F1_XSTATUS = 'Z'
 				IF l103Class
 					RETURN .T.
-				ELSE
-					FWAlertError("Nota Já Enviada para Recebimento", "RCTEC05")
-					RETURN .F.
 				ENDIF
-			ENDIF
+				//ELSE
+				//	FWAlertError("Nota Já Enviada para Recebimento", "RCTEC05")
+				//	RETURN .F.
+				//ENDIF
+			//ENDIF
 
 		ENDIF
-		Return lRet
+Return lRet
 
 /*/{Protheus.doc} lCkNumNF
 	(long_description)
