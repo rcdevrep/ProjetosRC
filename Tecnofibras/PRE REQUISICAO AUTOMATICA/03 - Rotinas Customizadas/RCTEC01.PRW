@@ -13,13 +13,14 @@
 // PROJETO - PRE REQUISICAO AUTOMATICA
 // DATA - 26/08/2024
 
-USER FUNCTION RCTEC01()
+USER FUNCTION RCTEC01(aParam)
 
-    local aRecSCP
-
-        aRecSCP    := {}
+    DEFAULT aParam := {'01','01'}
+ 
+    PREPARE ENVIRONMENT EMPRESA aParam[1] FILIAL aParam[2]
 
         //FUNCAO PADRAO PARA GERAR AS PRE REQUISICOES
-        A106PreReq(.F.,.T.,,.F.,.F.,.T.,'01','01',.F.,.F.,'1',.T.,.F.,@aRecSCP,.F.)
+        A106PreReq(.F.,.T.,,.F.,.F.,.T.,'01','01',.F.,.F.,'1',.T.,.F.)
 
 RETURN
+
