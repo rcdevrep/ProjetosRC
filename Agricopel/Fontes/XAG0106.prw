@@ -1181,24 +1181,56 @@ Local oPix := BRDPix():New()
 					SEE->(msUnlock())
 
 					//Transferencias
-					If TRB->MODELO $ "01/03/41/43"
+					If TRB->MODELO $ "01/03/41/43/48"
 						lTransferencia:= .T.
 
-						IF(!EMPTY(SA2->A2_PIXTP) .AND. !EMPTY(SA2->A2_PIXCHAV)) // se o fornecedor possui PIX
-
+						IF(!EMPTY(SA2->A2_PIXTP) .AND. !EMPTY(SA2->A2_PIXCHAV)) .AND. TRB->MODELO == "48"// se o fornecedor possui PIX
+							oObj:IncRegua2("Efetuando pagamento com PIX")
 							oPix:oRecebedor:cCpfCnpj := SA2->A2_CGC
 							oPix:oRecebedor:cTipoChave := SA2->A2_PIXTP
-							oPix:oRecebedor:cChavePix := SA2->A2_PIXCHAV
+							oPix:oRecebedor:cChavePix := ALLTRIM(SA2->A2_PIXCHAV)
 							oPix:oRecebedor:cFavorecido	:= SA2->A2_NOME
 
 							oPix:cIdTransacao := Alltrim(SE2->E2_IDCNAB)
 							oPix:nValor := SE2->E2_VALOR
-							oPix:cDescricao := "PAGAMENTO FORNECEDOR AGRICOPEL"																		
+							oPix:cDescricao := "PAGAMENTO FORNECEDOR"																		
 
-							oPix:SolicitarTransferencia()
+							IF(oPix:SolicitarTransferencia())
+								lRec:= .T.
+								//Cria o registro na ZLA
+								If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
+									lRec:= .F.
+									cCodigo:= ZLA->ZLA_CODIGO
+								Endif    
+								Reclock("ZLA",lRec)
+									ZLA_FILIAL:= xFilial("ZLA")
+									ZLA_PREFIX:= SE2->E2_PREFIXO
+									ZLA_NUM:= SE2->E2_NUM
+									ZLA_PARCEL:= SE2->E2_PARCELA
+									ZLA_TIPO:= SE2->E2_TIPO
+									ZLA_CLIFOR:= SE2->E2_FORNECE
+									ZLA_LOJA:= SE2->E2_LOJA
+									ZLA_VENCTO:= SE2->E2_VENCTO
+									ZLA_VALOR:= SE2->E2_VALOR
+									ZLA_NUMBOR:= SE2->E2_NUMBOR
+									ZLA_BANCO:= SEE->EE_CODIGO
+									ZLA_AGENCI:= SEE->EE_AGENCIA
+									ZLA_CONTA:= SEE->EE_CONTA
+									ZLA_RECPAG:= 'P'
+									ZLA_STATUS:= Iif(lRegistrou,'2','0')
+									ZLA_DATA:= dDataBase
+									ZLA_DTOPER := Date()
+									ZLA_USER:= __cUserId
+									ZLA_CODIGO:= cCodigo
+									ZLA_IDCNAB:= SE2->E2_IDCNAB
+									ZLA_PIXE2E := ""
+									ZLA->ZLA_FILORI:= SE2->E2_FILORIG
+								MsUnlock()
+
+							ENDIF
 
 
-						ELSE // SE FOR TED entra por aqui.
+						ELSEIF TRB->MODELO != "48"
 							oObj:IncRegua2("Efetuando TED")   
 							cTitulo:='{'
 							cTitulo+='"identificadorDoTipoDeTransferencia":1,' //diferente titularidade

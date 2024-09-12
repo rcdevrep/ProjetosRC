@@ -188,11 +188,11 @@ Method SolicitarTransferencia() Class BRDPix
     Local jRecebedor := JSONObject() :New()
     Local jJsonPost := JSONObject() :New()
     Local oIntegrador := BRDIntegracao():New()
+    Local aHeader := {}
     Local cURL:= ""    
     Local cToken:= ""
     Local cHeaderRet:= ""
     Local cErro:= ""
-    Local aHeadStr      := {} 
     Local nCodResp:= 0
     Public nNossoNum   := 0
     Public oObjLog     := nil
@@ -225,27 +225,35 @@ Method SolicitarTransferencia() Class BRDPix
   
         cToken:= oIntegrador:cToken
         //Autorização no header
-        Aadd(aHeadStr, "Authorization: Bearer "+cToken )
-        Aadd(aHeadStr, "Content-Type: application/json") 
+        AAdd(aHeader, 'User-Agent: Mozilla/4.0 (compatible; Protheus ' + GetBuild() + ')' )
+        aadd(aHeader, "Content-Type: application/x-www-form-urlencoded")
+        Aadd(aHeader, "Authorization: "+cToken)
 
         //HTTPSPost(cUrl, /*cGetParms*/, jJsonPost:ToJson(), /*nTimeOut*/, aHeadStr, @cHeaderRet)
         //cJson := '{"pagador": { "tipoChave": "EVP","chavePix": "b3bdd4e4-7cdc-41c1-bd70-7842d987d79f" },"recebedor": {"cpfCnpj": "09999902291969","tipoChave": "CPFCNPJ","chavePix": "09999902291969","nomeFavorecido": "FULANO DA SILVA JUNIOR"},"valor": "1.00","idtransacao": "TestesTiagoAPI35","descricao": "Pagamento teste"}'
         cJson := '{'
         cJson += '"pagador": {'
-        cJson += '"tipoChave": "'+jPagador["tipoChave"]+'",'
-        cJson += '"chavePix": "'+jPagador["chavePix"]+'"'
+         IF(ALLTRIM(jPagador["tipoChave"]) == "C")
+            cJson += '"tipoChave": "CPFCNPJ",'
+        ENDIF        
+        cJson += '"chavePix": "'+ALLTRIM(jPagador["chavePix"])+'"'
         cJson += '},'
         cJson += '"recebedor": {'
-        cJson += '"cpfCnpj": "'+jRecebedor["cpfcnpj"]+'",'
-        cJson += '"tipoChave": "'+jRecebedor["tipoChave"]+'",'
-        cJson += '"chavePix": "'+jRecebedor["chavePix"]+'",'
-        cJson += '"nomeFavorecido": "'+jRecebedor["nomeFavorecido"]+'"'
-        cJson += '},'
-        cJson += '"valor": "'+str(jJsonPost["valor"])+'",'
-        cJson += '"idtransacao": "'+jJsonPost["idtransacao"]+'",'
-        cJson += '"descricao": "'+jJsonPost["descricao"]+'"'
-        cJson += '}'
+        cJson += '"cpfCnpj": "'+ALLTRIM(jRecebedor["cpfcnpj"])+'",'
+        IF(ALLTRIM(jRecebedor["tipoChave"]) == "C")
+            cJson += '"tipoChave": "CPFCNPJ",'
+        ENDIF        
         
+        cJson += '"chavePix": "'+ALLTRIM(jRecebedor["chavePix"])+'",'
+        cJson += '"nomeFavorecido": "'+ALLTRIM(jRecebedor["nomeFavorecido"])+'"'
+        cJson += '},'
+        cJson += '"valor": "'+ALLTRIM(jJsonPost["valor"])+'.00",'
+        cJson += '"idtransacao": "'+ALLTRIM(jJsonPost["idtransacao"])+'",'
+        cJson += '"descricao": "'+ALLTRIM(jJsonPost["descricao"])+'"'
+        cJson += '}'
+        cParam := ""
+
+        aRet := U_RCRestSSL(cURL, , cJson, aHeader )        
 
         If nCodResp <> 200
             If nCodResp = 401
@@ -354,9 +362,9 @@ Dados do Recebedor:
 
 Method New() Class BRDIntegracao
 
-    Self:cClientKey := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
-    Self:cClientSecret := "29fbf612-aa65-4c29-987c-9ba0c76afd89"
-    Self:cAuthorization := "Basic MDM1NmRlYzQtN2NkZS00ZDkxLWI2ZTEtNzdmMzQzMzY2NWUxOjI5ZmJmNjEyLWFhNjUtNGMyOS05ODdjLTliYTBjNzZhZmQ4OQ=="
+    Self:cClientKey := "8e035687-9f2b-4b8a-871b-6f71b8670423"
+    Self:cClientSecret := "65fa8a4f-2b70-43bb-a5ac-1d42457e58da"
+    Self:cAuthorization := "Basic OGUwMzU2ODctOWYyYi00YjhhLTg3MWItNmY3MWI4NjcwNDIzOjY1ZmE4YTRmLTJiNzAtNDNiYi1hNWFjLTFkNDI0NTdlNThkYQ=="
     Self:cErro := ""
     Self:cToken := ""
     Self:cJti := ""
