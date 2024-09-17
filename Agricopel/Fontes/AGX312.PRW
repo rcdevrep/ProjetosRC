@@ -102,18 +102,18 @@ Static Function GeraArq()
 	EndIf
 
 	cQuery := ""
-	cQuery += "SELECT D2_PRCVEN AS VLRUNIT,  D2_FILIAL,D2_DOC, D2_SERIE,D2_EMISSAO,D2_CLIENTE,D2_CF,D2_TIPO,D2_LOJA,B1_CODSIMP,D2_TP,SUM(D2_QUANT * B1_VOLSIMP)  AS QUANT "
-	cQuery += "FROM "+RetSqlName("SD2") + " (NOLOCK)," + RetSqlName("SB1") + " (NOLOCK) "
+	cQuery += "SELECT D2_PRCVEN AS VLRUNIT,  D2_FILIAL,D2_DOC, D2_SERIE,D2_EMISSAO,D2_CLIENTE,D2_CF,D2_TIPO,D2_LOJA,B1_CODSIMP,D2_TP,SUM(D2_QUANT * B1_VOLSIMP)  AS QUANT, "
+	cQuery += "F2_CHVNFE ,F2_TPFRETE AS MODFRT "
+	cQuery += "FROM "+RetSqlName("SD2") + " (NOLOCK)  "
+	cQuery += "INNER JOIN " + RetSqlName("SB1") + " (NOLOCK) ON SB1010.B1_FILIAL = D2_FILIAL  AND SB1010.B1_COD = D2_COD   AND SB1010.D_E_L_E_T_ = ''  "
+	cQuery += "INNER JOIN "+RetSqlName("SF2") + " (NOLOCK) ON F2_DOC = D2_DOC AND F2_SERIE = D2_SERIE AND F2_CLIENTE = D2_CLIENTE AND F2_LOJA = D2_LOJA AND SF2010.D_E_L_E_T_ <> '*' "
 	cQuery += "WHERE D2_FILIAL = '"+xFilial("SD2")+"' "
 	cQuery += "AND " + RetSqlName("SD2") + ".D_E_L_E_T_ = '' AND D2_TIPO = 'N' "
 	cQuery += "AND D2_EMISSAO >= '"+dtos(mv_par01)+"' AND D2_EMISSAO <= '"+dtos(mv_par02)+"' "
-	cQuery += "AND (D2_TP = 'CO' OR D2_TP = 'GV' OR D2_TP = 'LU'  OR D2_TP = 'QR' OR D2_TP = 'IA'  OR D2_TP = 'SH') "
-	cQuery += "AND " + RetSqlName("SB1") + ".B1_FILIAL = D2_FILIAL "
-	cQuery += "AND " + RetSqlName("SB1") + ".B1_COD = D2_COD  "
-	cQuery += "AND " + RetSqlName("SB1") + ".D_E_L_E_T_ = '' "
+	cQuery += "AND (D2_TP = 'CO' OR D2_TP = 'GV' OR D2_TP = 'LU'  OR D2_TP = 'QR' OR D2_TP = 'IA'  OR D2_TP = 'SH') "	
 	cQuery += "AND B1_CODSIMP <> '' AND B1_SITUACA = '1'  "
 	cQuery += "AND LTRIM(RTRIM(D2_CF)) NOT IN('5663','6663','5657') "
-	cQuery += "GROUP BY D2_FILIAL,D2_DOC, D2_SERIE,D2_EMISSAO,D2_CLIENTE,D2_LOJA,B1_CODSIMP,D2_TP,D2_CF,D2_TIPO,D2_PRCVEN "
+	cQuery += "GROUP BY D2_FILIAL,D2_DOC, D2_SERIE,D2_EMISSAO,D2_CLIENTE,D2_LOJA,B1_CODSIMP,D2_TP,D2_CF,D2_TIPO,D2_PRCVEN, F2_CHVNFE ,F2_TPFRETE "
 	cQuery += "ORDER BY D2_FILIAL,D2_DOC, D2_SERIE,D2_EMISSAO,B1_CODSIMP "
 
 	CONOUT(cQuery)
@@ -283,44 +283,44 @@ Static Function GeraArq()
 	//* Extrai Estoque Inicial
 	//****************************
 
-	DbSelectArea("SB9")
-	dbSetOrder(2)
-	DbGotop()
+	
+	cQuery := "select B9_FILIAL, B9_COD, B9_DATA, B9_QINI, B1_CODSIMP, B1_VOLSIMP from  "+RetSqlName("SB9")+" SB9 (NOLOCK) "
+	cQuery += "inner join  "+RetSqlName("SB1")+" SB1 (NOLOCK) on B1_COD = B9_COD AND B1_FILIAL = B9_FILIAL "
+	cQuery += "where B9_FILIAL = '"+xFilial("SB9")+"' AND B9_DATA = '"+DTOS(MV_PAR03)+"' AND B1_CODSIMP <> ' ' "
+
+	If (Select("MSSB9") != 0)
+		dbSelectArea("MSSB9")
+		dbCloseArea()
+	Endif
+
+	TCQuery cQuery NEW ALIAS "MSSB9"
+	TCSetField("MSSB9","B9_DATA","D",08,0)
+
+	sele MSSB9
+	dbgotop()
 	Procregua(Reccount())
-	DbSeek(xFilial("SB9")+DTOS(MV_PAR03))
-	While !Eof() .And. xFilial("SB9") == SB9->B9_FILIAL .And. DTOS(SB9->B9_DATA) == DTOS(MV_PAR03)
+	While !eof()
 
 		Incproc()
 
 		cProOpe:= '000000000'
 		cQtdKg := 0
+		cCodsImp := ""
 
-		cQuery := ""
-		cQuery += "SELECT * "
-		cQuery += "FROM "+RetSqlName("SB1")+" (NOLOCK) "
-		cQuery += "WHERE B1_FILIAL = '"+xFilial("SB1")+"' "
-		cQuery += "AND D_E_L_E_T_ = '' AND B1_CODSIMP <> '' AND B1_SITUACA = '1' "
-		cQuery += "AND B1_COD = '" + Alltrim(SB9->B9_COD) + "'"
+		cCodsImp := MSSB9->B1_CODSIMP
 
-		If (Select("MSB1S") != 0)
-			dbSelectArea("MSB1S")
-			dbCloseArea()
-		Endif
-		TCQuery cQuery NEW ALIAS "MSB1S"
-
-		dbSelectArea("MSB1S")
-		dbGoTop()
-
-		if alltrim(MSB1S->B1_CODSIMP) == ""
-			Sele SB9
+		if alltrim(cCodsImp) == ""
+			Sele MSSB9
 			DbSkip()
 			Loop
 		Endif
 
-		cProOpe := alltrim(MSB1S->B1_CODSIMP)
+		nVolsImp := MSSB9->B1_VOLSIMP
 
-		cQtdKg  := int(SB9->B9_QINI) * MSB1S->B1_VOLSIMP
-		cQINI   := int(SB9->B9_QINI) * MSB1S->B1_VOLSIMP
+		cProOpe := alltrim(cCodsImp)
+
+		cQtdKg  := int(MSSB9->B9_QINI) * nVolsImp
+		cQINI   := int(MSSB9->B9_QINI) * nVolsImp
 
 		DbSelectArea(cAliESTOQU)
 		If !DbSeek(cProOpe)
@@ -336,7 +336,7 @@ Static Function GeraArq()
 			MsUnlock()
 		Endif
 
-		Sele SB9
+		Sele MSSB9
 		DbSkip()
 
 	End
@@ -437,42 +437,43 @@ Static Function GeraArq()
 	//* Extrai Estoque Final
 	//*****************************
 
-	DbSelectArea("SB9")
-	dbSetOrder(2)
-	DbGotop()
+	cQuery := "select B9_FILIAL, B9_COD, B9_DATA, B9_QINI, B1_CODSIMP, B1_VOLSIMP from  "+RetSqlName("SB9")+" SB9 (NOLOCK) "
+	cQuery += "inner join  "+RetSqlName("SB1")+" SB1 (NOLOCK) on B1_COD = B9_COD AND B1_FILIAL = B9_FILIAL "
+	cQuery += "where B9_FILIAL = '"+xFilial("SB9")+"' AND B9_DATA = '"+DTOS(MV_PAR02)+"' AND B1_CODSIMP <> ' ' "
+
+	If (Select("MSSB92") != 0)
+		dbSelectArea("MSSB92")
+		dbCloseArea()
+	Endif
+
+	TCQuery cQuery NEW ALIAS "MSSB92"
+	TCSetField("MSSB92","B9_DATA","D",08,0)
+
+	sele MSSB92
+	dbgotop()
 	Procregua(Reccount())
-	DbSeek(xFilial("SB9")+DTOS(MV_PAR02))
-	While !Eof() .And. xFilial("SB9") == SB9->B9_FILIAL .And. DTOS(SB9->B9_DATA) == DTOS(MV_PAR02)
+	While !eof()
 
 		Incproc()
 		cQtdKg := 0
 		cProOpe := '000000000'
 		cQINI := 0
 
-		cQuery := ""
-		cQuery += "SELECT * "
-		cQuery += "FROM "+RetSqlName("SB1")+" (NOLOCK) "
-		cQuery += "WHERE B1_FILIAL = '"+xFilial("SB1")+"' "
-		cQuery += "AND D_E_L_E_T_ = '' AND B1_CODSIMP <> '' AND B1_SITUACA = '1' "
-		cQuery += "AND B1_COD = '" + Alltrim(SB9->B9_COD) + "'"
-
-		If (Select("MSB1S") != 0)
-			dbSelectArea("MSB1S")
-			dbCloseArea()
-		Endif
-		TCQuery cQuery NEW ALIAS "MSB1S"
-
-		dbSelectArea("MSB1S")
-		dbGoTop()
-		if alltrim(MSB1S->B1_CODSIMP) == ""
-			Sele SB9
+		cCodsImp := "" 
+	
+		cCodsImp := MSSB92->B1_CODSIMP
+		
+		if alltrim(cCodsImp) == ""
+			Sele MSSB92
 			DbSkip()
 			Loop
 		Endif
 
-		cProOpe := ALLTRIM(MSB1S->B1_CODSIMP)
-		cQtdKg  := int(SB9->B9_QINI) * MSB1S->B1_VOLSIMP
-		cQINI   := int(SB9->B9_QINI) * MSB1S->B1_VOLSIMP
+		nVolsImp := MSSB92->B1_VOLSIMP
+
+		cProOpe := ALLTRIM(cCodsImp)
+		cQtdKg  := int(MSSB92->B9_QINI) * nVolsImp
+		cQINI   := int(MSSB92->B9_QINI) * nVolsImp
 
 		DbSelectArea(cAliESTOQU)
 		If !DbSeek(cProOpe)
@@ -488,7 +489,7 @@ Static Function GeraArq()
 			MsUnlock()
 		Endif
 
-		Sele SB9
+		Sele MSSB92
 		DbSkip()
 
 	End
@@ -604,32 +605,10 @@ Static Function GeraArq()
 	Procregua(Reccount())
 	While !eof()
 
-		//BUSCO CHAVE DOCUMENTO QUANDO FOR TIPO DOCUMENTO SPED
-		cQuery := ""
-		cQuery += "SELECT F2_CHVNFE ,F2_TPFRETE AS MODFRT  "
-		cQuery += "FROM "+RetSqlName("SF2") + " (NOLOCK) "
-		cQuery += "WHERE F2_FILIAL = '"+xFilial("SF2")+"' "
-		cQuery += "AND D_E_L_E_T_ = ''  "
-		cQuery += "AND F2_DOC     = '" + MSD2->D2_DOC     + "' "
-		cQuery += "AND F2_SERIE   = '" + MSD2->D2_SERIE   + "' "
-		cQuery += "AND F2_CLIENTE = '" + MSD2->D2_CLIENTE + "' "
-		cQuery += "AND F2_LOJA    = '" + MSD2->D2_LOJA    + "' "
-
-		If (Select("MSF2") != 0)
-			dbSelectArea("MSF2")
-			dbCloseArea()
-		Endif
-		TCQuery cQuery NEW ALIAS "MSF2"
-
-		cChaveNfe := ""
-		dbSelectArea("MSF2")
-		//dbGoTop()
-		iF !eof()
-			cChaveNfe := MSF2->F2_CHVNFE
-			//MSF2->(dbskip())
-		EndIF
-
-		//****************************************************
+	
+		cChaveNfe := MSD2->F2_CHVNFE
+	
+	
 		Incproc()
 		cLinha := Space(01)
 		cLinha2 := ""
@@ -832,7 +811,7 @@ Static Function GeraArq()
 		*
 		cFisQui1 := '000' // Codigo da Caracteristica Fisico-Quimica do produto //163 164 165
 		cMetodo1 := '000' // Codigo do Metodo Utilizado para Afericao da Caracteristica // 166 167 168
-		cUnMedi1 := RetModFrt('MSF2')//'00'  // Codigo da Unidade de Medida da Caracteristica // 169 170
+		cUnMedi1 := RetModFrt('MSD2')//'00'  // Codigo da Unidade de Medida da Caracteristica // 169 170
 		cVlCara1 := cCertifi // Valor Encontrado da Caracteristica //171 172 173 174 175 176 177 178 179 180
 		/*If SD2->D2_UM == 'KG' // Caso Seja unidade medida KG cfe Fabi/Batista considera massa igual a qtde vendida 02/01/2007
 		cMassaE1 := StrZero(int(MSD2->D2_QUANT),7)  // Massa Especifica do Produto
