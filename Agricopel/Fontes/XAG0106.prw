@@ -69,8 +69,9 @@ User Function XAG0106()
 	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '1'", "BLUE",	"Enviado" )
 	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '2'", "GREEN",	"Entrada Confirmada" )
 	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '3'", "RED",		"Pago" )
-	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '4'", "ORANGE",		"Aguardando Aprovação" )
-	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '5'", "BLACK",		"Cancelado" )
+	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '4'", "ORANGE",	"Aguardando Aprovação" )
+	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '5'", "BLACK",	"Cancelado" )
+	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '6'", "WHITE",	"Erro Comunicação" )
 
 //Ativa a Browse
 	oBrowse:Activate()
@@ -315,7 +316,7 @@ return
 user function XAG0107S
 Default oObjLog:= nil
 
-	IF(ZLA->ZLA_STATUS == "2" .OR. ZLA->ZLA_STATUS == "0") 
+	IF(ZLA->ZLA_STATUS == "2" .OR. ZLA->ZLA_STATUS == "0" .OR. ZLA->ZLA_STATUS == "6") //entrada confirmada, erro, erro comunicação.
 		IF(ZLA->ZLA_RECPAG == "P")
 			U_XAG0107P(oObjLog, .T.)
 		ELSE
@@ -336,7 +337,7 @@ IF(ZLA_RECPAG == "P")
 		return
 	ENDIF
 
-	IF(ZLA_STATUS == "0" .OR. ZLA_STATUS == "4" .OR. ZLA_STATUS == "2")
+	IF(ZLA_STATUS == "0" .OR. ZLA_STATUS == "4" .OR. ZLA_STATUS == "2" .OR. ZLA->ZLA_STATUS == "6")
 		U_XAG0107P(oObjLog, .F.)
 	ELSE
 		FWAlertError("Status inválido", "XAG0106")
@@ -1181,6 +1182,7 @@ Local oPix := BRDPix():New()
 					SEE->(msUnlock())
 
 					//Transferencias
+					//If TRB->MODELO $ "01/03/41/43" // REMOVIDO PIX.
 					If TRB->MODELO $ "01/03/41/43/48"
 						lTransferencia:= .T.
 
@@ -1196,37 +1198,9 @@ Local oPix := BRDPix():New()
 							oPix:cDescricao := "PAGAMENTO FORNECEDOR"																		
 
 							IF(oPix:SolicitarTransferencia())
-								lRec:= .T.
-								//Cria o registro na ZLA
-								If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-									lRec:= .F.
-									cCodigo:= ZLA->ZLA_CODIGO
-								Endif    
-								Reclock("ZLA",lRec)
-									ZLA_FILIAL:= xFilial("ZLA")
-									ZLA_PREFIX:= SE2->E2_PREFIXO
-									ZLA_NUM:= SE2->E2_NUM
-									ZLA_PARCEL:= SE2->E2_PARCELA
-									ZLA_TIPO:= SE2->E2_TIPO
-									ZLA_CLIFOR:= SE2->E2_FORNECE
-									ZLA_LOJA:= SE2->E2_LOJA
-									ZLA_VENCTO:= SE2->E2_VENCTO
-									ZLA_VALOR:= SE2->E2_VALOR
-									ZLA_NUMBOR:= SE2->E2_NUMBOR
-									ZLA_BANCO:= SEE->EE_CODIGO
-									ZLA_AGENCI:= SEE->EE_AGENCIA
-									ZLA_CONTA:= SEE->EE_CONTA
-									ZLA_RECPAG:= 'P'
-									ZLA_STATUS:= Iif(lRegistrou,'2','0')
-									ZLA_DATA:= dDataBase
-									ZLA_DTOPER := Date()
-									ZLA_USER:= __cUserId
-									ZLA_CODIGO:= cCodigo
-									ZLA_IDCNAB:= SE2->E2_IDCNAB
-									ZLA_PIXE2E := ""
-									ZLA->ZLA_FILORI:= SE2->E2_FILORIG
-								MsUnlock()
-
+								lRec:= .T.								
+							ELSE
+								oObj:IncRegua2("ERRO PIX")   
 							ENDIF
 
 
