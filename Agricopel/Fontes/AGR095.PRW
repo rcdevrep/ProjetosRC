@@ -3919,7 +3919,7 @@ User Function AGR95SEL()
 	Endif
 		
 	cQuery := " SELECT EE.R_E_C_N_O_ AS RECNOSEE, A6.R_E_C_N_O_ AS RECNOSA6, * FROM "+RetSqlName('SEE')+"(NOLOCK) EE " 
-	cQuery += " INNER JOIN "+RetSqlName('SA6')+"(NOLOCK) A6  ON EE_CODIGO = A6_COD AND EE_CONTA = A6_NUMCON "
+	cQuery += " INNER JOIN "+RetSqlName('SA6')+"(NOLOCK) A6  ON EE_CODIGO = A6_COD AND (EE_CONTA = A6_NUMCON OR EE_CTAORI = A6_NUMCON) "
 	cQuery += " AND A6_AGENCIA = EE_AGENCIA AND A6.D_E_L_E_T_ = '' AND A6_FILIAL = '"+xfilial('SA6')+"'  "	 
 	cQuery += " WHERE EE_XGERABO = 'S' AND EE.D_E_L_E_T_ = '' AND A6_XGERABO = 'S' "
 	cQuery += " ORDER BY EE_CODIGO "

@@ -37,10 +37,17 @@ cRet:=""
         
 	Else
 	               
-       If CMODPGTO <> "01" .OR.  CMODPGTO <> "41"  .OR.  CMODPGTO <> "31" //DEMAIS PAGAMENTOS 
+       If CMODPGTO <> "01" .OR.  CMODPGTO <> "41"  .OR.  CMODPGTO <> "31"  .OR.  CMODPGTO <> "48" //DEMAIS PAGAMENTOS 
        
           cRet := Space(50)
 	      cRet := "(Empty(E2_CODBAR) .AND. E2_VENCREA >= DVENINI240 .AND. Empty(POSICIONE('SA2', 1,xFilial('SA2')+(cAliasSE2)->E2_FORNECE+(cAliasSE2)->E2_LOJA,'A2_BANCO')) .AND. E2_VENCREA <= DVENFIM240)"  
+    
+       Endif
+
+	    If CMODPGTO == "48" 
+       
+          cRet := Space(50)
+	      cRet := "(Empty(E2_CODBAR) .AND. E2_VENCREA >= DVENINI240 .AND. !Empty(POSICIONE('SA2', 1,xFilial('SA2')+(cAliasSE2)->E2_FORNECE+(cAliasSE2)->E2_LOJA,'A2_PIXCHV')) .AND. E2_VENCREA <= DVENFIM240)"  
     
        Endif
     

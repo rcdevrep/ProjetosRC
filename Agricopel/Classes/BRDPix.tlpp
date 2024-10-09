@@ -188,11 +188,11 @@ Method SolicitarTransferencia() Class BRDPix
     Local jRecebedor := JSONObject() :New()
     Local jJsonPost := JSONObject() :New()
     Local oIntegrador := BRDIntegracao():New()
+    Local aHeader := {}
     Local cURL:= ""    
     Local cToken:= ""
     Local cHeaderRet:= ""
     Local cErro:= ""
-    Local aHeadStr      := {} 
     Local nCodResp:= 0
     Public nNossoNum   := 0
     Public oObjLog     := nil
@@ -225,42 +225,105 @@ Method SolicitarTransferencia() Class BRDPix
   
         cToken:= oIntegrador:cToken
         //Autorização no header
-        Aadd(aHeadStr, "Authorization: Bearer "+cToken )
-        Aadd(aHeadStr, "Content-Type: application/json") 
+        AAdd(aHeader, 'User-Agent: Mozilla/4.0 (compatible; Protheus ' + GetBuild() + ')' )
+        aadd(aHeader, "Content-Type: application/json")
+        Aadd(aHeader, "Authorization: "+cToken)
 
         //HTTPSPost(cUrl, /*cGetParms*/, jJsonPost:ToJson(), /*nTimeOut*/, aHeadStr, @cHeaderRet)
         //cJson := '{"pagador": { "tipoChave": "EVP","chavePix": "b3bdd4e4-7cdc-41c1-bd70-7842d987d79f" },"recebedor": {"cpfCnpj": "09999902291969","tipoChave": "CPFCNPJ","chavePix": "09999902291969","nomeFavorecido": "FULANO DA SILVA JUNIOR"},"valor": "1.00","idtransacao": "TestesTiagoAPI35","descricao": "Pagamento teste"}'
         cJson := '{'
         cJson += '"pagador": {'
-        cJson += '"tipoChave": "'+jPagador["tipoChave"]+'",'
-        cJson += '"chavePix": "'+jPagador["chavePix"]+'"'
+         IF(ALLTRIM(jPagador["tipoChave"]) == "C")
+            cJson += '"tipoChave": "CPFCNPJ",'
+        ENDIF        
+        cJson += '"chavePix": "'+ALLTRIM(jPagador["chavePix"])+'"'
         cJson += '},'
         cJson += '"recebedor": {'
-        cJson += '"cpfCnpj": "'+jRecebedor["cpfcnpj"]+'",'
-        cJson += '"tipoChave": "'+jRecebedor["tipoChave"]+'",'
-        cJson += '"chavePix": "'+jRecebedor["chavePix"]+'",'
-        cJson += '"nomeFavorecido": "'+jRecebedor["nomeFavorecido"]+'"'
-        cJson += '},'
-        cJson += '"valor": "'+str(jJsonPost["valor"])+'",'
-        cJson += '"idtransacao": "'+jJsonPost["idtransacao"]+'",'
-        cJson += '"descricao": "'+jJsonPost["descricao"]+'"'
-        cJson += '}'
+        cJson += '"cpfCnpj": "'+ALLTRIM(jRecebedor["cpfcnpj"])+'",'
+        IF(ALLTRIM(jRecebedor["tipoChave"]) == "C")
+            cJson += '"tipoChave": "CPFCNPJ",'
+        ENDIF        
         
+        cJson += '"chavePix": "'+ALLTRIM(jRecebedor["chavePix"])+'",'
+        cJson += '"nomeFavorecido": "'+ALLTRIM(jRecebedor["nomeFavorecido"])+'"'
+        cJson += '},'
+        cJson += '"valor": "'+ALLTRIM(jJsonPost["valor"])+'",'
+        cJson += '"idtransacao": "'+ALLTRIM(jJsonPost["idtransacao"])+'",'
+        cJson += '"descricao": "'+ALLTRIM(jJsonPost["descricao"])+'"'
+        cJson += '}'
+        cParam := 'grant_type=client_credentials'
 
-        If nCodResp <> 200
-            If nCodResp = 401
-                cErro:= jJsonBol["message"]
-            Else
-                If jJsonBol:HasProperty("codigo")
-                    cErro:= jJsonBol["codigo"]+" - "+jJsonBol["mensagem"]
-                Elseif jJsonBol:HasProperty("code")
-                    cErro:= jJsonBol["code"]+" - "+jJsonBol["message"]
-                Else 
-                    cErro:= "Falha ao enviar a requisicao. Codi	go: " +cvaltochar(nCodResp)+' - '+cHeaderRet
-                Endif      
-            Endif
-        Else
+        aRet := U_RCRestSSL(cURL,cParam , cJson, aHeader )       
+
+        /*
+
+        [UTF8]"{"pagador":{"cpfCnpj":"81632093000411","agencia":"2693","conta":"52922","tipoConta":"CONTA_CORRENTE"},"recebedor":{"cpfCnpj":"10239757939","tipoChave":"CPFCNPJ","chavePix":"10239757939","nomeFavorecido":"Ludmila Ynnae da Silva"},"valor":"72.93","e2e":"E60746948202410071826L2693lXZ208","idTransacao":"A000345243","descricao":"PAGAMENTO FORNECEDOR","dataCriacao":"2024-10-07T18:26:31.777Z","status":"EM_PROCESSAMENTO","valorTarifa":"0.00","motivo":"Transação em processamento"}"
+
+        DATACRIACAO = "2024-10-07T18:26:31.777Z"
+        DESCRICAO = "PAGAMENTO FORNECEDOR"
+        E2E = "E60746948202410071826L2693lXZ208"
+        IDTRANSACAO = "A000345243"
+        MOTIVO = "TransaÃ§Ã£o em processamento"
+        PAGADOR = Object
+        AGENCIA = "2693"
+        CONTA = "52922"
+        CPFCNPJ = "81632093000411"
+        TIPOCONTA = "CONTA_CORRENTE"
+        RECEBEDOR = Object
+        CHAVEPIX = "10239757939"
+        CPFCNPJ = "10239757939"
+        NOMEFAVORECIDO = "Ludmila Ynnae da Silva"
+        TIPOCHAVE = "CPFCNPJ"
+        STATUS = "EM_PROCESSAMENTO"
+        VALOR = "72.93"
+        VALORTARIFA = "0.00"
+
+        */         
+
+        If aRet[1]
+
+            If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
+                Reclock("ZLA",.F.)
+                ZLA->ZLA_FILIAL:= xFilial("ZLA")
+                ZLA->ZLA_PREFIX:= SE2->E2_PREFIXO
+                ZLA->ZLA_NUM:= SE2->E2_NUM
+                ZLA->ZLA_PARCEL:= SE2->E2_PARCELA
+                ZLA->ZLA_TIPO:= SE2->E2_TIPO
+                ZLA->ZLA_CLIFOR:= SE2->E2_FORNECE
+                ZLA->ZLA_LOJA:= SE2->E2_LOJA
+                ZLA->ZLA_VENCTO:= SE2->E2_VENCTO
+                ZLA->ZLA_VALOR:= SE2->E2_VALOR
+                ZLA->ZLA_NUMBOR:= SE2->E2_NUMBOR
+                ZLA->ZLA_BANCO:= SEE->EE_CODIGO
+                ZLA->ZLA_AGENCI:= SEE->EE_AGENCIA
+                ZLA->ZLA_CONTA:= SEE->EE_CONTA
+                ZLA->ZLA_RECPAG:= 'P'
+                ZLA->ZLA_STATUS:= Iif(lOK,'2','0')
+                ZLA->ZLA_DATA:= dDataBase
+                ZLA->ZLA_USER:= __cUserId                
+                ZLA->ZLA_IDCNAB:= SE2->E2_IDCNAB                
+                ZLA->ZLA_FILORI:= SE2->E2_FILORIG
+                ZLA->ZLA_IDTRAN := aRet[3]:IDTRANSACAO 
+                ZLA->ZLA_PIXE2E := aRet[3]:E2E 
+                ZLA->ZLA_IDAPI :=  aRet[3]:IDTRANSACAO 
+                ZLA->ZLA_DTOPER := Date()
+                MsUnlock()
+            
+                Reclock("ZLB",.T.)
+                    ZLB_FILIAL:= xFilial("ZLB")
+                    ZLB_CODIGO:= cCodigo
+                    ZLB_DATA:= dDataBase
+                    ZLB_HORA:= Time()
+                    ZLB_EVENTO:= '1' //Envio do titulo
+                    ZLB_STATUS:= ZLA->ZLA_STATUS
+                    ZLB_USER:= __cUserId
+                    ZLB_ERRO:= " "
+                    ZLB_FILORI:= ZLA->ZLA_FILORI
+                msUnlock()
+
             lRet:= .T.
+        Else
+            lRet:= .F.
         Endif
     ENDIF
 
@@ -354,9 +417,9 @@ Dados do Recebedor:
 
 Method New() Class BRDIntegracao
 
-    Self:cClientKey := "0356dec4-7cde-4d91-b6e1-77f3433665e1"
-    Self:cClientSecret := "29fbf612-aa65-4c29-987c-9ba0c76afd89"
-    Self:cAuthorization := "Basic MDM1NmRlYzQtN2NkZS00ZDkxLWI2ZTEtNzdmMzQzMzY2NWUxOjI5ZmJmNjEyLWFhNjUtNGMyOS05ODdjLTliYTBjNzZhZmQ4OQ=="
+    Self:cClientKey := "8e035687-9f2b-4b8a-871b-6f71b8670423"
+    Self:cClientSecret := "65fa8a4f-2b70-43bb-a5ac-1d42457e58da"
+    Self:cAuthorization := "Basic OGUwMzU2ODctOWYyYi00YjhhLTg3MWItNmY3MWI4NjcwNDIzOjY1ZmE4YTRmLTJiNzAtNDNiYi1hNWFjLTFkNDI0NTdlNThkYQ=="
     Self:cErro := ""
     Self:cToken := ""
     Self:cJti := ""
@@ -376,8 +439,8 @@ Method Token() Class BRDIntegracao
     aadd(aHeader, "Content-Type: application/x-www-form-urlencoded")
     Aadd(aHeader, "Authorization: "+Self:cAuthorization)
 
-    cJson := 'grant_type=client_credentials'
-    cParam := ""
+    cParam := 'grant_type=client_credentials'
+    cJson := ""
 
     aRet := U_RCRestSSL(cURL+cPath, cParam, cJson, aHeader )
 

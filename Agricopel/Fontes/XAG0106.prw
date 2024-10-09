@@ -69,8 +69,9 @@ User Function XAG0106()
 	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '1'", "BLUE",	"Enviado" )
 	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '2'", "GREEN",	"Entrada Confirmada" )
 	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '3'", "RED",		"Pago" )
-	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '4'", "ORANGE",		"Aguardando Aprovação" )
-	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '5'", "BLACK",		"Cancelado" )
+	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '4'", "ORANGE",	"Aguardando Aprovação" )
+	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '5'", "BLACK",	"Cancelado" )
+	oBrowse:AddLegend( "ZLA->ZLA_STATUS == '6'", "WHITE",	"Erro Comunicação" )
 
 //Ativa a Browse
 	oBrowse:Activate()
@@ -315,7 +316,7 @@ return
 user function XAG0107S
 Default oObjLog:= nil
 
-	IF(ZLA->ZLA_STATUS == "2" .OR. ZLA->ZLA_STATUS == "0") 
+	IF(ZLA->ZLA_STATUS == "2" .OR. ZLA->ZLA_STATUS == "0" .OR. ZLA->ZLA_STATUS == "6") //entrada confirmada, erro, erro comunicação.
 		IF(ZLA->ZLA_RECPAG == "P")
 			U_XAG0107P(oObjLog, .T.)
 		ELSE
@@ -336,7 +337,7 @@ IF(ZLA_RECPAG == "P")
 		return
 	ENDIF
 
-	IF(ZLA_STATUS == "0" .OR. ZLA_STATUS == "4" .OR. ZLA_STATUS == "2")
+	IF(ZLA_STATUS == "0" .OR. ZLA_STATUS == "4" .OR. ZLA_STATUS == "2" .OR. ZLA->ZLA_STATUS == "6")
 		U_XAG0107P(oObjLog, .F.)
 	ELSE
 		FWAlertError("Status inválido", "XAG0106")
@@ -1181,24 +1182,29 @@ Local oPix := BRDPix():New()
 					SEE->(msUnlock())
 
 					//Transferencias
-					If TRB->MODELO $ "01/03/41/43"
+					//If TRB->MODELO $ "01/03/41/43" // REMOVIDO PIX.
+					If TRB->MODELO $ "01/03/41/43/48"
 						lTransferencia:= .T.
 
-						IF(!EMPTY(SA2->A2_PIXTP) .AND. !EMPTY(SA2->A2_PIXCHAV)) // se o fornecedor possui PIX
-
+						IF(!EMPTY(SA2->A2_PIXTP) .AND. !EMPTY(SA2->A2_PIXCHAV)) .AND. TRB->MODELO == "48"// se o fornecedor possui PIX
+							oObj:IncRegua2("Efetuando pagamento com PIX")
 							oPix:oRecebedor:cCpfCnpj := SA2->A2_CGC
 							oPix:oRecebedor:cTipoChave := SA2->A2_PIXTP
-							oPix:oRecebedor:cChavePix := SA2->A2_PIXCHAV
+							oPix:oRecebedor:cChavePix := ALLTRIM(SA2->A2_PIXCHAV)
 							oPix:oRecebedor:cFavorecido	:= SA2->A2_NOME
 
 							oPix:cIdTransacao := Alltrim(SE2->E2_IDCNAB)
 							oPix:nValor := SE2->E2_VALOR
-							oPix:cDescricao := "PAGAMENTO FORNECEDOR AGRICOPEL"																		
+							oPix:cDescricao := "PAGAMENTO FORNECEDOR"																		
 
-							oPix:SolicitarTransferencia()
+							IF(oPix:SolicitarTransferencia())
+								lRec:= .T.								
+							ELSE
+								oObj:IncRegua2("ERRO PIX")   
+							ENDIF
 
 
-						ELSE // SE FOR TED entra por aqui.
+						ELSEIF TRB->MODELO != "48"
 							oObj:IncRegua2("Efetuando TED")   
 							cTitulo:='{'
 							cTitulo+='"identificadorDoTipoDeTransferencia":1,' //diferente titularidade

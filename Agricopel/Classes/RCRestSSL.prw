@@ -17,7 +17,7 @@ user function RCRestSSL(cURL, cParam, cJson, aHeadOut )
 	Local aRet := {}
 	Private oJsonRet:= NIL
 
-	cPostRet := HttpSPost(cURL,cCert, cPrivate ,cPassword,cJson,,,aHeadOut,@cHeadRet )
+	cPostRet := HttpSPost(cURL,cCert, cPrivate ,cPassword,cParam,cJson,,aHeadOut,@cHeadRet )
 	cStatus:= HTTPGetStatus(cHeadRet)
 
 	if Empty( cPostRet )
