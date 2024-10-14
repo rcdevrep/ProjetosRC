@@ -375,49 +375,54 @@ Default oObjLog:= nil
 //Endif
 
 //multiplos borderos
+	IF(!lAuto)
+		cQry:= "SELECT distinct EA_NUMBOR NUMBOR FROM "+RetSqlName("SEA")+" SEA "
+		cQry+= "WHERE EA_FILIAL = '"+xFilial("SEA")+"' "
+		//cQry+= "AND EA_NUMBOR >= '"+MV_PAR01+"' AND EA_NUMBOR <= '"+MV_PAR02+"' "
+		cQry+= "AND EA_DATABOR = '"+DTOS(dDateSel)+"' "
 
-	cQry:= "SELECT distinct EA_NUMBOR NUMBOR FROM "+RetSqlName("SEA")+" SEA "
-	cQry+= "WHERE EA_FILIAL = '"+xFilial("SEA")+"' "
-	//cQry+= "AND EA_NUMBOR >= '"+MV_PAR01+"' AND EA_NUMBOR <= '"+MV_PAR02+"' "
-	cQry+= "AND EA_DATABOR = '"+DTOS(dDateSel)+"' "
-
-	IF(bConsulta)
-		cQry += " "
-	ELSE
-		cQry += "AND EA_TRANSF = ' ' "
-	ENDIF
-
-	IF(ZLA->ZLA_BANCO == "237")
-		cQry+= " AND EA_PORTADO = '"+ZLA->ZLA_BANCO+"' AND SUBSTRING(EA_AGEDEP,1,5) = '"+ALLTRIM(ZLA->ZLA_AGENCI)+"' AND SUBSTRING(EA_NUMCON,1,7) = '"+ALLTRIM(ZLA->ZLA_CONTA)+"' AND EA_CART = 'P' "
-	ELSE
-		cQry+= " AND EA_PORTADO = '"+ZLA->ZLA_BANCO+"' AND SUBSTRING(EA_AGEDEP,1,4) = '"+ALLTRIM(ZLA->ZLA_AGENCI)+"' AND SUBSTRING(EA_NUMCON,1,6) = '"+ALLTRIM(ZLA->ZLA_CONTA)+"' AND EA_CART = 'P' "
-	ENDIF
-	cQry+= "And SEA.D_E_L_E_T_ = ' ' "
-
-	If Select("QRYDST") > 0
-		QRYDST->(dbCloseArea())
-	Endif
-	TcQuery cQry New Alias "QRYDST"
-
-	While QRYDST->(!Eof())
-		AADD(aLstBor,ALLTRIM(QRYDST->NUMBOR))
-		MvParDef+= ALLTRIM(QRYDST->NUMBOR)
-		QRYDST->(dbSkip())
-	End
-
-	cQry:= "SELECT * FROM "+RetSqlName("SEA")+" SEA "
-	cQry+= "WHERE EA_FILIAL = '"+xFilial("SEA")+"' "
-	IF(!bConsulta)
-		IF f_Opcoes(@aBorderos,"Selecione Borderôs para Aprovação",aLstBor,MvParDef,12,49,.F.,6,5)  // Chama funcao f_Opcoes (padrão Protheus)
-
-			cQry+= "AND EA_NUMBOR IN ('"+ArrTokStr(aBorderos,"','")+"') "
-
+		IF(bConsulta)
+			cQry += " "
 		ELSE
+			cQry += "AND EA_TRANSF = ' ' "
+		ENDIF
 
+		IF(ZLA->ZLA_BANCO == "237")
+			cQry+= " AND EA_PORTADO = '"+ZLA->ZLA_BANCO+"' AND SUBSTRING(EA_AGEDEP,1,5) = '"+ALLTRIM(ZLA->ZLA_AGENCI)+"' AND SUBSTRING(EA_NUMCON,1,7) = '"+ALLTRIM(ZLA->ZLA_CONTA)+"' AND EA_CART = 'P' "
+		ELSE
+			cQry+= " AND EA_PORTADO = '"+ZLA->ZLA_BANCO+"' AND SUBSTRING(EA_AGEDEP,1,4) = '"+ALLTRIM(ZLA->ZLA_AGENCI)+"' AND SUBSTRING(EA_NUMCON,1,6) = '"+ALLTRIM(ZLA->ZLA_CONTA)+"' AND EA_CART = 'P' "
+		ENDIF
+		cQry+= "And SEA.D_E_L_E_T_ = ' ' "
+
+		If Select("QRYDST") > 0
+			QRYDST->(dbCloseArea())
+		Endif
+		TcQuery cQry New Alias "QRYDST"
+
+		While QRYDST->(!Eof())
+			AADD(aLstBor,ALLTRIM(QRYDST->NUMBOR))
+			MvParDef+= ALLTRIM(QRYDST->NUMBOR)
+			QRYDST->(dbSkip())
+		End
+
+		cQry:= "SELECT * FROM "+RetSqlName("SEA")+" SEA "
+		cQry+= "WHERE EA_FILIAL = '"+xFilial("SEA")+"' "
+		IF(!bConsulta)
+			IF f_Opcoes(@aBorderos,"Selecione Borderôs para Aprovação",aLstBor,MvParDef,12,49,.F.,6,5)  // Chama funcao f_Opcoes (padrão Protheus)
+
+				cQry+= "AND EA_NUMBOR IN ('"+ArrTokStr(aBorderos,"','")+"') "
+
+			ELSE
+
+				cQry+= "AND EA_NUMBOR >= '"+ZLA->ZLA_NUMBOR+"' AND EA_NUMBOR <= '"+ZLA->ZLA_NUMBOR+"' "
+			
+			EndIF
+		else
 			cQry+= "AND EA_NUMBOR >= '"+ZLA->ZLA_NUMBOR+"' AND EA_NUMBOR <= '"+ZLA->ZLA_NUMBOR+"' "
-		
-		EndIF
-	else
+		ENDIF
+	ELSE
+		cQry:= "SELECT * FROM "+RetSqlName("SEA")+" SEA "
+		cQry+= "WHERE EA_FILIAL = '"+xFilial("SEA")+"' "
 		cQry+= "AND EA_NUMBOR >= '"+ZLA->ZLA_NUMBOR+"' AND EA_NUMBOR <= '"+ZLA->ZLA_NUMBOR+"' "
 	ENDIF
 /*
