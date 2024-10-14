@@ -152,16 +152,16 @@ Method New() Class BRDRecebedor
 	Local lRet := .T.
 	Local lJob := IsBlind()
 
-	Self:cCpfCnpj := "09999902291969"
-	Self:cChavePix := "de24cbca-2c66-4372-9c16-26056b966ece"
+	Self:cCpfCnpj := ""
+	Self:cChavePix := ""
 	Self:cTipoChave := "CPFCNPJ"
-	Self:cAgencia := "3987"
-	Self:cBanco := "237"
-	Self:cIspb := "60746948"
-	Self:cConta := "200958"
-	Self:cDigitoConta := "7"
-	Self:cTipoConta := "CONTA_POUPANCA"
-	Self:cFavorecido := "FULANO DA SILVA JUNIOR"
+	Self:cAgencia := ""
+	Self:cBanco := ""
+	Self:cIspb := ""
+	Self:cConta := ""
+	Self:cDigitoConta := ""
+	Self:cTipoConta := "CONTA_CORRENTE"
+	Self:cFavorecido := ""
 
 Return lRet
 
@@ -207,11 +207,18 @@ Method SolicitarTransferencia() Class BRDPix
 
 	jPagador["tipoChave"] := Self:oPagador:cTipoChave
 	jPagador["chavePix"] := Self:oPagador:cChavePix
+	jPagador["agencia"] := Self:oPagador:cAgencia
+	jPagador["conta"] := Self:oPagador:cConta
 
 	jRecebedor["cpfcnpj"] := Self:oRecebedor:cCpfCnpj
 	jRecebedor["tipoChave"] := Self:oRecebedor:cTipoChave
 	jRecebedor["chavePix"] := Self:oRecebedor:cChavePix
 	jRecebedor["nomeFavorecido"] := Self:oRecebedor:cFavorecido
+	jRecebedor["agencia"] := Self:oRecebedor:cAgencia
+	jRecebedor["conta"] := Self:oRecebedor:cConta
+	jRecebedor["digitoConta"] := Self:oRecebedor:cDigitoConta
+	jRecebedor["ispb"] := Self:oRecebedor:cIspb
+	jRecebedor["tipoConta"] := Self:oRecebedor:cTipoConta
 
 	jJsonPost["pagador"] := jPagador:ToJson()
 	jJsonPost["recebedor"] := jRecebedor:ToJson()
@@ -235,19 +242,30 @@ Method SolicitarTransferencia() Class BRDPix
 		cJson += '"pagador": {'
 		IF(ALLTRIM(jPagador["tipoChave"]) == "C")
 			cJson += '"tipoChave": "CPFCNPJ",'
+			cJson += '"chavePix": "'+ALLTRIM(jPagador["chavePix"])+'"'
+		ELSE
+			cJson += '"tipoChave": "AGENCIACONTA",'
+			cJson += '"agencia": "'+ALLTRIM(jPagador["agencia"])+'",'
+			cJson += '"conta": "'+ALLTRIM(jPagador["conta"])+'"'
 		ENDIF
-		cJson += '"chavePix": "'+ALLTRIM(jPagador["chavePix"])+'"'
+		
 		cJson += '},'
 		cJson += '"recebedor": {'
 		cJson += '"cpfCnpj": "'+ALLTRIM(jRecebedor["cpfcnpj"])+'",'
 		IF(ALLTRIM(jRecebedor["tipoChave"]) == "C")
 			cJson += '"tipoChave": "CPFCNPJ",'
-		ENDIF
-
-		cJson += '"chavePix": "'+ALLTRIM(jRecebedor["chavePix"])+'",'
+			cJson += '"chavePix": "'+ALLTRIM(jRecebedor["chavePix"])+'",'
+		ELSE
+			cJson += '"tipoChave": "AGENCIACONTA",'
+			cJson += '"agencia": "'+ALLTRIM(jRecebedor["agencia"])+'",'
+			cJson += '"conta": "'+ALLTRIM(jRecebedor["conta"])+'",'
+			cJson += '"digitoConta": "'+ALLTRIM(jRecebedor["digitoConta"])+'",'
+			cJson += '"tipoConta": "'+ALLTRIM(jRecebedor["tipoConta"])+'",'
+			cJson += '"ispb": "'+ALLTRIM(jRecebedor["ispb"])+'",'
+		ENDIF		
 		cJson += '"nomeFavorecido": "'+ALLTRIM(jRecebedor["nomeFavorecido"])+'"'
 		cJson += '},'
-		cJson += '"valor": "'+ALLTRIM(jJsonPost["valor"])+'",'
+		cJson += '"valor": "'+ALLTRIM(STRTRAN(TRANSFORM(VAL(jJsonPost["valor"]),'@E 999999999.99'),',','.'))+'",'
 		cJson += '"idtransacao": "'+ALLTRIM(jJsonPost["idtransacao"])+'",'
 		cJson += '"descricao": "'+ALLTRIM(jJsonPost["descricao"])+'"'
 		cJson += '}'
@@ -280,7 +298,7 @@ Method SolicitarTransferencia() Class BRDPix
 
         */         
 
-		If aRet[1]
+		If EMPTY(aRet[4]:VIOLACOES)
 
 			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
 				Reclock("ZLA",.F.)
@@ -298,14 +316,14 @@ Method SolicitarTransferencia() Class BRDPix
 				ZLA->ZLA_AGENCI:= SEE->EE_AGENCIA
 				ZLA->ZLA_CONTA:= SEE->EE_CONTA
 				ZLA->ZLA_RECPAG:= 'P'
-				ZLA->ZLA_STATUS:= Iif(lOK,'2','0')
+				ZLA->ZLA_STATUS:= '2'
 				ZLA->ZLA_DATA:= dDataBase
 				ZLA->ZLA_USER:= __cUserId
 				ZLA->ZLA_IDCNAB:= SE2->E2_IDCNAB
 				ZLA->ZLA_FILORI:= SE2->E2_FILORIG
-				ZLA->ZLA_IDTRAN := aRet[3]:IDTRANSACAO
-				ZLA->ZLA_PIXE2E := aRet[3]:E2E
-				ZLA->ZLA_IDAPI :=  aRet[3]:IDTRANSACAO
+				ZLA->ZLA_IDTRAN := aRet[4]:IDTRANSACAO
+				ZLA->ZLA_PIXE2E := aRet[4]:E2E
+				ZLA->ZLA_IDAPI :=  aRet[4]:IDTRANSACAO
 				ZLA->ZLA_DTOPER := Date()
 				MsUnlock()
 
@@ -325,6 +343,46 @@ Method SolicitarTransferencia() Class BRDPix
 			Else
 				lRet:= .F.
 			Endif
+		ELSE
+			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
+				Reclock("ZLA",.F.)
+				ZLA->ZLA_FILIAL:= xFilial("ZLA")
+				ZLA->ZLA_PREFIX:= SE2->E2_PREFIXO
+				ZLA->ZLA_NUM:= SE2->E2_NUM
+				ZLA->ZLA_PARCEL:= SE2->E2_PARCELA
+				ZLA->ZLA_TIPO:= SE2->E2_TIPO
+				ZLA->ZLA_CLIFOR:= SE2->E2_FORNECE
+				ZLA->ZLA_LOJA:= SE2->E2_LOJA
+				ZLA->ZLA_VENCTO:= SE2->E2_VENCTO
+				ZLA->ZLA_VALOR:= SE2->E2_VALOR
+				ZLA->ZLA_NUMBOR:= SE2->E2_NUMBOR
+				ZLA->ZLA_BANCO:= SEE->EE_CODIGO
+				ZLA->ZLA_AGENCI:= SEE->EE_AGENCIA
+				ZLA->ZLA_CONTA:= SEE->EE_CONTA
+				ZLA->ZLA_RECPAG:= 'P'
+				ZLA->ZLA_STATUS:= '2'
+				ZLA->ZLA_DATA:= dDataBase
+				ZLA->ZLA_USER:= __cUserId
+				ZLA->ZLA_IDCNAB:= SE2->E2_IDCNAB
+				ZLA->ZLA_FILORI:= SE2->E2_FILORIG
+				ZLA->ZLA_IDTRAN := aRet[4]:IDTRANSACAO
+				ZLA->ZLA_PIXE2E := aRet[4]:E2E
+				ZLA->ZLA_IDAPI :=  aRet[4]:IDTRANSACAO
+				ZLA->ZLA_DTOPER := Date()
+				MsUnlock()
+
+				Reclock("ZLB",.T.)
+				ZLB_FILIAL:= xFilial("ZLB")
+				ZLB_CODIGO:= cCodigo
+				ZLB_DATA:= dDataBase
+				ZLB_HORA:= Time()
+				ZLB_EVENTO:= '2' //Envio do titulo
+				ZLB_STATUS:= ZLA->ZLA_STATUS
+				ZLB_USER:= __cUserId
+				ZLB_ERRO:= aRet[4]:VIOLACOES[1]:RAZAO
+				ZLB_FILORI:= ZLA->ZLA_FILORI
+				msUnlock()
+			endif
 		endif
 	endif
 

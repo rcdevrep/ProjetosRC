@@ -25,6 +25,7 @@ User Function XAG0106()
 	Local cFiltro	:= ""
 	Local oBrowse
 	Private aRotina := {}
+	Private dDateSel := dDataBase
 
 //Carrega os registros
 	dbSelectArea("ZLA")
@@ -43,6 +44,7 @@ User Function XAG0106()
 		Endif
 		If !Empty(MV_PAR03)
 			cFiltro+=".AND.DTOS(ZLA_DATA)=='"+DTOS(MV_PAR03)+"'"
+			dDateSel := MV_PAR03
 		Endif
 		If MV_PAR04 = 1
 			cFiltro+=".AND.ZLA_STATUS<>' '"
@@ -92,7 +94,7 @@ Static Function MenuDef()
 	ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.XAG0106' OPERATION MODEL_OPERATION_VIEW   ACCESS 0 //OPERATION 1
 	ADD OPTION aRotina TITLE 'Gerar/Enviar'    ACTION 'U_XAG0107' OPERATION 3 ACCESS 0 //OPERATION 4	
 	ADD OPTION aRotina TITLE 'Consultar Status'    ACTION 'U_XAG0107S' OPERATION 3 ACCESS 0 //OPERATION 4	
-	ADD OPTION aRotina TITLE 'Aprovar'    ACTION 'U_XAG0107R' OPERATION 3 ACCESS 0 //OPERATION 4
+	ADD OPTION aRotina TITLE 'Aprovar'    ACTION 'U_XAG0107R' OPERATION 1 ACCESS 0 //OPERATION 4
 	//ADD OPTION aRotina TITLE 'Posição'    ACTION 'FINC010' OPERATION MODEL_OPERATION_INSERT ACCESS 0 //OPERATION 3
 	//
 	//ADD OPTION aRot TITLE 'Excluir'    ACTION 'VIEWDEF.XAG0106' OPERATION MODEL_OPERATION_DELETE ACCESS 0 //OPERATION 5
@@ -284,7 +286,7 @@ ConfirmSX8()
 				ZLA_CLIFOR:= SE2->E2_FORNECE
 				ZLA_LOJA:= SE2->E2_LOJA
 				ZLA_VENCTO:= SE2->E2_VENCREA
-				ZLA_VALOR:= SE2->E2_VALOR
+				ZLA_VALOR:= SE2->E2_SALDO
 				ZLA_NUMBOR:= SE2->E2_NUMBOR
 				ZLA_BANCO:= SEE->EE_CODIGO
 				ZLA_AGENCI:= SEE->EE_AGENCIA
@@ -346,7 +348,7 @@ ELSE
 	FWAlertError("Aprovação somente de titulos a pagar.", "XAG0106")
 ENDIF
 
-return
+return .F.
 
 user function XAG0107P(oObjLog, bConsulta)
 Local cPerg:= "XAG0107"
@@ -356,9 +358,13 @@ Local lAuto := isBlind()
 
 Local cCodigo := ""
 Local bBoleto := .F.
+Local aBorderos := {}
+Local aLstBor := {}
+Local MvParDef := ""
 Private lTransferencia:= .F.
 Private lBoleto:= .F.
 Private lGuiaCB:= .F.
+
 Default oObjLog:= nil
 
 //If !lAuto
@@ -367,11 +373,76 @@ Default oObjLog:= nil
 		//Return
 	//Endif
 //Endif
- 
+
+//multiplos borderos
+
+	cQry:= "SELECT distinct EA_NUMBOR NUMBOR FROM "+RetSqlName("SEA")+" SEA "
+	cQry+= "WHERE EA_FILIAL = '"+xFilial("SEA")+"' "
+	//cQry+= "AND EA_NUMBOR >= '"+MV_PAR01+"' AND EA_NUMBOR <= '"+MV_PAR02+"' "
+	cQry+= "AND EA_DATABOR = '"+DTOS(dDateSel)+"' "
+
+	IF(bConsulta)
+		cQry += " "
+	ELSE
+		cQry += "AND EA_TRANSF = ' ' "
+	ENDIF
+
+	IF(ZLA->ZLA_BANCO == "237")
+		cQry+= " AND EA_PORTADO = '"+ZLA->ZLA_BANCO+"' AND SUBSTRING(EA_AGEDEP,1,5) = '"+ALLTRIM(ZLA->ZLA_AGENCI)+"' AND SUBSTRING(EA_NUMCON,1,7) = '"+ALLTRIM(ZLA->ZLA_CONTA)+"' AND EA_CART = 'P' "
+	ELSE
+		cQry+= " AND EA_PORTADO = '"+ZLA->ZLA_BANCO+"' AND SUBSTRING(EA_AGEDEP,1,4) = '"+ALLTRIM(ZLA->ZLA_AGENCI)+"' AND SUBSTRING(EA_NUMCON,1,6) = '"+ALLTRIM(ZLA->ZLA_CONTA)+"' AND EA_CART = 'P' "
+	ENDIF
+	cQry+= "And SEA.D_E_L_E_T_ = ' ' "
+
+	If Select("QRYDST") > 0
+		QRYDST->(dbCloseArea())
+	Endif
+	TcQuery cQry New Alias "QRYDST"
+
+	While QRYDST->(!Eof())
+		AADD(aLstBor,ALLTRIM(QRYDST->NUMBOR))
+		MvParDef+= ALLTRIM(QRYDST->NUMBOR)
+		QRYDST->(dbSkip())
+	End
+
+	cQry:= "SELECT * FROM "+RetSqlName("SEA")+" SEA "
+	cQry+= "WHERE EA_FILIAL = '"+xFilial("SEA")+"' "
+	IF(!bConsulta)
+		IF f_Opcoes(@aBorderos,"Selecione Borderôs para Aprovação",aLstBor,MvParDef,12,49,.F.,6,5)  // Chama funcao f_Opcoes (padrão Protheus)
+
+			cQry+= "AND EA_NUMBOR IN ('"+ArrTokStr(aBorderos,"','")+"') "
+
+		ELSE
+
+			cQry+= "AND EA_NUMBOR >= '"+ZLA->ZLA_NUMBOR+"' AND EA_NUMBOR <= '"+ZLA->ZLA_NUMBOR+"' "
+		
+		EndIF
+	else
+		cQry+= "AND EA_NUMBOR >= '"+ZLA->ZLA_NUMBOR+"' AND EA_NUMBOR <= '"+ZLA->ZLA_NUMBOR+"' "
+	ENDIF
+/*
+Function f_Opcoes(	uVarRet			,;	//Variavel de Retorno
+			cTitulo			,;	//Titulo da Coluna com as opcoes
+			aOpcoes			,;	//Opcoes de Escolha (Array de Opcoes)
+			cOpcoes			,;	//String de Opcoes para Retorno
+			nLin1			,;	//Nao Utilizado
+			nCol1			,;	//Nao Utilizado
+			l1Elem			,;	//Se a Selecao sera de apenas 1 Elemento por vez
+			nTam			,;	//Tamanho da Chave
+			nElemRet		,;	//No maximo de elementos na variavel de retorno
+			lMultSelect		,;	//Inclui Botoes para Selecao de Multiplos Itens
+			lComboBox		,;	//Se as opcoes serao montadas a partir de ComboBox de Campo ( X3_CBOX )
+			cCampo			,;	//Qual o Campo para a Montagem do aOpcoes
+			lNotOrdena		,;	//Nao Permite a Ordenacao
+			lNotPesq		,;	//Nao Permite a Pesquisa	
+			lForceRetArr		,;	//Forca o Retorno Como Array
+			cF3			 ;	//Consulta F3	
+		  )
+
+*/
+
 //Localiza os borderôs a pagar
-cQry:= "SELECT * FROM "+RetSqlName("SEA")+" SEA "
-cQry+= "WHERE EA_FILIAL = '"+xFilial("SEA")+"' "
-cQry+= "AND EA_NUMBOR >= '"+ZLA->ZLA_NUMBOR+"' AND EA_NUMBOR <= '"+ZLA->ZLA_NUMBOR+"' "
+
 
 IF(bConsulta)
 	cQry += " "
@@ -380,9 +451,9 @@ ELSE
 ENDIF
 
 IF(ZLA->ZLA_BANCO == "237")
-cQry+= " AND EA_PORTADO = '"+ZLA->ZLA_BANCO+"' AND SUBSTRING(EA_AGEDEP,1,5) = '"+ALLTRIM(ZLA->ZLA_AGENCI)+"' AND SUBSTRING(EA_NUMCON,1,7) = '"+ALLTRIM(ZLA->ZLA_CONTA)+"' AND EA_CART = 'P' "
+	cQry+= " AND EA_PORTADO = '"+ZLA->ZLA_BANCO+"' AND SUBSTRING(EA_AGEDEP,1,5) = '"+ALLTRIM(ZLA->ZLA_AGENCI)+"' AND SUBSTRING(EA_NUMCON,1,7) = '"+ALLTRIM(ZLA->ZLA_CONTA)+"' AND EA_CART = 'P' "
 ELSE
-cQry+= " AND EA_PORTADO = '"+ZLA->ZLA_BANCO+"' AND SUBSTRING(EA_AGEDEP,1,4) = '"+ALLTRIM(ZLA->ZLA_AGENCI)+"' AND SUBSTRING(EA_NUMCON,1,6) = '"+ALLTRIM(ZLA->ZLA_CONTA)+"' AND EA_CART = 'P' "
+	cQry+= " AND EA_PORTADO = '"+ZLA->ZLA_BANCO+"' AND SUBSTRING(EA_AGEDEP,1,4) = '"+ALLTRIM(ZLA->ZLA_AGENCI)+"' AND SUBSTRING(EA_NUMCON,1,6) = '"+ALLTRIM(ZLA->ZLA_CONTA)+"' AND EA_CART = 'P' "
 ENDIF
 //adicionar filtro do banco e agencia
 
@@ -390,19 +461,19 @@ cQry+= "And SEA.D_E_L_E_T_ = ' ' "
 
 If Select("QRY") > 0
 	QRY->(dbCloseArea())
-Endif	
+Endif
 TcQuery cQry New Alias "QRY"
 
 If QRY->(Eof())
 	If lAuto
-		oObjLog:saveMsg("Não foram encontrados títulos (Contate a TI)!")		
+		oObjLog:saveMsg("Não foram encontrados títulos (Contate a TI)!")
 	Else
 		Aviso("Atenção","Não foram encontrados títulos (Contate a TI)!",{"OK"})
 	Endif
 
-	Reclock("ZLA",.F.)					
-	ZLA->ZLA_STATUS:= '5'		
-	ZLA->ZLA_DTOPER := Date()		
+	Reclock("ZLA",.F.)
+	ZLA->ZLA_STATUS:= '5'
+	ZLA->ZLA_DTOPER := Date()
 	MsUnlock()
 
 	Reclock("ZLB",.T.)
@@ -417,7 +488,7 @@ If QRY->(Eof())
 	ZLB_FILORI:= ZLA->ZLA_FILORI
 	msUnlock()
 
-	Return
+Return
 Endif
 
 SEE->(dbSetOrder(1))
@@ -428,7 +499,7 @@ If !SEE->(dbSeek(xFilial("SEE")+ZLA->ZLA_BANCO+ZLA->ZLA_AGENCI+ZLA->ZLA_CONTA+"P
 	Else
 		Aviso("Atenção","Banco "+ZLA->ZLA_BANCO+" Ag. "+ZLA->ZLA_AGENCI+" Conta "+ZLA->ZLA_CONTA+" SubConta PAG não encontrado nos parametros de banco!",{"OK"},2)
 	Endif
-		Return
+Return
 Endif
 
 //seleção dos titulos..
@@ -449,28 +520,28 @@ IF(bConsulta)
 	If SE2->(dbSeek(xFilial("SE2")+ZLA->(ZLA_PREFIXO+ZLA_NUM+ZLA_PARCEL+ZLA_TIPO+ZLA_CLIFOR+ZLA_LOJA)))
 		DBselectarea("SEA")
 		SEA->(dbSetOrder(1))
-    	If SEA->(dbSeek(xFilial("SEA")+SE2->E2_NUMBOR+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+SE2->E2_TIPO))
-			
+		If SEA->(dbSeek(xFilial("SEA")+SE2->E2_NUMBOR+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+SE2->E2_TIPO))
+
 			IF(!EMPTY(SE2->E2_CODBAR))
 				bBoleto := .T.
 			ELSE
 				bBoleto := .F.
 			ENDIF
-			
+
 			IF(bBoleto)
 				//ConsBRD106(ZLA->ZLA_CODIGO, cClientId)
 				consPGT106(ZLA->ZLA_CODIGO, cClientId)
 			ELSE
 				U_XAG0122(cClientId)
 			ENDIF
-			
-		ENDIF		
+
+		ENDIF
 	ENDIF
 ELSE
 	XAGMARKAPR()
 ENDIF
 
-return 
+return
 
 static function XAGMARKAPR()
 	Local aSeek       := {}
@@ -483,7 +554,7 @@ static function XAGMARKAPR()
 	Private cFontUti    := "Tahoma"
 	Private oFontSay    := TFont():New(cFontUti, , -12)
 	Private oSayTot, cSayTot := "Total selecionado:"
-	Private oGetTot, oGetQtd            
+	Private oGetTot, oGetQtd
 	Private nGetTot := 0
 	Private nGetQtd := 0
 	Private cMascara := "@E 999,999,999,999,999.99"
@@ -534,7 +605,7 @@ static function XAGMARKAPR()
 			TRB->LOJA:= SE2->E2_LOJA
 			TRB->NOME:= Posicione("SA2", 1, xFilial("SA2") + SE2->E2_FORNECE + SE2->E2_LOJA, "A2_NOME")
 			TRB->VENCTO:= SE2->E2_VENCREA
-			TRB->VALOR:= SE2->E2_VALOR
+			TRB->VALOR:= SE2->E2_SALDO
 			TRB->NUMBOR:= SE2->E2_NUMBOR
 			TRB->BANCO:= SEE->EE_CODIGO
 			TRB->AGENCI:= SEE->EE_AGENCIA
@@ -545,11 +616,11 @@ static function XAGMARKAPR()
 		QRY->(dbSkip())
 	End
 
-	
+
 
 	TRB->(DbGoTop())
 	If TRB->(!Eof())
-		
+
 		DEFINE MSDIALOG oDlgExemp TITLE "SELEÇÃO DE TITULOS PARA PAGAMENTO"  FROM 0, 0 TO nJanAltu, nJanLarg PIXEL
 
 		oFwLayer := FwLayer():New()
@@ -579,13 +650,15 @@ static function XAGMARKAPR()
 		oMark:SetTemporary()
 		oMark:oBrowse:SetSeek(.T.,aSeek)
 		oMark:oBrowse:SetFilterDefault("")
-		
+
 		oMark:SetAllMark( { || fInvert() } )
 		oMark:ForceQuitButton(.T.)
 
 		aRotina := {}
 		bAprova := {|| Confirmar() }
+		
 		oMark:AddButton('Confirmar',bAprova,nil,1,0)
+		//oMark:AddButton("Sair",{|| MsAguarde({|| Close(oDlgExemp) },'Encerrando...')  },,2,,.F.)
 
 		oColumn := FWBrwColumn():New()
 		oColumn:SetData({||FILIAL})
@@ -650,7 +723,7 @@ static function XAGMARKAPR()
 
 		oColumn := FWBrwColumn():New()
 		oColumn:SetData({||VALOR})
-		oColumn:SetTitle("Valor")		
+		oColumn:SetTitle("Valor")
 		oColumn:SetPicture("@E 999,999,999.99")
 		oColumn:SetSize(1)
 		oMark:SetColumns({oColumn})
@@ -679,46 +752,48 @@ static function XAGMARKAPR()
 		oColumn:SetTitle("Conta")
 		oColumn:SetSize(1)
 		oMark:SetColumns({oColumn})
-			
+
 		oMark:SetOwner(oPanGrid)
 
 		oMark:SetCustomMarkRec({||EditaCell(oMark)})
 
-		
-		oMark:Activate()		
+
+		oMark:Activate()
 		oMark:oBrowse:Setfocus()
 
 		nLargPanel := (oPanTotal:nWidth) / 2
-        nLinhaObj  := 30
-        oSayTot := TSay():New(nLinhaObj, 003, {|| cSayTot}, oPanTotal, "", oFontSay,  , , , .T., RGB(031, 073, 125), , 200, 10, , , , , , .F., , )
-        nLinhaObj += 10
-        
+		nLinhaObj  := 30
+		oSayTot := TSay():New(nLinhaObj, 003, {|| cSayTot}, oPanTotal, "", oFontSay,  , , , .T., RGB(031, 073, 125), , 200, 10, , , , , , .F., , )
+		nLinhaObj += 10
+
 		oGetQtd  := TGet():New(nLinhaObj, 010, {|u| Iif(PCount() > 0 , nGetQtd := u, nGetQtd)}, oPanTotal, 60, 15, cMascara, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
 		oGetQtd:lReadOnly := .T.
 
 		oGetTot  := TGet():New(nLinhaObj, 100, {|u| Iif(PCount() > 0 , nGetTot := u, nGetTot)}, oPanTotal, 125, 15, cMascara, /*bValid*/, /*nClrFore*/, /*nClrBack*/, oFontSay, , , .T.)
-        oGetTot:lReadOnly := .T.
+		oGetTot:lReadOnly := .T.
 
 		Activate MsDialog oDlgExemp Centered
-		
+
 	else
 		MSGINFO("Nenhum registro encontrado.")
 	endif
-	
+
 	dbCloseArea()
-	oTempTable:Delete() 
+	oTempTable:Delete()
 return
+
+
 
 static function fInvert
 
-Local aBkpArea     := GetArea()
-    Local cItens         := ""
+	Local aBkpArea     := GetArea()
+	Local cItens         := ""
 	Local cMarca := oMark:Mark()
 
 	TRB->(dbGoTop())
-	While TRB->(!Eof())	 	
-		RecLock( 'TRB', .F. )		
-		if(oMark:IsMark(cMarca))	
+	While TRB->(!Eof())
+		RecLock( 'TRB', .F. )
+		if(oMark:IsMark(cMarca))
 			nGetTot -= TRB->VALOR
 			nGetQtd := nGetQtd-1
 			TRB->OK := ""
@@ -727,23 +802,23 @@ Local aBkpArea     := GetArea()
 			nGetQtd := nGetQtd+1
 			TRB->OK := cMarca
 		ENDIF
-		MSUNLOCK()			
+		MSUNLOCK()
 
 		TRB->(dbSkip())
 	End
 	TRB->(dbGoTop())
 
-	oGetTot:Refresh() 
+	oGetTot:Refresh()
 	oGetQtd:Refresh()
 	oMark:Refresh()
-	
+
 
 return
 
 Static Function EditaCell(oMarkBrow)
-    Local aBkpArea     := GetArea()
-    Local nPosCol     := oMarkBrow:oBrowse:ColPos()-1//Desconta campo de marcação
-    Local cItens         := ""
+	Local aBkpArea     := GetArea()
+	Local nPosCol     := oMarkBrow:oBrowse:ColPos()-1//Desconta campo de marcação
+	Local cItens         := ""
 	Local cMarca := oMark:Mark()
 
 	RecLock( 'TRB', .F. )
@@ -761,52 +836,50 @@ Static Function EditaCell(oMarkBrow)
 Return
 
 static function Confirmar
-Local cBcosAPI := ""
-Local bAprovou := .F.
+	Local cBcosAPI := ""
+	Local bAprovou := .F.
 
-oProcess := MsNewProcess():New({|| ConfTransacao(oProcess)}, "Processando...", "Aguarde...", .T.)
-oProcess:Activate()
-  
-IF(bAprovou)
-	FWAlertSuccess("Titulo(s) aprovados(s)! ", "AGRICOPEL")
-Endif
+	oProcess := MsNewProcess():New({|| ConfTransacao(oProcess)}, "Processando...", "Aguarde...", .T.)
+	oProcess:Activate()
+
+	Close(oDlgExemp)	
 
 Return
 
 Static Function ConfTransacao(oObj)
-    Local aArea  := GetArea()
-    Local nAtual := 0
-    Local nTotal := 0
-    Local nAtu2  := 0
-    Local nTot2  := 4
+	Local aArea  := GetArea()
+	Local nAtual := 0
+	Local nTotal := 0
+	Local nAtu2  := 0
+	Local nTot2  := 4
 
 	cBcosAPI := GetNewPar("MV_XBCOAPI","001/237")
 
 	Count To nTotal
-    oObj:SetRegua1(nTotal)
+	oObj:SetRegua1(nTotal)
 	oObj:SetRegua2(nTot2)
 
 	TRB->(dbGoTop())
 	While TRB->(!Eof())
-	 	nAtual++
-		If TRB->BANCO $ cBcosAPI  
+		nAtual++
+		If TRB->BANCO $ cBcosAPI
 			if(oMark:IsMark(cMarca))
-				oObj:IncRegua1("Efetuando aprovação registro "+ TRB->NUMERO + "...")	
-				oObj:IncRegua2("Iniciando envio titulo ")        					            		
-				Pagam106(oObj)	
+				oObj:IncRegua1("Efetuando aprovação registro "+ TRB->NUMERO + "...")
+				oObj:IncRegua2("Iniciando envio titulo ")
+				Pagam106(oObj)
 				bAprovou := .T.
 			ENDIF
 		Endif
 		TRB->(dbSkip())
 	End
-    RestArea(aArea)
+	RestArea(aArea)
 Return
 
 Static function Receb106
-Local nQtd := 0
-Local cTitulo:= ""
-Local lAuto := isBlind()
-Local cCodigo := ""
+	Local nQtd := 0
+	Local cTitulo:= ""
+	Local lAuto := isBlind()
+	Local cCodigo := ""
 	SE1->(dbSetOrder(1))
 	If SE1->(dbSeek(xFilial("SE1")+QRY->(EA_PREFIXO+EA_NUM+EA_PARCELA+EA_TIPO)))
 		//Verifica se já foi confirmado
@@ -1004,49 +1077,226 @@ return
 
 
 Static function Pagam106(oObj)
-Local nQtd := 0
-Local cTitulo:= ""
-Local lAuto := isBlind()
-Local cCodigo := ""
-Local oPix := BRDPix():New()
+	Local nQtd := 0
+	Local cTitulo:= ""
+	Local lAuto := isBlind()
+	Local cCodigo := ""
+	Local oPix := BRDPix():New()
 
-	
-		If SE2->(dbSeek(xFilial("SE2")+TRB->(PREFIXO+NUMERO+PARCELA+TIPO+FORNECE+LOJA)))
-			If SE2->E2_SALDO > 0
-				nQtd++
-				If TRB->BANCO == '001'
-			 		//Posiciona no fornecedor
-					SA2->(dbSeek(xFilial("SA2")+SE2->E2_FORNECE+SE2->E2_LOJA))
 
-					//Grava o idcnab
-					If Empty(SE2->E2_IDCNAB)
-						Reclock("SE2",.F.)
-						SE2->E2_IDCNAB:= GetSxENum("SE2", "E2_IDCNAB","E2_IDCNAB"+cEmpAnt)
-						MsUnlock()
-						ConfirmSX8()
+	If SE2->(dbSeek(xFilial("SE2")+TRB->(PREFIXO+NUMERO+PARCELA+TIPO+FORNECE+LOJA)))
+		If SE2->E2_SALDO > 0
+			nQtd++
+			If TRB->BANCO == '001'
+				//Posiciona no fornecedor
+				SA2->(dbSeek(xFilial("SA2")+SE2->E2_FORNECE+SE2->E2_LOJA))
+
+				//Grava o idcnab
+				If Empty(SE2->E2_IDCNAB)
+					Reclock("SE2",.F.)
+					SE2->E2_IDCNAB:= GetSxENum("SE2", "E2_IDCNAB","E2_IDCNAB"+cEmpAnt)
+					MsUnlock()
+					ConfirmSX8()
+				Endif
+
+				//Numero da requisição
+				cNumReq:= Soma1(Alltrim(SEE->EE_FAXATU))
+				Reclock("SEE",.F.)
+				SEE->EE_FAXATU:= cNumReq
+				SEE->(msUnlock())
+
+				//Transferencias
+				If TRB->MODELO $ "41/43"
+					lTransferencia:= .T.
+					cTitulo:= '{'
+					cTitulo+= '"numeroRequisicao": '+cNumReq+','
+					cTitulo+= '"numeroContratoPagamento": '+Alltrim(SEE->EE_CODEMP)+','
+					cTitulo+= '"agenciaDebito": '+SEE->EE_AGENCIA+','
+					cTitulo+= '"contaCorrenteDebito": '+SEE->EE_CONTA+','
+					cTitulo+= '"digitoVerificadorContaCorrente": "'+SEE->EE_DVCTA+'",'
+					cTitulo+= '"tipoPagamento": 126,'
+					cTitulo+= '"listaTransferencias": ['
+					cTitulo+= '  {'
+					cTitulo+= '    "numeroCOMPE": '+cvaltochar(val(SA2->A2_BANCO))+','
+					cTitulo+= '    "numeroISPB": 0,'
+					cTitulo+= '    "agenciaCredito": '+cvaltochar(val(SA2->A2_AGENCIA))+','
+					If !Empty(SA2->A2_DVCTA)
+						cDigCta:= Alltrim(SA2->A2_DVCTA)
+						cConta:= cvaltochar(val(SA2->A2_NUMCON))
+					Else
+						nPosDig:= At("-",SA2->A2_NUMCON)
+						If nPosDig > 0
+							cDigCta:= Alltrim(Substr(SA2->A2_NUMCON,nPosDig))
+							cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,nPosDig-1)))
+						Else
+							cDigCta:= Right(Alltrim(SA2->A2_NUMCON),1)
+							cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,Len(Alltrim(SA2->A2_NUMCON)-1))))
+						Endif
+					Endif
+					cTitulo+= '    "contaCorrenteCredito": '+cConta+','
+					cTitulo+= '    "digitoVerificadorContaCorrente": "'+cDigCta+'",'
+					cTitulo+= '    "contaPagamentoCredito": "",'
+					cTitulo+= '    "cpfBeneficiario": '+Iif(Len(Alltrim(SA2->A2_CGC)) == 14,'0', cvaltochar(val(SA2->A2_CGC)))+','
+					cTitulo+= '    "cnpjBeneficiario": '+Iif(Len(Alltrim(SA2->A2_CGC)) == 14, cvaltochar(val(SA2->A2_CGC)),'0')+','
+					cTitulo+= '    "dataTransferencia": '+cvaltochar(val((GRAVADATA(dDataBase,.F.,5))))+','
+					cTitulo+= '    "valorTransferencia": '+cvaltochar(SE2->E2_VALOR)+','
+					cTitulo+= '    "documentoDebito": 0,'
+					cTitulo+= '    "documentoCredito": 0,'
+					If TRB->MODELO = '03' //DOC
+						cTitulo+= '    "codigoFinalidadeDOC": 1,'
+					Elseif TRB->MODELO <> '01' //Ted
+						cTitulo+= '    "codigoFinalidadeTED": 10,'
+					Endif
+					cTitulo+= '    "numeroDepositoJudicial": "",'
+					cTitulo+= '    "descricaoTransferencia": "'+SE2->E2_IDCNAB+'"'
+					cTitulo+= '  }'
+					cTitulo+= ']'
+					cTitulo+= '}'
+
+					//Boletos
+				Elseif TRB->MODELO $ "30/31"
+					If !Empty(SE2->E2_CODBAR)
+						lBoleto:= .T.
+
+						cTitulo:= '{'
+						cTitulo+= '"numeroRequisicao": '+u_TiraZero(cNumReq)+','
+						cTitulo+= '"codigoContrato": '+Alltrim(SEE->EE_CODEMP)+','
+						cTitulo+= '"numeroAgenciaDebito": '+SEE->EE_AGENCIA+','
+						cTitulo+= '"numeroContaCorrenteDebito": '+u_TiraZero(Alltrim(SEE->EE_CONTA))+','
+						cTitulo+= '"digitoVerificadorContaCorrenteDebito": "'+SEE->EE_DVCTA+'",'
+						cTitulo+= '"lancamentos": ['
+						cTitulo+= '  {'
+						cTitulo+= '    "numeroDocumentoDebito": '+cvaltochar(val(SA2->A2_BANCO))+','
+						cTitulo+= '    "numeroCodigoBarras": "'+Alltrim(SE2->E2_CODBAR)+'",'
+						cTitulo+= '    "dataPagamento": '+cvaltochar(val((GRAVADATA(dDataBase,.F.,5))))+','
+						cTitulo+= '    "valorPagamento": '+cvaltochar(SE2->E2_VALOR)+','
+						cTitulo+= '    "descricaoPagamento": "",'
+						cTitulo+= '    "codigoSeuDocumento": "'+SE2->E2_IDCNAB+'",'
+						cTitulo+= '    "codigoNossoDocumento": "",'
+						cTitulo+= '    "valorNominal": '+cvaltochar(SE2->E2_VALOR)+','
+						cTitulo+= '    "valorDesconto": 0,'
+						cTitulo+= '    "valorMoraMulta": 0,'
+						cTitulo+= '    "codigoTipoPagador": 0,'
+						cTitulo+= '    "documentoPagador": 0,'
+						cTitulo+= '    "codigoTipoBeneficiario": '+Iif(Len(Alltrim(SA2->A2_CGC)) == 14,'2','1')+','
+						cTitulo+= '    "documentoBeneficiario": '+cvaltochar(val(SA2->A2_CGC))+','
+						cTitulo+= '    "codigoTipoAvalista": 0,'
+						cTitulo+= '    "documentoAvalista": 0'
+						cTitulo+= '  }'
+						cTitulo+= ']'
+						cTitulo+= '}'
 					Endif
 
-					//Numero da requisição
-					cNumReq:= Soma1(Alltrim(SEE->EE_FAXATU))
-					Reclock("SEE",.F.)
-					SEE->EE_FAXATU:= cNumReq
-					SEE->(msUnlock())
+					//Guias com código de barras
+				Elseif TRB->MODELO $ "11/13/16/17/18"
+					If !Empty(SE2->E2_CODBAR)
+						lGuiaCB:= .T.
 
-					//Transferencias
-					If TRB->MODELO $ "41/43"
-						lTransferencia:= .T.
 						cTitulo:= '{'
 						cTitulo+= '"numeroRequisicao": '+cNumReq+','
-						cTitulo+= '"numeroContratoPagamento": '+Alltrim(SEE->EE_CODEMP)+','
-						cTitulo+= '"agenciaDebito": '+SEE->EE_AGENCIA+','
-						cTitulo+= '"contaCorrenteDebito": '+SEE->EE_CONTA+','
-						cTitulo+= '"digitoVerificadorContaCorrente": "'+SEE->EE_DVCTA+'",'
-						cTitulo+= '"tipoPagamento": 126,'
-						cTitulo+= '"listaTransferencias": ['
+						cTitulo+= '"codigoContrato": '+Alltrim(SEE->EE_CODEMP)+','
+						cTitulo+= '"numeroAgenciaDebito": '+SEE->EE_AGENCIA+','
+						cTitulo+= '"numeroContaCorrenteDebito": '+SEE->EE_CONTA+','
+						cTitulo+= '"digitoVerificadorContaCorrenteDebito": "'+SEE->EE_DVCTA+'",'
+						cTitulo+= '"lancamentos": ['
 						cTitulo+= '  {'
-						cTitulo+= '    "numeroCOMPE": '+cvaltochar(val(SA2->A2_BANCO))+','
-						cTitulo+= '    "numeroISPB": 0,'
-						cTitulo+= '    "agenciaCredito": '+cvaltochar(val(SA2->A2_AGENCIA))+','
+						cTitulo+= '    "codigoBarras": "'+Alltrim(SE2->E2_CODBAR)+'",'
+						cTitulo+= '    "dataPagamento": '+cvaltochar(val((GRAVADATA(dDataBase,.F.,5))))+','
+						cTitulo+= '    "valorPagamento": '+cvaltochar(SE2->E2_VALOR)+','
+						cTitulo+= '    "numeroDocumentoDebito": 0,'
+						cTitulo+= '    "codigoSeuDocumento": "'+SE2->E2_IDCNAB+'",'
+						cTitulo+= '    "descricaoPagamento": ""'
+						cTitulo+= '  }'
+						cTitulo+= ']'
+						cTitulo+= '}'
+					Endif
+				Endif
+
+
+				If !Empty(cTitulo)
+					cCodigo:= GetSxENum("ZLA", "ZLA_CODIGO")
+					ConfirmSX8()
+					//Chama a API do banco
+					If lAuto
+						u_XAG0114(cTitulo,cCodigo)
+					Else
+						FWMsgRun(,{|| u_XAG0114(cTitulo,cCodigo)},"Envio ao Banco do Brasil","Enviando título(s)... Aguarde...")
+					Endif
+				Endif
+
+				cLiberaJson:= '{'
+				cLiberaJson+= '"numeroRequisicao": '+cNumReq+','
+				cLiberaJson+= '"indicadorFloat": "S"'
+				cLiberaJson+= '}'
+
+				If lAuto
+					u_XAG0114B(cLiberaJson,cCodigo)
+				Else
+					FWMsgRun(,{|| u_XAG0114(cTitulo,cCodigo)},"Envio ao Banco do Brasil","Enviando título(s)... Aguarde...")
+				Endif
+
+			Else
+				//237 - BRADESCO
+				//Posiciona no fornecedor
+				SA2->(dbSeek(xFilial("SA2")+SE2->E2_FORNECE+SE2->E2_LOJA))
+
+				//Grava o idcnab
+				If Empty(SE2->E2_IDCNAB)
+					Reclock("SE2",.F.)
+					SE2->E2_IDCNAB:= GetSxENum("SE2", "E2_IDCNAB","E2_IDCNAB"+cEmpAnt)
+					MsUnlock()
+					ConfirmSX8()
+				Endif
+
+				//Numero da requisição
+				cNumReq:= Soma1(Alltrim(SEE->EE_FAXATU))
+				Reclock("SEE",.F.)
+				SEE->EE_FAXATU:= cNumReq
+				SEE->(msUnlock())
+
+				//Transferencias
+				//If TRB->MODELO $ "01/03/41/43" // REMOVIDO PIX.
+				If TRB->MODELO $ "01/03/41/43/48"
+					lTransferencia:= .T.
+
+					IF(!EMPTY(SA2->A2_PIXTP) .AND. TRB->MODELO == "48")// se o fornecedor possui PIX
+						oObj:IncRegua2("Efetuando pagamento com PIX")
+						oPix:oRecebedor:cCpfCnpj := SA2->A2_CGC
+						oPix:oRecebedor:cTipoChave := SA2->A2_PIXTP
+						IF(oPix:oRecebedor:cTipoChave == "CPFCNPJ")
+							oPix:oRecebedor:cChavePix := ALLTRIM(SA2->A2_PIXCHAV)
+						ELSE
+							oPix:oPagador:cTipoChave := "AGENCIACONTA"
+							oPix:oRecebedor:cChavePix := ALLTRIM(SA2->A2_PIXCHAV)
+							oPix:oRecebedor:cAgencia := ALLTRIM(SA2->A2_AGENCIA)
+							oPix:oRecebedor:cBanco := ALLTRIM(SA2->A2_BANCO)
+							oPix:oRecebedor:cConta := ALLTRIM(SA2->A2_NUMCON)
+							oPix:oRecebedor:cIspb := Posicione("SA6",1,xFilial("SA6")+SA2->A2_BANCO,"A6_ISPB") //ALLTRIM(SA2->A2_BANCO)
+							oPix:oRecebedor:cDigitoConta := ALLTRIM(SA2->A2_DVCTA)
+							//01800
+						ENDIF
+						oPix:oRecebedor:cFavorecido	:= SA2->A2_NOME						
+						oPix:cIdTransacao := Alltrim(SE2->E2_IDCNAB)
+						oPix:nValor := SE2->E2_SALDO 
+						oPix:cDescricao := "PAGAMENTO FORNECEDOR"
+
+						IF(oPix:SolicitarTransferencia())
+							lRec:= .T.
+						ELSE
+							oObj:IncRegua2("ERRO PIX")
+						ENDIF
+
+
+					ELSEIF TRB->MODELO != "48"
+						oObj:IncRegua2("Efetuando TED")
+						cTitulo:='{'
+						cTitulo+='"identificadorDoTipoDeTransferencia":1,' //diferente titularidade
+						cTitulo+='"agenciaRemetente":'+cvaltochar(val(SEE->EE_AGENCIA))+','
+						cTitulo+='"bancoDestinatario":'+cvaltochar(val(SA2->A2_BANCO))+','
+						cTitulo+='"agenciaDestinatario":'+cvaltochar(val(SA2->A2_AGENCIA))+','
+						cTitulo+='"contaRemetenteComDigito":'+cvaltochar(val(SEE->EE_CONTA))+cvaltochar(val(SEE->EE_DVCTA))+','
+						cTitulo+='"tipoContaRemetente":"CC",' //CC=Conta corrente - PP=Poupança
+						cTitulo+='"tipoDePessoaRemetente":"J",'
 						If !Empty(SA2->A2_DVCTA)
 							cDigCta:= Alltrim(SA2->A2_DVCTA)
 							cConta:= cvaltochar(val(SA2->A2_NUMCON))
@@ -1057,322 +1307,156 @@ Local oPix := BRDPix():New()
 								cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,nPosDig-1)))
 							Else
 								cDigCta:= Right(Alltrim(SA2->A2_NUMCON),1)
-								cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,Len(Alltrim(SA2->A2_NUMCON)-1))))
+								cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,Len(Alltrim(SA2->A2_NUMCON))-1)))
 							Endif
 						Endif
-						cTitulo+= '    "contaCorrenteCredito": '+cConta+','
-						cTitulo+= '    "digitoVerificadorContaCorrente": "'+cDigCta+'",'
-						cTitulo+= '    "contaPagamentoCredito": "",'
-						cTitulo+= '    "cpfBeneficiario": '+Iif(Len(Alltrim(SA2->A2_CGC)) == 14,'0', cvaltochar(val(SA2->A2_CGC)))+','
-						cTitulo+= '    "cnpjBeneficiario": '+Iif(Len(Alltrim(SA2->A2_CGC)) == 14, cvaltochar(val(SA2->A2_CGC)),'0')+','
-						cTitulo+= '    "dataTransferencia": '+cvaltochar(val((GRAVADATA(dDataBase,.F.,5))))+','
-						cTitulo+= '    "valorTransferencia": '+cvaltochar(SE2->E2_VALOR)+','
-						cTitulo+= '    "documentoDebito": 0,'
-						cTitulo+= '    "documentoCredito": 0,'
-						If TRB->MODELO = '03' //DOC
-							cTitulo+= '    "codigoFinalidadeDOC": 1,'
-						Elseif TRB->MODELO <> '01' //Ted
-							cTitulo+= '    "codigoFinalidadeTED": 10,'
+						cTitulo+='"contaDestinatario":'+cConta+cDigCta+','
+						cTitulo+='"tipoDeContaDestinatario":"CC",
+						cTitulo+='"tipodePessoaDestinatario":"'+Iif(Len(Alltrim(SA2->A2_CGC)) == 14,'J','F')+'",'
+						cTitulo+='"numeroInscricao":"'+Iif(Len(Alltrim(SA2->A2_CGC))==14,Left(SA2->A2_CGC,8),Left(SA2->A2_CGC,9))+'",'
+						//cTitulo+='"numeroFilial":"'+Substr(Alltrim(SA2->A2_CGC),9,4)+'",
+						cTitulo+='"numeroFilial":"'+Iif(Len(Alltrim(SA2->A2_CGC))==14,Substr(Alltrim(SA2->A2_CGC),9,4),"00000")+'",
+						cTitulo+='"numeroControle":"'+Right(Alltrim(SA2->A2_CGC),2)+'",'
+						cTitulo+='"nomeClienteDestinatario":"'+U_RemCarEsp(Alltrim(SA2->A2_NOME))+'",'
+						cTitulo+='"valorDaTransferencia":'+cvaltochar(SE2->E2_SALDO)+','
+						cTitulo+='"finalidadeDaTransferencia":10,'
+						cTitulo+='"codigoIdentificadorDaTransferencia":"'+Alltrim(SE2->E2_IDCNAB)+'",'
+						cTitulo+='"dataMovimento":"'+StrTran(Left(FWTIMESTAMP(2,dDataBase),10),"/",".")+'",'
+						cTitulo+='"tipoDeDoc":"",' //D=mesma titularidade E=diferente titularidade
+						cTitulo+='"tipoDeDocumentoDeBarras":"",'
+						cTitulo+='"numeroCodigoDeBarras":"",'
+						cTitulo+='"canalPagamento":0,'
+						cTitulo+='"valorMulta":0,'
+						cTitulo+='"valorJuro":0,'
+						cTitulo+='"valorDescontoOuAbatimento":0,'
+						cTitulo+='"valorOutrosAcrescimos":0,'
+						cTitulo+='"indicadorDda":"N"'
+						cTitulo+='}'
+					ENDIF
+					//Boletos
+				Elseif TRB->MODELO $ "30/31"
+					If !Empty(SE2->E2_CODBAR)
+						oObj:IncRegua2("Efetuando pagamento BOLETO")
+						lBoleto:= .T.
+						cCodigo:= GetSxENum("ZLA", "ZLA_CODIGO")
+						cClientId := ALLTRIM(SEE->EE_ZZCLIID)
+						ConfirmSX8()
+						If u_XAG0121A(cCodigo, cClientId)
+							if(U_XAG0121B(cCodigo, cClientId))
+								cTitulo:='{'
+								cTitulo+='"agencia":'+U_TiraZero(Alltrim(SEE->EE_AGENCIA))+','
+								cTitulo+='"indicadorFuncao":"1",'//0-CONSULTAPRÉ-PAGAMENTO;1 - PAGAMENTO / AGENDAMENTO;2 - ANULAÇÃO.
+								cTitulo+='"nomeCliente":"'+SUBSTR(U_RemCarEsp(Alltrim(Upper(SM0->M0_NOMECOM))),1,40)+'",'//"'+U_RemCarEsp(Alltrim(SA2->A2_NOME))+'",'
+								If Left(SE2->E2_CODBAR,3) <> '237'
+									//Busca o num de controle do participante
+									cTitulo+= '"numeroControleParticipante":"'+Alltrim(ZLA->ZLA_PIXTID)+'",'
+								Else
+									cTitulo+= '"numeroControleParticipante":"0",'
+								Endif
+								cTitulo+='"identificacaoChequeCartao":0,'
+								cTitulo+='"indicadorValidacaoGravacao":"N",'
+								cTitulo+='"valorMinimoIdentificacao":0.00,'//'+cvaltochar(SE2->E2_VALOR)+'",
+								cTitulo+='"destinatarioDadosComum":{
+								cTitulo+='"cpfCnpjDestinatario":"'+Alltrim(SM0->M0_CGC)+'"'
+								cTitulo+='},
+								cTitulo+='"pagamentoComumRequest":{'
+								cTitulo+='"dadosSegundaLinhaExtrato":"'+SE2->E2_FILIAL+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+'",
+								cTitulo+='"dataMovimento":'+DTOS(dDataBase)+','
+								cTitulo+='"dataPagamento":'+DTOS(dDataBase)+','
+								cTitulo+='"dataVencimento":'+DTOS(dDataBase)+','
+								cTitulo+='"horaTransacao":'+cvaltochar(val(StrTran(Time(),":","")))+',
+								cTitulo+='"identificacaoTituloCobranca":"'+Alltrim(SE2->E2_CODBAR)+'",
+								cTitulo+='"indicadorFormaCaptura":1,'//1=codigodebarras,2=linhadigitável
+								cTitulo+='"valorTitulo":'+cvaltochar(SE2->E2_VALOR )+',
+								cTitulo+='"contaDadosComum":{
+								cTitulo+='"agenciaContaDebitada":'+cvaltochar(val(SEE->EE_AGENCIA))+',
+								cTitulo+='"bancoContaDebitada":'+cvaltochar(val(SEE->EE_CODIGO))+',
+								cTitulo+='"contaDebitada": '+cvaltochar(val(SEE->EE_CONTA))+',
+								//cTitulo+= '"contaDebitada":27720,'
+								cTitulo+='"digitoAgenciaDebitada":'+Alltrim(SEE->EE_DVAGE)+',
+								//cTitulo+='"digitoContaDebitada":7'
+								cTitulo+= '"digitoContaDebitada": "'+Alltrim(SEE->EE_DVCTA)+'"'
+								cTitulo+='}'
+								cTitulo+='},
+								cTitulo+='"portadorDadosComum":{
+								//cTitulo+='"cpfCnpjPortador":"'+Alltrim(SM0->M0_CGC)+'"'//'+Alltrim(SA2->A2_CGC)+'
+								//cTitulo+='"cpfCnpjPortador":"81632093000411"'//'+Alltrim(SEE->EE_ZZCNPJP)+'
+								cTitulo+='"cpfCnpjPortador":"'+Alltrim(SEE->EE_ZZCNPJP)+'"'//'+Alltrim(SEE->EE_ZZCNPJP)+'
+								cTitulo+='},
+								cTitulo+='"remetenteDadosComum":{
+								cTitulo+='"cpfCnpjRemetente":"'+Alltrim(SA2->A2_CGC)+'"'
+								cTitulo+='},
+								cTitulo+='"transactionId":'+LEFT(CVALTOCHAR(VAL(SUBSTR(SE2->E2_IDCNAB,2,10))),9)//'+u_TiraZero(Right(cNumReq,9))
+								cTitulo+='}
+							Endif
 						Endif
-						cTitulo+= '    "numeroDepositoJudicial": "",'
-						cTitulo+= '    "descricaoTransferencia": "'+SE2->E2_IDCNAB+'"'
-						cTitulo+= '  }'
-						cTitulo+= ']'
+					Endif
+
+					//Guias com código de barras
+				Elseif QRY->EA_MODELO $ "11/13/16/17/18"
+					If !Empty(SE2->E2_CODBAR)
+						lGuiaCB:= .T.
+
+						cTitulo:= '{'
+						cTitulo+= '"agencia": '+cvaltochar(val(SEE->EE_AGENCIA))+','
+						cTitulo+= '"codigoBarras": "'+Alltrim(SE2->E2_CODBAR)+'",'
+						//cTitulo+= '"conta":27720 ,'
+						cTitulo+= '"conta": '+cvaltochar(val(SEE->EE_CONTA))+','
+						cTitulo+= '"dataDebito": "'+Left(FwTimeStamp(3,dDataBase),10)+'",'
+						cTitulo+= '"digitoAgencia": '+Alltrim(SEE->EE_DVAGE)+','
+						//cTitulo+= '"digitoAgencia":7,'
+						cTitulo+= '"digitoConta": "'+Alltrim(SEE->EE_DVCTA)+'",'
+						cTitulo+= '"idTransacao": "'+Right(Alltrim(SE2->E2_IDCNAB),9)+'",'
+						cTitulo+= '"tipoConta": 1,' //1-conta corrente, 2-poupança
+						cTitulo+= '"tipoRegistro": 1,' // 0- consulta, 1-inclusao
+						cTitulo+= '"valorPrincipal": '+cvaltochar(SE2->E2_VALOR)
 						cTitulo+= '}'
 
-						//Boletos
-					Elseif TRB->MODELO $ "30/31"
-						If !Empty(SE2->E2_CODBAR)
-							lBoleto:= .T.
-
-							cTitulo:= '{'
-							cTitulo+= '"numeroRequisicao": '+u_TiraZero(cNumReq)+','
-							cTitulo+= '"codigoContrato": '+Alltrim(SEE->EE_CODEMP)+','
-							cTitulo+= '"numeroAgenciaDebito": '+SEE->EE_AGENCIA+','
-							cTitulo+= '"numeroContaCorrenteDebito": '+u_TiraZero(Alltrim(SEE->EE_CONTA))+','
-							cTitulo+= '"digitoVerificadorContaCorrenteDebito": "'+SEE->EE_DVCTA+'",'
-							cTitulo+= '"lancamentos": ['
-							cTitulo+= '  {'
-							cTitulo+= '    "numeroDocumentoDebito": '+cvaltochar(val(SA2->A2_BANCO))+','
-							cTitulo+= '    "numeroCodigoBarras": "'+Alltrim(SE2->E2_CODBAR)+'",'
-							cTitulo+= '    "dataPagamento": '+cvaltochar(val((GRAVADATA(dDataBase,.F.,5))))+','
-							cTitulo+= '    "valorPagamento": '+cvaltochar(SE2->E2_VALOR)+','
-							cTitulo+= '    "descricaoPagamento": "",'
-							cTitulo+= '    "codigoSeuDocumento": "'+SE2->E2_IDCNAB+'",'
-							cTitulo+= '    "codigoNossoDocumento": "",'
-							cTitulo+= '    "valorNominal": '+cvaltochar(SE2->E2_VALOR)+','
-							cTitulo+= '    "valorDesconto": 0,'
-							cTitulo+= '    "valorMoraMulta": 0,'
-							cTitulo+= '    "codigoTipoPagador": 0,'
-							cTitulo+= '    "documentoPagador": 0,'
-							cTitulo+= '    "codigoTipoBeneficiario": '+Iif(Len(Alltrim(SA2->A2_CGC)) == 14,'2','1')+','
-							cTitulo+= '    "documentoBeneficiario": '+cvaltochar(val(SA2->A2_CGC))+','
-							cTitulo+= '    "codigoTipoAvalista": 0,'
-							cTitulo+= '    "documentoAvalista": 0'
-							cTitulo+= '  }'
-							cTitulo+= ']'
-							cTitulo+= '}'
-						Endif
-
-						//Guias com código de barras
-					Elseif TRB->MODELO $ "11/13/16/17/18"
-						If !Empty(SE2->E2_CODBAR)
-							lGuiaCB:= .T.
-
-							cTitulo:= '{'
-							cTitulo+= '"numeroRequisicao": '+cNumReq+','
-							cTitulo+= '"codigoContrato": '+Alltrim(SEE->EE_CODEMP)+','
-							cTitulo+= '"numeroAgenciaDebito": '+SEE->EE_AGENCIA+','
-							cTitulo+= '"numeroContaCorrenteDebito": '+SEE->EE_CONTA+','
-							cTitulo+= '"digitoVerificadorContaCorrenteDebito": "'+SEE->EE_DVCTA+'",'
-							cTitulo+= '"lancamentos": ['
-							cTitulo+= '  {'
-							cTitulo+= '    "codigoBarras": "'+Alltrim(SE2->E2_CODBAR)+'",'
-							cTitulo+= '    "dataPagamento": '+cvaltochar(val((GRAVADATA(dDataBase,.F.,5))))+','
-							cTitulo+= '    "valorPagamento": '+cvaltochar(SE2->E2_VALOR)+','
-							cTitulo+= '    "numeroDocumentoDebito": 0,'
-							cTitulo+= '    "codigoSeuDocumento": "'+SE2->E2_IDCNAB+'",'
-							cTitulo+= '    "descricaoPagamento": ""'
-							cTitulo+= '  }'
-							cTitulo+= ']'
-							cTitulo+= '}'
-						Endif
 					Endif
 
-					
-					If !Empty(cTitulo)
+				Endif
+
+				If !Empty(cTitulo)
+					If Empty(cCodigo)
 						cCodigo:= GetSxENum("ZLA", "ZLA_CODIGO")
 						ConfirmSX8()
-						//Chama a API do banco
-						If lAuto
-							u_XAG0114(cTitulo,cCodigo)
-						Else
-							FWMsgRun(,{|| u_XAG0114(cTitulo,cCodigo)},"Envio ao Banco do Brasil","Enviando título(s)... Aguarde...")
-						Endif
 					Endif
-
-					cLiberaJson:= '{'
-					cLiberaJson+= '"numeroRequisicao": '+cNumReq+','
-					cLiberaJson+= '"indicadorFloat": "S"'					
-					cLiberaJson+= '}'
-
+					//Chama a API do banco
+					cClientId := ALLTRIM(SEE->EE_ZZCLIID)
+					oObj:IncRegua2("Enviado ao Bradesco")
 					If lAuto
-						u_XAG0114B(cLiberaJson,cCodigo)
+						u_XAG0121(cTitulo,cCodigo, cClientId)
 					Else
-						FWMsgRun(,{|| u_XAG0114(cTitulo,cCodigo)},"Envio ao Banco do Brasil","Enviando título(s)... Aguarde...")
+						FWMsgRun(,{|| u_XAG0121(cTitulo,cCodigo, cClientId)},"Envio ao Bradesco","Enviando título(s)... Aguarde...")
 					Endif
-
-				Else
-					//237 - BRADESCO
-					//Posiciona no fornecedor
-					SA2->(dbSeek(xFilial("SA2")+SE2->E2_FORNECE+SE2->E2_LOJA))
-
-					//Grava o idcnab
-					If Empty(SE2->E2_IDCNAB)
-						Reclock("SE2",.F.)
-						SE2->E2_IDCNAB:= GetSxENum("SE2", "E2_IDCNAB","E2_IDCNAB"+cEmpAnt)
-						MsUnlock()
-						ConfirmSX8()
-					Endif
-
-					//Numero da requisição
-					cNumReq:= Soma1(Alltrim(SEE->EE_FAXATU))
-					Reclock("SEE",.F.)
-					SEE->EE_FAXATU:= cNumReq
-					SEE->(msUnlock())
-
-					//Transferencias
-					//If TRB->MODELO $ "01/03/41/43" // REMOVIDO PIX.
-					If TRB->MODELO $ "01/03/41/43/48"
-						lTransferencia:= .T.
-
-						IF(!EMPTY(SA2->A2_PIXTP) .AND. !EMPTY(SA2->A2_PIXCHAV)) .AND. TRB->MODELO == "48"// se o fornecedor possui PIX
-							oObj:IncRegua2("Efetuando pagamento com PIX")
-							oPix:oRecebedor:cCpfCnpj := SA2->A2_CGC
-							oPix:oRecebedor:cTipoChave := SA2->A2_PIXTP
-							oPix:oRecebedor:cChavePix := ALLTRIM(SA2->A2_PIXCHAV)
-							oPix:oRecebedor:cFavorecido	:= SA2->A2_NOME
-
-							oPix:cIdTransacao := Alltrim(SE2->E2_IDCNAB)
-							oPix:nValor := SE2->E2_VALOR
-							oPix:cDescricao := "PAGAMENTO FORNECEDOR"																		
-
-							IF(oPix:SolicitarTransferencia())
-								lRec:= .T.								
-							ELSE
-								oObj:IncRegua2("ERRO PIX")   
-							ENDIF
-
-
-						ELSEIF TRB->MODELO != "48"
-							oObj:IncRegua2("Efetuando TED")   
-							cTitulo:='{'
-							cTitulo+='"identificadorDoTipoDeTransferencia":1,' //diferente titularidade
-							cTitulo+='"agenciaRemetente":'+cvaltochar(val(SEE->EE_AGENCIA))+','
-							cTitulo+='"bancoDestinatario":'+cvaltochar(val(SA2->A2_BANCO))+','
-							cTitulo+='"agenciaDestinatario":'+cvaltochar(val(SA2->A2_AGENCIA))+','
-							cTitulo+='"contaRemetenteComDigito":'+cvaltochar(val(SEE->EE_CONTA))+cvaltochar(val(SEE->EE_DVCTA))+','
-							cTitulo+='"tipoContaRemetente":"CC",' //CC=Conta corrente - PP=Poupança
-							cTitulo+='"tipoDePessoaRemetente":"J",'
-							If !Empty(SA2->A2_DVCTA)
-								cDigCta:= Alltrim(SA2->A2_DVCTA)
-								cConta:= cvaltochar(val(SA2->A2_NUMCON))
-							Else
-								nPosDig:= At("-",SA2->A2_NUMCON)
-								If nPosDig > 0
-									cDigCta:= Alltrim(Substr(SA2->A2_NUMCON,nPosDig))
-									cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,nPosDig-1)))
-								Else
-									cDigCta:= Right(Alltrim(SA2->A2_NUMCON),1)
-									cConta:= cvaltochar(val(substr(Alltrim(SA2->A2_NUMCON),1,Len(Alltrim(SA2->A2_NUMCON))-1)))
-								Endif
-							Endif
-							cTitulo+='"contaDestinatario":'+cConta+cDigCta+','
-							cTitulo+='"tipoDeContaDestinatario":"CC",
-							cTitulo+='"tipodePessoaDestinatario":"'+Iif(Len(Alltrim(SA2->A2_CGC)) == 14,'J','F')+'",'
-							cTitulo+='"numeroInscricao":"'+Iif(Len(Alltrim(SA2->A2_CGC))==14,Left(SA2->A2_CGC,8),Left(SA2->A2_CGC,9))+'",'
-							cTitulo+='"numeroFilial":"'+Substr(Alltrim(SA2->A2_CGC),9,4)+'",
-							cTitulo+='"numeroControle":"'+Right(Alltrim(SA2->A2_CGC),2)+'",'
-							cTitulo+='"nomeClienteDestinatario":"'+U_RemCarEsp(Alltrim(SA2->A2_NOME))+'",'
-							cTitulo+='"valorDaTransferencia":'+cvaltochar(SE2->E2_VALOR)+','
-							cTitulo+='"finalidadeDaTransferencia":'+cvaltochar(val(TRB->MODELO))+','
-							cTitulo+='"codigoIdentificadorDaTransferencia":"'+Alltrim(SE2->E2_IDCNAB)+'",'
-							cTitulo+='"dataMovimento":"'+StrTran(Left(FWTIMESTAMP(2,dDataBase),10),"/",".")+'",'
-							cTitulo+='"tipoDeDoc":"",' //D=mesma titularidade E=diferente titularidade
-							cTitulo+='"tipoDeDocumentoDeBarras":"",'
-							cTitulo+='"numeroCodigoDeBarras":"",'
-							cTitulo+='"canalPagamento":0,'
-							cTitulo+='"valorMulta":0,'
-							cTitulo+='"valorJuro":0,'
-							cTitulo+='"valorDescontoOuAbatimento":0,'
-							cTitulo+='"valorOutrosAcrescimos":0,'
-							cTitulo+='"indicadorDda":"N"'
-							cTitulo+='}'
-						ENDIF
-						//Boletos
-					Elseif TRB->MODELO $ "30/31"
-						If !Empty(SE2->E2_CODBAR)
-							oObj:IncRegua2("Efetuando pagamento BOLETO")   
-							lBoleto:= .T.
-							cCodigo:= GetSxENum("ZLA", "ZLA_CODIGO")
-							cClientId := ALLTRIM(SEE->EE_ZZCLIID)
-							ConfirmSX8()
-							If u_XAG0121A(cCodigo, cClientId)
-								if(U_XAG0121B(cCodigo, cClientId))
-									cTitulo:='{'
-									cTitulo+='"agencia":'+U_TiraZero(Alltrim(SEE->EE_AGENCIA))+','
-									cTitulo+='"indicadorFuncao":"1",'//0-CONSULTAPRÉ-PAGAMENTO;1 - PAGAMENTO / AGENDAMENTO;2 - ANULAÇÃO.
-									cTitulo+='"nomeCliente":"'+SUBSTR(U_RemCarEsp(Alltrim(Upper(SM0->M0_NOMECOM))),1,40)+'",'//"'+U_RemCarEsp(Alltrim(SA2->A2_NOME))+'",'
-									If Left(SE2->E2_CODBAR,3) <> '237'
-										//Busca o num de controle do participante
-										cTitulo+= '"numeroControleParticipante":"'+Alltrim(ZLA->ZLA_PIXTID)+'",'
-									Else
-										cTitulo+= '"numeroControleParticipante":"0",'
-									Endif
-									cTitulo+='"identificacaoChequeCartao":0,'
-									cTitulo+='"indicadorValidacaoGravacao":"N",'
-									cTitulo+='"valorMinimoIdentificacao":0.00,'//'+cvaltochar(SE2->E2_VALOR)+'",
-									cTitulo+='"destinatarioDadosComum":{
-									cTitulo+='"cpfCnpjDestinatario":"'+Alltrim(SM0->M0_CGC)+'"'
-									cTitulo+='},
-									cTitulo+='"pagamentoComumRequest":{'
-									cTitulo+='"dadosSegundaLinhaExtrato":"'+SE2->E2_FILIAL+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+'",
-									cTitulo+='"dataMovimento":'+DTOS(dDataBase)+','
-									cTitulo+='"dataPagamento":'+DTOS(dDataBase)+','
-									cTitulo+='"dataVencimento":'+DTOS(dDataBase)+','
-									cTitulo+='"horaTransacao":'+cvaltochar(val(StrTran(Time(),":","")))+',
-									cTitulo+='"identificacaoTituloCobranca":"'+Alltrim(SE2->E2_CODBAR)+'",
-									cTitulo+='"indicadorFormaCaptura":1,'//1=codigodebarras,2=linhadigitável
-									cTitulo+='"valorTitulo":'+cvaltochar(SE2->E2_VALOR )+',
-									cTitulo+='"contaDadosComum":{
-									cTitulo+='"agenciaContaDebitada":'+cvaltochar(val(SEE->EE_AGENCIA))+',
-									cTitulo+='"bancoContaDebitada":'+cvaltochar(val(SEE->EE_CODIGO))+',
-									cTitulo+='"contaDebitada": '+cvaltochar(val(SEE->EE_CONTA))+',
-									//cTitulo+= '"contaDebitada":27720,'
-									cTitulo+='"digitoAgenciaDebitada":'+Alltrim(SEE->EE_DVAGE)+',
-									//cTitulo+='"digitoContaDebitada":7'
-									cTitulo+= '"digitoContaDebitada": "'+Alltrim(SEE->EE_DVCTA)+'"'
-									cTitulo+='}'
-									cTitulo+='},
-									cTitulo+='"portadorDadosComum":{
-									//cTitulo+='"cpfCnpjPortador":"'+Alltrim(SM0->M0_CGC)+'"'//'+Alltrim(SA2->A2_CGC)+'
-									//cTitulo+='"cpfCnpjPortador":"81632093000411"'//'+Alltrim(SEE->EE_ZZCNPJP)+'
-									cTitulo+='"cpfCnpjPortador":"'+Alltrim(SEE->EE_ZZCNPJP)+'"'//'+Alltrim(SEE->EE_ZZCNPJP)+'
-									cTitulo+='},
-									cTitulo+='"remetenteDadosComum":{
-									cTitulo+='"cpfCnpjRemetente":"'+Alltrim(SA2->A2_CGC)+'"'
-									cTitulo+='},
-									cTitulo+='"transactionId":'+LEFT(CVALTOCHAR(VAL(SUBSTR(SE2->E2_IDCNAB,2,10))),9)//'+u_TiraZero(Right(cNumReq,9))
-									cTitulo+='}
-								Endif
-							Endif
-						Endif
-
-						//Guias com código de barras
-					Elseif QRY->EA_MODELO $ "11/13/16/17/18"
-						If !Empty(SE2->E2_CODBAR)
-							lGuiaCB:= .T.
-
-							cTitulo:= '{'
-							cTitulo+= '"agencia": '+cvaltochar(val(SEE->EE_AGENCIA))+','
-							cTitulo+= '"codigoBarras": "'+Alltrim(SE2->E2_CODBAR)+'",'
-							//cTitulo+= '"conta":27720 ,'
-							cTitulo+= '"conta": '+cvaltochar(val(SEE->EE_CONTA))+','
-							cTitulo+= '"dataDebito": "'+Left(FwTimeStamp(3,dDataBase),10)+'",'
-							cTitulo+= '"digitoAgencia": '+Alltrim(SEE->EE_DVAGE)+','
-							//cTitulo+= '"digitoAgencia":7,'
-							cTitulo+= '"digitoConta": "'+Alltrim(SEE->EE_DVCTA)+'",'
-							cTitulo+= '"idTransacao": "'+Right(Alltrim(SE2->E2_IDCNAB),9)+'",'
-							cTitulo+= '"tipoConta": 1,' //1-conta corrente, 2-poupança
-							cTitulo+= '"tipoRegistro": 1,' // 0- consulta, 1-inclusao
-							cTitulo+= '"valorPrincipal": '+cvaltochar(SE2->E2_VALOR)
-							cTitulo+= '}'
-
-						Endif
-
-					Endif
-
-					If !Empty(cTitulo)
-						If Empty(cCodigo)
-							cCodigo:= GetSxENum("ZLA", "ZLA_CODIGO")
-							ConfirmSX8()
-						Endif
-						//Chama a API do banco
-						cClientId := ALLTRIM(SEE->EE_ZZCLIID)
-						oObj:IncRegua2("Enviado ao Bradesco")   
-						If lAuto
-							u_XAG0121(cTitulo,cCodigo, cClientId)
-						Else
-							FWMsgRun(,{|| u_XAG0121(cTitulo,cCodigo, cClientId)},"Envio ao Bradesco","Enviando título(s)... Aguarde...")
-						Endif
-						oObj:IncRegua2("Finalizado")   
-					Endif
+					oObj:IncRegua2("Finalizado")
 				Endif
-			ELSE
-				//ALERTA
-				FWAlertWarning("Titulo "+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA)+" já baixado!","Status atualizado")
-				
-				If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))					
-
-					Reclock("ZLA",.F.)					
-					ZLA_STATUS:= '3'				
-					MsUnlock()
-
-					Reclock("ZLB",.T.)
-					ZLB_FILIAL:= xFilial("ZLB")
-					ZLB_CODIGO:= ZLA->ZLA_CODIGO
-					ZLB_DATA:= dDataBase
-					ZLB_HORA:= Time()
-					ZLB_EVENTO:= '3' //Alteração boleto
-					ZLB_STATUS:= '3'
-					ZLB_USER:= __cUserId
-					ZLB_ERRO:= "Titulo já baixado."
-					ZLB_FILORI:= ZLA->ZLA_FILORI
-					msUnlock()
-				Endif  
-
 			Endif
+		ELSE
+			//ALERTA
+			FWAlertWarning("Titulo "+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA)+" já baixado!","Status atualizado")
+
+			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
+
+				Reclock("ZLA",.F.)
+				ZLA_STATUS:= '3'
+				MsUnlock()
+
+				Reclock("ZLB",.T.)
+				ZLB_FILIAL:= xFilial("ZLB")
+				ZLB_CODIGO:= ZLA->ZLA_CODIGO
+				ZLB_DATA:= dDataBase
+				ZLB_HORA:= Time()
+				ZLB_EVENTO:= '3' //Alteração boleto
+				ZLB_STATUS:= '3'
+				ZLB_USER:= __cUserId
+				ZLB_ERRO:= "Titulo já baixado."
+				ZLB_FILORI:= ZLA->ZLA_FILORI
+				msUnlock()
+			Endif
+
 		Endif
+	Endif
 
 return
 
@@ -1380,16 +1464,16 @@ return
 //  Cria as perguntas na SX1                               
 //********************************************************************************
 
-Static Function AjustaSx1(cPerg) 
+Static Function AjustaSx1(cPerg)
 
-Local aRegs:= {}
+	Local aRegs:= {}
 
-aAdd(aRegs,{cPerg, '01', "Carteira"				,"Carteira" 		,"Carteira" 			, 'mv_ch1' , 'C', 01	, 0, 0, 'C', '', 'mv_par03', 'Ambos','','','','','Pagar','','','','','Receber','','','','','','','','','','','','','','','','',''})
-aAdd(aRegs,{cPerg, '02', "Cliente/Fornecedor"   ,"Cliente/Fornecedor","Cliente/Fornecedor"	, 'mv_ch2' , 'C', 06	, 0, 0, 'G', '', 'mv_par04', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
-aAdd(aRegs,{cPerg, '03', "Data de Envio"   		,"Data de Envio" 	,"Data de Envio"    	, 'mv_ch3' , 'D', 10	, 0, 0, 'G', '', 'mv_par05', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
-aAdd(aRegs,{cPerg, '04', "Status"  				,"Status"  			,"Status"   			, 'mv_ch4' , 'C', 01	, 0, 0, 'C', '', 'mv_par06', 'Todos','','','','','Enviado','','','','','Entr. Confirm. ','','','','','Pago','','','','','Erro','','','','','','',''})
+	aAdd(aRegs,{cPerg, '01', "Carteira"				,"Carteira" 		,"Carteira" 			, 'mv_ch1' , 'C', 01	, 0, 0, 'C', '', 'mv_par03', 'Ambos','','','','','Pagar','','','','','Receber','','','','','','','','','','','','','','','','',''})
+	aAdd(aRegs,{cPerg, '02', "Cliente/Fornecedor"   ,"Cliente/Fornecedor","Cliente/Fornecedor"	, 'mv_ch2' , 'C', 06	, 0, 0, 'G', '', 'mv_par04', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
+	aAdd(aRegs,{cPerg, '03', "Data de Envio"   		,"Data de Envio" 	,"Data de Envio"    	, 'mv_ch3' , 'D', 10	, 0, 0, 'G', '', 'mv_par05', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
+	aAdd(aRegs,{cPerg, '04', "Status"  				,"Status"  			,"Status"   			, 'mv_ch4' , 'C', 01	, 0, 0, 'C', '', 'mv_par06', 'Todos','','','','','Enviado','','','','','Entr. Confirm. ','','','','','Pago','','','','','Erro','','','','','','',''})
 
-U_XAG0112(aRegs)
+	U_XAG0112(aRegs)
 
 Return
 
@@ -1397,59 +1481,59 @@ Return
 //  Cria as perguntas na SX1                               
 //********************************************************************************
 
-Static Function AjustaPerg(cPerg) 
+Static Function AjustaPerg(cPerg)
 
-Local aRegs:= {}
+	Local aRegs:= {}
 
-aAdd(aRegs,{cPerg, '01', "Bordero De"		,"Bordero De" 	,"Bordero De" 	, 'mv_ch1' , 'C', 06	, 0, 0, 'G', '', 'mv_par01', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
-aAdd(aRegs,{cPerg, '02', "Bordero Até"   	,"Bordero Até"	,"Bordero Até"	, 'mv_ch2' , 'C', 06	, 0, 0, 'G', '', 'mv_par02', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
-aAdd(aRegs,{cPerg, '03', "Banco"   			,"Banco" 		,"Banco"    	, 'mv_ch3' , 'C', 03	, 0, 0, 'G', '', 'mv_par03', '','','','','','','','','','','','','','','','','','','','','','','','','SA6','','',''})
-aAdd(aRegs,{cPerg, '04', "Agencia"  		,"Agencia"		,"Agencia"   	, 'mv_ch4' , 'C', 05	, 0, 0, 'G', '', 'mv_par04', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
-aAdd(aRegs,{cPerg, '05', "Conta"  			,"Conta"		,"Conta"   		, 'mv_ch5' , 'C', 10	, 0, 0, 'G', '', 'mv_par05', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
-aAdd(aRegs,{cPerg, '06', "Subconta"  		,"Subconta"		,"Subconta"   	, 'mv_ch6' , 'C', 03	, 0, 0, 'G', '', 'mv_par06', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
+	aAdd(aRegs,{cPerg, '01', "Bordero De"		,"Bordero De" 	,"Bordero De" 	, 'mv_ch1' , 'C', 06	, 0, 0, 'G', '', 'mv_par01', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
+	aAdd(aRegs,{cPerg, '02', "Bordero Até"   	,"Bordero Até"	,"Bordero Até"	, 'mv_ch2' , 'C', 06	, 0, 0, 'G', '', 'mv_par02', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
+	aAdd(aRegs,{cPerg, '03', "Banco"   			,"Banco" 		,"Banco"    	, 'mv_ch3' , 'C', 03	, 0, 0, 'G', '', 'mv_par03', '','','','','','','','','','','','','','','','','','','','','','','','','SA6','','',''})
+	aAdd(aRegs,{cPerg, '04', "Agencia"  		,"Agencia"		,"Agencia"   	, 'mv_ch4' , 'C', 05	, 0, 0, 'G', '', 'mv_par04', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
+	aAdd(aRegs,{cPerg, '05', "Conta"  			,"Conta"		,"Conta"   		, 'mv_ch5' , 'C', 10	, 0, 0, 'G', '', 'mv_par05', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
+	aAdd(aRegs,{cPerg, '06', "Subconta"  		,"Subconta"		,"Subconta"   	, 'mv_ch6' , 'C', 03	, 0, 0, 'G', '', 'mv_par06', '','','','','','','','','','','','','','','','','','','','','','','','','','','',''})
 
-U_XAG0112(aRegs)
+	U_XAG0112(aRegs)
 
 Return
 
 //  Remove zeros à esquerda                              
 //*******************************************************************************
 User Function TiraZero(cTexto)
-Local cRetorno  := ""
-Local lContinua := .T.
-Default cTexto  := ""
- 
+	Local cRetorno  := ""
+	Local lContinua := .T.
+	Default cTexto  := ""
+
 //Pegando o texto atual
-cRetorno := Alltrim(cTexto)
+	cRetorno := Alltrim(cTexto)
 
 //Enquanto existir zeros a esquerda
-While lContinua
-	//Se a priemira posição for diferente de 0 ou não existir mais texto de retorno, encerra o laço
-	If SubStr(cRetorno, 1, 1) <> "0" .Or. Len(cRetorno) ==0 .or. cRetorno == "0"
-		lContinua := .f.
-	EndIf
-		
-	//Se for continuar o processo, pega da próxima posição até o fim
-	If lContinua
-		cRetorno := Substr(cRetorno, 2, Len(cRetorno))
-	EndIf
-End     
-  
+	While lContinua
+		//Se a priemira posição for diferente de 0 ou não existir mais texto de retorno, encerra o laço
+		If SubStr(cRetorno, 1, 1) <> "0" .Or. Len(cRetorno) ==0 .or. cRetorno == "0"
+			lContinua := .f.
+		EndIf
+
+		//Se for continuar o processo, pega da próxima posição até o fim
+		If lContinua
+			cRetorno := Substr(cRetorno, 2, Len(cRetorno))
+		EndIf
+	End
+
 Return cRetorno
 
 
 //  Remove acento e caracter especial                              
 //*******************************************************************************
 User Function RemCarEsp(cTexto)
-Local cRet:= ""
+	Local cRet:= ""
 //Local aCarEsp:= {'"',"'",'#','%','*','&','>','<','!','$','(',')','_','=','+','{','}','[',']','/','?','.','\','|',':','°','ª'}
-Local aCarEsp:= {'"',"'",'#','%','*','&','>','<','!','$','´','(',')','_','=','¶','µ','+','{','}','[',']','/','?','.','\','|',':','°','ª','º'}
+	Local aCarEsp:= {'"',"'",'#','%','*','&','>','<','!','$','´','(',')','_','=','¶','µ','+','{','}','[',']','/','?','.','\','|',':','°','ª','º'}
 
 //Remove acentos
-cRet:= FWNoAccent(cTexto)
+	cRet:= FWNoAccent(cTexto)
 
 //Remove caracteres especiais
-aEval(aCarEsp,{|x| cRet:= StrTran(cRet,x,'') })
+	aEval(aCarEsp,{|x| cRet:= StrTran(cRet,x,'') })
 
 Return cRet
 
@@ -1699,7 +1783,7 @@ msUnlock()
 */
 
 Return lRet
-  
+
 
 static Function ConsBB106()
 	local jJsonList     := ""
@@ -2084,7 +2168,7 @@ cTitulo+= '  },
 					lRec:= .F.
 					cCodigo:= ZLA->ZLA_CODIGO
 				Endif
-				Reclock("ZLA",lRec)
+				Reclock("ZLA",lRec) //ANALISAR
 				ZLA_FILIAL:= xFilial("ZLA")
 				ZLA_PREFIX:= SE2->E2_PREFIXO
 				ZLA_NUM:= SE2->E2_NUM
@@ -2093,7 +2177,7 @@ cTitulo+= '  },
 				ZLA_CLIFOR:= SE2->E2_FORNECE
 				ZLA_LOJA:= SE2->E2_LOJA
 				ZLA_VENCTO:= SE2->E2_VENCTO
-				ZLA_VALOR:= SE2->E2_VALOR
+				ZLA_VALOR:= SE2->E2_SALDO
 				ZLA_NUMBOR:= SE2->E2_NUMBOR
 				ZLA_BANCO:= SEE->EE_CODIGO
 				ZLA_AGENCI:= SEE->EE_AGENCIA
@@ -2243,7 +2327,7 @@ Static Function consTEDBRD(cCodigo, cClientId)
 		cCodigo:= ZLA->ZLA_CODIGO
 	Endif
 
-	Reclock("ZLA",lRec)
+	Reclock("ZLA",lRec) //ANALISAR
 	ZLA_FILIAL:= xFilial("ZLA")
 	ZLA_STATUS:= '3'
 	ZLA_DATA:= dDataBase
@@ -2275,4 +2359,3 @@ Static Function consTEDBRD(cCodigo, cClientId)
 	Endif
 
 Return
-
