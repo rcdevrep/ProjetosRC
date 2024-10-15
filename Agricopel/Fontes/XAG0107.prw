@@ -259,6 +259,9 @@ If !lRegistrou
     Endif
 Endif
 
+Dbselectarea("ZLA")
+Dbsetorder(1)
+dbgotop()
 //Cria o registro na ZLA
 If ZLA->(DBSeek(xFilial("ZLA")+SE1->(E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO)))
     lRec:= .F.
@@ -765,6 +768,9 @@ Else
     Endif
 Endif
 
+Dbselectarea("ZLA")
+Dbsetorder(1)
+dbgotop()
 //Cria o registro na ZLA
 If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
     lRec:= .F.
@@ -916,6 +922,9 @@ If cCodResp <> 201
     Endif
 ENDIF
 
+Dbselectarea("ZLA")
+Dbsetorder(1)
+dbgotop()
 //Cria o registro na ZLA
 If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
     lRec:= .F.

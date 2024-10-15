@@ -62,10 +62,9 @@ cConteudo+= cToken+LF
 cConteudo+= cJti+LF
 cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-00:00'+LF
 cConteudo+= "SHA256"
-Memowrite(cDirServ+"request.txt",cConteudo)
 
 //Gera a assinatura
-cAssinatura:= U_gSignBrd()
+cAssinatura:= U_gSignBrd("RegistrarBoleto", SE1->E1_IDCNAB, cConteudo)
 
 If Empty(cAssinatura)
     Return
@@ -115,6 +114,9 @@ If !lRegistrou
     ENDIF
 Endif
 
+Dbselectarea("ZLA")
+Dbsetorder(1)
+dbgotop()
 //Cria o registro na ZLA
 If ZLA->(DBSeek(xFilial("ZLA")+SE1->(E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO)))
     lRec:= .F.
@@ -187,7 +189,9 @@ Return
 
 User Function XAG0121F(cCodigo)
 
-
+Dbselectarea("ZLA")
+Dbsetorder(1)
+dbgotop()
 //Cria o registro na ZLA
 If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
     lRec:= .F.
@@ -271,6 +275,7 @@ Local lRegistrou := .F.
 Local aToken      	:= {} 
 Local aHeadStr      := {} 
 Local nCodResp:= 0
+Local cFolderSign := ""
 Private nNossoNum   := 0
 Private oObjLog     := nil
 
@@ -284,10 +289,13 @@ cUrlBase:= GetNewPar("AC_BRDURL","https://proxy.api.prebanco.com.br") //https://
 
 If lTransferencia
     cUrl+= '/v1/transferencia/efetiva'
+    cFolderSign := "EfetivaTransferencia"
 Elseif lBoleto
     cUrl+= '/oapi/v1/pagamentos/boleto/efetivarPagamento'
+    cFolderSign := "EfetivaPagamentoBoleto"
 Elseif lGuiaCB   
     cUrl+= '/oapi/v1/pagamentos/pagamentoContaConsumo'
+    cFolderSign := "PagamentoContaConsumo"
 Endif
 
 //Busca o token para autenticação
@@ -310,10 +318,9 @@ cConteudo+= cToken+LF
 cConteudo+= cJti+LF
 cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-03:00'+LF
 cConteudo+= "SHA256"
-Memowrite(cDirServ+"request.txt",cConteudo)
 
 //Gera a assinatura
-cAssinatura:= U_gSignBrd()
+cAssinatura:= U_gSignBrd(cFolderSign, SE2->E2_IDCNAB, cConteudo)
 
 If Empty(cAssinatura)
     Return
@@ -357,6 +364,9 @@ If !lRegistrou
     Endif
 Endif
 
+Dbselectarea("ZLA")
+Dbsetorder(1)
+dbgotop()
 //Cria o registro na ZLA
 If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
     lRec:= .F.
@@ -482,10 +492,9 @@ cConteudo+= cToken+LF
 cConteudo+= cJti+LF
 cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-00:00'+LF
 cConteudo+= "SHA256"
-Memowrite(cDirServ+"request.txt",cConteudo)
 
 //Gera a assinatura
-cAssinatura:= U_gSignBrd()
+cAssinatura:= U_gSignBrd("ValidarDadosTitulo", SE2->E2_IDCNAB, cConteudo)
 
 If Empty(cAssinatura)
     Return
@@ -531,6 +540,9 @@ Else
     lRet:= .T.
 Endif
 
+Dbselectarea("ZLA")
+Dbsetorder(1)
+dbgotop()
 //Cria o registro na ZLA
 If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
     lRec:= .F.
@@ -557,7 +569,7 @@ Reclock("ZLA",lRec)
     ZLA_CODIGO:= cCodigo
     ZLA_IDCNAB:= SE2->E2_IDCNAB
     ZLA->ZLA_FILORI:= SE2->E2_FILORIG
-    If nCodResp = 200
+    If nCodResp = 200 //PIXTID NÃO PREENCHIDO.
         ZLA->ZLA_PIXTID:= jJsonBol["consultaFatorDataVencimentoResponse"]["numeroControleParticipante"] //0237CP01240660800208
     Endif
 MsUnlock()
@@ -762,10 +774,9 @@ cConteudo+= cToken+LF
 cConteudo+= cJti+LF
 cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-00:00'+LF
 cConteudo+= "SHA256"
-Memowrite(cDirServ+"request.txt",cConteudo)
 
 //Gera a assinatura
-cAssinatura:= U_gSignBrd()
+cAssinatura:= U_gSignBrd("ValidarPagamento", SE2->E2_IDCNAB, cConteudo)
 
 If Empty(cAssinatura)
     Return
@@ -811,6 +822,9 @@ Else
     lRet:= .T.
 Endif
 
+Dbselectarea("ZLA")
+Dbsetorder(1)
+dbgotop()
 //Cria o registro na ZLA
 If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
     lRec:= .F.
@@ -1041,31 +1055,36 @@ Return aRet
 ¦¦+-----------------------------------------------------------------------+¦¦
 ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦
 ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯*/
-User Function gSignBrd()
+User Function gSignBrd(cFolder, cId, cConteudo)
 Local cSign:= ""
 Local cComando1:= ""
 Local cComando2:= ""
 Local cRootServ:= GetSrvProfString ("ROOTPATH","") 
 Local cDirServ:= "\cert APIs bancos\openssl\"
 
-cComando1:= "dgst -sha256 -keyform pem -sign privkey_"+cEmpAnt+".pem -out assinado.txt request.txt" 
-cComando2:= "enc -base64 -in assinado.txt -out assinado.txt.base64" //codifica em base64
+//cFolder := "ArquivosAssinados\"+cFolder
+cFolder := ""
+cId := ALLTRIM(cId)
+Memowrite(cDirServ+cFolder+"\request"+cId+".txt",cConteudo)
+
+cComando1:= "dgst -sha256 -keyform pem -sign privkey_"+cEmpAnt+".pem -out assinado"+cId+".txt request"+cId+".txt" 
+cComando2:= "enc -base64 -in assinado"+cId+".txt -out assinado"+cId+".txt.base64" //codifica em base64
 
 If WaitRunSrv(cRootServ+cDirServ+'openssl.exe'+space(1)+cComando1,.T.,cRootServ+cDirServ)
-	If File(cDirServ+'assinado.txt')
+	If File(cDirServ+'assinado'+cId+'.txt')
  		WaitRunSrv(cRootServ+cDirServ+'openssl.exe'+space(1)+cComando2,.T.,cRootServ+cDirServ)
-		If File(cDirServ+'assinado.txt.base64')
+		If File(cDirServ+'assinado'+cId+'.txt.base64')
 			//Lê arquivo gerado com assinatura
-			cSign:= Memoread(cDirServ+'assinado.txt.base64')
+			cSign:= Memoread(cDirServ+'assinado'+cId+'.txt.base64')
 			cSign:= StrTran(cSign,"/","_")
 			cSign:= StrTran(cSign,"+","-")
 			cSign:= StrTran(cSign,"==","")
 			cSign:= Strtran(cSign,chr(10),"")
 
 			//Apaga arquivos gerados
-			fErase(cDirServ+'assinado.txt')
-			fErase(cDirServ+'assinado.txt.base64')
-			fErase(cDirServ+'request.txt')
+			//fErase(cDirServ+'assinado.txt')
+			//fErase(cDirServ+'assinado.txt.base64')
+			//fErase(cDirServ+'request.txt')
 		Endif
 	Endif	
 
@@ -1109,6 +1128,7 @@ Local i             := 0
 Local aRet          := {}
 Local aHeadStr      := {}
 Local aToken      	:= {} 
+Local cFolderSign   := ""
  
 
 oObjLog := LogSMS():new("XAG0107A")
@@ -1120,13 +1140,16 @@ oObjLog:saveMsg(GetEnvServer())
 If SEA->EA_MODELO $ "01/03/41/43"
     cUrl+="/v1/transferencia/consulta"
     cParam:="numeroDocumento="+Alltrim(ZLA->ZLA_NUMBCO)+"&dataOperacao="+StrTran(Left(FWTIMESTAMP(2,ZLA->ZLA_DATA),10),"/",".")
+    cFolderSign := "ConsultaTED"
 //Boletos	
 Elseif SEA->EA_MODELO $ "30/31" 
     cUrl+="/pagamentos/boleto/consulta/"+Alltrim(SE2->E2_IDCNAB)  //transactionId
+    cFolderSign := "ConsultaBoleto"
 //Guias com código de barras	
 Elseif SEA->EA_MODELO $ "11/13/16/17/18"
     cUrl+="/v1/pagamentos/"+Alltrim(ZLA->ZLA_AGENCI)+"/"+Alltrim(ZLA->ZLA_CONTA)+"/1" //:agencia/:conta/:tipoConta/
     cParam:="tipoConsulta=3&segmentoConsulta=99&dataInicial=2023-01-18&dataFinal=2023-05-30&idTransacao="+Right(Alltrim(SE2->E2_IDCNAB),9) //07-guias com codigo de barras
+    cFolderSign := "ConsultaContaConsumo"
 Endif
 
 //Busca o token para autenticação
@@ -1149,10 +1172,9 @@ cConteudo+= cToken+LF
 cConteudo+= cJti+LF
 cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-00:00'+LF
 cConteudo+= "SHA256"
-Memowrite(cDirServ+"request.txt",cConteudo)
 
 //Gera a assinatura
-cAssinatura:= U_gSignBrd()
+cAssinatura:= U_gSignBrd(cFolderSign, SE2->E2_IDCNAB, cConteudo)
 
 If Empty(cAssinatura)
     Return
@@ -1221,7 +1243,9 @@ Else
                     ///EFETUAR BAIXA AQUI
                     aAdd(aRet,SE2->E2_VENCREA)
                     aAdd(aRet,jJsonList["valorDaTransferencia"])                            
-
+                    Dbselectarea("ZLA")
+                    Dbsetorder(1)
+                    dbgotop()
                     If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
                         lRec:= .F.
                         cCodigo:= ZLA->ZLA_CODIGO

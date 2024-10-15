@@ -23,7 +23,9 @@ Local oComprovante := FINComprovantes():New()
 		FWAlertError("Titulo em aberto não possui comprovante." , "XAG0168")
 		return .F.
 	ENDIF
-
+	Dbselectarea("ZLA")
+	Dbsetorder(1)
+	dbgotop()
 	If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
 		IF(ZLA->ZLA_STATUS <> '3')
 			FWAlertError("Titulo aguardando retorno na API." , "XAG0168")

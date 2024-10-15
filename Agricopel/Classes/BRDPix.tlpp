@@ -299,7 +299,9 @@ Method SolicitarTransferencia() Class BRDPix
         */         
 
 		If EMPTY(aRet[4]:VIOLACOES)
-
+	        Dbselectarea("ZLA")
+			Dbsetorder(1)
+			dbgotop()
 			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
 				Reclock("ZLA",.F.)
 				ZLA->ZLA_FILIAL:= xFilial("ZLA")
@@ -344,6 +346,9 @@ Method SolicitarTransferencia() Class BRDPix
 				lRet:= .F.
 			Endif
 		ELSE
+	        Dbselectarea("ZLA")
+			Dbsetorder(1)
+			dbgotop()
 			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
 				Reclock("ZLA",.F.)
 				ZLA->ZLA_FILIAL:= xFilial("ZLA")

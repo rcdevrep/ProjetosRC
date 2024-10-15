@@ -273,6 +273,9 @@ ConfirmSX8()
 
 	If SE2->(dbSeek(xFilial("SE2")+QRY->(EA_PREFIXO+EA_NUM+EA_PARCELA+EA_TIPO+EA_FORNECE+EA_LOJA)))
 		If SE2->E2_SALDO > 0	
+	        Dbselectarea("ZLA")
+			Dbsetorder(1)
+			dbgotop()
 			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
 				lRec:= .F.
 				cCodigo:= ZLA->ZLA_CODIGO
@@ -661,7 +664,7 @@ static function XAGMARKAPR()
 
 		aRotina := {}
 		bAprova := {|| Confirmar() }
-		
+
 		oMark:AddButton('Confirmar',bAprova,nil,1,0)
 		//oMark:AddButton("Sair",{|| MsAguarde({|| Close(oDlgExemp) },'Encerrando...')  },,2,,.F.)
 
@@ -847,7 +850,7 @@ static function Confirmar
 	oProcess := MsNewProcess():New({|| ConfTransacao(oProcess)}, "Processando...", "Aguarde...", .T.)
 	oProcess:Activate()
 
-	Close(oDlgExemp)	
+	Close(oDlgExemp)
 
 Return
 
@@ -1280,9 +1283,9 @@ Static function Pagam106(oObj)
 							oPix:oRecebedor:cDigitoConta := ALLTRIM(SA2->A2_DVCTA)
 							//01800
 						ENDIF
-						oPix:oRecebedor:cFavorecido	:= SA2->A2_NOME						
+						oPix:oRecebedor:cFavorecido	:= SA2->A2_NOME
 						oPix:cIdTransacao := Alltrim(SE2->E2_IDCNAB)
-						oPix:nValor := SE2->E2_SALDO 
+						oPix:nValor := SE2->E2_SALDO
 						oPix:cDescricao := "PAGAMENTO FORNECEDOR"
 
 						IF(oPix:SolicitarTransferencia())
@@ -1440,7 +1443,9 @@ Static function Pagam106(oObj)
 		ELSE
 			//ALERTA
 			FWAlertWarning("Titulo "+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA)+" já baixado!","Status atualizado")
-
+	        Dbselectarea("ZLA")
+			Dbsetorder(1)
+			dbgotop()
 			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
 
 				Reclock("ZLA",.F.)
@@ -1556,9 +1561,11 @@ Local cBcosAPI := ""
 Private oObjLog     := nil
 
 RpcSetType( 3 )
-If !x`(aParam[1],aParam[2])
+If !RPCSetEnv(aParam[1],aParam[2])
 	Return
 Endif
+
+//RPCSetEnv("01","06")
 
 //Geração de log
 oObjLog := LogSMS():new("XAG0107A")
@@ -1575,7 +1582,7 @@ cQry+= "FROM "+RetSqlName("SEA")+" SEA "
 cQry+= "INNER JOIN "+RetSqlName("SE1")+" SE1 ON E1_FILIAL = '"+xFilial("SEA")+"' AND E1_PREFIXO = EA_PREFIXO AND E1_NUM = EA_NUM AND E1_PARCELA = EA_PARCELA "
 cQry+= " AND E1_TIPO = EA_TIPO AND E1_FILORIG = '"+cFilAnt+"' AND SE1.D_E_L_E_T_ = ' ' "
 cQry+= "WHERE EA_PORTADO IN "+FormatIn(cBcosAPI,"/")+" "
-cQry+= "AND EA_DATABOR = '"+dtos(dDataBase)+"' "
+cQry+= "AND EA_DATABOR >= '"+dtos(dDataBase-4)+"' "
 cQry+= "AND EA_TRANSF = '' "
 cQry+= "AND SEA.D_E_L_E_T_ = ' ' "
 cQry+= "ORDER BY EA_NUMBOR "
@@ -1690,10 +1697,9 @@ cConteudo+= cToken+LF
 cConteudo+= cJti+LF
 cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-00:00'+LF
 cConteudo+= "SHA256"
-Memowrite(cDirServ+"request.txt",cConteudo)
 
 //Gera a assinatura
-cAssinatura:= U_gSignBrd()
+cAssinatura:= U_gSignBrd("ValidarDadosTitulo", SE2->E2_IDCNAB, cConteudo) 
 
 If Empty(cAssinatura)
     Return
@@ -2099,13 +2105,13 @@ cTitulo+= '  },
 	cConteudo+= cToken+LF
 	cConteudo+= cJti+LF
 	cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-00:00'+LF
-	cConteudo+= "SHA256"
-	Memowrite(cDirServ+"request.txt",cConteudo)
+	cConteudo+= "SHA256"	
 
 //Gera a assinatura
-	cAssinatura:= U_gSignBrd()
+	cAssinatura:= U_gSignBrd("ValidarPagamento", SE2->E2_IDCNAB, cConteudo)
 
 	If Empty(cAssinatura)
+		//TRATAR ERRO QUANDO NÃO CONSEGUE ASSINAR!
 		Return
 	Endif
 
@@ -2133,42 +2139,44 @@ cTitulo+= '  },
 	jJsonBol := JsonObject():New()
 	jJsonBol:FromJson(cRetPost)
 
-	If nCodResp <> 200
-		If nCodResp = 401
-			cErro:= jJsonBol["message"]
-		Else
-			If jJsonBol:HasProperty("codigo")
-				IF((jJsonBol["codigo"] == "2125") .OR. (jJsonBol["codigo"] == "2135"))
-					lRet := .T.
-					cErro:= "TRANSACAO EFETUADA BRADESCO"
 
-					If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-
-						//aAdd(aRet,ZLA->ZLA_DTQUIT)
-						aAdd(aRet,ZLA->ZLA_DTOPER)
-						aAdd(aRet,SE2->E2_SALDO)
-
-					ENDIF
-				ELSE
-					cErro:= jJsonBol["codigo"]+" - "+jJsonBol["mensagem"]
-				ENDIF
-
-			Elseif jJsonBol:HasProperty("code")
-				cErro:= jJsonBol["code"]+" - "+jJsonBol["message"]
-			Else
-				cErro:= "Falha ao enviar a requisicao. Codigo: " +cvaltochar(nCodResp)+' - '+cHeaderRet
-			Endif
-		Endif
+	If nCodResp = 401
+		cErro:= jJsonBol["message"]
 	Else
-		lRet:= .T.
+		If jJsonBol:HasProperty("codigo") 
+			IF((jJsonBol["codigo"] == "2125") .OR. (jJsonBol["codigo"] == "2135"))
+				lRet := .T.
+				cErro:= "TRANSACAO EFETUADA BRADESCO"
+				Dbselectarea("ZLA")
+				Dbsetorder(1)
+				dbgotop()
+				If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
+
+					//aAdd(aRet,ZLA->ZLA_DTQUIT)
+					aAdd(aRet,ZLA->ZLA_DTOPER)
+					aAdd(aRet,SE2->E2_SALDO)
+					lRet:= .T.
+				ENDIF
+			ELSE
+				cErro:= jJsonBol["codigo"]+" - "+jJsonBol["mensagem"]
+			ENDIF
+
+		Elseif jJsonBol:HasProperty("code")
+			cErro:= jJsonBol["code"]+" - "+jJsonBol["message"]
+		Else
+			cErro:= "Falha ao enviar a requisicao. Codigo: " +cvaltochar(nCodResp)+' - '+cHeaderRet
+		Endif
 	Endif
+
 
 	IF(lRet)
 
 //Cria o registro na ZLA	
 		If Len(aRet) > 0
 			IF(u_BaixaPag(aRet)	)
-
+				Dbselectarea("ZLA")
+				Dbsetorder(1)
+				dbgotop()
 				If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
 					lRec:= .F.
 					cCodigo:= ZLA->ZLA_CODIGO
@@ -2276,11 +2284,10 @@ Static Function consTEDBRD(cCodigo, cClientId)
 	cConteudo+= cToken+LF
 	cConteudo+= cJti+LF
 	cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-03:00'+LF
-	cConteudo+= "SHA256"
-	Memowrite(cDirServ+"request.txt",cConteudo)
+	cConteudo+= "SHA256"	
 
 //Gera a assinatura
-	cAssinatura:= U_gSignBrd()
+	cAssinatura:= U_gSignBrd("ConsultaTED", SE2->E2_IDCNAB, cConteudo)
 
 	If Empty(cAssinatura)
 		Return
@@ -2326,6 +2333,9 @@ Static Function consTEDBRD(cCodigo, cClientId)
 		Endif
 	Endif
 
+   Dbselectarea("ZLA")
+   Dbsetorder(1)
+   dbgotop()
 //Cria o registro na ZLA
 	If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
 		lRec:= .F.
