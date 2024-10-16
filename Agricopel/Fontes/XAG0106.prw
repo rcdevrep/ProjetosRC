@@ -1438,7 +1438,47 @@ Static function Pagam106(oObj)
 						FWMsgRun(,{|| u_XAG0121(cTitulo,cCodigo, cClientId)},"Envio ao Bradesco","Enviando título(s)... Aguarde...")
 					Endif
 					oObj:IncRegua2("Finalizado")
+
+					Dbselectarea("ZLA")
+					Dbsetorder(1)
+					dbgotop()
+					If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))						
+						IF(EMPTY(ZLA->ZLA_DTOPER))
+							RECLOCK("ZLA",.F.)
+							ZLA->ZLA_STATUS = '6'					
+							MSUNLOCK()
+
+							Reclock("ZLB",.T.)
+							ZLB_FILIAL:= xFilial("ZLB")
+							ZLB_CODIGO:= ZLA->ZLA_CODIGO
+							ZLB_DATA:= dDataBase
+							ZLB_HORA:= Time()
+							ZLB_EVENTO:= '5' //Validação boleto
+							ZLB_STATUS:= '6'
+							ZLB_USER:= __cUserId
+							ZLB_ERRO:= "ERRO DE COMUNICAÇÃO"
+							ZLB_FILORI:= ZLA->ZLA_FILORI
+							msUnlock()
+
+						ENDIF
+						
+					Endif
+
+
+					cQryDupl := " "
+		
+					cQryDupl += "UPDATE "+RETSQLNAME("ZLA")+" SET D_E_L_E_T_ = '*',ZLA_IDAPI = 'DUPLI' where  "
+					cQryDupl += "ZLA_PREFIX + ZLA_NUM + ZLA_PARCEL + ZLA_TIPO  IN ( "
+					cQryDupl += "select ZLA_PREFIX + ZLA_NUM + ZLA_PARCEL + ZLA_TIPO from "+RETSQLNAME("ZLA")+" ZLA where ZLA_NUMBOR = '"+ZLA->ZLA_NUMBOR+"' "
+					cQryDupl += "GROUP BY ZLA_PREFIX,ZLA_NUM,ZLA_PARCEL,ZLA_TIPO "
+					cQryDupl += "HAVING COUNT(*) > 1 ) "
+					cQryDupl += "AND ZLA_STATUS <> '4' "
+
+					TcSqlExec(cQryDupl)
+
 				Endif
+
+				//MSGALERT("ZLA")
 			Endif
 		ELSE
 			//ALERTA
