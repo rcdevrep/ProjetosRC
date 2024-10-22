@@ -298,7 +298,7 @@ Method SolicitarTransferencia() Class BRDPix
 
         */         
 
-		If EMPTY(aRet[4]:VIOLACOES)
+		If !aRet[4]:hasProperty("VIOLACOES")
 	        Dbselectarea("ZLA")
 			Dbsetorder(1)
 			dbgotop()
@@ -323,15 +323,15 @@ Method SolicitarTransferencia() Class BRDPix
 				ZLA->ZLA_USER:= __cUserId
 				ZLA->ZLA_IDCNAB:= SE2->E2_IDCNAB
 				ZLA->ZLA_FILORI:= SE2->E2_FILORIG
-				ZLA->ZLA_IDTRAN := aRet[4]:IDTRANSACAO
-				ZLA->ZLA_PIXE2E := aRet[4]:E2E
-				ZLA->ZLA_IDAPI :=  aRet[4]:IDTRANSACAO
+				ZLA->ZLA_IDTRAN := aRet[4]["idTransacao"]
+				ZLA->ZLA_PIXE2E := aRet[4]["e2e"]
+				ZLA->ZLA_IDAPI :=  aRet[4]["idTransacao"]
 				ZLA->ZLA_DTOPER := Date()
 				MsUnlock()
 
 				Reclock("ZLB",.T.)
 				ZLB_FILIAL:= xFilial("ZLB")
-				ZLB_CODIGO:= cCodigo
+				ZLB_CODIGO:= ZLA->ZLA_CODIGO
 				ZLB_DATA:= dDataBase
 				ZLB_HORA:= Time()
 				ZLB_EVENTO:= '1' //Envio do titulo
@@ -351,40 +351,18 @@ Method SolicitarTransferencia() Class BRDPix
 			dbgotop()
 			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
 				Reclock("ZLA",.F.)
-				ZLA->ZLA_FILIAL:= xFilial("ZLA")
-				ZLA->ZLA_PREFIX:= SE2->E2_PREFIXO
-				ZLA->ZLA_NUM:= SE2->E2_NUM
-				ZLA->ZLA_PARCEL:= SE2->E2_PARCELA
-				ZLA->ZLA_TIPO:= SE2->E2_TIPO
-				ZLA->ZLA_CLIFOR:= SE2->E2_FORNECE
-				ZLA->ZLA_LOJA:= SE2->E2_LOJA
-				ZLA->ZLA_VENCTO:= SE2->E2_VENCTO
-				ZLA->ZLA_VALOR:= SE2->E2_VALOR
-				ZLA->ZLA_NUMBOR:= SE2->E2_NUMBOR
-				ZLA->ZLA_BANCO:= SEE->EE_CODIGO
-				ZLA->ZLA_AGENCI:= SEE->EE_AGENCIA
-				ZLA->ZLA_CONTA:= SEE->EE_CONTA
-				ZLA->ZLA_RECPAG:= 'P'
-				ZLA->ZLA_STATUS:= '2'
-				ZLA->ZLA_DATA:= dDataBase
-				ZLA->ZLA_USER:= __cUserId
-				ZLA->ZLA_IDCNAB:= SE2->E2_IDCNAB
-				ZLA->ZLA_FILORI:= SE2->E2_FILORIG
-				ZLA->ZLA_IDTRAN := aRet[4]:IDTRANSACAO
-				ZLA->ZLA_PIXE2E := aRet[4]:E2E
-				ZLA->ZLA_IDAPI :=  aRet[4]:IDTRANSACAO
-				ZLA->ZLA_DTOPER := Date()
+				ZLA->ZLA_STATUS:= '0'
 				MsUnlock()
 
 				Reclock("ZLB",.T.)
 				ZLB_FILIAL:= xFilial("ZLB")
-				ZLB_CODIGO:= cCodigo
+				ZLB_CODIGO:= ZLA->ZLA_CODIGO
 				ZLB_DATA:= dDataBase
 				ZLB_HORA:= Time()
 				ZLB_EVENTO:= '2' //Envio do titulo
 				ZLB_STATUS:= ZLA->ZLA_STATUS
 				ZLB_USER:= __cUserId
-				ZLB_ERRO:= aRet[4]:VIOLACOES[1]:RAZAO
+				ZLB_ERRO:= aRet[4]["violacoes"][1]["razao"]
 				ZLB_FILORI:= ZLA->ZLA_FILORI
 				msUnlock()
 			endif
@@ -509,7 +487,7 @@ Method Token() Class BRDIntegracao
 	aRet := U_RCRestSSL(cURL+cPath, cParam, cJson, aHeader )
 
 	IF((aRet[1]) .AND. aRet[3] == "05") //retorno .T.
-		Self:cToken := aRet[4]:ACCESS_TOKEN
+		Self:cToken := aRet[4]["access_token"]
 	ELSE // retorno .F.
 		Self:cToken := "INVALIDO"
 	ENDIF

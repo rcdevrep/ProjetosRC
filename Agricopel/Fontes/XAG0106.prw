@@ -1271,7 +1271,7 @@ Static function Pagam106(oObj)
 						oObj:IncRegua2("Efetuando pagamento com PIX")
 						oPix:oRecebedor:cCpfCnpj := SA2->A2_CGC
 						oPix:oRecebedor:cTipoChave := SA2->A2_PIXTP
-						IF(oPix:oRecebedor:cTipoChave == "CPFCNPJ")
+						IF(oPix:oRecebedor:cTipoChave == "C")
 							oPix:oRecebedor:cChavePix := ALLTRIM(SA2->A2_PIXCHAV)
 						ELSE
 							oPix:oPagador:cTipoChave := "AGENCIACONTA"
@@ -1442,10 +1442,10 @@ Static function Pagam106(oObj)
 					Dbselectarea("ZLA")
 					Dbsetorder(1)
 					dbgotop()
-					If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))						
+					If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
 						IF(EMPTY(ZLA->ZLA_DTOPER))
 							RECLOCK("ZLA",.F.)
-							ZLA->ZLA_STATUS = '6'					
+							ZLA->ZLA_STATUS = '6'
 							MSUNLOCK()
 
 							Reclock("ZLB",.T.)
@@ -1461,18 +1461,18 @@ Static function Pagam106(oObj)
 							msUnlock()
 
 						ENDIF
-						
+
 					Endif
 
 
 					cQryDupl := " "
-		
+
 					cQryDupl += "UPDATE "+RETSQLNAME("ZLA")+" SET D_E_L_E_T_ = '*',ZLA_IDAPI = 'DUPLI' where  "
-					cQryDupl += "ZLA_PREFIX + ZLA_NUM + ZLA_PARCEL + ZLA_TIPO  IN ( "
-					cQryDupl += "select ZLA_PREFIX + ZLA_NUM + ZLA_PARCEL + ZLA_TIPO from "+RETSQLNAME("ZLA")+" ZLA where ZLA_NUMBOR = '"+ZLA->ZLA_NUMBOR+"' "
-					cQryDupl += "GROUP BY ZLA_PREFIX,ZLA_NUM,ZLA_PARCEL,ZLA_TIPO "
+					cQryDupl += "ZLA_PREFIX + ZLA_NUM + ZLA_PARCEL + ZLA_TIPO + ZLA_CLIFOR + ZLA_LOJA IN ( "
+					cQryDupl += "select ZLA_PREFIX + ZLA_NUM + ZLA_PARCEL + ZLA_TIPO +  ZLA_CLIFOR + ZLA_LOJA from "+RETSQLNAME("ZLA")+" ZLA where ZLA_NUMBOR = '"+ZLA->ZLA_NUMBOR+"' "
+					cQryDupl += "GROUP BY ZLA_PREFIX,ZLA_NUM,ZLA_PARCEL,ZLA_TIPO, ZLA_CLIFOR + ZLA_LOJA"
 					cQryDupl += "HAVING COUNT(*) > 1 ) "
-					cQryDupl += "AND ZLA_STATUS <> '4' "
+					cQryDupl += "AND ZLA_DTOPER <> '4' "
 
 					TcSqlExec(cQryDupl)
 
@@ -1483,7 +1483,7 @@ Static function Pagam106(oObj)
 		ELSE
 			//ALERTA
 			FWAlertWarning("Titulo "+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA)+" já baixado!","Status atualizado")
-	        Dbselectarea("ZLA")
+			Dbselectarea("ZLA")
 			Dbsetorder(1)
 			dbgotop()
 			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
@@ -1785,54 +1785,6 @@ Else
     lRet:= .T.
 Endif
 
-//AQUI EFETUAR A BAIXA CONFORME CONFIRMAÇÃO.
-
-/*
-//Cria o registro na ZLA
-If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-    lRec:= .F.
-    cCodigo:= ZLA->ZLA_CODIGO
-Endif    
-Reclock("ZLA",lRec)
-    ZLA_FILIAL:= xFilial("ZLA")
-    ZLA_PREFIX:= SE2->E2_PREFIXO
-    ZLA_NUM:= SE2->E2_NUM
-    ZLA_PARCEL:= SE2->E2_PARCELA
-    ZLA_TIPO:= SE2->E2_TIPO
-    ZLA_CLIFOR:= SE2->E2_FORNECE
-    ZLA_LOJA:= SE2->E2_LOJA
-    ZLA_VENCTO:= SE2->E2_VENCTO
-    ZLA_VALOR:= SE2->E2_VALOR
-    ZLA_NUMBOR:= SE2->E2_NUMBOR
-    ZLA_BANCO:= SEE->EE_CODIGO
-    ZLA_AGENCI:= SEE->EE_AGENCIA
-    ZLA_CONTA:= SEE->EE_CONTA
-    ZLA_RECPAG:= 'P'
-    ZLA_STATUS:= '3'
-    ZLA_DATA:= dDataBase
-    ZLA_USER:= __cUserId
-    ZLA_CODIGO:= cCodigo
-    ZLA_IDCNAB:= SE2->E2_IDCNAB
-    ZLA->ZLA_FILORI:= SE2->E2_FILORIG
-    If nCodResp = 200
-        ZLA->ZLA_PIXTID:= jJsonBol["consultaFatorDataVencimentoResponse"]["numeroControleParticipante"] //0237CP01240660800208
-    Endif
-MsUnlock()
-
-//Cria o registro na ZLB
-Reclock("ZLB",.T.)
-    ZLB_FILIAL:= xFilial("ZLB")
-    ZLB_CODIGO:= cCodigo
-    ZLB_DATA:= dDataBase
-    ZLB_HORA:= Time()
-    ZLB_EVENTO:= '3' //Validação boleto
-    ZLB_STATUS:= ZLA->ZLA_STATUS
-    ZLB_USER:= __cUserId
-    ZLB_ERRO:= cErro
-    ZLB_FILORI:= ZLA->ZLA_FILORI
-msUnlock()
-*/
-
 Return lRet
 
 
@@ -2001,36 +1953,6 @@ static Function consPGT106(cCodigo, cClientId)
 	oObjLog:eraseLog()
 	oObjLog:saveMsg(GetEnvServer())
 
-
-
-//cJson:='{'
-//cJson+='"agencia":"'+u_TiraZero(SEE->EE_AGENCIA)+'",'
-//cJson+='"dadosEntrada":"'+Alltrim(SE2->E2_CODBAR)+'",'
-//cJson+='"tipoEntrada":"1"'
-//cJson+='}
-
-/*
-
-POST
-/oapi/v1/pagamentos/boleto/validarDadosTitulo
-
-{"agencia":"2693","dadosEntrada":"34196964100000181571090005192407206129004000","tipoEntrada":"1"}
-eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzUxMiJ9.ew0KICJ2ZXIiOiAiMS4wIiwNCiAiaXNzIjogImh0dHBzOi8vb3BlbmFwaS5icmFkZXNjby5jb20uYnIvYXV0aC9zZXJ2ZXIvdjEuMS90b2tlbiIsDQogImF1ZCI6ICJodHRwczovL2h0dHBzOi8vb3BlbmFwaS5icmFkZXNjby5jb20uYnI6ODQ0MyIsDQogImlhdCI6IDE3MDg5NjQ1MzEsDQogImV4cCI6IDE3MDg5NjgxMzEsDQogInNjcCI6ICJURURCT1BFTixwZ2JvbGV0byxwYWd0b3MiLA0KICJqdGkiOiAiRjdTVTJySXptYUJqMlp3K01WUVYrUT0iLA0KICJ0b2tlblR5cGUiOiAiYWNjZXNzIiwNCiAiY2xpZW50VHlwZSI6ICJzZXJ2ZXIiLA0KICJvd25lclR5cGUiIDogInNlcnZlciIsDQogImF1dGhEYXRhIjogImV5SjBlWEFpT2lKS1YxUWlMQ0pqZEhraU9pSktWMVFpTENKaGJHY2lPaUpTVTBFdFQwRkZVQ0lzSW1WdVl5STZJa0V5TlRaRFFrTXRTRk0xTVRJaWZRLkVwY3dWMFljckphdmlvdmdPdTFiZW5fMUdOMVl5VnA4ekUzbjVHTGk0dDhVRXItdnJ4SlhTR2QxcGl2UjJuWUVfZ3dERV92eDNESkdtN3dXM0JteHR2RFlKUU45WDNNdTd3ZVlHU3ZUT21xWTlsT1BadkVudFdJWlk3SnhydjIyNGI2TDJqMlZWX0g1MnJZZkFoVWQ0ckIwV0dCbVhST3Bsd3hpV01Rd2phb2RkcFJnY1Z5c2xuMUxSQUYxZDJOX1FOT3VDR3lncjJORGotaGRwekJ6dzhMcmpwYW9MbHduRHdWQ2tvN3VCNGlSeVRwYUFiek0xRzh3ZndzazJlMHBjV0hLVHZoX1JpRmxsVjNCaUE0ZndoODZxWmdpWm50Sk9ybXg2NElsQmVrbm01aExaeEpNdHYzN0M0cnI5eFM2YXI0NUdrcXhpajFuSDRsSjR6c2NhUS43aTJ4RUpBVGUwQ21tUlJjbjZtR253LmNwRG5sOUJOZ0ZCbWc4MGNZdWJFRXQwVzNZVUpOZzFwX0c3MEVDX3hlRG0yZGYtaGx4X1V4emFTbjd5UjNYQmhVUWJJRlkyeUhjdFAxMDRYaloyOHBFSVlyVHhOVEJpM19QTkZYT1ZoNE9wbDB2Mlp0QnZGcGRnS3pBNWxVQlFHYU9ONTY0N2JvSDNfMFhGakxiN1F2T2hSWjhDTEVSOGY2ZWNUQzkxdlFoaURPSEdpMUFpeWxER0VQTWc3LUNmbWtGNG5hWXZnQzNXX2FZeUZTZVJsaGFGYUswTnVKb0lOdU1FYnN0c3U0QkJoMmdSekVheWtJZWt6R2VCQ2pWWG5GS0ZjcW5uRG9lcjhvZmhzcmVpSS1ZVFZmUnVKd2hpUFJ6YUtxUTdzQVN4WFl2cXdDaGFXMExldTZiWHBVNTV5TTl6a1JMUnRCN1pBeWdYeExnLXE5bmd4TG1DbVF6cGd4VkktU21oRkVFcWNlcEtMV0xDT29fS0VUeXdiMkdxQ2JjRE84Tl9ZY3VlaHB6bHg2NVV2aU9QVGp1Sno3dDhxMWVyeFVXdzZ3STJsQ3htMXlNQkdkS3ppa1MtcGhFZHRHNmZHMnVaUGdkMnlOcjU2dTBRUzN0RVVfRi1aZENkd1lILWtoVHJfNXE5NFVQSlZjWi1IQ1VCZTJTX2YxbU5MSnhZZWxfbUltOWhPMXo3RzFQMkc5ZUZ5NE5vUW9fa29JTHF6QUJHUFBQQWRZX0NJeVpJV0tuQ1VYUk5qSFNCZklkYURfN1h5M0NOZHRxc212ZEhLempmTVd0UF83UXA5cWVfZTNmOXNfUFlTdmNfMjc1UF9zREgzQ0pCUHI4d0FLUmxsZUEzX0t3OEFtajdicGx6REx3b2NYWW5LWDN6RW5BN3R6ZzlSYkRma0xSUF9OSmc2TldNTnNkT1F3dFZ6T3pmN0kzeUhIeUdBaWJTUnV3UkxRM3ptUmVXOEVpTS1GZ3lQTGlFOEF2enJtaDlVY1JyQVpYM3AwUFU4S04tR2ZZaU5ZMlFvVi1QaWhHRUJfOU1vLWVKMzVaZWJtUEdoaEcwVVh5d1I2d1Q5N2R5Z2dJMl96Z2FkX01UOWE4bUpjNENIeVJ5X1djMTlHT2JNVXhpRW9palk0NXZxZngzYkkzZy1MTWpmNGZrSTE5b25sYUpZV2s1T0lxMmQ0U2JaczNfeGFSWTZQcnRnYmtsOUZfQjQwelRCOW1IU0hSdmhER0JWZDcxbzB3Y3dYWThZRGk5ZzJiNVBEdDdlXzhjb0xYRHlURDI0c2xqYjA3US1jYVgwZkRxTXg4ZmRmZUZPNjUwNlBuNTFxSkYxZU94eTZpdnFDLTBWdWk0elhSQ2VjXzZ5Y0FQSEZ2OThLTjQwa3Z0cHdRU3RSN1hpNVk1MjRFeUJEMEEyRkJVUDZEUzlfbXY3Vl80WjhnZ056bWpNVkhMNXhGX3hHeENlSl9zOEd0M2YwUVowajlQY25aS3JtUHB1RFNRRXdGd1p5R0FNYXcxVVFNazM4c0F2eldzSmxZMlV3Y3dlOGxQZ0l0dUE1MjRVRVEuWmVqLXhGWVNzV0Vta3JKaV9BeDFqLXBPUnVQejVQYTRIS21SekJiMS1FbyINCn0.P7NdIkrdrxd2WYxftcC3Rj7ub4yOqKlh2kXMs3WgnOxcKA05wDOaRuaoVNW7pg3buujnGZmV8eJOpRsZRebtJm64wNEF_O4WwjkoLp-lwwC7cApifugz0Sr6k6QHPoZco_nq2He9W4uZbpJwG_zX_o3qkYWxKb9CYEbwzo2E0P_4PUQdRGIxhlF7mXaikMgT8-H83deGSi_R5vXmOIDwJvKDqcpycVp79irUS6aJORX0K4kdUf6vYD94ItETEeWJRzqGEqlIBqyFuSTB6usrIhWVog8Sq-QG8upp5lMrh8aGpBSKnfuCjypzmMDlbJoN3Zb7dAZSnZc1xRvDwMWE7Q
-1708964531000
-2024-02-26T13:22:11-00:00
-SHA256
-
-FUfzhgTK+McfwJbA22RbwKKqtRUkY9DWYJDvX2wakmsnGu78SCDh8JwQRqDk2ZuA
-ApsFU3z3YU6i8MpahinPWo6iuQ/SwgI5NkjIHTKQ2StjOxXOt9bQIi7otLC1nsuQ
-YPMpQrwP3sX9jKQfyUD4sWgdahZ5dDp1VSSwQ/PeOCKoEUGwYhRqwh2LZFQbbJ6o
-RgrbWkeS33fGxtP4RKHiVEDIu6AnmARzMULGPTP3rwO4x7E+c4wpC7dM4vnvUhKW
-du+ByjvL5b85L2KBj7wJ4iMgty/7FMc0qt7zRTu84hTOONl3xKbJppjSbwfB0kBP
-ZFwK5TlBgrn9/mrRaw48cA==
-
-
-
-*/
-
 	cJson:='{'
 	cJson+='"agencia":'+U_TiraZero(Alltrim(SEE->EE_AGENCIA))+','
 	cJson+='"pagamentoComumRequest":'
@@ -2145,7 +2067,7 @@ cTitulo+= '  },
 	cConteudo+= cToken+LF
 	cConteudo+= cJti+LF
 	cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-00:00'+LF
-	cConteudo+= "SHA256"	
+	cConteudo+= "SHA256"
 
 //Gera a assinatura
 	cAssinatura:= U_gSignBrd("ValidarPagamento", SE2->E2_IDCNAB, cConteudo)
@@ -2183,22 +2105,26 @@ cTitulo+= '  },
 	If nCodResp = 401
 		cErro:= jJsonBol["message"]
 	Else
-		If jJsonBol:HasProperty("codigo") 
-			IF((jJsonBol["codigo"] == "2125") .OR. (jJsonBol["codigo"] == "2135"))
-				lRet := .T.
-				cErro:= "TRANSACAO EFETUADA BRADESCO"
-				Dbselectarea("ZLA")
-				Dbsetorder(1)
-				dbgotop()
-				If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-
-					//aAdd(aRet,ZLA->ZLA_DTQUIT)
+		If jJsonBol:HasProperty("codigo") .OR. jJsonBol["pagamentoComumResponse"]:HasProperty("codigoRetorno")
+			IF(jJsonBol:HasProperty("codigo"))
+				IF((jJsonBol["codigo"] == "2125") .OR. (jJsonBol["codigo"] == "2135"))
+					lRet := .T.
+					cErro:= "TRANSACAO EFETUADA BRADESCO"
 					aAdd(aRet,ZLA->ZLA_DTOPER)
 					aAdd(aRet,SE2->E2_SALDO)
 					lRet:= .T.
+				ELSE
+					cErro:= jJsonBol["codigo"]+" - "+jJsonBol["mensagem"]
+				ENDIF
+			ELSEIF jJsonBol["pagamentoComumResponse"]:HasProperty("codigoRetorno")
+				IF jJsonBol["pagamentoComumResponse"]["codigoRetorno"] == 2143
+					lRet := .F.
+					cErro:= "NÃO FOI PROCESSADO PAGAMENTO, REFAZER O PROCESSO"					
+				ELSE
+					cErro:= "ERRO AO CONSULTAR BOLETO"
 				ENDIF
 			ELSE
-				cErro:= jJsonBol["codigo"]+" - "+jJsonBol["mensagem"]
+				cErro:= "ERRO AO CONSULTAR BOLETO"
 			ENDIF
 
 		Elseif jJsonBol:HasProperty("code")
@@ -2210,44 +2136,19 @@ cTitulo+= '  },
 
 
 	IF(lRet)
-
-//Cria o registro na ZLA	
 		If Len(aRet) > 0
 			IF(u_BaixaPag(aRet)	)
-				Dbselectarea("ZLA")
-				Dbsetorder(1)
-				dbgotop()
-				If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-					lRec:= .F.
-					cCodigo:= ZLA->ZLA_CODIGO
-				Endif
-				Reclock("ZLA",lRec) //ANALISAR
-				ZLA_FILIAL:= xFilial("ZLA")
-				ZLA_PREFIX:= SE2->E2_PREFIXO
-				ZLA_NUM:= SE2->E2_NUM
-				ZLA_PARCEL:= SE2->E2_PARCELA
-				ZLA_TIPO:= SE2->E2_TIPO
-				ZLA_CLIFOR:= SE2->E2_FORNECE
-				ZLA_LOJA:= SE2->E2_LOJA
-				ZLA_VENCTO:= SE2->E2_VENCTO
-				ZLA_VALOR:= SE2->E2_SALDO
-				ZLA_NUMBOR:= SE2->E2_NUMBOR
-				ZLA_BANCO:= SEE->EE_CODIGO
-				ZLA_AGENCI:= SEE->EE_AGENCIA
-				ZLA_CONTA:= SEE->EE_CONTA
-				ZLA_RECPAG:= 'P'
-				ZLA_STATUS:= '3'
-				ZLA_DATA:= dDataBase
-				ZLA_USER:= __cUserId
-				ZLA_CODIGO:= cCodigo
-				ZLA_IDCNAB:= SE2->E2_IDCNAB
-				ZLA->ZLA_FILORI:= SE2->E2_FILORIG
-				//If nCodResp = 200
-				//ZLA->ZLA_PIXTID:= jJsonBol["numeroControleParticipante"]
-				//Endif
-				MsUnlock()
 
-				//Cria o registro na ZLB
+
+
+				cQryDupl := " "
+				cQryDupl += "UPDATE "+RETSQLNAME("ZLA")+" SET ZLA_STATUS = '3' where  "
+				cQryDupl += "ZLA_PREFIX = '" + SE2->E2_PREFIXO + "' AND ZLA_NUM ='" + SE2->E2_NUM + "' AND ZLA_PARCEL = '" + SE2->E2_PARCELA + "' AND ZLA_TIPO = '" + SE2->E2_TIPO + "' AND ZLA_CLIFOR = '" + SE2->E2_FORNECE + "' AND ZLA_LOJA = '" + SE2->E2_LOJA +"' "
+
+				TcSqlExec(cQryDupl)
+
+
+
 				Reclock("ZLB",.T.)
 				ZLB_FILIAL:= xFilial("ZLB")
 				ZLB_CODIGO:= cCodigo
@@ -2324,7 +2225,7 @@ Static Function consTEDBRD(cCodigo, cClientId)
 	cConteudo+= cToken+LF
 	cConteudo+= cJti+LF
 	cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-03:00'+LF
-	cConteudo+= "SHA256"	
+	cConteudo+= "SHA256"
 
 //Gera a assinatura
 	cAssinatura:= U_gSignBrd("ConsultaTED", SE2->E2_IDCNAB, cConteudo)
@@ -2373,9 +2274,9 @@ Static Function consTEDBRD(cCodigo, cClientId)
 		Endif
 	Endif
 
-   Dbselectarea("ZLA")
-   Dbsetorder(1)
-   dbgotop()
+	Dbselectarea("ZLA")
+	Dbsetorder(1)
+	dbgotop()
 //Cria o registro na ZLA
 	If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
 		lRec:= .F.

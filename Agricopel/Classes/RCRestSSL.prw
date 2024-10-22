@@ -15,7 +15,7 @@ user function RCRestSSL(cURL, cParam, cJson, aHeadOut )
 	Local cPassword := GetNewPar("MV_XCERTPS","p3tro_@632")
 	Local cCodResp, cStatus := ""
 	Local aRet := {}
-	Private oJsonRet:= NIL
+	Private oJsonRet:= JsonObject():new()
 
 	cPostRet := HttpSPost(cURL,cCert, cPrivate ,cPassword,cParam,cJson,,aHeadOut,@cHeadRet )
 	cStatus:= HTTPGetStatus(cHeadRet)
@@ -28,21 +28,21 @@ user function RCRestSSL(cURL, cParam, cJson, aHeadOut )
 
 	else
 
-
-		If !FWJsonDeserialize(cPostRet,@oJsonRet)
+		ret := oJsonRet:FromJson(cPostRet)
+ 
+		if ValType(ret) == "U"
+			Conout("JsonObject populado com sucesso")
+			AADD(aRet, .T.)
+			AADD(aRet, cPostRet )
+			AADD(aRet, "05" ) // SUCESSO
+			AADD(aRet, oJsonRet)		
+		else
+			Conout("Falha ao popular JsonObject. Erro: " + ret)
 			AADD(aRet, .F.)
 			AADD(aRet, cPostRet )
 			AADD(aRet, "02" ) //"NAO FOI POSSIVEL DESEREALIZAR O RETORNO
 			AADD(aRet, oJsonRet)
-
-		ELSE
-			AADD(aRet, .T.)
-			AADD(aRet, cPostRet )
-			AADD(aRet, "05" ) // SUCESSO
-			AADD(aRet, oJsonRet)
-
-		Endif
-
+		endif
 		varinfo( "WebPage", cPostRet )
 	endif
 

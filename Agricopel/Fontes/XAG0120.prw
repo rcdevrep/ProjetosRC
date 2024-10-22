@@ -1150,6 +1150,8 @@ Elseif SEA->EA_MODELO $ "11/13/16/17/18"
     cUrl+="/v1/pagamentos/"+Alltrim(ZLA->ZLA_AGENCI)+"/"+Alltrim(ZLA->ZLA_CONTA)+"/1" //:agencia/:conta/:tipoConta/
     cParam:="tipoConsulta=3&segmentoConsulta=99&dataInicial=2023-01-18&dataFinal=2023-05-30&idTransacao="+Right(Alltrim(SE2->E2_IDCNAB),9) //07-guias com codigo de barras
     cFolderSign := "ConsultaContaConsumo"
+Else
+    Return .F.
 Endif
 
 //Busca o token para autenticação
