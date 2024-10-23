@@ -239,22 +239,23 @@ cContaVer := ALLTRIM(QRY->EA_NUMCON)
 
 
 QRY->(dbGoTop())
-While QRY->(!Eof())
-	If QRY->EA_PORTADO $ cBcosAPI  
-		If QRY->EA_CART = "R"
+WHILE QRY->(!Eof())
+	IF QRY->EA_PORTADO $ cBcosAPI  
+		IF QRY->EA_CART = "R"
 			Receb106()
-		Else //Pagamentos	
+			nQtd ++
+		ELSE //Pagamentos	
 			
 			IF(SUBSTRING(cContaVer,1,LEN(cContaVer)-1) <> ALLTRIM(MV_PAR05))
 				FWAlertError("Conta do borderô: "+QRY->EA_NUMBOR+"  diferente da conta informada. Conta: "+QRY->EA_NUMCON, "XAG0106")
 				return .F.
 			ELSE
-				EnvApr106()			
-			ENDIF
-					
-		Endif	
-		nQtd ++
-	Endif
+				IF(EnvApr106())				
+					nQtd ++
+				ENDIF		
+			ENDIF					
+		ENDIF			
+	ENDIF
 	QRY->(dbSkip())
 	
 End
@@ -265,58 +266,149 @@ Endif
 
 Return
 
+user function ZLAEXIST(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja)
+
+Local aRet := {}
+Local cQuery := ""
+
+cQuery := "SELECT ZLA_CODIGO FROM ZLA010 ZLA WHERE D_E_L_E_T_ <> '*' "
+cQuery += "AND ZLA_PREFIX = '"+cPrefixo+"' "
+cQuery += "AND ZLA_NUM = '"+cNumero+"' "
+cQuery += "AND ZLA_PARCEL = '"+cParcela+"' "
+cQuery += "AND ZLA_TIPO = '"+cTipo+"' "
+cQuery += "AND ZLA_CLIFOR = '"+cFornece+"' "
+cQuery += "AND ZLA_LOJA = '"+cLoja+"' "
+
+If Select("QRY") > 0
+	QRY->(dbCloseArea())
+Endif
+TcQuery cQuery New Alias "QRY"
+If !QRY->(Eof())
+	AADD(aRet, .T.)
+	AADD(aRet, QRY->ZLA_CODIGO)
+	return aRet
+ELSE
+	AADD(aRet, .F.)
+	AADD(aRet, "NAO ENCONTRADO")
+ENDIF
+
+return aRet
+
+user function ZLAUPDATE(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja, cStatus)
+Local bRet
+Local aZLA
+
+aZLA := U_ZLAEXIST(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja)
+
+IF(aZLA[1])
+	cQryStatus := "UPDATE ZLA010 SET ZLA_STATUS = '"+cStatus+"' WHERE D_E_L_E_T_ <> '*' "
+	cQryStatus += "AND ZLA_PREFIX = '"+cPrefixo+"' "
+	cQryStatus += "AND ZLA_NUM = '"+cNumero+"' "
+	cQryStatus += "AND ZLA_PARCEL = '"+cParcela+"' "
+	cQryStatus += "AND ZLA_TIPO = '"+cTipo+"' "
+	cQryStatus += "AND ZLA_CLIFOR = '"+cFornece+"' "
+	cQryStatus += "AND ZLA_LOJA = '"+cLoja+"' "
+
+	TcSqlExec(cQryStatus)
+
+	aZLA[1] := .T.
+ELSE
+	aZLA[1] := .F.
+ENDIF
+
+RETURN aZLA
+
+
+user function ZLACAMPO(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja,cCampo,cValue)
+Local bRet
+Local aZLA
+
+aZLA := U_ZLAEXIST(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja)
+
+IF(aZLA[1])
+	cQryStatus := "UPDATE ZLA010 SET "+cCampo+" = '"+cValue+"' WHERE D_E_L_E_T_ <> '*' "
+	cQryStatus += "AND ZLA_PREFIX = '"+cPrefixo+"' "
+	cQryStatus += "AND ZLA_NUM = '"+cNumero+"' "
+	cQryStatus += "AND ZLA_PARCEL = '"+cParcela+"' "
+	cQryStatus += "AND ZLA_TIPO = '"+cTipo+"' "
+	cQryStatus += "AND ZLA_CLIFOR = '"+cFornece+"' "
+	cQryStatus += "AND ZLA_LOJA = '"+cLoja+"' "
+
+	TcSqlExec(cQryStatus)
+	bRet := .T.
+ELSE
+	bRet := .F.
+ENDIF
+
+return bRet
+
+user function ZLBHIST(cFilori, cCodigo, cStatus, cMsg, cEvento)
+
+Reclock("ZLB",.T.)
+	ZLB->ZLB_FILIAL:= xFilial("ZLB")
+	ZLB->ZLB_CODIGO:= cCodigo
+	ZLB->ZLB_DATA:= dDataBase
+	ZLB->ZLB_HORA := Time()
+	ZLB->ZLB_EVENTO:= cEvento
+	ZLB->ZLB_STATUS:= cStatus
+	ZLB->ZLB_USER:= __cUserId
+	ZLB->ZLB_ERRO:= cMsg
+	ZLB->ZLB_FILORI:= cFilori
+	msUnlock()
+
+return 
+
+
 static function EnvApr106
-Local lRec := .T.
+Local lRec := .F.
 
-cCodigo:= GetSxENum("ZLA", "ZLA_CODIGO")
-ConfirmSX8()
+	cCodigo:= GetSxENum("ZLA", "ZLA_CODIGO")
+	ConfirmSX8()
 
-	If SE2->(dbSeek(xFilial("SE2")+QRY->(EA_PREFIXO+EA_NUM+EA_PARCELA+EA_TIPO+EA_FORNECE+EA_LOJA)))
-		If SE2->E2_SALDO > 0	
-	        Dbselectarea("ZLA")
-			Dbsetorder(1)
-			dbgotop()
-			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-				lRec:= .F.
-				cCodigo:= ZLA->ZLA_CODIGO
-			Endif    
-			Reclock("ZLA",lRec)
-				ZLA_FILIAL:= xFilial("ZLA")
-				ZLA_PREFIX:= SE2->E2_PREFIXO
-				ZLA_NUM:= SE2->E2_NUM
-				ZLA_PARCEL:= SE2->E2_PARCELA
-				ZLA_TIPO:= SE2->E2_TIPO
-				ZLA_CLIFOR:= SE2->E2_FORNECE
-				ZLA_LOJA:= SE2->E2_LOJA
-				ZLA_VENCTO:= SE2->E2_VENCREA
-				ZLA_VALOR:= SE2->E2_SALDO
-				ZLA_NUMBOR:= SE2->E2_NUMBOR
-				ZLA_BANCO:= SEE->EE_CODIGO
-				ZLA_AGENCI:= SEE->EE_AGENCIA
-				ZLA_CONTA:= SEE->EE_CONTA
-				ZLA_RECPAG:= 'P'
-				ZLA_STATUS:= '4'
-				ZLA_DATA:= dDataBase
-				ZLA_USER:= __cUserId
-				ZLA_CODIGO:= cCodigo
-				ZLA_IDCNAB:= SE2->E2_IDCNAB
+	IF SE2->(dbSeek(xFilial("SE2")+QRY->(EA_PREFIXO+EA_NUM+EA_PARCELA+EA_TIPO+EA_FORNECE+EA_LOJA)))
+		IF SE2->E2_SALDO > 0	
+	       	aZLA := ZLAEXIST(QRY->EA_PREFIXO, QRY->EA_NUM,  QRY->EA_PARCELA, QRY->EA_TIPO, QRY->EA_FORNECE, QRY->EA_LOJA)
+			IF(!aZLA[1])			
+				Reclock("ZLA",.T.)
+				ZLA->ZLA_FILIAL:= xFilial("ZLA")
+				ZLA->ZLA_PREFIX:= SE2->E2_PREFIXO
+				ZLA->ZLA_NUM:= SE2->E2_NUM
+				ZLA->ZLA_PARCEL:= SE2->E2_PARCELA
+				ZLA->ZLA_TIPO:= SE2->E2_TIPO
+				ZLA->ZLA_CLIFOR:= SE2->E2_FORNECE
+				ZLA->ZLA_LOJA:= SE2->E2_LOJA
+				ZLA->ZLA_VENCTO:= SE2->E2_VENCREA
+				ZLA->ZLA_VALOR:= SE2->E2_SALDO
+				ZLA->ZLA_NUMBOR:= SE2->E2_NUMBOR
+				ZLA->ZLA_BANCO:= SEE->EE_CODIGO
+				ZLA->ZLA_AGENCI:= SEE->EE_AGENCIA
+				ZLA->ZLA_CONTA:= SEE->EE_CONTA
+				ZLA->ZLA_RECPAG:= 'P'
+				ZLA->ZLA_STATUS:= '4'
+				ZLA->ZLA_DATA:= dDataBase
+				ZLA->ZLA_USER:= __cUserId
+				ZLA->ZLA_CODIGO:= cCodigo
+				ZLA->ZLA_IDCNAB:= SE2->E2_IDCNAB
 				ZLA->ZLA_FILORI:= SE2->E2_FILORIG				
-			MsUnlock()
-			//Cria o registro na ZLB
-			Reclock("ZLB",.T.)
+				MsUnlock()
+			
+				Reclock("ZLB",.T.)
 				ZLB_FILIAL:= xFilial("ZLB")
 				ZLB_CODIGO:= cCodigo
 				ZLB_DATA:= dDataBase
 				ZLB_HORA:= Time()
-				ZLB_EVENTO:= '6' //enviado para aprovação
+				ZLB_EVENTO:= '6'
 				ZLB_STATUS:= ZLA->ZLA_STATUS
 				ZLB_USER:= __cUserId
 				ZLB_ERRO:= "Aguardando aprovação"
 				ZLB_FILORI:= ZLA->ZLA_FILORI
-			msUnlock()
-		Endif
-	Endif
-return
+				msUnlock()
+
+				lRec := .T.
+			ENDIF
+		ENDIF
+	ENDIF
+return lRec
 
 user function XAG0107S
 Default oObjLog:= nil
@@ -525,7 +617,7 @@ ENDIF
 
 IF(bConsulta)
 	cClientId := ALLTRIM(SEE->EE_ZZCLIID)
-	If SE2->(dbSeek(xFilial("SE2")+ZLA->(ZLA_PREFIXO+ZLA_NUM+ZLA_PARCEL+ZLA_TIPO+ZLA_CLIFOR+ZLA_LOJA)))
+	If SE2->(dbSeek(xFilial("SE2")+ZLA->(ZLA_PREFIX+ZLA_NUM+ZLA_PARCEL+ZLA_TIPO+ZLA_CLIFOR+ZLA_LOJA)))
 		DBselectarea("SEA")
 		SEA->(dbSetOrder(1))
 		If SEA->(dbSeek(xFilial("SEA")+SE2->E2_NUMBOR+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+SE2->E2_TIPO))
@@ -624,7 +716,7 @@ static function XAGMARKAPR()
 		QRY->(dbSkip())
 	End
 
-
+ 
 
 	TRB->(DbGoTop())
 	If TRB->(!Eof())
@@ -1438,75 +1530,16 @@ Static function Pagam106(oObj)
 						FWMsgRun(,{|| u_XAG0121(cTitulo,cCodigo, cClientId)},"Envio ao Bradesco","Enviando título(s)... Aguarde...")
 					Endif
 					oObj:IncRegua2("Finalizado")
-
-					Dbselectarea("ZLA")
-					Dbsetorder(1)
-					dbgotop()
-					If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-						IF(EMPTY(ZLA->ZLA_DTOPER))
-							RECLOCK("ZLA",.F.)
-							ZLA->ZLA_STATUS = '6'
-							MSUNLOCK()
-
-							Reclock("ZLB",.T.)
-							ZLB_FILIAL:= xFilial("ZLB")
-							ZLB_CODIGO:= ZLA->ZLA_CODIGO
-							ZLB_DATA:= dDataBase
-							ZLB_HORA:= Time()
-							ZLB_EVENTO:= '5' //Validação boleto
-							ZLB_STATUS:= '6'
-							ZLB_USER:= __cUserId
-							ZLB_ERRO:= "ERRO DE COMUNICAÇÃO"
-							ZLB_FILORI:= ZLA->ZLA_FILORI
-							msUnlock()
-
-						ENDIF
-
-					Endif
-
-
-					cQryDupl := " "
-
-					cQryDupl += "UPDATE "+RETSQLNAME("ZLA")+" SET D_E_L_E_T_ = '*',ZLA_IDAPI = 'DUPLI' where  "
-					cQryDupl += "ZLA_PREFIX + ZLA_NUM + ZLA_PARCEL + ZLA_TIPO + ZLA_CLIFOR + ZLA_LOJA IN ( "
-					cQryDupl += "select ZLA_PREFIX + ZLA_NUM + ZLA_PARCEL + ZLA_TIPO +  ZLA_CLIFOR + ZLA_LOJA from "+RETSQLNAME("ZLA")+" ZLA where ZLA_NUMBOR = '"+ZLA->ZLA_NUMBOR+"' "
-					cQryDupl += "GROUP BY ZLA_PREFIX,ZLA_NUM,ZLA_PARCEL,ZLA_TIPO, ZLA_CLIFOR + ZLA_LOJA"
-					cQryDupl += "HAVING COUNT(*) > 1 ) "
-					cQryDupl += "AND ZLA_DTOPER <> '4' "
-
-					TcSqlExec(cQryDupl)
-
 				Endif
-
-				//MSGALERT("ZLA")
 			Endif
 		ELSE
 			//ALERTA
 			FWAlertWarning("Titulo "+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA)+" já baixado!","Status atualizado")
-			Dbselectarea("ZLA")
-			Dbsetorder(1)
-			dbgotop()
-			If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))
 
-				Reclock("ZLA",.F.)
-				ZLA_STATUS:= '3'
-				MsUnlock()
-
-				Reclock("ZLB",.T.)
-				ZLB_FILIAL:= xFilial("ZLB")
-				ZLB_CODIGO:= ZLA->ZLA_CODIGO
-				ZLB_DATA:= dDataBase
-				ZLB_HORA:= Time()
-				ZLB_EVENTO:= '3' //Alteração boleto
-				ZLB_STATUS:= '3'
-				ZLB_USER:= __cUserId
-				ZLB_ERRO:= "Titulo já baixado."
-				ZLB_FILORI:= ZLA->ZLA_FILORI
-				msUnlock()
+			aZLA := U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, "3")
+			U_ZLBHIST(SE2->E2_FILORIG, aZLA[2], '3', "TITULO JÁ BAIXADO NO SISTEMA", '1')							
 			Endif
-
 		Endif
-	Endif
 
 return
 
@@ -2119,9 +2152,9 @@ cTitulo+= '  },
 			ELSEIF jJsonBol["pagamentoComumResponse"]:HasProperty("codigoRetorno")
 				IF jJsonBol["pagamentoComumResponse"]["codigoRetorno"] == 2143
 					lRet := .F.
-					cErro:= "NÃO FOI PROCESSADO PAGAMENTO, REFAZER O PROCESSO"					
+					cErro:= "NÃO FOI PROCESSADO PAGAMENTO, REFAZER O PROCESSO"
 				ELSE
-					cErro:= "ERRO AO CONSULTAR BOLETO"
+					cErro:= "ERRO AO CONSULTAR BOLETO COD:"+ jJsonBol["pagamentoComumResponse"]["codigoRetorno"]
 				ENDIF
 			ELSE
 				cErro:= "ERRO AO CONSULTAR BOLETO"
@@ -2139,179 +2172,22 @@ cTitulo+= '  },
 		If Len(aRet) > 0
 			IF(u_BaixaPag(aRet)	)
 
-
-
-				cQryDupl := " "
-				cQryDupl += "UPDATE "+RETSQLNAME("ZLA")+" SET ZLA_STATUS = '3' where  "
-				cQryDupl += "ZLA_PREFIX = '" + SE2->E2_PREFIXO + "' AND ZLA_NUM ='" + SE2->E2_NUM + "' AND ZLA_PARCEL = '" + SE2->E2_PARCELA + "' AND ZLA_TIPO = '" + SE2->E2_TIPO + "' AND ZLA_CLIFOR = '" + SE2->E2_FORNECE + "' AND ZLA_LOJA = '" + SE2->E2_LOJA +"' "
-
-				TcSqlExec(cQryDupl)
-
-
-
-				Reclock("ZLB",.T.)
-				ZLB_FILIAL:= xFilial("ZLB")
-				ZLB_CODIGO:= cCodigo
-				ZLB_DATA:= dDataBase
-				ZLB_HORA:= Time()
-				ZLB_EVENTO:= '5' //Validação boleto
-				ZLB_STATUS:= ZLA->ZLA_STATUS
-				ZLB_USER:= __cUserId
-				ZLB_ERRO:= cErro
-				ZLB_FILORI:= ZLA->ZLA_FILORI
-				msUnlock()
+				aZLA := U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, "3")
+				U_ZLBHIST(SE2->E2_FILORIG, aZLA[2], '3', cErro, '1')
+			
 			ELSE
 				FWAlertError("Não foi possivel fazer a baixa. ", "AGRICOPEL")
 			ENDIF
 
 
-		ELSE
+		ELSE			
 			FWAlertError("Erro na consulta. ", "AGRICOPEL")
 		Endif
 	ELSE
 		FWAlertError("Erro na consulta. ", "AGRICOPEL")
 	ENDIF
 
-
-
 Return lRet
 
 
-Static Function consTEDBRD(cCodigo, cClientId)
-	Local cURL:= ""
-	Local cURLBase:= ""
-	Local cToken:= ""
-	Local cHeaderRet:= ""
-	Local cErro:= ""
-	Local cJti:= ""
-	Local cAssinatura:= ""
-	Local cConteudo:= ""
-//Local cClientId:= GetNewPar("AC_BRDCLIP","e67ca582-a3d6-47d0-af05-8713f8a520be")
-	Local cDirServ:= "\cert APIs bancos\openssl\"
-	Local lRec:= .T.
-	Local lRegistrou := .F.
-	Local aToken      	:= {}
-	Local aHeadStr      := {}
-	Local nCodResp:= 0
-	Private nNossoNum   := 0
-	Private oObjLog     := nil
 
-//Geração de log
-	oObjLog := LogSMS():new("APIBRD_ENVIAR_PGTO")
-	oObjLog:setFileName('\log\APIBRD\consultaTED'+cEmpAnt+'_'+cFilant+'_'+dtos(date())+"_"+strtran(time(),":","")+"_"+SE2->E2_NUM+"_"+cValToChar(ThreadId())+'.txt')
-	oObjLog:eraseLog()
-	oObjLog:saveMsg(GetEnvServer())
-
-	cUrlBase:= GetNewPar("AC_BRDURL","https://proxy.api.prebanco.com.br") //https://openapi.bradesco.com.br
-	cUrl+= '/v1/transferencia/consulta'
-	cParam:="numeroDocumento="+Alltrim(ZLA->ZLA_NUMBCO)+"&dataOperacao="+StrTran(Left(FWTIMESTAMP(2,ZLA->ZLA_DATA),10),"/",".")
-
-//Busca o token para autenticação
-	aToken:= U_gTokenBrd(cClientId)
-	If !aToken[1]
-		oObjLog:saveMsg("Autenticação inválida!!!")
-		Return
-	Else
-		cToken:= aToken[2]
-		cJti:= aToken[3]
-		cTime:= aToken[4]
-	Endif
-
-//Salva o arquivo com o request para uso na assinatura
-	cConteudo:= "POST"+LF
-	cConteudo+= cUrl+LF
-	cConteudo+= LF
-	cConteudo+= Alltrim(cParam)+LF
-	cConteudo+= cToken+LF
-	cConteudo+= cJti+LF
-	cConteudo+= Left(FwTimeStamp(3,date(),cTime),19)+'-03:00'+LF
-	cConteudo+= "SHA256"
-
-//Gera a assinatura
-	cAssinatura:= U_gSignBrd("ConsultaTED", SE2->E2_IDCNAB, cConteudo)
-
-	If Empty(cAssinatura)
-		Return
-	Endif
-
-//Autorização no header
-	Aadd(aHeadStr, "Authorization: Bearer "+cToken )
-	Aadd(aHeadStr, "X-Brad-Signature: "+cAssinatura)
-	Aadd(aHeadStr, "X-Brad-Nonce: "+cJti)
-	Aadd(aHeadStr, "X-Brad-Timestamp: "+Left(FwTimeStamp(3,date(),cTime),19)+'-03:00')
-	Aadd(aHeadStr, "X-Brad-Algorithm: SHA256")
-	Aadd(aHeadStr, "Access-token: "+cClientId)
-	Aadd(aHeadStr, "Content-Type: application/json")
-
-//cUrl += "?numeroDocumento="+ZLA->ZLA_NUMBCO                                                                                                              +"&dataOperacao="+REPLACE(DTOC(dDataBase),'/','.')"
-
-//Efetua o POST na API
-	cRetGet := HTTPGet(cUrlBase+cUrl, cParam, /*nTimeOut*/, aHeadStr, @cHeaderRet)
-	cRetGet:= DecodeUTF8(cRetGet)
-	nCodResp:= HTTPGetStatus(cHeaderRet)
-	lRegistrou:= nCodResp = 200
-	oObjLog:saveMsg("Consulta TED")
-	oObjLog:saveMsg("**URL: "+cUrlBase+cUrl)
-	oObjLog:saveMsg("**Body: "+cParam)
-	oObjLog:saveMsg("**Retorno: "+Iif(cRetGet = nil,"",cRetGet))
-	oObjLog:saveMsg("**Cabeçalho Retorno: "+cHeaderRet)
-
-//Transforma o retorno em um JSON
-	jJsonBol := JsonObject():New()
-	jJsonBol:FromJson(cRetGet)
-
-	If !lRegistrou
-		If nCodResp = 401
-			cErro:= jJsonBol["mensagem"]
-		Else
-			If jJsonBol:HasProperty("codigo")
-				cErro:= jJsonBol["codigo"]+" - "+jJsonBol["mensagem"]
-			Elseif jJsonBol:HasProperty("code")
-				cErro:= jJsonBol["code"]+" - "+jJsonBol["message"]
-			Else
-				cErro:= "Falha ao enviar a requisicao. Codigo: " +cvaltochar(nCodResp)+' - '+cHeaderRet
-			Endif
-		Endif
-	Endif
-
-	Dbselectarea("ZLA")
-	Dbsetorder(1)
-	dbgotop()
-//Cria o registro na ZLA
-	If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-		lRec:= .F.
-		cCodigo:= ZLA->ZLA_CODIGO
-	Endif
-
-	Reclock("ZLA",lRec) //ANALISAR
-	ZLA_FILIAL:= xFilial("ZLA")
-	ZLA_STATUS:= '3'
-	ZLA_DATA:= dDataBase
-	ZLA_USER:= __cUserId
-	MsUnlock()
-
-
-//Cria o registro na ZLB
-	Reclock("ZLB",.T.)
-	ZLB_FILIAL:= xFilial("ZLB")
-	ZLB_CODIGO:= cCodigo
-	ZLB_DATA:= dDataBase
-	ZLB_HORA:= Time()
-	ZLB_EVENTO:= '1' //Registro boleto
-	ZLB_STATUS:= ZLA->ZLA_STATUS
-	ZLB_USER:= __cUserId
-	ZLB_ERRO:= cErro
-	ZLB_FILORI:= ZLA->ZLA_FILORI
-	msUnlock()
-
-//Atualiza o bordero para enviado
-	If lRegistrou
-		SEA->(dbSetOrder(1))
-		If SEA->(dbSeek(xFilial("SEA")+SE2->E2_NUMBOR+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+SE2->E2_TIPO+SE2->E2_FORNECE+SE2->E2_LOJA))
-			Reclock("SEA",.F.)
-			SEA->EA_TRANSF:= 'S'
-			SEA->(msUnlock())
-		Endif
-	Endif
-
-Return

@@ -364,59 +364,23 @@ If !lRegistrou
     Endif
 Endif
 
-Dbselectarea("ZLA")
-Dbsetorder(1)
-dbgotop()
-//Cria o registro na ZLA
-If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-    lRec:= .F.
-    cCodigo:= ZLA->ZLA_CODIGO
-Endif    
-Reclock("ZLA",lRec)
-    ZLA_FILIAL:= xFilial("ZLA")
-    ZLA_PREFIX:= SE2->E2_PREFIXO
-    ZLA_NUM:= SE2->E2_NUM
-    ZLA_PARCEL:= SE2->E2_PARCELA
-    ZLA_TIPO:= SE2->E2_TIPO
-    ZLA_CLIFOR:= SE2->E2_FORNECE
-    ZLA_LOJA:= SE2->E2_LOJA
-    ZLA_VENCTO:= SE2->E2_VENCTO
-    ZLA_VALOR:= SE2->E2_VALOR
-    ZLA_NUMBOR:= SE2->E2_NUMBOR
-    ZLA_BANCO:= SEE->EE_CODIGO
-    ZLA_AGENCI:= SEE->EE_AGENCIA
-    ZLA_CONTA:= SEE->EE_CONTA
-    ZLA_RECPAG:= 'P'
-    ZLA_STATUS:= Iif(lRegistrou,'2','0')
-    ZLA_DATA:= dDataBase
-    ZLA_DTOPER := Date()
-    ZLA_USER:= __cUserId
-    ZLA_CODIGO:= cCodigo
-    ZLA_IDCNAB:= SE2->E2_IDCNAB
-    If lRegistrou
-        ZLA_IDENT:= cValtoChar(jJsonBol["autenticacaoBancaria"])
-        If lTransferencia
-            ZLA_NUMBCO:= Substr(jJsonBol["chaveUnicaParaApi"],1,At("-",jJsonBol["chaveUnicaParaApi"])-5)
-        Endif  
-    Endif  
-    ZLA->ZLA_FILORI:= SE2->E2_FILORIG
-MsUnlock()
+//AQUI
 
+aZLA := U_ZLAEXIST(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA)
 
-//Cria o registro na ZLB
-Reclock("ZLB",.T.)
-    ZLB_FILIAL:= xFilial("ZLB")
-    ZLB_CODIGO:= cCodigo
-    ZLB_DATA:= dDataBase
-    ZLB_HORA:= Time()
-    ZLB_EVENTO:= '1' //Registro boleto
-    ZLB_STATUS:= ZLA->ZLA_STATUS
-    ZLB_USER:= __cUserId
-    ZLB_ERRO:= cErro
-    ZLB_FILORI:= ZLA->ZLA_FILORI
-msUnlock()
+IF(lRegistrou)
+    U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, "2")
+    U_ZLACAMPO(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA,'ZLA_IDENT',cValtoChar(jJsonBol["autenticacaoBancaria"]))
+    IF lTransferencia 
+        U_ZLACAMPO(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA,'ZLA_NUMBCO', Substr(jJsonBol["chaveUnicaParaApi"],1,At("-",jJsonBol["chaveUnicaParaApi"])-5))
+    ENDIF  
+    U_ZLBHIST(SE2->E2_FILORIG, aZLA[2], '2', "PAGAMENTO EFETIVADO NO BANCO", '1')
 
-//Atualiza o bordero para enviado
+ELSE
+    U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, "6")
+    U_ZLBHIST(SE2->E2_FILORIG, aZLA[2], '6', "ERRO AO REGISTRAR PAGAMENTO NO BANCO", '1')
+ENDIF
+
 If lRegistrou
     SEA->(dbSetOrder(1))
     If SEA->(dbSeek(xFilial("SEA")+SE2->E2_NUMBOR+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+SE2->E2_TIPO+SE2->E2_FORNECE+SE2->E2_LOJA))
@@ -456,7 +420,7 @@ Local aHeadStr      := {}
 Local nCodResp:= 0
 Private nNossoNum   := 0
 Private oObjLog     := nil
-
+ 
 //Geração de log
 oObjLog := LogSMS():new("APIBRD_ENVIAR_PGTO")
 oObjLog:setFileName('\log\APIBRD\validar_boleto_'+cEmpAnt+'_'+cFilant+'_'+dtos(date())+"_"+strtran(time(),":","")+"_"+SE2->E2_NUM+"_"+cValToChar(ThreadId())+'.txt')
@@ -540,54 +504,14 @@ Else
     lRet:= .T.
 Endif
 
-Dbselectarea("ZLA")
-Dbsetorder(1)
-dbgotop()
-//Cria o registro na ZLA
-If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-    lRec:= .F.
-    cCodigo:= ZLA->ZLA_CODIGO
-Endif    
-Reclock("ZLA",lRec)
-    ZLA_FILIAL:= xFilial("ZLA")
-    ZLA_PREFIX:= SE2->E2_PREFIXO
-    ZLA_NUM:= SE2->E2_NUM
-    ZLA_PARCEL:= SE2->E2_PARCELA
-    ZLA_TIPO:= SE2->E2_TIPO
-    ZLA_CLIFOR:= SE2->E2_FORNECE
-    ZLA_LOJA:= SE2->E2_LOJA
-    ZLA_VENCTO:= SE2->E2_VENCTO
-    ZLA_VALOR:= SE2->E2_VALOR
-    ZLA_NUMBOR:= SE2->E2_NUMBOR
-    ZLA_BANCO:= SEE->EE_CODIGO
-    ZLA_AGENCI:= SEE->EE_AGENCIA
-    ZLA_CONTA:= SEE->EE_CONTA
-    ZLA_RECPAG:= 'P'
-    ZLA_STATUS:= Iif(nCodResp = 200,'2','0')
-    ZLA_DATA:= dDataBase
-    ZLA_USER:= __cUserId
-    ZLA_CODIGO:= cCodigo
-    ZLA_IDCNAB:= SE2->E2_IDCNAB
-    ZLA->ZLA_FILORI:= SE2->E2_FILORIG
-    If nCodResp = 200 //PIXTID NÃO PREENCHIDO.
-        ZLA->ZLA_PIXTID:= jJsonBol["consultaFatorDataVencimentoResponse"]["numeroControleParticipante"] //0237CP01240660800208
-    Endif
-MsUnlock()
-
-//Cria o registro na ZLB
-Reclock("ZLB",.T.)
-    ZLB_FILIAL:= xFilial("ZLB")
-    ZLB_CODIGO:= cCodigo
-    ZLB_DATA:= dDataBase
-    ZLB_HORA:= Time()
-    ZLB_EVENTO:= '5' //Validação boleto
-    ZLB_STATUS:= ZLA->ZLA_STATUS
-    ZLB_USER:= __cUserId
-    ZLB_ERRO:= cErro
-    ZLB_FILORI:= ZLA->ZLA_FILORI
-msUnlock()
-
-
+IF(lRet)
+    cControlePart := jJsonBol["consultaFatorDataVencimentoResponse"]["numeroControleParticipante"]    
+    IF(EMPTY(cControlePart))
+        lRet := U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, "6")
+    ELSE
+        lRet := U_ZLACAMPO(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA,"ZLA_PIXTID", cControlePart)
+    ENDIF
+ENDIF
 
 
 Return lRet
@@ -659,52 +583,52 @@ ZFwK5TlBgrn9/mrRaw48cA==
 
 */
 
-cJson:='{' 
+cJson:='{'
 cJson+='"agencia":'+U_TiraZero(Alltrim(SEE->EE_AGENCIA))+','
-cJson+='"pagamentoComumRequest":' 
-cJson+='{' 
-cJson+='"contaDadosComum":' 
-cJson+='{' 
+cJson+='"pagamentoComumRequest":'
+cJson+='{'
+cJson+='"contaDadosComum":'
+cJson+='{'
 cJson+='"agenciaContaDebitada":'+cvaltochar(val(SEE->EE_AGENCIA))+','
 cJson+='"bancoContaDebitada":'+cvaltochar(val(SEE->EE_CODIGO))+','
 cJson+='"contaDebitada":'+cvaltochar(val(SEE->EE_CONTA))+','
 cJson+='"digitoAgenciaDebitada": '+Alltrim(SEE->EE_DVAGE)+','
 cJson+='"digitoContaDebitada":"'+Alltrim(SEE->EE_DVCTA)+'"'
-cJson+='},' 
+cJson+='},'
 cJson+='"dadosSegundaLinhaExtrato":"'+SE2->E2_FILIAL+SE2->E2_PREFIXO+SE2->E2_NUM+SE2->E2_PARCELA+'",'
 cJson+='"dataMovimento":'+DTOS(DDATABASE)+','
 cJson+='"dataPagamento":'+DTOS(DDATABASE)+','
 cJson+='"dataVencimento":'+DTOS(SE2->E2_VENCTO)+','
 cJson+='"horaTransacao":'+cvaltochar(val(StrTran(Time(),":","")))+','
 cJson+='"identificacaoTituloCobranca":"'+Alltrim(SE2->E2_CODBAR)+'",'
-cJson+='"indicadorFormaCaptura":1,' 
+cJson+='"indicadorFormaCaptura":1,'
 cJson+='"valorTitulo":'+cvaltochar(SE2->E2_VALOR )+''
-cJson+='},' 
-cJson+='"destinatarioDadosComum":' 
-cJson+='{' 
-cJson+='"cpfCnpjDestinatario":""' 
-cJson+='},' 
-cJson+='"identificacaoChequeCartao":0,' 
-cJson+='"indicadorValidacaoGravacao":"N",' 
+cJson+='},'
+cJson+='"destinatarioDadosComum":'
+cJson+='{'
+cJson+='"cpfCnpjDestinatario":""'
+cJson+='},'
+cJson+='"identificacaoChequeCartao":0,'
+cJson+='"indicadorValidacaoGravacao":"N",'
 cJson+='"nomeCliente":"'+SUBSTR(U_RemCarEsp(Alltrim(SA2->A2_NOME)),1,40)+'",'
 If Left(SE2->E2_CODBAR,3) <> '237'
-cJson+= '"numeroControleParticipante":"'+Alltrim(ZLA->ZLA_PIXTID)+'",'
-Else	
-cJson+= '"numeroControleParticipante":"0",'
-Endif        
+	cJson+= '"numeroControleParticipante":"'+Alltrim(ZLA->ZLA_PIXTID)+'",'
+Else
+	cJson+= '"numeroControleParticipante":"0",'
+Endif
 
-cJson+='"portadorDadosComum":' 
-cJson+='{' 
+cJson+='"portadorDadosComum":'
+cJson+='{'
 //cJson+='"cpfCnpjPortador":"81632093000411"' 
-cJson+='"cpfCnpjPortador":"'+Alltrim(SEE->EE_ZZCNPJP)+'"' 
+cJson+='"cpfCnpjPortador":"'+Alltrim(SEE->EE_ZZCNPJP)+'"'
 
-cJson+='},' 
-cJson+='"remetenteDadosComum":' 
-cJson+='{' 
+cJson+='},'
+cJson+='"remetenteDadosComum":'
+cJson+='{'
 cJson+='"cpfCnpjRemetente":"'+Alltrim(SA2->A2_CGC)+'"'
-cJson+='},' 
-cJson+='"valorMinimoIdentificacao":0' 
-cJson+='}' 
+cJson+='},'
+cJson+='"valorMinimoIdentificacao":0'
+cJson+='}'
 
 /*
 
@@ -757,8 +681,8 @@ cUrlBase:= GetNewPar("AC_BRDURL","https://proxy.api.prebanco.com.br") //https://
 //Busca o token para autenticação
 aToken:= U_gTokenBrd(cClientId)
 If !aToken[1]
-	oObjLog:saveMsg("Autenticação inválida!!!") 
-    Return
+	oObjLog:saveMsg("Autenticação inválida!!!")
+Return
 Else
 	cToken:= aToken[2]
 	cJti:= aToken[3]
@@ -779,95 +703,38 @@ cConteudo+= "SHA256"
 cAssinatura:= U_gSignBrd("ValidarPagamento", SE2->E2_IDCNAB, cConteudo)
 
 If Empty(cAssinatura)
-    Return
-Endif    
+Return
+Endif
 
 //Autorização no header
-Aadd(aHeadStr, "Content-Type: application/json") 
+Aadd(aHeadStr, "Content-Type: application/json")
 Aadd(aHeadStr, "Authorization: Bearer "+cToken )
 Aadd(aHeadStr, "X-Brad-Signature: "+cAssinatura)
 Aadd(aHeadStr, "X-Brad-Nonce: "+cJti)
-Aadd(aHeadStr, "X-Brad-Timestamp: "+Left(FwTimeStamp(3,date(),cTime),19)+'-00:00') 
-Aadd(aHeadStr, "X-Brad-Algorithm: SHA256") 
-Aadd(aHeadStr, "Access-token: "+cClientId) 
+Aadd(aHeadStr, "X-Brad-Timestamp: "+Left(FwTimeStamp(3,date(),cTime),19)+'-00:00')
+Aadd(aHeadStr, "X-Brad-Algorithm: SHA256")
+Aadd(aHeadStr, "Access-token: "+cClientId)
 
 
 //Efetua o POST na API
 cRetPost := HTTPPost(cUrlBase+cUrl, /*cGetParms*/, cJson, /*nTimeOut*/, aHeadStr, @cHeaderRet)
 cRetPost:= DecodeUTF8(cRetPost)
 nCodResp:= HTTPGetStatus(cHeaderRet)
-oObjLog:saveMsg("Envia Validacao-Pagamento") 
-oObjLog:saveMsg("**URL: "+cUrlBase+cUrl) 
-oObjLog:saveMsg("**Body: "+cJson)  
-oObjLog:saveMsg("**Retorno: "+Iif(cRetPost = nil,"",cRetPost)) 
-oObjLog:saveMsg("**Cabeçalho Retorno: "+cHeaderRet) 
+oObjLog:saveMsg("Envia Validacao-Pagamento")
+oObjLog:saveMsg("**URL: "+cUrlBase+cUrl)
+oObjLog:saveMsg("**Body: "+cJson)
+oObjLog:saveMsg("**Retorno: "+Iif(cRetPost = nil,"",cRetPost))
+oObjLog:saveMsg("**Cabeçalho Retorno: "+cHeaderRet)
 
 //Transforma o retorno em um JSON
 jJsonBol := JsonObject():New()
 jJsonBol:FromJson(cRetPost)
 
-If nCodResp <> 200
-    If nCodResp = 401
-        cErro:= jJsonBol["message"]
-    Else
-        If jJsonBol:HasProperty("codigo")
-            cErro:= jJsonBol["codigo"]+" - "+jJsonBol["mensagem"]
-        Elseif jJsonBol:HasProperty("code")
-            cErro:= jJsonBol["code"]+" - "+jJsonBol["message"]
-        Else 
-            cErro:= "Falha ao enviar a requisicao. Codigo: " +cvaltochar(nCodResp)+' - '+cHeaderRet
-        Endif      
-    Endif
-Else
-    lRet:= .T.
+If nCodResp = 200
+	lRet:= .T.
 Endif
 
-Dbselectarea("ZLA")
-Dbsetorder(1)
-dbgotop()
-//Cria o registro na ZLA
-If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
-    lRec:= .F.
-    cCodigo:= ZLA->ZLA_CODIGO
-Endif    
-Reclock("ZLA",lRec)
-    ZLA_FILIAL:= xFilial("ZLA")
-    ZLA_PREFIX:= SE2->E2_PREFIXO
-    ZLA_NUM:= SE2->E2_NUM
-    ZLA_PARCEL:= SE2->E2_PARCELA
-    ZLA_TIPO:= SE2->E2_TIPO
-    ZLA_CLIFOR:= SE2->E2_FORNECE
-    ZLA_LOJA:= SE2->E2_LOJA
-    ZLA_VENCTO:= SE2->E2_VENCTO
-    ZLA_VALOR:= SE2->E2_VALOR
-    ZLA_NUMBOR:= SE2->E2_NUMBOR
-    ZLA_BANCO:= SEE->EE_CODIGO
-    ZLA_AGENCI:= SEE->EE_AGENCIA
-    ZLA_CONTA:= SEE->EE_CONTA
-    ZLA_RECPAG:= 'P'
-    ZLA_STATUS:= Iif(nCodResp = 200,'2','0')
-    ZLA_DATA:= dDataBase
-    ZLA_USER:= __cUserId
-    ZLA_CODIGO:= cCodigo
-    ZLA_IDCNAB:= SE2->E2_IDCNAB
-    ZLA->ZLA_FILORI:= SE2->E2_FILORIG
-    //If nCodResp = 200
-        //ZLA->ZLA_PIXTID:= jJsonBol["numeroControleParticipante"]
-    //Endif
-MsUnlock()
 
-//Cria o registro na ZLB
-Reclock("ZLB",.T.)
-    ZLB_FILIAL:= xFilial("ZLB")
-    ZLB_CODIGO:= cCodigo
-    ZLB_DATA:= dDataBase
-    ZLB_HORA:= Time()
-    ZLB_EVENTO:= '5' //Validação boleto
-    ZLB_STATUS:= ZLA->ZLA_STATUS
-    ZLB_USER:= __cUserId
-    ZLB_ERRO:= cErro
-    ZLB_FILORI:= ZLA->ZLA_FILORI
-msUnlock()
 
 
 

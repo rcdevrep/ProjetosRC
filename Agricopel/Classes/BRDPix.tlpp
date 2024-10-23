@@ -345,7 +345,7 @@ Method SolicitarTransferencia() Class BRDPix
 			Else
 				lRet:= .F.
 			Endif
-		ELSE
+		ELSE 
 	        Dbselectarea("ZLA")
 			Dbsetorder(1)
 			dbgotop()

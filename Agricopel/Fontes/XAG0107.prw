@@ -267,7 +267,7 @@ If ZLA->(DBSeek(xFilial("ZLA")+SE1->(E1_PREFIXO+E1_NUM+E1_PARCELA+E1_TIPO)))
     lRec:= .F.
     cCodigo:= ZLA->ZLA_CODIGO
 Endif    
-Reclock("ZLA",lRec)
+Reclock("ZLA",lRec) //A RECEBER
 ZLA_FILIAL:= xFilial("ZLA")
 ZLA_PREFIX:= SE1->E1_PREFIXO
 ZLA_NUM:= SE1->E1_NUM
@@ -430,7 +430,7 @@ Endif
 
 //Atualiza o registro na ZLA
 If lRet
-    Reclock("ZLA",.F.)
+    Reclock("ZLA",.F.) //A RECEBER
         ZLA->ZLA_STATUS:= '3' //Pago
     msUnlock()    
 Endif
@@ -1030,7 +1030,7 @@ cQry+= " AND SEA.D_E_L_E_T_ = ' ' "
 cQry+= "Where ZLA_FILIAL = '"+xFilial("ZLA")+"' "
 cQry+= "And ZLA_STATUS = '2' " //entrada confirmada
 cQry+= "And ZLA_BANCO in "+FormatIn(cBcosAPI,"/")+" "
-cQry+= "And ZLA_DATA >= "+DTOS(date())
+cQry+= "And ZLA_DATA >= "+DTOS(date()-10)
 cQry+= "And ZLA.D_E_L_E_T_ = ' ' " 
 If Select("QRY") > 0
     QRY->(dbCloseArea())
@@ -1048,12 +1048,12 @@ While PROXTIT->(!Eof())
 
     //Busca o título
     If ZLA->ZLA_BANCO = '001'
-        U_XAG0119()
+        U_XAG0119() 
     Else    
         //U_XAG0122()
         IF(ZLA->ZLA_STATUS == "2")
             IF(ZLA->ZLA_RECPAG == "P")
-                U_XAG0107P(oObjLog, .T.)
+                 U_XAG0107P(oObjLog, .T.)
             ELSE
                 //FWAlertError("Consulta de status somente de titulos a pagar.", "XAG0106")
             ENDIF
@@ -1248,3 +1248,4 @@ Reclock("ZLB",.T.)
 msUnlock()
 
 Return lRet
+
