@@ -627,7 +627,7 @@ IF(bConsulta)
 			ELSE
 				bBoleto := .F.
 			ENDIF
-
+			//aqui
 			IF(bBoleto)
 				//ConsBRD106(ZLA->ZLA_CODIGO, cClientId)
 				consPGT106(ZLA->ZLA_CODIGO, cClientId)
@@ -1516,7 +1516,7 @@ Static function Pagam106(oObj)
 
 				Endif
 
-				If !Empty(cTitulo)
+ 				If !Empty(cTitulo)
 					If Empty(cCodigo)
 						cCodigo:= GetSxENum("ZLA", "ZLA_CODIGO")
 						ConfirmSX8()
