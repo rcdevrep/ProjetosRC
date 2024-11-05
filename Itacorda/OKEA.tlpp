@@ -1,0 +1,399 @@
+#Include "Protheus.ch"
+#INCLUDE "TOPCONN.CH"`
+#INCLUDE "FILEIO.CH"
+#include "tlpp-core.th"
+#include "tlpp-rest.th"
+#include 'tbiconn.ch'
+
+
+#define LF chr(10)
+
+Class OKEA_Integracao
+
+    Public Data ContentType as Character
+    Public Data BodyFormat as Character
+    Public Data Token as Character
+    Public Data Accept as Character
+    Public Data Objeto as Object
+    Public Data BodyJson as Character
+    Public Data Body as Character
+    Public Data Params as Character
+    Public Data Server as Character
+    Public Data Url as Character
+    Public Data Retorno 
+    Public Data RetornoJson as Object
+    Public Data RetornoIntegracao as Object
+
+    Public Method New() Constructor	
+    Public Method Enviar() Constructor	
+
+Endclass
+
+
+Method New() Class OKEA_Integracao
+
+    /*
+
+    Usuário: INTEGRAÇÃO/COLETORES
+    Chave de autenticação (Token): e92d74ccac
+
+    */
+
+	Self:ContentType    := "application/raw"
+    Self:BodyFormat     := "json"
+    Self:Token          := SuperGetMv("MV_OKEATK",.F.,"e92d74ccac") // Parametro TOKEN Okea
+    Self:Accept         := "application/json"
+    Self:Params         := ""
+    Self:Body           := ""
+    Self:BodyJson       := "" //ArrToJson(ClassDataArr(Self:Objeto))
+    Self:Server         := SuperGetMv("MV_OKEASV",.F.,"http://192.168.1.160:2070") // Parametro SERVER Okea
+    Self:Url            := ""  //VirtualLoomService.svc/Rest/RestIntegracaoDAO_CriarOrdemCompleta
+    Self:Retorno        := .F.
+    Self:RetornoIntegracao := OKEA_RetornoIntegracaoData():New()
+
+    // Exemplo de URL Documentação -> http://localhost:2070/VirtualLoomService.svc/Rest/RestIntegracaoDAO_CriarOrdemCompleta
+
+
+
+Return Self
+
+Method Enviar() Class OKEA_Integracao
+
+    Self:BodyJson       := ArrToJson(ClassDataArr(Self:Body))
+    Self:Server         := SuperGetMv("MV_OKEASV",.F.,"http://192.168.1.160:2070") // Parametro SERVER Okea
+    //Self:Url            := "VirtualLoomService.svc/Rest/RestIntegracaoDAO_CriarOrdemCompleta"
+    Self:Retorno        := .F.  
+
+    AAdd(aHeader, 'User-Agent: Mozilla/4.0 (compatible; Protheus ' + GetBuild() + ')' )
+	aadd(aHeader, "Content-Type: "+Self:ContentType)
+    Aadd(aHeader, "Token: "+Self:Token)
+
+    cUrl := Self:Url
+    cJson := Self:BodyJson
+    cParam := Self:Params
+
+    aRet := U_RCRestPost(cURL,cParam,cJson,aHeader)
+
+    if(aRet[3] == "05")
+        Self:RetornoJson := aRet[4]
+
+        Self:RetornoIntegracao:CodigoRetorno := Self:RetornoJson["CodigoRetorno"]
+        Self:RetornoIntegracao:IndiceParametro := Self:RetornoJson["IndiceParametro"]
+        Self:RetornoIntegracao:Mensagem := Self:RetornoJson["Mensagem"]
+        Self:RetornoIntegracao:Excecao := Self:RetornoJson["Excecao"]
+        Self:RetornoIntegracao:DataRetorno := Self:RetornoJson["DataRetorno"]
+        Self:RetornoIntegracao:RetornoExtra := Self:RetornoJson["RetornoExtra"]
+        Self:RetornoIntegracao:TempoProcessamento := Self:RetornoJson["TempoProcessamento"]
+
+        IF(Self:RetornoIntegracao:CodigoRetorno == "CR_OK")        
+        
+            Self:Retorno := .T.
+
+        ELSE
+
+            Self:Retorno := .F.
+
+        ENDIF
+
+    endif    
+    // Exemplo de URL Documentação -> http://localhost:2070/VirtualLoomService.svc/Rest/RestIntegracaoDAO_CriarOrdemCompleta
+
+Return Self
+
+
+Class OKEA_OpData
+
+    //OBRIGATÓRIOS
+	Public Data NumeroOp as Numeric
+	Public Data DataEntrega as Date
+	Public Data DataCriacao as Date
+	Public Data Quantidade as Numeric
+	Public Data TipoSituacao as Numeric
+	Public Data TipoProducao as Numeric
+	Public Data UnidadeProduto as Object
+    Public Data RoteiroProducaoId as Numeric
+    Public Data FichasTecnicas as Object // OKEA_FichaTenicaData
+
+    //OPCIONAIS
+    Public Data Clientes as Object // OKEA_ClienteLoomData
+    Public Data Cortes as Object // OKEA_AgendamentoParadaData
+    Public Data Alocacoes as Object // OKEA_AlocacaoData
+    Public Data Infos as Object // OKEA_InfoTecnicaData
+    Public Data RoteiroProducao as Object // OKEA_RoteiroProducaoData
+
+
+	Public Method New() Constructor
+
+EndClass
+
+
+Method New() Class OKEA_OpData
+
+	Self:NumeroOp           := 0
+    Self:DataEntrega        := Date()
+    Self:DataCriacao        := Date()
+    Self:Quantidade         := 0
+    Self:TipoSituacao       := 0
+    Self:TipoProducao       := 0
+    Self:UnidadeProduto     := OKEA_UnidadeProdutoData():New()
+    Self:RoteiroProducaoId  := 0
+    Self:FichasTecnicas     := OKEA_FichaTecnicaData():New()
+
+
+Return Self
+
+Class OKEA_FichaTecnicaData
+
+    //OBRIGATÓRIOS
+
+    Public Data Artigo as Object // OKEA_ArtigoData
+    Public Data Quantidade as Numeric
+    Public Data PosicaoSlots as Numeric
+    Public Data SlotsParalelos as Numeric
+
+    //OPCIONAIS
+
+    Public Data OpReferencia as Numeric
+    Public Data GrupoFichaTecnica as Object // OKEA_GrupoFichaTecnica
+    Public Data Cortes as Object // OKEA_AgendamentoParadaData
+    Public Data Conversoes as Object // OKEA_UnidadeConversaoData
+    Public Data Padroes as Object // OKEA_PadraoTecnicoData
+    Public Data InformacoesTecnicas as Object // OKEA_InfoTecnicaData
+    Public Data RoteiroProducao as Object // OKEA_RoteiroProducaoData
+    Public Data RoteiroProducaoId as Numeric
+    Public Data UnidadeProduto as Object // OKEA_UnidadeProdutoData
+
+	Public Method New() Constructor
+	
+EndClass
+
+Method New() Class OKEA_FichaTecnicaData
+
+	Self:Artigo         := OKEA_ArtigoData():New()
+    Self:Quantidade     := 0
+    Self:PosicaoSlots   := 1
+    Self:SlotsParalelos := 1
+   
+Return Self
+
+Class OKEA_ArtigoData
+
+    Public Data Referencia as Character
+    Public Data Descricao as Character
+
+	Public Method New() Constructor
+	
+EndClass
+
+Method New() Class OKEA_ArtigoData
+
+	Self:Referencia    := ""
+    Self:Descricao     := ""   
+   
+Return Self
+
+Class OKEA_GrupoFichaTecnica
+	Public Method New() Constructor
+EndClass
+
+Class OKEA_UnidadeConversaoData
+	Public Method New() Constructor
+EndClass
+
+Class OKEA_PadraoTecnicoData
+	Public Method New() Constructor
+EndClass
+
+Class OKEA_UnidadeProdutoData
+
+    Public Data Sigla as Character
+    Public Data Descricao as Character
+    Public Data CasasDecimais as Numeric
+
+	Public Method New() Constructor
+EndClass
+
+Method New() Class OKEA_UnidadeProdutoData
+
+	Self:Sigla          := ""
+    Self:Descricao      := ""   
+    Self:CasasDecimais  := 0 
+   
+Return Self
+
+Class OKEA_ClienteLoomData
+	Public Method New() Constructor
+EndClass
+
+Class OKEA_AgendamentoParadaData
+	Public Method New() Constructor
+EndClass
+
+Class OKEA_AlocacaoData
+	Public Method New() Constructor
+EndClass
+
+Class OKEA_InfoTecnicaData
+	Public Method New() Constructor
+EndClass
+
+Class OKEA_RoteiroProducaoData
+	Public Method New() Constructor
+EndClass
+
+Class OKEA_RetornoIntegracaoData 
+    
+    Public Data CodigoRetorno as Character
+    Public Data IndiceParametro as Numeric
+    Public Data Mensagem as Character
+    Public Data Excecao as Character
+    Public Data DataRetorno as Date
+    Public Data RetornoExtra as Character
+    Public Data TempoProcessamento as Character
+
+	Public Method New() Constructor
+EndClass
+
+Method New() Class OKEA_RetornoIntegracaoData
+
+	Self:CodigoRetorno       := ""
+    Self:IndiceParametro     := 0 
+    Self:Mensagem            := ""   
+    Self:Excecao             := ""   
+    Self:DataRetorno         := Date()
+    Self:RetornoExtra        := ""   
+    Self:TempoProcessamento  := ""   
+   
+Return Self
+
+
+           
+
+/*
+
+    Objeto: OpData (Cabeçalho da OP)
+    
+        ? Tipo: Obrigatória;
+        ? Relacionamento pai: Nenhum;
+        ? Descrição: Gera todas as informações necessárias para criação de uma nova ordem de produção no VIRTUALLOOM.
+
+            ElementoObjeto      Opcional        Tipo            Descrição
+
+            NumeroOp            Não             Inteiro         Número da OP
+            DataEntrega         Não             Data            Data de entrega da ordem de produção,Formato: yyyy-MM-ddTHH:mm:ss
+            DataCriacao         Não             Data            Data da criação da ordem de produção,Formato: yyyy-MM-ddTHH:mm:ss
+            Quantidade          Não             Inteiro         Quantidade da OP
+            TipoSituacao        Não             Inteiro         Tipo de situação (*1)
+            TipoProducao        Não             Inteiro         Tipo de produção (*2)
+            UnidadeProduto      Não             Complexo        (Ver UnidadeProdutoData) (1..1)
+            RoteiroProducaoId   Não             Inteiro         Id (do VirtualLoom) do roteiro de produção para essa ordem. Zero 0, o VIRTUALLOOM utiliza o padrão (quando não especificado em RoteiroProducao)
+            FichasTecnicas      Não             Complexo        (Ver FichaTecnicaData) (1..N)
+            Clientes            Sim             Complexo        (Ver ClienteLoomData) (0..N)
+            Cortes              Sim             Complexo        (Ver AgendamentoParadaData) (0..N)
+            Alocacoes           Sim             Complexo        (Ver AlocacaoData) (0..N)
+            Infos               Sim             Complexo        (Ver InfoTecnicaData) (0..N)
+            RoteiroProducao     Sim             Complexo        (Ver RoteiroProducaoData) (1..1)
+
+    Observação:
+
+    ? TipoSituacao:
+
+        ? 0 Liberada: A Op pode ser alocada e iniciada;
+        ? 1 Bloqueada alocação: A Op não pode ser alocada e iniciada;
+        ? 2 Bloqueada início: A Op não pode ser iniciada;
+        ? 3 Cancelada: A Op será excluída do VirtualLoom.
+
+    ? TipoProducao:
+
+        ? 0 Sequencial: As fichas técnicas da Op serão executadas sequencialmente;
+        ? 1 Paralelo: As fichas técnicas da Op serão executadas simultaneamente;
+        ? 2 Independente: As fichas técnicas da Op serão executadas simultaneamente, porém podem ser finalizadas de forma independente;
+        ? 3 Ficha técnica independente: As fichas técnicas da Op serão executadas independentes, como se fosse Ops diferentes, a finalização é independente
+
+
+    Objeto: FichaTecnicaData (Ficha técnica)
+
+        ? Tipo: Obrigatória;
+        ? Relacionamento pai: OpData de 1 para N;
+        ? Descrição: Gera informações relacionadas ao(s) artigo(s) que a ordem de produção de destina a produzir. Dependendo do processo de produção, uma máquina pode produzir mais de um artigo, portanto, caso a ordem de produção no ERP já esteja programada com essa característica, o formato de integração atenderá.
+
+            ElementoObjeto          Opcional        Tipo            Descrição
+            
+            OpReferencia            Sim             Inteiro         Código da Op Original do ERP (quando cada artigo é um op diferente)
+            Artigo                  Não             Complexo        (Ver em ArtigoData) (1..1)
+            GrupoFichaTecnica       Sim             Complexo        (Ver em GrupoFichaTecnicaData) (0...N)
+            Quantidade              Não             Real            Quantidade a produzir desse artigo
+            Cortes                  Sim             Complexo        (Ver em AgendamentoParadaData) (0..N)
+            Conversoes              Sim             Complexo        (Ver em UnidadeConversaoData) (0..N)
+            PosicaoSlots            Não             Inteiro         Posição do slot para máquinas paralelas
+            Padroes                 Sim             Complexo        (Ver em PadraoTecnicoData) (1..N)
+            SlotsParalelos          Não             Inteiro         Número de slots que esse artigo vai produzir na máquina
+            InformacoesTecnicas     Sim             Complexo        (Ver em InfoTecnicaData) (0..N)
+            RoteiroProducao         Sim             Complexo        (Ver RoteiroProducaData) (1..1)
+            RoteiroProducaoID       Sim             Inteiro         Id (do VirtualLoom) do roteiro de produção para essa Ficha. Se Zero utiliza o padrão.
+            UnidadeProduto          Sim             Complexo        (Ver UnidadeProdutoData) (1..1)
+
+
+    Objeto: ArtigoData (Informações sobre artigos)
+    
+        ? Tipo: Obrigatória;        
+        ? Relacionamento pai: FichaTecnicaData de 1 para 1;
+        ? Descrição: Permite descrever o artigo que compõe a ficha técnica.
+
+            ElementoObjeto          Opcional        Tipo            Descrição
+
+            Referencia              Não             String(50)      Referencia do artigo (Igual a cadastro do VirtualLoom) geralmente código do produto
+            Descricao               Não             String(200)     Valor desse parâmetro
+            Imagem                  Sim             String(MAX)     Url ou Base64 da imagem a ser importada
+            
+        Obs.:* - Tipo de imagens
+
+            FILE_PDF = Base64 de um arquivo pdf;
+            FILE_PNG = Base64 de um arquivo png;
+            FILE_JPG = Base64 de um arquivo jpg;
+            PATH_PDF = URL do arquivo pdf;
+            PATH_PNG = URL do arquivo png;
+            PATH_JPG = URL do arquivo jpg;
+
+
+    Objeto: UnidadeProdutoData (Informações da unidade de produto)
+        ? Tipo: Obrigatória;
+        ? Relacionamento pai: UnidadeConversaoData (Unidade de conversão) de 1 para 1, OpData (Capa da Op) de 1 para 1;
+        ? Descrição: Informações (do tipo dicionário de dados) que agregam ao padrão técnico, dados que ajudam na regulagem e setup da máquina. É apenas informativo para o VirtualLoom.
+        
+            ElementoObjeto          Opcional        Tipo            Descrição
+
+            Sigla                   Não             String(10)      Sigla da Unidade de produto (Igual cadastrada no VirtualLoom)
+            Descricao               Não             String(50)      Descrição da unidade de produto
+            CasasDecimais           Não             Inteiro         Número de casas decimais para calculo de produção
+
+    Objeto: RetornoIntegracaoData (Retorno da integracao)
+
+        ? Tipo: Opcional (Gerada pelo VirtualLoom);
+        ? Relacionamento pai: Nenhum;
+        ? Descrição: Gera o retorno das OPs que foram criadas e atualizadas no Objeto OpData.
+            
+            ElementoObjeto          Opcional        Tipo                    Descrição
+            
+            CodigoRetorno           Não             Inteiro/String(MAX)     Código de retorno da integração (*1)
+            IndiceParametro         Não             Inteiro                 Índice do parâmetro que gerou inconsistência. Não utilizado.
+            Mensagem                Não             String(MAX)             Mensagem do erro
+            Excecao                 Não             String(MAX)             Mostra a mensagem detalhada do erro
+            Data                    Não             Data                    Data do retorno, Formato: yyyy-MM-ddTHH:mm:ss
+            RetornoExtra            Não             String(MAX)/Complexo    Outra informação dependendo do processo
+            TempoProcessamento      Não             String(MAX)             Tempo de processamento em ms
+        
+        Obs.: *1 – Códigos de retorno:
+
+            CR_OK (será utilizado)
+            CR_FALHA_GERAL (será utilizado)
+            CR_FALHA_FORMATO
+            CR_FALHA_CRIACAO
+            CR_FALHA_EXCLUSAO
+            CR_FALHA_BUSCA
+            CR_INCONSISTENCIA (será utilizado)
+            CR_AUTH
+            CR_BLOQUEADO
+            CR_EXPIRADO1
+
+*/
