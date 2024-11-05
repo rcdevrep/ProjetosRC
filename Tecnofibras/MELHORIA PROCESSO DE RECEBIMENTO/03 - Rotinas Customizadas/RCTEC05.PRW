@@ -368,10 +368,10 @@ USER FUNCTION CLAS103()
 			SD1->(dbskip())
 		ENDDO
 
-		//aCab := FWVetByDic(aCab, 'SF1')
-		//aItens := FWVetByDic(aItens, 'SD1', .T.)
+		aCab := FWVetByDic(aCab, 'SF1')
+		aItens := FWVetByDic(aItens, 'SD1', .T.)
 
-		ASort(aItens,,, {|x, y| x[1][3] < y[1][3]})
+		//ASort(aItens,,, {|x, y| x[1][3] < y[1][3]})
 
 		//3-Inclusão / 4-Classificação / 5-Exclusão
 		FWMsgRun(,{|| MSExecAuto({|x,y,z,w| MATA103(x,y,z,w)},aCab,aItens,nOpc,.T.)},"Aguarde","Classificando Nota...") 
