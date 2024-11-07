@@ -1030,7 +1030,7 @@ cQry+= " AND SEA.D_E_L_E_T_ = ' ' "
 cQry+= "Where ZLA_FILIAL = '"+xFilial("ZLA")+"' "
 cQry+= "And ZLA_STATUS = '2' " //entrada confirmada
 cQry+= "And ZLA_BANCO in "+FormatIn(cBcosAPI,"/")+" "
-cQry+= "And ZLA_DATA >= "+DTOS(date()-10)
+cQry+= "And ZLA_DATA >= "+DTOS(date())
 cQry+= "And ZLA.D_E_L_E_T_ = ' ' " 
 If Select("QRY") > 0
     QRY->(dbCloseArea())
