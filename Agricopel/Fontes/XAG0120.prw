@@ -299,7 +299,9 @@ Elseif lGuiaCB
 Endif
 
 //Busca o token para autenticação
-aToken:= U_gTokenBrd(cClientId)
+aToken:= U_gTokenBrd(cClientId) //AQUI TOKEN
+
+
 If !aToken[1]
 	oObjLog:saveMsg("Autenticação inválida!!!") 
     Return
@@ -381,6 +383,7 @@ IF(lRegistrou)
 ELSE
     U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, SE2->E2_NUMBOR, "6")
     U_ZLBHIST(SE2->E2_FILORIG, aZLA[2], '6', "ERRO AO REGISTRAR PAGAMENTO NO BANCO", '1')
+    U_ZLBHIST(SE2->E2_FILORIG, aZLA[2], '6', cErro, '1')
 ENDIF
 
 If lRegistrou
@@ -768,7 +771,7 @@ Local cSign:= ""
 Local cConteudo:= ""
 Local cChave:= ""
 Local cRootServ:= ""
-Local cDirServ:= "\cert APIs bancos\openssl\"
+Local cDirServ:= "cert APIs bancos\openssl\"
 Local cComando1:= ""
 Local cComando2:= ""
 Local _cUnComp:= ""
@@ -824,7 +827,7 @@ cConteudo:= Encode64(cCabec)+'.'+Encode64(cBody)
 /***********************************************
 // Chamada paliativa para geração da assinatura
 ************************************************/
-Memowrite(cDirServ+"conteudo.txt",cConteudo)
+Memowrite(cDirServ+"conteudo.txt",cConteudo) //ERRO NO ROOTPATH
 
 cRootServ:= GetSrvProfString ("ROOTPATH","") 
 cComando1:= "dgst -sha256 -keyform pem -sign privkey_"+cEmpAnt+".txt -out assinado.txt.sha256 conteudo.txt" //gera assinatura em sha256
