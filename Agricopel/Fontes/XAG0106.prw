@@ -266,7 +266,7 @@ Endif
 
 Return
 
-user function ZLAEXIST(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja)
+user function ZLAEXIST(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja, cNumBor)
 
 Local aRet := {}
 Local cQuery := ""
@@ -278,6 +278,8 @@ cQuery += "AND ZLA_PARCEL = '"+cParcela+"' "
 cQuery += "AND ZLA_TIPO = '"+cTipo+"' "
 cQuery += "AND ZLA_CLIFOR = '"+cFornece+"' "
 cQuery += "AND ZLA_LOJA = '"+cLoja+"' "
+cQuery += "AND ZLA_NUMBOR = '"+cNumBor+"' "
+
 
 If Select("QRY") > 0
 	QRY->(dbCloseArea())
@@ -294,11 +296,11 @@ ENDIF
 
 return aRet
 
-user function ZLAUPDATE(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja, cStatus)
+user function ZLAUPDATE(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja,cNumBor, cStatus)
 Local bRet
 Local aZLA
 
-aZLA := U_ZLAEXIST(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja)
+aZLA := U_ZLAEXIST(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja, cNumBor)
 
 IF(aZLA[1])
 	cQryStatus := "UPDATE ZLA010 SET ZLA_STATUS = '"+cStatus+"' WHERE D_E_L_E_T_ <> '*' "
@@ -319,11 +321,11 @@ ENDIF
 RETURN aZLA
 
 
-user function ZLACAMPO(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja,cCampo,cValue)
+user function ZLACAMPO(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja,cNumBor, cCampo,cValue)
 Local bRet
 Local aZLA
 
-aZLA := U_ZLAEXIST(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja)
+aZLA := U_ZLAEXIST(cPrefixo, cNumero, cParcela, cTipo, cFornece, cLoja, cNumBor)
 
 IF(aZLA[1])
 	cQryStatus := "UPDATE ZLA010 SET "+cCampo+" = '"+cValue+"' WHERE D_E_L_E_T_ <> '*' "
@@ -367,7 +369,7 @@ Local lRec := .F.
 
 	IF SE2->(dbSeek(xFilial("SE2")+QRY->(EA_PREFIXO+EA_NUM+EA_PARCELA+EA_TIPO+EA_FORNECE+EA_LOJA)))
 		IF SE2->E2_SALDO > 0	
-	       	aZLA := ZLAEXIST(QRY->EA_PREFIXO, QRY->EA_NUM,  QRY->EA_PARCELA, QRY->EA_TIPO, QRY->EA_FORNECE, QRY->EA_LOJA)
+	       	aZLA := U_ZLAEXIST(QRY->EA_PREFIXO, QRY->EA_NUM,  QRY->EA_PARCELA, QRY->EA_TIPO, QRY->EA_FORNECE, QRY->EA_LOJA, QRY->EA_NUMBOR)
 			IF(!aZLA[1])			
 				Reclock("ZLA",.T.)
 				ZLA->ZLA_FILIAL:= xFilial("ZLA")
@@ -453,11 +455,13 @@ Local lAuto := isBlind()
 
 Local cCodigo := ""
 Local bBoleto := .F.
+Local bPix := .F.
 Local aBorderos := {}
 Local aLstBor := {}
 Local MvParDef := ""
 Private lTransferencia:= .F.
 Private lBoleto:= .F.
+
 Private lGuiaCB:= .F.
 
 Default oObjLog:= nil
@@ -627,12 +631,22 @@ IF(bConsulta)
 			ELSE
 				bBoleto := .F.
 			ENDIF
+			
+			IF(SEA->EA_MODELO == '48' .AND. !bBoleto)
+				bPix := .T.
+			ENDIF
 			//aqui
 			IF(bBoleto)
-				//ConsBRD106(ZLA->ZLA_CODIGO, cClientId)
+				//Boleto
 				consPGT106(ZLA->ZLA_CODIGO, cClientId)
 			ELSE
-				U_XAG0122(cClientId)
+				IF(bPix)
+					//PIX BAIXA
+
+				ELSE
+					//transferencia TED
+					U_XAG0122(cClientId)
+				ENDIF
 			ENDIF
 
 		ENDIF
@@ -1187,6 +1201,9 @@ Static function Pagam106(oObj)
 	If SE2->(dbSeek(xFilial("SE2")+TRB->(PREFIXO+NUMERO+PARCELA+TIPO+FORNECE+LOJA)))
 		If SE2->E2_SALDO > 0
 			nQtd++
+			lTransferencia := .F.
+			lBoleto := .F.
+			lGuiaCB := .F.
 			If TRB->BANCO == '001'
 				//Posiciona no fornecedor
 				SA2->(dbSeek(xFilial("SA2")+SE2->E2_FORNECE+SE2->E2_LOJA))
@@ -1536,7 +1553,7 @@ Static function Pagam106(oObj)
 			//ALERTA
 			FWAlertWarning("Titulo "+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA)+" já baixado!","Status atualizado")
 
-			aZLA := U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, "3")
+			aZLA := U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, SE2->E2_NUMBOR, "3")
 			U_ZLBHIST(SE2->E2_FILORIG, aZLA[2], '3', "TITULO JÁ BAIXADO NO SISTEMA", '1')							
 			Endif
 		Endif
@@ -2172,7 +2189,7 @@ cTitulo+= '  },
 		If Len(aRet) > 0
 			IF(u_BaixaPag(aRet)	)
 
-				aZLA := U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, "3")
+				aZLA := U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, SE2->E2_NUMBOR, "3")
 				U_ZLBHIST(SE2->E2_FILORIG, aZLA[2], '3', cErro, '1')
 			
 			ELSE
