@@ -368,8 +368,8 @@ USER FUNCTION CLAS103()
 			SD1->(dbskip())
 		ENDDO
 
-		aCab := FWVetByDic(aCab, 'SF1')
-		aItens := FWVetByDic(aItens, 'SD1', .T.)
+		//aCab := FWVetByDic(aCab, 'SF1')
+		//aItens := FWVetByDic(aItens, 'SD1', .T.)
 
 		//ASort(aItens,,, {|x, y| x[1][3] < y[1][3]})
 
