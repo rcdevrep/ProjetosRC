@@ -782,6 +782,21 @@ Local cExp:= cvaltochar(val(cIat)+3600) //data/hora atual + 1h em segundos
 Local cJti:= cvaltochar(val(cIat)*1000) //data/hora atual em milisegundos
 Local nPosHdr:= 0
 Private oDadosws:= NIL
+/*
+cTime:=  GetMv('MV_APITIME')
+cToken:= GetMv('MV_APITOKE')
+
+IF(SomaHoras(cTime,2) - SomaHoras(Time(),0) > 0 .AND. !EMPTY(cToken))
+    
+    cJti:= GetMv('MV_APIJTI')    
+    aRet:= {.T.,cToken,cJti,cTime}
+    return aRet
+Else
+    cTime := Time()
+ENDIF
+*/
+
+
 
 //Obtém a chave privada
 oFile := FWFileReader():New(cDirServ+"privkey_"+cEmpAnt+".txt")
@@ -802,6 +817,7 @@ Else
     aRet:={.F.,"Falha ao localizar o arquivo com a private key."}
     Return aRet
 EndIf
+
 
 //Cabeçalho
 cCabec:= '{"alg":"RS256","typ":"JWT"}'
@@ -915,6 +931,10 @@ Else
 		oObjLog:SaveMsg("Falha ao obter o token. Erro: "+cvaltochar(oDadosWS:code)+" - "+oDadosWS:message)
 	Endif
 Endif
+
+//PutMv("MV_APITOKE",aRet[2])
+//PutMv("MV_APIJTI",aRet[3])
+//PutMv("MV_APITIME",aRet[4])
 
 Return aRet
 

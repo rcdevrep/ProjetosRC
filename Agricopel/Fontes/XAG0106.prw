@@ -281,13 +281,13 @@ cQuery += "AND ZLA_LOJA = '"+cLoja+"' "
 cQuery += "AND ZLA_NUMBOR = '"+cNumBor+"' "
 
 
-If Select("QRY") > 0
-	QRY->(dbCloseArea())
+If Select("QRYZLA") > 0
+	QRYZLA->(dbCloseArea())
 Endif
-TcQuery cQuery New Alias "QRY"
-If !QRY->(Eof())
+TcQuery cQuery New Alias "QRYZLA"
+If !QRYZLA->(Eof())
 	AADD(aRet, .T.)
-	AADD(aRet, QRY->ZLA_CODIGO)
+	AADD(aRet, QRYZLA->ZLA_CODIGO)
 	return aRet
 ELSE
 	AADD(aRet, .F.)
