@@ -10,12 +10,11 @@
 #include "fileio.ch"
 #INCLUDE "TOPCONN.CH"
 
-/*/{Protheus.doc} User Function MCON00X
-Funcao de conciliacao financeiro
-@type  Function
-@author Fabricio Antunes
-@since 22/09/2021
-/*/
+// RC CONSULTORIA
+// EVANDRO BURLIN
+// ROTINA RCKHR01 - RC1_CONCR MARKETPLACE 
+// PROJETO - RC1_CONCR MARKETPLACE
+// DATA - 09/10/2024
 
 User Function RCKHR01()
 	Local aArea        :=  FWGetArea()
@@ -223,8 +222,10 @@ User Function RCKHR01()
             oBrowse:SetAmbiente(.T.) 
             oBrowse:SetTemporary(.T.)
             oBrowse:SetFields(aBrows)
-            //oBrowse:AddLegend( "DIF_VAL == 0", "GREEN", "Correto" )
-            //oBrowse:AddLegend( "DIF_VAL <> 0", "RED",   "Incorreto" )
+
+            //oBrowse:AddLegend( "RC3_STATUS == 'B'", "GREEN", "Baixado" )
+            //oBrowse:AddLegend( "RC3_STATUS == 'E'", "RED",   "Não Encontrado" )
+
             oBrowse:Activate()
         EndIf
  
@@ -320,7 +321,13 @@ Static Function ModelDef()
  
     oModel  :=  FWFormModel():New( 'mdRCKHR01',,,{|oModel| commit()},{|oModel| cancel()})   
  
-     
+    osGrd1:AddField( " ", " ", "OK", "L", 1, 0, FwBuildFeature(STRUCT_FEATURE_VALID, "AlwaysTrue()"), FwBuildFeature(STRUCT_FEATURE_WHEN, "AlwaysTrue()"), Nil, .F., Nil, .F., .F., .T.)
+
+    osGrd2:AddField( " ", " ", "OK", "L", 1, 0, FwBuildFeature(STRUCT_FEATURE_VALID, "AlwaysTrue()"), FwBuildFeature(STRUCT_FEATURE_WHEN, "AlwaysTrue()"), Nil, .F., Nil, .F., .F., .T.)
+
+    // LEGENDAS JANELA 2
+    osGrd2:AddField( AllTrim('') , AllTrim('') ,'RC3_LEGEND' ,'C' ,50 , 0 , NIL ,NIL , NIL ,NIL ,{ || Iif( RC3_STATUS == 'B', "BR_VERDE","BR_VERMELHO") } , NIL , NIL ,.T. )
+
     oModel:AddFields( 'ID_M_FLD', , osCabec,bPre,bPos,bLoad)
     oModel:AddGrid( 'ID_M_GRD1', 'ID_M_FLD', osGrd1, /*bLinePre*/, /*{|oModelZA2| ValLinha(oModelZA2)}*/, /*bPreVal*/,/*{|oModel| ValLinha(oModel)}*/, bLoaGr1/*bLoad1*/)
     oModel:AddGrid( 'ID_M_GRD2', 'ID_M_FLD', osGrd2, /*bLinePre*/, /*{|oModelZA2| ValLinha(oModelZA2)}*/, /*bPreVal*/,/*{|oModel| ValLinha(oModel)}*/, bLoaGr2/* bLoad2*/)
@@ -491,7 +498,13 @@ Static Function ViewDef()
  
     oView:AddField("ID_V_FLD", osCabec, "ID_M_FLD")
     oView:AddGrid("ID_V_GRD1", osGrd1, "ID_M_GRD1")
-    oView:AddGrid("ID_V_GRD2", osGrd2, "ID_M_GRD2")     
+    oView:AddGrid("ID_V_GRD2", osGrd2, "ID_M_GRD2")    
+
+    osGrd1:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
+    osGrd2:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
+
+    //LEGENDAS JANELA 2
+    osGrd2:AddField('RC3_LEGEND', "00",AllTrim(''), AllTrim(''),{ 'Legenda' }, 'C','@BMP',NIL,'', .T., NIL,NIL, NIL, NIL, NIL, .T., NIL,NIL)
  
     oView:CreateHorizontalBox("SUPERIOR",20)
     oView:CreateHorizontalBox("INFERIOR",80)
