@@ -128,7 +128,7 @@ User Function RCKHR01()
         aAdd(aCposGrd1,{"RC2_VENC","D",08,0})
  
         //aTitulos := {'ID Rotina',  "Item","Data", "Documento", "Historico","Fin. Debito","Fin. Credito", "Saldo" }
-        aTitulos := {'Id','Filial','Numero',  "Tipo","Valor", "Emissao", "Parcela","Vencimento"}
+        aTitulos := {'Id'                ,'Filial','Numero',  "Tipo","Valor", "Emissao", "Parcela","Vencimento"}
         aGrd1 := gerCpBrow(aCposGrd1,aTitulos)
  
  
@@ -509,7 +509,11 @@ Static Function ViewDef()
     osGrd2:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
 
     //LEGENDAS JANELA 2
+<<<<<<< HEAD
+    osGrd2:AddField('RC3_LEGEND', "00",AllTrim(''), AllTrim(''),, 'C','@BMP',NIL,'', .T., NIL,NIL, NIL, NIL, NIL, .T., NIL,NIL)
+=======
     //osGrd2:AddField('RC3_LEGEND', "12",AllTrim(''), AllTrim(''),{ 'Legenda' }, 'Get','@BMP',NIL,'', .T., NIL,NIL, NIL, NIL, NIL, .T., NIL,NIL)
+>>>>>>> 639a098284970bdf2475116f39be15814b0a71c3
  
     oView:CreateHorizontalBox("SUPERIOR",20)
     oView:CreateHorizontalBox("INFERIOR",80)
