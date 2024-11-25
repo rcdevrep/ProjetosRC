@@ -162,6 +162,7 @@ User Function RCKHR01()
         aAdd(aCposGrd2,{"FIN_CRED"  ,"N",18,2})
         aAdd(aCposGrd2,{"SALDO"     ,"N",18,2})*/
 
+        aAdd(aCposGrd2,{"RC3_LEGEND","C",30,0})
         aAdd(aCposGrd2,{"ID","C",8,0})
         aAdd(aCposGrd2,{"RC3_FILIAL","C",2,0})
         aAdd(aCposGrd2,{"RC3_DOCTEF","C",20,0})
@@ -176,7 +177,7 @@ User Function RCKHR01()
 
  
         //aTitulos := {'ID Rotina', "Item","Data", "Lote", "Historico","Fin. Debito","Fin. Credito", "Saldo" }
-        aTitulos := {'Id','Filial', "NSU","Prefixo", "Numero", "Parcela","Tipo","Status","Recebido","Data","Importacao"}
+        aTitulos := {'Legenda','Id','Filial',"NSU","Prefixo", "Numero", "Parcela","Tipo","Status","Recebido","Data","Importacao"}
         aGrd2 := gerCpBrow(aCposGrd2,aTitulos)
  
  
@@ -326,7 +327,7 @@ Static Function ModelDef()
     osGrd2:AddField( " ", " ", "OK", "L", 1, 0, FwBuildFeature(STRUCT_FEATURE_VALID, "AlwaysTrue()"), FwBuildFeature(STRUCT_FEATURE_WHEN, "AlwaysTrue()"), Nil, .F., Nil, .F., .F., .T.)
 
     // LEGENDAS JANELA 2
-    osGrd2:AddField( AllTrim('') , AllTrim('') ,'RC3_LEGEND' ,'C' ,50 , 0 , NIL ,NIL , NIL ,NIL ,{ || Iif( RC3_STATUS == 'B', "BR_VERDE","BR_VERMELHO") } , NIL , NIL ,.T. )
+    //osGrd2:AddField( AllTrim('') , AllTrim('') ,'RC3_LEGEND' ,'C' ,50 , 0 , NIL ,NIL , NIL ,NIL ,{ || Iif( RC3_STATUS == 'B', "BR_VERDE","BR_VERMELHO") } , NIL , NIL ,.T. )
 
     oModel:AddFields( 'ID_M_FLD', , osCabec,bPre,bPos,bLoad)
     oModel:AddGrid( 'ID_M_GRD1', 'ID_M_FLD', osGrd1, /*bLinePre*/, /*{|oModelZA2| ValLinha(oModelZA2)}*/, /*bPreVal*/,/*{|oModel| ValLinha(oModel)}*/, bLoaGr1/*bLoad1*/)
@@ -480,7 +481,11 @@ Static Function ViewDef()
  
     For nX := 1 to Len(aGrd2)
          IF aGrd2[nX,3] = "C"
+            IF aGrd2[nX,2] == "RC3_LEGEND"
+                cPict := "@BMP"
+            ELSE
              cPict := "@!"
+            ENDIF
          ElseIF aGrd2[nX,3] = "N"
              cPict := "@E 9,999,999.99"
          Else
@@ -504,7 +509,11 @@ Static Function ViewDef()
     osGrd2:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
 
     //LEGENDAS JANELA 2
+<<<<<<< HEAD
     osGrd2:AddField('RC3_LEGEND', "00",AllTrim(''), AllTrim(''),, 'C','@BMP',NIL,'', .T., NIL,NIL, NIL, NIL, NIL, .T., NIL,NIL)
+=======
+    //osGrd2:AddField('RC3_LEGEND', "12",AllTrim(''), AllTrim(''),{ 'Legenda' }, 'Get','@BMP',NIL,'', .T., NIL,NIL, NIL, NIL, NIL, .T., NIL,NIL)
+>>>>>>> 639a098284970bdf2475116f39be15814b0a71c3
  
     oView:CreateHorizontalBox("SUPERIOR",20)
     oView:CreateHorizontalBox("INFERIOR",80)
@@ -719,6 +728,7 @@ Static function GrvFin()
         (cAlisGr2)->RC3_RECEBI := TEMPKHR3->RECEBI
         (cAlisGr2)->RC3_DATA := STOD(TEMPKHR3->DTRECEB)
         (cAlisGr2)->RC3_IMPORT := TEMPKHR3->IMPORT
+        (cAlisGr2)->RC3_LEGEND := "BR_VERDE"
         MSUNLOCK()
         TEMPKHR3->(DbSkip())
     ENDDO
