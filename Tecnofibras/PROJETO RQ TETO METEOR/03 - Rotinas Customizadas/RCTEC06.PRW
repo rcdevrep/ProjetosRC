@@ -7,8 +7,6 @@
 #include "fileio.ch"
 #INCLUDE "TOPCONN.CH"
 
-
-
 // RC CONSULTORIA
 // EVANDRO BURLIN
 // ROTINA RCTEC06 - PRODUCAO TETO METEOR 
@@ -29,8 +27,8 @@ User Function RCTEC06()
 	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '1'}        ,'BR_AMARELO'  ,'Setup OK')
 	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '2'}        ,'BR_LARANJA'  ,'Moldagem OK')
 	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '3'}        ,'BR_VERMELHO'  ,'Dureza 10/12min OK')
-	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '4'}        ,'BR_MARRON'  ,'Dureza 24h OK')
-	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '5'}        ,'BR_PRETO'  ,'Dureza OK')
+	oBrowse:addLegend({|| ZT0->ZT0_STATUS = '4'}        ,'BR_PRETO'  ,'Teto Finalizado')
+	//oBrowse:addLegend({|| ZT0->ZT0_STATUS = '5'}        ,'BR_PRETO'  ,'Dureza OK')
 	oBrowse:Activate()
 	RestArea(aArea)
 
@@ -42,7 +40,7 @@ Static Function MenuDef()
 
 	ADD OPTION aRotina TITLE 'Incluir' ACTION 'U_fIncTeto' OPERATION 3 ACCESS 0
 	ADD OPTION aRotina TITLE 'Produção'    ACTION 'VIEWDEF.RCTEC06' OPERATION 4 ACCESS 0
-	//ADD OPTION aRotina TITLE 'Visualizar' ACTION 'VIEWDEF.RCTEC06' OPERATION 2 ACCESS 0
+	ADD OPTION aRotina TITLE 'Relatorio'    ACTION 'U_RCTECR2' OPERATION 2 ACCESS 0
 
 Return(aRotina)
 
@@ -69,10 +67,10 @@ Static Function ModelDef()
 	// Associa os objetos visuais criados com as estruturas criadas, desta forma ira criar os campos conforme as estrutura.
 	oModel:addFields('MASTER' ,/*cOwner*/  ,oStMain   ,/*bLinePre*/                          ,/*bLinePost*/,/*bPreVal*/, /*bPost*/                          ,/*BLoad*/ )
 
-	oModel:AddGrid('ABA1', 'MASTER', oStAba1,/*bLinePre*/{|oModel|sfLinPre1(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos(oModel)} /*bPost*/,/*BLoad*/ )
-	oModel:AddGrid('ABA2', 'MASTER', oStAba2,/*bLinePre*/{|oModel|sfLinPre2(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos(oModel)} /*bPost*/,/*BLoad*/)
-	oModel:AddGrid('ABA3', 'MASTER', oStAba3,/*bLinePre*/{|oModel|sfLinPre(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos(oModel)} /*bPost*/,/*BLoad*/)
-	oModel:AddGrid('ABA4', 'MASTER', oStAba4,/*bLinePre*/{|oModel|sfLinPre(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos(oModel)} /*bPost*/,/*BLoad*/)
+	oModel:AddGrid('ABA1', 'MASTER', oStAba1,/*bLinePre*/{|oModel|sfLinPre1(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos1(oModel)} /*bPost*/,/*BLoad*/ )
+	oModel:AddGrid('ABA2', 'MASTER', oStAba2,/*bLinePre*/{|oModel|sfLinPre2(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos2(oModel)} /*bPost*/,/*BLoad*/)
+	oModel:AddGrid('ABA3', 'MASTER', oStAba3,/*bLinePre*/{|oModel|sfLinPre(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos3(oModel)} /*bPost*/,/*BLoad*/)
+	oModel:AddGrid('ABA4', 'MASTER', oStAba4,/*bLinePre*/{|oModel|sfLinPre(oModel)},/**/,/*bPreVal*/,{|oModel|sfLinPos4(oModel)} /*bPost*/,/*BLoad*/)
 
 	// Cria chave primaria do cadastro principal.
 	oModel:SetPrimaryKey( { } )
@@ -134,7 +132,6 @@ Static Function ViewDef()
 	// Criar um "box" horizontal para receber algum elemento da view
 	oView:CreateHorizontalBox( 'SUPERIOR', 30 )
 	oView:CreateHorizontalBox( 'INFERIOR', 70 )
-	//oView:CreateHorizontalBox( 'RODAPE'  , 10 )
 
 	oView:CreateFolder('PASTA_ABAS', 'INFERIOR')
 	oView:AddSheet('PASTA_ABAS', 'ABA_1', "Diario de Bordo")
@@ -169,12 +166,11 @@ Static Function ViewDef()
 	oView:SetOwnerView('VIEW_ZT4', 'ITENS4')
 	oView:SetOwnerView( 'VIEW_RODAPE4'  , 'RODAPE4')
 
-	//oView:AddIncrementField( 'ABA1', 'D1_ITEM' )
+	//Adiciona Incremento automatico no campo
+	oView:AddIncrementField( 'VIEW_ZT2', 'ZT2_ORDEM' )
 
 	//Força o fechamento da janela na confirmação
-	//oView:SetCloseOnOk({||.T.})
-
-	//oView:SetViewAction( 'BUTTONOK' ,{ |oView| U_fRefresh( oView ) } )
+	oView:SetCloseOnOk({||.F.})
 
 Return oView
 
@@ -185,8 +181,6 @@ Static Function sfValAtiva(oModel)
 	Local oModelM
 	Local oModelSD1
 	Local aSaveLines
-
-	//oModel:Refresh()
 
 Return(_lRet)
 
@@ -218,18 +212,6 @@ Return(lRet)
 
 Static Function sfLinPre2(oModel)
 	Local lRet       := .T.
-
-	IF RECLOCK("ZT2",.T.)
-		ZT2->ZT2_FILIAL := xFilial("ZT0")
-		ZT2->ZT2_CTETO := ZT0->ZT0_CODIGO
-		ZT2->ZT2_ORDEM := nOrPub
-		ZT2->ZT2_DATA := DATE()
-		MSUNLOCK()
-	ELSE
-		FWAlertError("Nao foi possivel gerar o registro","RCTEC06")
-		lRet := .F.
-	ENDIF
-
 Return(lRet)
 
 Static Function sfVldCpo(oModel,cCpo)
@@ -246,7 +228,70 @@ Static Function sfVldCpo(oModel,cCpo)
 Return(lRet)
 
 Static Function sfLinPos(oModel)
+	Local lRet	     := .T.	
+Return(lRet)
+
+Static Function sfLinPos1(oModel)
 	Local lRet	     := .T.
+Return(lRet)
+
+Static Function sfLinPos2(oModel)
+	Local lRet	     := .T.
+	//Local cData := DTOS(Date())
+
+	//DBSELECTAREA("ZT1")
+	//DBSETORDER(1)
+
+	//IF DBSEEK(xFilial("ZT1")+cData)
+
+	//	IF !ZT1->ZT1_APROVD
+	//		FWAlertError("Diário de Bordo não aprovado","SETUP" )
+	//		lRet := .F.
+	//	ENDIF
+	//ELSE
+	//	FWAlertError("Diario não encontrado","RCTEC06")
+	//	lRet := .F.
+	//ENDIF
+	
+Return(lRet)
+
+Static Function sfLinPos3(oModel)
+	Local lRet	     := .T.
+	//Local cData := DTOS(Date())
+
+	//DBSELECTAREA("ZT1")
+	//DBSETORDER(1)
+
+	//IF DBSEEK(xFilial("ZT1")+cData)
+
+	//	IF !ZT1->ZT1_APROVD
+	//		FWAlertError("Diário de Bordo não aprovado","Moldagem" )
+	//		lRet := .F.
+	//	ENDIF
+	//ELSE
+	//	FWAlertError("Diario não encontrado","RCTEC06")
+	//	lRet := .F.
+	//ENDIF
+	
+Return(lRet)
+
+Static Function sfLinPos4(oModel)
+	Local lRet	     := .T.
+	//Local cData := DTOS(Date())
+
+	//DBSELECTAREA("ZT1")
+	//DBSETORDER(1)
+
+	//IF DBSEEK(xFilial("ZT1")+cData)
+
+	//	IF !ZT1->ZT1_APROVD
+	//		FWAlertError("Diário de Bordo não aprovado","Dureza" )
+	//		lRet := .F.
+	//	ENDIF
+	//ELSE
+	//	FWAlertError("Diario não encontrado","RCTEC06")
+	//	lRet := .F.
+	//ENDIF
 	
 Return(lRet)
 
@@ -280,8 +325,9 @@ Static Function STRUABA2(cCampo)
 	DO CASE
 	CASE cCampo = "ZT2_CTETO" ; RETURN .T.
 	CASE cCampo = "ZT2_DATA" ; RETURN .T.
-	CASE cCampo = "ZT2_ORDEM" ; RETURN .T.
+	CASE cCampo = "ZT2_ORD" ; RETURN .T.
 	CASE cCampo = "ZT2_TURNO" ; RETURN .T.
+	CASE cCampo = "ZT2_CAV" ; RETURN .T.
 	CASE cCampo = "ZT2_TMA" ; RETURN .T.
 	CASE cCampo = "ZT2_TMB" ; RETURN .T.
 	CASE cCampo = "ZT2_TMC" ; RETURN .T.
@@ -356,6 +402,7 @@ Static Function STRUABA4(cCampo)
 Return(lRet)
 
 Static Function BeforeCMdl(oModel)
+
 	Local lRet	:= .T.
 Return(lRet)
 
@@ -368,12 +415,9 @@ STATIC FUNCTION fRodape1(oPanel)
 	Local cFontPad := "Tahoma"
 	Local cFontBtn := TFont():New(cFontPad, , 2)
 
-	//oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_incDiario(DTOS(Date()),TIME())},nLargBtn)
-	//oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_altDiario(ZT1->ZT1_DATA,ZT1->ZT1_HINI,ZT1->ZT1_HFIM,ZT1->ZT1_PRAZO)},nLargBtn)
-	oBtnS1 := TButton():New(001,60 , "Salvar Alteracoes", oPanel, {|| U_fSalvarGrid('VIEW_ZT1')},nLargBtn)
-	oBtn5s := TButton():New(001,110 , "Realizar Checklist", oPanel, {|| U_fCheckl(Date())},nLargBtn)
-	oBtnApr := TButton():New(001,160 , "Aprovar Diario", oPanel, {|| U_fAprovD(Date())},nLargBtn)
-	oBtnObs := TButton():New(001,210 , "Observações Diario", oPanel, {|| U_fObservD(Date())},nLargBtn)
+	oBtn5s := TButton():New(001,60 , "Realizar Checklist", oPanel, {|| U_fCheckl(Date())},nLargBtn)
+	oBtnApr := TButton():New(001,110 , "Aprovar Diario", oPanel, {|| U_fAprovD(Date())},nLargBtn)
+	oBtnObs := TButton():New(001,160 , "Observações Diario", oPanel, {|| U_fObservD(Date())},nLargBtn)
 
 RETURN
 
@@ -385,13 +429,7 @@ STATIC FUNCTION fRodape2(oPanel)
 	Local cFontPad := "Tahoma"
 	Local cFontBtn := TFont():New(cFontPad, , 2)
 
-	//oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_incSetup(ZT0->ZT0_CODIGO)},nLargBtn)
-	//oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_altSetup()},nLargBtn)
-	oBtnS2 := TButton():New(001,60 , "Salvar Alteracoes", oPanel, {|| U_fSalvarGrid()},nLargBtn)
-	oBtnSetup := TButton():New(001,110 , "Finalizar SETUP", oPanel, {|| U_fFinSetup(DATE())},nLargBtn)
-	//oBtnApr := TButton():New(001,160 , "Aprovar Diario", oPanel, {|| U_CancReceb()},nLargBtn)
-	//oBtnApr := TButton():New(001,210 , "Observações", oPanel, {|| fObserv()},nLargBtn)
-
+	oBtnSetup := TButton():New(001,60 , "Finalizar SETUP", oPanel, {|| U_fFinSetup(DATE())},nLargBtn)
 RETURN
 
 STATIC FUNCTION fRodape3(oPanel)
@@ -402,13 +440,7 @@ STATIC FUNCTION fRodape3(oPanel)
 	Local cFontPad := "Tahoma"
 	Local cFontBtn := TFont():New(cFontPad, , 2)
 
-	//oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_incAcomp()},nLargBtn)
-	//oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_altAcomp()},nLargBtn)
-	oBtnS3 := TButton():New(001,60 , "Salvar Alteracoes", oPanel, {|| U_fSalvarGrid()},nLargBtn)
-	oBtnMol := TButton():New(001,110 , "Finalizar Moldagem", oPanel, {|| U_fFinMol(DATE())},nLargBtn)
-	//oBtnApr := TButton():New(001,160 , "Aprovar Diario", oPanel, {|| U_CancReceb()},nLargBtn)
-	//oBtnApr := TButton():New(001,210 , "Observações", oPanel, {|| fObserv()},nLargBtn)
-
+	oBtnMol := TButton():New(001,60 , "Finalizar Moldagem", oPanel, {|| U_fFinMol(DATE())},nLargBtn)
 RETURN
 
 STATIC FUNCTION fRodape4(oPanel)
@@ -419,12 +451,9 @@ STATIC FUNCTION fRodape4(oPanel)
 	Local cFontPad := "Tahoma"
 	Local cFontBtn := TFont():New(cFontPad, , 2)
 
-	//oBtnInc := TButton():New(001,10 , "Incluir", oPanel, {|| U_incDureza()},nLargBtn)
-	//oBtnAlt := TButton():New(001,60 , "Alterar", oPanel, {|| U_altDureza()},nLargBtn)
-	oBtnS4 := TButton():New(001,60 , "Salvar Alteracoes", oPanel, {|| U_fSalvarGrid()},nLargBtn)
-	oBtnDur := TButton():New(001,110 , "Finalizar Dureza", oPanel, {|| U_fFinDureza(DATE())},nLargBtn)
-	oBtn1012 := TButton():New(001,160 , "Finalizar 10/12 Min", oPanel, {|| U_fFin1012(DATE(),ZT0->ZT0_CODIGO)},nLargBtn)
-	oBtn24 := TButton():New(001,210 , "Finalizar 24 Horas", oPanel, {|| fFin24(DATE())},nLargBtn)
+	//oBtnDur := TButton():New(001,60 , "Finalizar Dureza", oPanel, {|| U_fFinDureza(DATE(),ZT0->ZT0_CODIGO)},nLargBtn)
+	oBtn1012 := TButton():New(001,110 , "Finalizar 10/12 Min", oPanel, {|| U_fFin1012(DATE(),ZT0->ZT0_CODIGO)},nLargBtn)
+	oBtn24 := TButton():New(001,160 , "Finalizar 24 Horas", oPanel, {|| U_fFin24(DATE(),ZT0->ZT0_CODIGO)},nLargBtn)
 
 RETURN
 
@@ -536,7 +565,7 @@ USER FUNCTION fObservD(dData)
 	_cQuery := " SELECT ZT9_OBS, ZT9.ZT9_DATA, ZT9.ZT9_HORA, ZT9.ZT9_USER "
 	_cQuery += " FROM " + RetSQLName("ZT9") + " ZT9 "
 	_cQuery += " WHERE ZT9.ZT9_ENTIDA = 'ZT1' "
-	_cQuery += "   AND ZT9.ZT9_FILIAL = '" + cFilAnt + "' "
+	_cQuery += "   AND ZT9.ZT9_FILIAL = '" + xFilial("ZT9") + "' "
 	_cQuery += "   AND ZT9.ZT9_CODENT = '" + cData + "' "
 	_cQuery += "   AND ZT9.D_E_L_E_T_ = ' ' "
 	_cQuery += " ORDER BY R_E_C_N_O_ DESC "
@@ -579,10 +608,10 @@ USER FUNCTION fSlvObsD(_cObsSalv, cData)
 	DBSELECTAREA("ZT1")
 	DBSETORDER(1)
 
-	IF DbSeek(cFilAnt+cData,.T.) .AND. !Empty(_cObsSalv)
+	IF DbSeek(xFilial("ZT1")+cData,.T.) .AND. !Empty(_cObsSalv)
 
 		RecLock("ZT9", .T.)
-		ZT9->ZT9_FILIAL	:= cFilAnt
+		ZT9->ZT9_FILIAL	:= xFilial("ZT9")
 		ZT9->ZT9_ENTIDA	:= "ZT1"
 		ZT9->ZT9_CODENT	:= cData
 		ZT9->ZT9_DATA		:= Date()
@@ -609,7 +638,7 @@ USER FUNCTION fIncTeto()
 	IF MsgYesNo("Deseja Gerar Novo Teto?", "Confirma", .T.)
 
 		IF RECLOCK("ZT0",.T.)
-			ZT0->ZT0_FILIAL := cFilant
+			ZT0->ZT0_FILIAL := xFilial("ZT0")
 			ZT0->ZT0_CODIGO := cCodTeto
 			ZT0->ZT0_STATUS := '0'
 			ZT0->ZT0_DESC := "Teto Meteor"
@@ -641,7 +670,7 @@ USER FUNCTION fCheckl(dData)
 
 	DBSELECTAREA("ZT1")
 	DBSETORDER(1)
-	IF DbSeek(cFilAnt+cData,.T.)
+	IF DbSeek(xFilial("ZT1")+cData,.T.)
 		IF ZT1->ZT1_APROV
 			FWAlertWarning("Checklist ja aprovado na data de hoje", "RCTEC06")
 			DBCLOSEAREA()
@@ -938,7 +967,7 @@ USER FUNCTION incDiario(dData)
 
 	DBSELECTAREA("ZT1")
 	DBSETORDER(1)
-	IF DbSeek(cFilAnt+cData,.T.)
+	IF DbSeek(xFilial("ZT1")+cData,.T.)
 		FWAlertError("Diário já existente para a data de hoje", "RCTEC06")
 		DBCLOSEAREA()
 		RETURN .F.
@@ -956,7 +985,7 @@ USER FUNCTION fAprovD(dData)
 	IF (__cUserId $ cAprovD)
 		DBSELECTAREA("ZT1")
 		DBSETORDER(1)
-		IF DbSeek(cFilAnt+cData,.T.)
+		IF DbSeek(xFilial("ZT1")+cData,.T.)
 			IF ZT1->ZT1_APROVD
 				FWAlertSuccess("Diario já Aprovado na Data de Hoje", "RCTEC06")
 				//U_fRefresh(oView)
@@ -969,7 +998,7 @@ USER FUNCTION fAprovD(dData)
 
 				DBSELECTAREA("ZT1")
 				DBSETORDER(1)
-				IF DbSeek(cFilAnt+cData,.T.)
+				IF DbSeek(xFilial("ZT1")+cData,.T.)
 					RECLOCK("ZT1",.F.)
 					ZT1->ZT1_APROVD := .T.
 					MSUNLOCK()
@@ -989,177 +1018,53 @@ USER FUNCTION fAprovD(dData)
 
 RETURN
 
-// FUNCAO INCLUIR SETUP
-USER FUNCTION incSetup(cCodTeto)
-
-	Local nOrdem := 0
-	Local cTurno
-	Local cCav
-	Local nTma
-	Local cOrdem
-	Local cUser := UsrRetName(__cUserID)
-	Local cData := DTOS(Date())
-	Local _oFontCabO   := TFont():New("Arial",,14,,.T.,,,,,.F.,.F.)
-	Local _oFont    := TFont():New("Arial",,14,,.F.,,,,,.F.,.F.)
-
-	// JANELA PRINCIPAL
-	_oDlg	:= TDialog():New(000,000,700,900,"Setup Teto: "+cCodTeto ,,,,,CLR_BLACK,CLR_WHITE,,,.T.)
-
-	//@ 330, 250 BITMAP oBitmap1 SIZE 416, 319 OF _oDlg NOBORDER FILENAME "\system\imagens\tetometeor\pontos.jpg" PIXEL
-
-	// TETO
-	_oSay1		:= TSay():New(005,005,{|| "Codigo do Teto: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet1	:= TMultiget():New(012,005,{|u| cCodTeto},_oDlg,50,010,_oFont,,,,,.T.)
-	_oMtGet1:lReadOnly := .T.
-
-	// DATA
-	_oSay2		:= TSay():New(027,005,{|| "Data: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet2	:= TMultiget():New(035,005,{|u| cData},_oDlg,50,010,_oFont,,,,,.T.)
-	_oMtGet2:lReadOnly := .T.
-
-	// ORDEM
-	If (Select("TEMPORD") <> 0)
-		dbSelectArea("TEMPORD")
-		dbCloseArea()
-	Endif
-
-	_cQuery := " SELECT COUNT (ZT2_ORDEM) CONTAGEM FROM "+ RetSQLName("ZT2") +" WHERE ZT2_CTETO = '"+cCodTeto+"' AND D_E_L_E_T_ <> '*' "
-	TCQuery _cQuery NEW ALIAS "TEMPORD"
-	nOrdem := TEMPORD->CONTAGEM + 1
-	cOrdem := cValtoChar(nOrdem)
-
-
-	_oSay3		:= TSay():New(049,005,{|| "Ordem: "},_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet3	:= TMultiget():New(058,005,{|u| cOrdem},_oDlg,50,010,_oFont,,,,,.T.)
-	_oMtGet3:lReadOnly := .T.
-
-	// TURNO DE TRABALHO
-	_oSay4		:= TSay():New(072,005,{|| "Turno (1,2,3,4):" },_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet4	:= TMultiget():New(081,005,{|u| if(Pcount()>0,cTurno := u,cTurno)},_oDlg,50,010,_oFont,,,,,.T.)
-
-	// CAVIDADE (1,2,3,4)
-	_oSay5		:= TSay():New(094,005,{|| "Cavidade (1,2,3,4):" },_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet5	:= TMultiget():New(104,005,{|u| if(Pcount()>0,cCav := u,cCav)},_oDlg,50,010,_oFont,,,,,.T.)
-
-	// CAVIDADE (1,2,3,4)
-	_oSay6		:= TSay():New(116,005,{|| "Temp. Molde A - 50.0 +- 2:" },_oDlg,,_oFontCabO,,,,.T.,CLR_BLACK,CLR_WHITE,50,10)
-	_oMtGet6	:= TMultiget():New(127,005,{|u| if(Pcount()>0,nTma := u,nTma)},_oDlg,50,010,_oFont,,,,,.T.)
-
-	// BOTOES
-	_oBtConf	:= TButton():New(600,100,"Confirmar"  ,_oDlg,{|| (U_fSalvaS(cCodTeto,cData,nOrdem,cTurno,cCav), _oDlg:End())},60,15,,,.F.,.T.,.F.,,.F.,,,.F.)
-	_oBtClos	:= TButton():New(600,195,"Sair"	      ,_oDlg,{|| _oDlg:End() },60,15,,,.F.,.T.,.F.,,.F.,,,.F.)
-
-	_oDlg:Activate(,,,.T.,{|| .t.},,{|| .t.})
-
-RETURN
-
-USER FUNCTION fSalvaS(cCodTeto,cData,nOrdem,cTurno,cCav)
-
-	IF !Empty(cCodTeto)
-
-		RecLock("ZT2", .T.)
-		ZT2->ZT2_FILIAL	:= cFilant
-		ZT2->ZT2_CTETO	:= cCodTeto
-		ZT2->ZT2_DATA	:= STOD(cData)
-		ZT2->ZT2_ORDEM		:= nOrdem
-		ZT2->ZT2_TURNO	:= cTurno
-		ZT2->ZT2_CAV	:= cCav
-		//ZT1->ZT1_APROVA := cAprov
-		MsUnlock()
-
-		MessageBox("Setup Registrado com Sucesso.", "RCTEC06", 0)
-
-	ELSE
-		FWAlertError("Não foi possível gravar o Setup, contate a TI", "RCTEC06")
-		RETURN .F.
-	ENDIF
-
-RETURN .T.
-
-USER FUNCTION fRefresh(oView)
-
-	oView:Refresh()
-
-RETURN
-
-USER FUNCTION fGOrdem(cTeto)
-
-	Public nOrPub 
-
-	DBSELECTAREA("ZT2")
-	DBSETORDER(1)
-	DBSEEK(xFilial("ZT2")+cTeto)
-	DBGOBOTTOM()
-
-	nOrPub  := (ZT2->ZT2_ORDEM)+1
-	
-RETURN nOrPub 
-
-USER FUNCTION fValTemp(nValor)
-
-	IF (nValor>=48.0 .AND. nValor<=52.0)
-		lRet := .T.
-	ELSE
-		lRet := .F.
-		MSGINFO("Utilize Valores entre: 48.0 <-> 52.0")
-	ENDIF
-RETURN lRet
-
-USER FUNCTION fValGel(nValor)
-
-	IF (nValor>=0.4 .AND. nValor<=0.6)
-		lRet := .T.
-	ELSE
-		lRet := .F.
-		MSGINFO("Utilize Valores entre: 0.4 <-> 0.6")
-	ENDIF
-RETURN lRet
-
+//FUNCAO FINALIZAR SETUP
 USER FUNCTION fFinSetup(dData)
 
 	Local cData := DTOS(dData)
 
-	DBSELECTAREA("ZT1")
-	DBSETORDER(1)
+	//DBSELECTAREA("ZT1")
+	//DBSETORDER(1)
 
-	IF DBSEEK(xFilial("ZT0")+cData)
-		IF ZT1->ZT1_APROVD
-			IF ZT0->ZT0_STATUS = '0'
-				IF MsgYesNo("Deseja Finalizar o SETUP?", "Confirma", .T.)
-					RECLOCK("ZT0",.F.)
-					ZT0->ZT0_STATUS := '1'
-					MSUNLOCK()
-					FWAlertSuccess("SETUP Finalizado com Sucesso!","RCTEC06")
+	//IF DBSEEK(xFilial("ZT0")+cData)
+		//IF ZT1->ZT1_APROVD
+				IF ZT0->ZT0_STATUS = '0'
+					IF MsgYesNo("Deseja Finalizar o SETUP?", "Confirma", .T.)
+						RECLOCK("ZT0",.F.)
+						ZT0->ZT0_STATUS := '1'
+						MSUNLOCK()
+						FWAlertSuccess("SETUP Finalizado com Sucesso!","RCTEC06")
+						DBCLOSEAREA()
+						RETURN .T.
+					ENDIF
+				ELSE
+					FWAlertError("Verifique o Status do Teto","RCTEC06")
 					DBCLOSEAREA()
-					RETURN .T.
+					RETURN .F.
 				ENDIF
-			ELSE
-				FWAlertError("Verifique o Status do Teto","RCTEC06")
-				DBCLOSEAREA()
-				RETURN .F.
-			ENDIF
 
-		ELSE
-			FWAlertError("Diário de Bordo não aprovado","RCTEC06")
-			DBCLOSEAREA()
-			RETURN .F.
-		ENDIF
-	ELSE
-		FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
-		DBCLOSEAREA()
-		RETURN .F.
-	ENDIF
+		//ELSE
+			//FWAlertError("Diário de Bordo não aprovado","RCTEC06")
+			//DBCLOSEAREA()
+			//RETURN .F.
+		//ENDIF
+	//ELSE
+		//FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
+		//DBCLOSEAREA()
+		//RETURN .F.
+	//ENDIF
 RETURN .F.
 
+//FUNCAO FINALIZAR MOLDAGEM
 USER FUNCTION fFinMol(dData)
 
 	Local cData := DTOS(dData)
 
-	DBSELECTAREA("ZT1")
-	DBSETORDER(1)
+	//DBSELECTAREA("ZT1")
+	//DBSETORDER(1)
 
-	IF DBSEEK(xFilial("ZT0")+cData)
-		IF ZT1->ZT1_APROVD
+	//IF DBSEEK(xFilial("ZT0")+cData)
+		//IF ZT1->ZT1_APROVD
 			IF ZT0->ZT0_STATUS = '1'
 				IF MsgYesNo("Deseja Finalizar a Moldagem?", "Confirma", .T.)
 					RECLOCK("ZT0",.F.)
@@ -1173,69 +1078,92 @@ USER FUNCTION fFinMol(dData)
 				DBCLOSEAREA()
 				RETURN .F.
 			ENDIF
-		ELSE
-			FWAlertError("Diário de Bordo não aprovado","RCTEC06")
-			DBCLOSEAREA()
-			RETURN .F.
-		ENDIF
-	ELSE
-		FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
-		DBCLOSEAREA()
-		RETURN .F.
-	ENDIF
+		//ELSE
+			//FWAlertError("Diário de Bordo não aprovado","RCTEC06")
+			//DBCLOSEAREA()
+			//RETURN .F.
+		//ENDIF
+	//ELSE
+		//FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
+		//DBCLOSEAREA()
+		//RETURN .F.
+	//ENDIF
 RETURN .F.
 
-USER FUNCTION fFinDureza(dData)
+//FUNCAO FINALIZAR DUREZA
+USER FUNCTION fFinDureza(dData,cTeto)
 
 	Local cData := DTOS(dData)
 
-	DBSELECTAREA("ZT1")
-	DBSETORDER(1)
+	//DBSELECTAREA("ZT1")
+	//DBSETORDER(1)
 
-	IF DBSEEK(xFilial("ZT0")+cData)
-		IF ZT1->ZT1_APROVD
-			IF ZT0->ZT0_STATUS = '2'
-				IF MsgYesNo("Deseja Finalizar a Dureza?", "Confirma", .T.)
-					RECLOCK("ZT0",.F.)
-					ZT0->ZT0_STATUS := '3'
-					MSUNLOCK()
-					FWAlertSuccess("Dureza Finalizada com Sucesso!","RCTEC06")
-					RETURN .T.
+	//IF DBSEEK(xFilial("ZT1")+cData)
+		//IF ZT1->ZT1_APROVD
+
+			DBSELECTAREA("ZT4")
+			DBSETORDER(1)
+
+			IF DBSEEK(xFilial("ZT4")+cTeto)
+				IF (ZT4->ZT4_A1012 .AND. ZT4_A24)
+					IF ZT0->ZT0_STATUS = '4'
+						IF MsgYesNo("Deseja Finalizar a Dureza?", "Confirma", .T.)
+							RECLOCK("ZT0",.F.)
+							ZT0->ZT0_STATUS := '5'
+							MSUNLOCK()
+							FWAlertSuccess("Dureza Finalizada com Sucesso!","RCTEC06")
+							DBCLOSEAREA()
+							RETURN .T.
+						ENDIF
+					ELSE
+						FWAlertError("Verifique o Status do Teto","RCTEC06")
+						DBCLOSEAREA()
+						RETURN .F.
+					ENDIF
+				ELSE
+					FWAlertError("Dureza 10/12 Minutos e Dureza 24 Horas Precisam estar Finalizadas","RCTEC06")
+					DBCLOSEAREA()
+					RETURN .F.
 				ENDIF
-			ELSE
-				FWAlertError("Verifique o Status do Teto","RCTEC06")
-				DBCLOSEAREA()
-				RETURN .F.
 			ENDIF
-		ELSE
-			FWAlertError("Diário de Bordo não aprovado","RCTEC06")
-			DBCLOSEAREA()
-			RETURN .F.
-		ENDIF
-	ELSE
-		FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
-		DBCLOSEAREA()
-		RETURN .F.
-	ENDIF
+		//ELSE
+			//FWAlertError("Diário de Bordo não aprovado","RCTEC06")
+			//DBCLOSEAREA()
+			//RETURN .F.
+		//ENDIF
+	//ELSE
+		//FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
+		//DBCLOSEAREA()
+		//RETURN .F.
+	//ENDIF
 RETURN .F.
 
+//FUNCAO FINALIZAR DUREZA 10/12 MINUTOS
 USER FUNCTION fFin1012(dData,cTeto)
 	Local cData := DTOS(dData)
 	Local c1012 := "Dureza Apos 10/12 Minutos "
 
-	DBSELECTAREA("ZT1")
-	DBSETORDER(1)
+	//DBSELECTAREA("ZT1")
+	//DBSETORDER(1)
 
-	IF DBSEEK(xFilial("ZT0")+cData)
-		IF ZT1->ZT1_APROVD
+	//IF DBSEEK(xFilial("ZT1")+cData)
+		//IF ZT1->ZT1_APROVD
 			DBCLOSEAREA()
 
 			DBSELECTAREA("ZT4")
 			DBSETORDER(1)
 
-			IF DBSEEK(xFilial("ZT0")+cTeto)
+			IF DBSEEK(xFilial("ZT4")+cTeto)
 				IF !EMPTY(ZT4->ZT4_DAPA) .OR. !EMPTY(ZT4->ZT4_DAPC) .OR. !EMPTY(ZT4->ZT4_DAPD) .OR. !EMPTY(ZT4->ZT4_DAPE) .OR. !EMPTY(ZT4->ZT4_DAPF) .OR. !EMPTY(ZT4->ZT4_DAPG)
-
+					FWAlertSuccess("Dureza Apos 10/12 Min. Aprovado com Sucesso","RCTEC06")
+					RECLOCK("ZT4",.F.)
+					ZT4->ZT4_A1012 := .T.
+					MSUNLOCK()
+					RECLOCK("ZT0",.F.)
+					ZT0_STATUS := '3'
+					MSUNLOCK()
+					DBCLOSEAREA()
+					RETURN .T.
 				ELSE
 					FWAlertError("Preencha todos os pontos (Dureza Apos 10/12 Min.)","RCTEC06")
 					DBCLOSEAREA()
@@ -1246,25 +1174,64 @@ USER FUNCTION fFin1012(dData,cTeto)
 				DBCLOSEAREA()
 				RETURN .F.
 			ENDIF
-		ELSE
-			FWAlertError("Diário de Bordo não aprovado","RCTEC06")
-			DBCLOSEAREA()
-			RETURN .F.
-		ENDIF
-	ELSE
-		FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
-		DBCLOSEAREA()
-		RETURN .F.
-	ENDIF
-
-	
+		//ELSE
+			//FWAlertError("Diário de Bordo não aprovado","RCTEC06")
+			//DBCLOSEAREA()
+			//RETURN .F.
+		//ENDIF
+	//ELSE
+		//FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
+		//DBCLOSEAREA()
+		//RETURN .F.
+	//ENDIF
 
 RETURN
 
-USER FUNCTION fSalvarGrid(cView)
+//FUNCAO FINALIZAR DUREZA 24 HORAS
+USER FUNCTION fFin24(dData,cTeto)
+	Local cData := DTOS(dData)
+	Local c1012 := "Dureza Apos 24 Horas "
 
-	If Type( 'oView' ) != "U"
-        oView:Refresh(cView)
-    EndIf
+	//DBSELECTAREA("ZT1")
+	//DBSETORDER(1)
+
+	//IF DBSEEK(xFilial("ZT1")+cData)
+		//IF ZT1->ZT1_APROVD
+			DBCLOSEAREA()
+
+			DBSELECTAREA("ZT4")
+			DBSETORDER(1)
+
+			IF DBSEEK(xFilial("ZT4")+cTeto)
+				IF !EMPTY(ZT4->ZT4_DAFA) .OR. !EMPTY(ZT4->ZT4_DAFC) .OR. !EMPTY(ZT4->ZT4_DAFD) .OR. !EMPTY(ZT4->ZT4_DAFE) .OR. !EMPTY(ZT4->ZT4_DAFF) .OR. !EMPTY(ZT4->ZT4_DAFG)
+					FWAlertSuccess("Dureza Apos 24 Horas. Aprovado com Sucesso","RCTEC06")
+					RECLOCK("ZT4",.F.)
+					ZT4->ZT4_A24 := .T.
+					MSUNLOCK()
+					RECLOCK("ZT0",.F.)
+					ZT0->ZT0_STATUS := '4'
+					MSUNLOCK()
+					DBCLOSEAREA()
+					RETURN .T.
+				ELSE
+					FWAlertError("Preencha todos os pontos (Dureza Apos 24 Horas.)","RCTEC06")
+					DBCLOSEAREA()
+					RETURN .F.
+				ENDIF
+			ELSE
+				FWAlertError("Registro de Dureza nao encontrado","RCTEC06")
+				DBCLOSEAREA()
+				RETURN .F.
+			ENDIF
+		//ELSE
+			//FWAlertError("Diário de Bordo não aprovado","RCTEC06")
+			//DBCLOSEAREA()
+			//RETURN .F.
+		//ENDIF
+	//ELSE
+		//FWAlertError("Não encontrado Diário de Bordo","RCTEC06")
+		//DBCLOSEAREA()
+		//RETURN .F.
+	//ENDIF
 
 RETURN
