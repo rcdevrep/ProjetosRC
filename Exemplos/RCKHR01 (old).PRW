@@ -13,7 +13,7 @@
 // PROJETO - RC1_CONCR MARKETPLACE
 // DATA - 09/10/2024
 
-User Function RCKHR01()
+User Function RCKHR01_OLD()
 
 	Local   oBrowse
 	Local aArea    := GetArea()
