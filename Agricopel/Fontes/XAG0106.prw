@@ -415,7 +415,7 @@ return lRec
 user function XAG0107S
 Default oObjLog:= nil
 
-	IF(ZLA->ZLA_STATUS == "2" .OR. ZLA->ZLA_STATUS == "0" .OR. ZLA->ZLA_STATUS == "6") //entrada confirmada, erro, erro comunicação.
+	IF(ZLA->ZLA_STATUS == "2" .OR. ZLA->ZLA_STATUS == "0" .OR. ZLA->ZLA_STATUS == "6" .OR. ZLA->ZLA_STATUS == "5") //entrada confirmada, erro, erro comunicação.
 		IF(ZLA->ZLA_RECPAG == "P")
 			U_XAG0107P(oObjLog, .T.)
 		ELSE
@@ -1465,8 +1465,16 @@ Static function Pagam106(oObj)
 								cTitulo+='"indicadorFuncao":"1",'//0-CONSULTAPRÉ-PAGAMENTO;1 - PAGAMENTO / AGENDAMENTO;2 - ANULAÇÃO.
 								cTitulo+='"nomeCliente":"'+SUBSTR(U_RemCarEsp(Alltrim(Upper(SM0->M0_NOMECOM))),1,40)+'",'//"'+U_RemCarEsp(Alltrim(SA2->A2_NOME))+'",'
 								If Left(SE2->E2_CODBAR,3) <> '237'
-									//Busca o num de controle do participante
-									cTitulo+= '"numeroControleParticipante":"'+Alltrim(ZLA->ZLA_PIXTID)+'",'
+									//buscar PIXTID ***
+									Dbselectarea("ZLA")
+									Dbsetorder(1)
+									dbgotop()
+									If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))										
+										cTitulo+= '"numeroControleParticipante":"'+Alltrim(ZLA->ZLA_PIXTID)+'",'
+									ELSE
+										U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, SE2->E2_NUMBOR, "6")
+    									U_ZLBHIST(SE2->E2_FILORIG, aZLA[2], '6', "NÃO IDENTIFICADO CÓDIGO DE CONTROLE DE PARTICIPANTE.", '1')
+									ENDIF
 								Else
 									cTitulo+= '"numeroControleParticipante":"0",'
 								Endif

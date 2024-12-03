@@ -616,10 +616,25 @@ cJson+='},'
 cJson+='"identificacaoChequeCartao":0,'
 cJson+='"indicadorValidacaoGravacao":"N",'
 cJson+='"nomeCliente":"'+SUBSTR(U_RemCarEsp(Alltrim(SA2->A2_NOME)),1,40)+'",'
-If Left(SE2->E2_CODBAR,3) <> '237'
+/*If Left(SE2->E2_CODBAR,3) <> '237'
 	cJson+= '"numeroControleParticipante":"'+Alltrim(ZLA->ZLA_PIXTID)+'",'
 Else
 	cJson+= '"numeroControleParticipante":"0",'
+Endif*/
+
+If Left(SE2->E2_CODBAR,3) <> '237'
+    //buscar PIXTID ***
+    Dbselectarea("ZLA")
+    Dbsetorder(1)
+    dbgotop()
+    If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO)))										
+        cJson+= '"numeroControleParticipante":"'+Alltrim(ZLA->ZLA_PIXTID)+'",'
+    ELSE
+        U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, SE2->E2_NUMBOR, "6")
+        U_ZLBHIST(SE2->E2_FILORIG, '', '6', "NÃO IDENTIFICADO CÓDIGO DE CONTROLE DE PARTICIPANTE.", '1')
+    ENDIF
+Else
+    cJson+= '"numeroControleParticipante":"0",'
 Endif
 
 cJson+='"portadorDadosComum":'
