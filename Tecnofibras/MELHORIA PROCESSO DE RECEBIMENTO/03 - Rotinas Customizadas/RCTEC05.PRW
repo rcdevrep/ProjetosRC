@@ -245,6 +245,7 @@ USER FUNCTION CLAS103()
 	Local aCab := {}
 	Local aItem := {}
 	Local aItens := {}
+	Local aCodRet := {}
 	Local nOpc := 4 // Classificação
 	Local nI := 0
 	Local nX := 0
@@ -303,7 +304,7 @@ USER FUNCTION CLAS103()
 		WHILE !SD1->(Eof()) .AND. SF1->F1_FILIAL = SD1->D1_FILIAL .AND. ;
 				SF1->F1_DOC = SD1->D1_DOC .AND. SF1->F1_SERIE = SD1->D1_SERIE .AND. ;
 				SF1->F1_FORNECE = SD1->D1_FORNECE .AND. SF1->F1_LOJA = SD1->D1_LOJA
-	
+
 			aItem := {}
 			aAdd(aItem,{"LINPOS" , "D1_ITEM",SD1->D1_ITEM })
 			aadd(aItem,{"D1_FILIAL" ,SD1->D1_FILIAL,NIL})
@@ -363,10 +364,24 @@ USER FUNCTION CLAS103()
 			aadd(aItem,{"AUTDELETA" ,"N",Nil,Nil})
 			aAdd(aItens,aItem)
 			aadd(Atail(aItens), {"LINPOS" , "D1_PEDIDO",SD1->D1_PEDIDO })
-          	aadd(Atail(aItens), {"LINPOS" , "D1_ITEMPC",SD1->D1_ITEMPC })
-			
+			aadd(Atail(aItens), {"LINPOS" , "D1_ITEMPC",SD1->D1_ITEMPC })
+
 			SD1->(dbskip())
 		ENDDO
+
+		// REGRA DILCIANE - FORNECEDORES PARA FIXAR PIS E COFINS
+		IF ALLTRIM(SF1->F1_FORNECE) $ "79499372;57563694;3476648;6217062;93831832;11363360;59274332"
+			//Array contendo a informação se gera DIRF e os códigos de retenção por imposto
+			aAdd( aCodRet, {01, "", 1, "..."} )
+			aAdd( aCodRet, {02, "", 1, "IRR"} )
+			aAdd( aCodRet, {03, "3770", 1, "PIS"} )
+			aAdd( aCodRet, {04, "3746", 1, "COF"} )
+			aAdd( aCodRet, {05, "", 1, "CSL"} )
+		ENDIF
+
+		// Exemplo para manipular o pergunte MTA103
+		//aAdd(aParamAux, {"MV_PAR01", 2}) //-- Mostra Lanc. Contabil? 1 = Sim, 2 = Não
+		//aAdd(aParamAux, {"MV_PAR06", 1}) //-- Contabilizacao Online? 1 = Sim, 2 = Não
 
 		//aCab := FWVetByDic(aCab, 'SF1')
 		//aItens := FWVetByDic(aItens, 'SD1', .T.)
@@ -374,7 +389,7 @@ USER FUNCTION CLAS103()
 		//ASort(aItens,,, {|x, y| x[1][3] < y[1][3]})
 
 		//3-Inclusão / 4-Classificação / 5-Exclusão
-		FWMsgRun(,{|| MSExecAuto({|x,y,z,w| MATA103(x,y,z,w)},aCab,aItens,nOpc,.T.)},"Aguarde","Classificando Nota...") 
+		FWMsgRun(,{|| MSExecAuto({|x,y,z,w| MATA103(x,y,z,w)},aCab,aItens,nOpc,.T.,,aCodRet)},"Aguarde","Classificando Nota...")
 
 		If !lMsErroAuto
 			ConOut(" NF Classificada RCTEC05: " + SF1->F1_DOC)
