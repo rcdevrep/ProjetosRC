@@ -123,12 +123,13 @@ User Function RCKHR01()
         aAdd(aCposGrd1,{"RC2_NUM","C",10,0})
         aAdd(aCposGrd1,{"RC2_TIPO","C",10,0})
         aAdd(aCposGrd1,{"RC2_VALOR","N",10,2})
+        aAdd(aCposGrd1,{"RC2_TAXA","N",11,4})
         aAdd(aCposGrd1,{"RC2_EMISSA","D",08,0})
         aAdd(aCposGrd1,{"RC2_PARCEL","C",3,0})
         aAdd(aCposGrd1,{"RC2_VENC","D",08,0})
  
         //aTitulos := {'ID Rotina',  "Item","Data", "Documento", "Historico","Fin. Debito","Fin. Credito", "Saldo" }
-        aTitulos := {'Id'                ,'Filial','Numero',  "Tipo","Valor", "Emissao", "Parcela","Vencimento"}
+        aTitulos := {'Id','Filial','Numero',  "Tipo","Valor","Taxa", "Emissao", "Parcela","Vencimento"}
         aGrd1 := gerCpBrow(aCposGrd1,aTitulos)
  
  
@@ -503,7 +504,8 @@ Static Function ViewDef()
  
     oView:AddField("ID_V_FLD", osCabec, "ID_M_FLD")
     oView:AddGrid("ID_V_GRD1", osGrd1, "ID_M_GRD1")
-    oView:AddGrid("ID_V_GRD2", osGrd2, "ID_M_GRD2")    
+    oView:AddGrid("ID_V_GRD2", osGrd2, "ID_M_GRD2")
+    oView:AddOtherObject('VIEW_RODAPE',{|oPanel|fRodape(oPanel)})    
 
     osGrd1:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
     osGrd2:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
@@ -513,13 +515,15 @@ Static Function ViewDef()
 
  
     oView:CreateHorizontalBox("SUPERIOR",20)
-    oView:CreateHorizontalBox("INFERIOR",80)
+    oView:CreateHorizontalBox("INFERIOR",70)
     oView:CreateVerticalBox('ESQUERDA', 45 , 'INFERIOR')
     oView:CreateVerticalBox("DIREITA",  55 , 'INFERIOR')
+    oView:CreateHorizontalBox("RODAPE",10)
      
     oView:SetOwnerView( 'ID_V_FLD'   , 'SUPERIOR' )
     oView:SetOwnerView( 'ID_V_GRD1'   , 'ESQUERDA' )
     oView:SetOwnerView( 'ID_V_GRD2'   , 'DIREITA' )
+    oView:SetOwnerView( 'VIEW_RODAPE'  , 'RODAPE')
  
  
     //Colocando título do formulário
@@ -672,7 +676,7 @@ Static function GrvFin()
         TEMPKHR2->(DbCloseArea())
     Endif
 
-    cQuery2 := "SELECT E1_FILORIG FILIAL, E1_NUM RC2_NUM,E1_TIPO RC2_TIPO,E1_VALOR RC2_VALOR, E1_EMIS1 RC2_EMISSA, E1_PARCELA RC2_PARCEL, E1_VENCREA RC2_VENC "
+    cQuery2 := "SELECT E1_FILORIG FILIAL, E1_NUM RC2_NUM,E1_TIPO RC2_TIPO,E1_VALOR RC2_VALOR,E1_TXMOEDA RC2_TAXA, E1_EMIS1 RC2_EMISSA, E1_PARCELA RC2_PARCEL, E1_VENCREA RC2_VENC "
     cQuery2 += "FROM "+RetSQLName("SE1")+" " 
     cQuery2 += "WHERE E1_VENCREA >= '"+DTOS(MV_PAR01)+"' AND E1_VENCREA <= '"+DTOS(MV_PAR02)+"' AND E1_NOMCLI = 'REDECARD' "
     cQuery2 += "AND E1_TIPO IN ('MAQ','CC','CD') " 
@@ -692,6 +696,7 @@ Static function GrvFin()
         (cAlisGr1)->RC2_NUM := TEMPKHR2->RC2_NUM
         (cAlisGr1)->RC2_TIPO := TEMPKHR2->RC2_TIPO
         (cAlisGr1)->RC2_VALOR := TEMPKHR2->RC2_VALOR
+        (cAlisGr1)->RC2_TAXA := TEMPKHR2->RC2_TAXA
         (cAlisGr1)->RC2_EMISSA := STOD(TEMPKHR2->RC2_EMISSA)
         (cAlisGr1)->RC2_PARCEL := TEMPKHR2->RC2_PARCEL
         (cAlisGr1)->RC2_VENC := STOD(TEMPKHR2->RC2_VENC)
@@ -916,3 +921,22 @@ Static Function loadGrd(oSub,lCopy,cIdSub)
         EndDo
     EndIF
 Return(aRet)
+
+STATIC FUNCTION fRodape(oPanel)
+
+	Local aArea := FWGetArea()
+	Local nJanLarg := oPanel:nWidth
+	Local nLinObj := 0
+	Local nLargBtn := 100
+	Local cFontPad := "Tahoma"
+	Local cFontBtn := TFont():New(cFontPad, , 2)
+
+	oBtnConc := TButton():New(001,100 , "Conciliar", oPanel, {|| U_Conciliar()},nLargBtn)
+	oBtnAb := TButton():New(001,20 , "Em Aberto", oPanel, ,nLargBtn)
+	oBtnRec := TButton():New(001,190 , "Recebidos", oPanel, ,nLargBtn)
+
+RETURN
+
+USER FUNCTION Conciliar()
+
+RETURN
