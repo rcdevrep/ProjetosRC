@@ -36,7 +36,6 @@ User Function FRECEB()
 
 Return
 
-
 Static Function ReportDef()
 	Local oReport
 	Local oDetalhe
@@ -404,7 +403,7 @@ Static Function ReportPrint(oReport,oDetalhe)
 						ZR1_DOCTEF := _cNsu
 						ZR1_PREFIX := cPrefixo
 						ZR1_NUM := cNum
-						ZR1_PARCEL := cParcela
+						ZR1_PARCEL := cParcela 
 						ZR1_TIPO := cTipo
 						ZR1_STATUS := "B"
 						ZR1_RECEBI := nReceb

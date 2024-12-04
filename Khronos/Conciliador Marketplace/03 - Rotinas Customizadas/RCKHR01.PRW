@@ -341,8 +341,11 @@ Static Function ModelDef()
     //oModel:GetModel( 'ID_M_GRD2' ):SetUniqueLine( { 'ITEM'} )
     oModel:SetPrimaryKey({ 'ID' })
  
-    //oModel:AddCalc( 'TOTAL', 'ID_M_FLD', 'ID_M_GRD1',  'SALDO'    , '_nVlrOcor', 'SUM' , ,,'Total Saldo',/*{ |oModel| AGL300H( oModel)} */  )
-    //oModel:AddCalc( 'TOTAL2', 'ID_M_FLD', 'ID_M_GRD2', 'SALDO'    , '_nVlrOco2', 'SUM' , ,,'Total Saldo',/*{ |oModel| AGL300H( oModel)} */  )
+    oModel:AddCalc( 'TOTAL', 'ID_M_FLD', 'ID_M_GRD1',  'ID'    , '_nQtdeOcor', 'COUNT' , ,,'Qtde',/*{ |oModel| AGL300H( oModel)} */  )
+    oModel:AddCalc( 'TOTAL2', 'ID_M_FLD', 'ID_M_GRD2', 'ID'    , '_nQtdeOco2', 'COUNT' , ,,'Qtde',/*{ |oModel| AGL300H( oModel)} */  )
+    oModel:AddCalc( 'TOTAL', 'ID_M_FLD', 'ID_M_GRD1',  'RC2_VALOR'    , '_nVlrOcor', 'SUM' , ,,'Em aberto',/*{ |oModel| AGL300H( oModel)} */  )
+    oModel:AddCalc( 'TOTAL2', 'ID_M_FLD', 'ID_M_GRD2', 'RC3_RECEBI'    , '_nVlrOco2', 'SUM' , ,,'Recebido',/*{ |oModel| AGL300H( oModel)} */  )
+    
  
     oModel:SetDescription( 'Concilicao MKT/Cartoes' )
     oModel:GetModel( 'ID_M_GRD1' ):SetDescription( 'Titulos em Aberto' )
@@ -442,6 +445,10 @@ Static Function ViewDef()
     Local osCabec  :=  FWFormViewStruct():New()
     Local osGrd1  :=  FWFormViewStruct():New()
     Local osGrd2  :=  FWFormViewStruct():New()
+    Local oStruTot := FWCalcStruct(oModel:GetModel("TOTAL"))
+    Local oStruTot2 := FWCalcStruct(oModel:GetModel("TOTAL2"))
+    //Local oStruQtd := FWCalcStruct(oModel:GetModel("QTDE"))
+    //Local oStruQtd2 := FWCalcStruct(oModel:GetModel("QTDE2"))
     Local oView  :=  Nil
     Local nX
     Local aDadCab  := {}
@@ -505,13 +512,17 @@ Static Function ViewDef()
     oView:AddField("ID_V_FLD", osCabec, "ID_M_FLD")
     oView:AddGrid("ID_V_GRD1", osGrd1, "ID_M_GRD1")
     oView:AddGrid("ID_V_GRD2", osGrd2, "ID_M_GRD2")
-    oView:AddOtherObject('VIEW_RODAPE',{|oPanel|fRodape(oPanel)})    
+    oView:AddField("VIEW_TOT", oStruTot, "TOTAL")
+    oView:AddField("VIEW_TOT2", oStruTot2, "TOTAL2")
+    //oView:AddField("VIEW_QTDE", oStruQtd, "QTDE")
+    //oView:AddField("VIEW_QTDE2", oStruQtd2, "QTDE2")
+    //oView:AddOtherObject('VIEW_RODAPE',{|oPanel|fRodape(oPanel)})    
 
     osGrd1:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
     osGrd2:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
 
     //LEGENDAS JANELA 2
-    osGrd2:AddField('RC3_LEGEND', "00",AllTrim(''), AllTrim(''),, 'C','@BMP',NIL,'', .T., NIL,NIL, NIL, NIL, NIL, .T., NIL,NIL)
+    //osGrd2:AddField('RC3_LEGEND', "00",AllTrim(''), AllTrim(''),, 'C','@BMP',NIL,'', .T., NIL,NIL, NIL, NIL, NIL, .T., NIL,NIL)
 
  
     oView:CreateHorizontalBox("SUPERIOR",20)
@@ -519,17 +530,28 @@ Static Function ViewDef()
     oView:CreateVerticalBox('ESQUERDA', 45 , 'INFERIOR')
     oView:CreateVerticalBox("DIREITA",  55 , 'INFERIOR')
     oView:CreateHorizontalBox("RODAPE",10)
+    oView:CreateVerticalBox('ENCH_TOT', 45 , 'RODAPE')
+    oView:CreateVerticalBox("ENCH_TOT2",  55 , 'RODAPE')
+
      
     oView:SetOwnerView( 'ID_V_FLD'   , 'SUPERIOR' )
     oView:SetOwnerView( 'ID_V_GRD1'   , 'ESQUERDA' )
     oView:SetOwnerView( 'ID_V_GRD2'   , 'DIREITA' )
-    oView:SetOwnerView( 'VIEW_RODAPE'  , 'RODAPE')
+    oView:SetOwnerView( 'VIEW_TOT'   , 'ENCH_TOT' )
+    oView:SetOwnerView( 'VIEW_TOT2'   , 'ENCH_TOT2' )
+    //oView:SetOwnerView( 'VIEW_QTDE'   , 'ENCH_TOT' )
+    //oView:SetOwnerView( 'VIEW_QTDE2'   , 'ENCH_TOT2' )
+    //oView:SetOwnerView( 'VIEW_RODAPE'  , 'RODAPE')
+
+
  
  
     //Colocando título do formulário
     oView:EnableTitleView('ID_V_FLD', 'Concilicao MKT/Cartoes' )  
     oView:EnableTitleView('ID_V_GRD1', 'Titulos em Aberto' )  
     oView:EnableTitleView('ID_V_GRD2', 'Recebidos do dia' )       
+    oView:EnableTitleView('VIEW_TOT', 'Totalizador' )    
+    oView:EnableTitleView('VIEW_TOT2', 'Totalizador2' )    
     oView:SetCloseOnOk({||.T.})
 Return oView
  

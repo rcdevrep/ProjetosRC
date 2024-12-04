@@ -445,7 +445,7 @@ cUrlBase:= GetNewPar("AC_BRDURL","https://proxy.api.prebanco.com.br") //https://
 aToken:= U_gTokenBrd(cClientId)
 If !aToken[1]
 	oObjLog:saveMsg("Autenticação inválida!!!") 
-    Return
+    Return .F.
 Else
 	cToken:= aToken[2]
 	cJti:= aToken[3]
@@ -466,7 +466,7 @@ cConteudo+= "SHA256"
 cAssinatura:= U_gSignBrd("ValidarDadosTitulo", SE2->E2_IDCNAB, cConteudo)
 
 If Empty(cAssinatura)
-    Return
+    Return .F.
 Endif    
 
 //Autorização no header
@@ -511,8 +511,12 @@ Endif
 
 IF(lRet)
     cControlePart := jJsonBol["consultaFatorDataVencimentoResponse"]["numeroControleParticipante"]    
-    IF(EMPTY(cControlePart))
-        lRet := U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, SE2->E2_NUMBOR, "6")
+    IF(EMPTY(cControlePart))       
+        IF(jJsonBol["consultaFatorDataVencimentoResponse"]["bancoTitulo"] != 237) 
+            lRet := U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, SE2->E2_NUMBOR, "6")[1]
+        ELSE
+            lRet := .T.
+        ENDIF
     ELSE
         lRet := U_ZLACAMPO(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, SE2->E2_NUMBOR ,"ZLA_PIXTID", cControlePart)
     ENDIF

@@ -372,11 +372,11 @@ USER FUNCTION CLAS103()
 		// REGRA DILCIANE - FORNECEDORES PARA FIXAR PIS E COFINS
 		IF ALLTRIM(SF1->F1_FORNECE) $ "79499372;57563694;3476648;6217062;93831832;11363360;59274332"
 			//Array contendo a informação se gera DIRF e os códigos de retenção por imposto
-			aAdd( aCodRet, {01, "", 1, "..."} )
-			aAdd( aCodRet, {02, "", 1, "IRR"} )
-			aAdd( aCodRet, {03, "3770", 1, "PIS"} )
-			aAdd( aCodRet, {04, "3746", 1, "COF"} )
-			aAdd( aCodRet, {05, "", 1, "CSL"} )
+			//aAdd( aCodRet, {01, "", 1, "..."} )
+			//aAdd( aCodRet, {02, "", 1, "IRR"} )
+			aAdd( aCodRet, {97, "3770", 1, "PIS"} )
+			aAdd( aCodRet, {98, "3746", 1, "COF"} )
+			//aAdd( aCodRet, {05, "", 1, "CSL"} )
 		ENDIF
 
 		// Exemplo para manipular o pergunte MTA103
@@ -389,7 +389,7 @@ USER FUNCTION CLAS103()
 		//ASort(aItens,,, {|x, y| x[1][3] < y[1][3]})
 
 		//3-Inclusão / 4-Classificação / 5-Exclusão
-		FWMsgRun(,{|| MSExecAuto({|x,y,z,w| MATA103(x,y,z,w)},aCab,aItens,nOpc,.T.,,aCodRet)},"Aguarde","Classificando Nota...")
+		FWMsgRun(,{|| MSExecAuto({|x,y,z,k,a,b| MATA103(x,y,z,,,,k,a,,,b)},aCab,aItens,nOpc,,,aCodRet)},"Aguarde","Classificando Nota...")
 
 		If !lMsErroAuto
 			ConOut(" NF Classificada RCTEC05: " + SF1->F1_DOC)
