@@ -389,7 +389,7 @@ USER FUNCTION CLAS103()
 		//ASort(aItens,,, {|x, y| x[1][3] < y[1][3]})
 
 		//3-Inclusão / 4-Classificação / 5-Exclusão
-		FWMsgRun(,{|| MSExecAuto({|x,y,z,k,a,b| MATA103(x,y,z,,,,k,a,,,b)},aCab,aItens,nOpc,,,aCodRet)},"Aguarde","Classificando Nota...")
+		FWMsgRun(,{|| MSExecAuto({|x,y,z,k,a,b| MATA103(x,y,z,.T.,,,k,a,,,b)},aCab,aItens,nOpc,,,aCodRet)},"Aguarde","Classificando Nota...")
 
 		If !lMsErroAuto
 			ConOut(" NF Classificada RCTEC05: " + SF1->F1_DOC)
