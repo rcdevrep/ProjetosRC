@@ -12,10 +12,12 @@ Class BRDPix
 	Public Data oPagador as Object
 	Public Data oRecebedor as Object
 	Public Data cIdTransacao as Character
+	Public Data cE2e as Character
 	Public Data nValor as Numeric
 	Public Data cDescricao as Character
 	Public Data cUrl as Character
 	Public Data cMetodo as Character
+	Public Data cDataPag as Character
 
     /*
 
@@ -391,8 +393,35 @@ Return lRet
 */
 
 Method ConsultaTransferencia() Class BRDPix
-	Local lRet := .T.
+	Local lRet := .F.
 	Local lJob := IsBlind()
+	Local jJsonPost := JSONObject() :New()
+	Local oIntegrador := BRDIntegracao():New()
+	Local aHeader := {}
+	Local cURL:= ""
+	Local cToken:= ""
+
+	Self:cMetodo := "/v1/spi/consulta/transferencia/"
+	cURL:= Self:cUrl + Self:cMetodo
+
+	IF(oIntegrador:Token())
+
+		cToken:= oIntegrador:cToken
+		//Autorização no header
+		AAdd(aHeader, 'User-Agent: Mozilla/4.0 (compatible; Protheus ' + GetBuild() + ')' )
+		//aadd(aHeader, "Content-Type: application/json")
+		Aadd(aHeader, "Authorization: "+cToken)
+		aRet := U_RCRestGet(cURL+Self:cIdTransacao+"/"+Self:cE2e," " , " ", aHeader )
+		IF(LEN(aRet) > 3)
+			If aRet[4]:hasProperty("status")
+				IF(aRet[4]["status"] == "CONCLUIDO")						
+					lRet := .T.
+					Self:nValor := VAL(aRet[4]["valor"])
+					Self:cDataPag := StrTran(SUBSTR(aRet[4]["dataCriacao"],1,10),"-","")
+				ENDIF
+			endif
+		ENDIF
+	ENDIF
 
 
 Return lRet

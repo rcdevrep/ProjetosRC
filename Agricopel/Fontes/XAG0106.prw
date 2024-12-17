@@ -189,11 +189,11 @@ Local cPerg:= "XAG0107"
 Local cTitulo:= ""
 Local cBcosAPI := GetNewPar("MV_XBCOAPI","001/237")
 Local lAuto := isBlind()
-Local nQtd:= 0
 Local cCodigo := ""
 Private lTransferencia:= .F.
 Private lBoleto:= .F.
 Private lGuiaCB:= .F.	
+Private nQtd:= 0
 Default oObjLog:= nil
 
 If !lAuto
@@ -632,7 +632,7 @@ IF(bConsulta)
 				bBoleto := .F.
 			ENDIF
 			
-			IF(SEA->EA_MODELO == '48' .AND. !bBoleto)
+			IF(SEA->EA_MODELO == "48" .AND. !bBoleto)
 				bPix := .T.
 			ENDIF
 			//aqui
@@ -642,6 +642,15 @@ IF(bConsulta)
 			ELSE
 				IF(bPix)
 					//PIX BAIXA
+					oPix := BRDPix():New()
+					oPix:cIdTransacao := ALLTRIM(ZLA->ZLA_IDTRAN)
+					oPix:cE2e := ALLTRIM(ZLA->ZLA_PIXE2E)
+					IF(oPix:ConsultaTransferencia())
+						aRet := {}
+						aAdd(aRet,stod(oPix:cDataPag))
+                		aAdd(aRet,oPix:nValor)
+						u_BaixaPag(aRet)
+					ENDIF
 
 				ELSE
 					//transferencia TED

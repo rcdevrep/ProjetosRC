@@ -756,6 +756,12 @@ jJsonBol:FromJson(cRetPost)
 
 If nCodResp = 200
 	lRet:= .T.
+ELSE
+
+    //ERRO VALIDAÇÃO DE PAGAMENTO
+    aZLA := U_ZLAUPDATE(SE2->E2_PREFIXO, SE2->E2_NUM, SE2->E2_PARCELA, SE2->E2_TIPO, SE2->E2_FORNECE, SE2->E2_LOJA, SE2->E2_NUMBOR, "0")
+	U_ZLBHIST(SE2->E2_FILORIG, aZLA[2], '0', jJsonBol["mensagem"], '1')			
+
 Endif
 
 
@@ -1150,6 +1156,46 @@ Else
         ElseIf SEA->EA_MODELO $ "01/03/41/43"
             If jJsonList["codigoDaDevolucao"] <> 0
                 oObjLog:saveMsg("Pagamento devolvido. Descrição: "+jJsonList["descricaoDaDevolucao"])
+
+                    If ZLA->(DBSeek(xFilial("ZLA")+SE2->(E2_PREFIXO+E2_NUM+E2_PARCELA+E2_TIPO+E2_FORNECE+E2_LOJA)))
+                        lRec:= .F.
+                        cCodigo:= ZLA->ZLA_CODIGO
+                    Endif    
+                    Reclock("ZLA",lRec)
+                        ZLA_FILIAL:= xFilial("ZLA")
+                        ZLA_PREFIX:= SE2->E2_PREFIXO
+                        ZLA_NUM:= SE2->E2_NUM
+                        ZLA_PARCEL:= SE2->E2_PARCELA
+                        ZLA_TIPO:= SE2->E2_TIPO
+                        ZLA_CLIFOR:= SE2->E2_FORNECE
+                        ZLA_LOJA:= SE2->E2_LOJA
+                        ZLA_VENCTO:= SE2->E2_VENCTO
+                        ZLA_VALOR:= SE2->E2_VALOR
+                        ZLA_NUMBOR:= SE2->E2_NUMBOR
+                        ZLA_BANCO:= SEE->EE_CODIGO
+                        ZLA_AGENCI:= SEE->EE_AGENCIA
+                        ZLA_CONTA:= SEE->EE_CONTA
+                        ZLA_RECPAG:= 'P'
+                        ZLA_STATUS:= '0'
+                        ZLA_DATA:= dDataBase
+                        ZLA_USER:= __cUserId
+                        ZLA_CODIGO:= cCodigo
+                        ZLA_IDCNAB:= SE2->E2_IDCNAB
+                        ZLA->ZLA_FILORI:= SE2->E2_FILORIG                        
+                    MsUnlock()
+
+                    //Cria o registro na ZLB
+                    Reclock("ZLB",.T.)
+                        ZLB_FILIAL:= xFilial("ZLB")
+                        ZLB_CODIGO:= cCodigo
+                        ZLB_DATA:= dDataBase
+                        ZLB_HORA:= Time()
+                        ZLB_EVENTO:= '1' //Validação boleto
+                        ZLB_STATUS:= ZLA->ZLA_STATUS
+                        ZLB_USER:= __cUserId
+                        ZLB_ERRO:= "Pagamento devolvido. Descrição: "+jJsonList["descricaoDaDevolucao"]
+                        ZLB_FILORI:= ZLA->ZLA_FILORI
+                    msUnlock()
             Else
                 If jJsonList["statusMensagem"] == "PROCESSADA" .and. jJsonList["codigoDaDevolucao"] = 0
                     
