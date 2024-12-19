@@ -1,8 +1,6 @@
-#include 'protheus.ch'
-#include 'parmtype.ch'
-#Include "RESTFUL.CH"
-#Include "FWMVCDEF.CH"
-#INCLUDE "apwebsrv.ch"
+#INCLUDE 'Totvs.ch'
+#INCLUDE 'Topconn.ch'
+#INCLUDE 'RESTFUL.CH'
 
 WSSTRUCT MATERIAIS_STRUCT
     WSDATA CODIGO
@@ -109,8 +107,9 @@ WSSTRUCT ITEM_RESERVA_STRUCT
     WSDATA QTD_ATENDIDA
 ENDWSSTRUCT
 
-
 WSRESTFUL IntegEQM DESCRIPTION 'Integração EQM x Protheus'
+
+     
     
     WSMETHOD GET MATERIAL DESCRIPTION 'Get Material pela ID'
     WSMETHOD GET MOVIMENTOS DESCRIPTION 'Get movimentos pela ID (material), e range de data.'
