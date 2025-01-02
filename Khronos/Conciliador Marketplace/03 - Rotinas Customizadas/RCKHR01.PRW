@@ -516,7 +516,7 @@ Static Function ViewDef()
     oView:AddField("VIEW_TOT2", oStruTot2, "TOTAL2")
     //oView:AddField("VIEW_QTDE", oStruQtd, "QTDE")
     //oView:AddField("VIEW_QTDE2", oStruQtd2, "QTDE2")
-    //oView:AddOtherObject('VIEW_RODAPE',{|oPanel|fRodape(oPanel)})    
+    oView:AddOtherObject('ID_V_FLD',{|oPanel|fBtConc(oPanel)})    
 
     osGrd1:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
     osGrd2:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
@@ -944,7 +944,7 @@ Static Function loadGrd(oSub,lCopy,cIdSub)
     EndIF
 Return(aRet)
 
-STATIC FUNCTION fRodape(oPanel)
+STATIC FUNCTION fBtConc(oPanel)
 
 	Local aArea := FWGetArea()
 	Local nJanLarg := oPanel:nWidth
@@ -953,9 +953,9 @@ STATIC FUNCTION fRodape(oPanel)
 	Local cFontPad := "Tahoma"
 	Local cFontBtn := TFont():New(cFontPad, , 2)
 
-	oBtnConc := TButton():New(001,100 , "Conciliar", oPanel, {|| U_Conciliar()},nLargBtn)
-	oBtnAb := TButton():New(001,20 , "Em Aberto", oPanel, ,nLargBtn)
-	oBtnRec := TButton():New(001,190 , "Recebidos", oPanel, ,nLargBtn)
+	oBtnConc := TButton():New(007,180 , "Conciliar", oPanel, {|| U_Conciliar()},nLargBtn)
+	//oBtnAb := TButton():New(001,20 , "Em Aberto", oPanel, ,nLargBtn)
+	//oBtnRec := TButton():New(001,190 , "Recebidos", oPanel, ,nLargBtn)
 
 RETURN
 
