@@ -40,33 +40,16 @@ User Function RCKHR01()
 	Private oCabec
 
 	// Perguntas de parametros para Funcao
-	//aAdd(aPergs, {1, "Da Conta", '           ',  "@!", ".T.", "CT1", ".T.", 80,  .T.})
 	aAdd(aPergs, {1, "Registro de",   sTod('        '),  "", ".T.", "", ".T.", 80,  .T.})
 	aAdd(aPergs, {1, "Registros ate",  sTod('        '),  "", ".T.", "", ".T.", 80,  .T.})
 	aAdd(aPergs ,{3, "Seleciona Filiais",1,{"Sim","Nao"},50,"",.T.})
 	aAdd(aPergs ,{3, "Somente Divergentes",2,{"Sim","Nao"},50,"",.T.})
-	//aAdd(aPergs ,{3, "Somente Div. Sld Final",2,{"Sim","Nao"},50,"",.T.})
-	//aAdd(aPergs, {1, "Do Item", cSpace,  "@!", ".T.", "CTD", ".T.", 80,  .F.})
-	//aAdd(aPergs, {1, "Ate o Item", 'ZZZZZZZZZZZZZZZZZ',  "@!", ".T.", "CTD", ".T.", 80,  .F.})
 
 	If ParamBox(aPergs, "Informe os parâmetros para definicao dos filtros da rotina")
 
 		///----------------------------------------------------------
 		//Cria tabela para browser que sera usada no filds do MVC
 		//----------------------------------------------------------
-        /*aAdd(aCposCab,{"ID","C",6,00})
-        aAdd(aCposCab,{"ITEM_TAB","C",10,00})
-        aAdd(aCposCab,{"DESC_ITEM","C",30,00})
-        aAdd(aCposCab,{"FIN_SLA","N",15,2})
-        aAdd(aCposCab,{"FIN_DEB","N",15,2})
-        aAdd(aCposCab,{"FIN_CRE","N",15,2})
-        aAdd(aCposCab,{"FIN_SLF","N",15,2})
-        aAdd(aCposCab,{"CTB_SLA","N",15,2})
-        aAdd(aCposCab,{"CTB_DEB","N",15,2})
-        aAdd(aCposCab,{"CTB_CRE","N",15,2})
-        aAdd(aCposCab,{"CTB_SLF","N",15,2})
-        aAdd(aCposCab,{"DEF_TAB","C",1,0})
-        aAdd(aCposCab,{"DIF_VAL","N",15,2})*/
 
         aAdd(aCposCab,{"ID","C",8,0})
         aAdd(aCposCab,{"RC1_TIPO","C",10,0})
@@ -77,7 +60,6 @@ User Function RCKHR01()
         aAdd(aCposCab,{"RC1_MOVIM","N",10,2})
             
         //Array com nome dos campos para Browser
-        //aTitulos := {'ID Rotina', "Codigo", "Nome", "Fin. Sl. Ant.","Fin. Debito","Fin. Credito","Fin. Sl. Fin.","Ctb. Sl. Ant." ,"Ctb. Debito","Ctb. Credito" ,"Ctb. Sl. Fin.", "Div.", "Diferença" }
         aTitulos := {'Id','Tipo', "Periodo", "Total", "Conciliado.","Pendente","Movimento Bancario" }
  
         //Funcao para gerar as colunas do Browser
@@ -89,14 +71,10 @@ User Function RCKHR01()
         oCabec := FWTemporaryTable():New(cAlisCab)
         oCabec:SetFields(aCposCab)
         oCabec:AddIndex("1", {"ID"})
-        //oCabec:AddIndex("1", {"RC1_PERIOD"})
-        //oCabec:AddIndex("2", {"ITEM_TAB"})
         oCabec:Create()
          
         //Obtenho o nome "verdadeiro" da tabela no BD (criada como tempor ria)
         cTableCab  :=  oCabec:GetRealName()
- 
- 
  
         //----------------------------------------------------------
         //Cria tabela grid 1 para ser usado  do MVC
@@ -108,16 +86,8 @@ User Function RCKHR01()
         Endif
  
         oGrd1  :=  FWTemporaryTable():New(cAlisGr1)
-         
-        /*aAdd(aCposGrd1,{"ID"        ,"C",06,0})
-        aAdd(aCposGrd1,{"ITEM"      ,"C",03,0})
-        aAdd(aCposGrd1,{"DATS"      ,"C",10,0})
-        aAdd(aCposGrd1,{"DOC"       ,"C",09,0})
-        aAdd(aCposGrd1,{"HIST"      ,"C",50,0})
-        aAdd(aCposGrd1,{"FIN_DEB"   ,"N",18,2})
-        aAdd(aCposGrd1,{"FIN_CRED"  ,"N",18,2})
-        aAdd(aCposGrd1,{"SALDO"     ,"N",18,2})*/
 
+        aAdd(aCposGrd1,{"OK","L",1,0})
         aAdd(aCposGrd1,{"ID","C",8,0})
         aAdd(aCposGrd1,{"RC2_FILIAL","C",2,0})
         aAdd(aCposGrd1,{"RC2_NUM","C",10,0})
@@ -128,17 +98,14 @@ User Function RCKHR01()
         aAdd(aCposGrd1,{"RC2_PARCEL","C",3,0})
         aAdd(aCposGrd1,{"RC2_VENC","D",08,0})
  
-        //aTitulos := {'ID Rotina',  "Item","Data", "Documento", "Historico","Fin. Debito","Fin. Credito", "Saldo" }
-        aTitulos := {'Id','Filial','Numero',  "Tipo","Valor","Taxa", "Emissao", "Parcela","Vencimento"}
+        aTitulos := {'OK','Id','Filial','Numero',  "Tipo","Valor","Taxa", "Emissao", "Parcela","Vencimento"}
         aGrd1 := gerCpBrow(aCposGrd1,aTitulos)
  
  
         oGrd1:SetFields(aCposGrd1)
         oGrd1:AddIndex("1", {"ID"})
-        //oGrd1:AddIndex("1", {"RC2_VENC"})
-        //oGrd1:AddIndex("2", {"DATS"})
-        //oGrd1:AddIndex("3", {"DOC"})
         oGrd1:Create()
+
         //Obtenho o nome "verdadeiro" da tabela no BD (criada como tempor ria)
         cTableGr1  :=  oGrd1:GetRealName()
  
@@ -153,16 +120,8 @@ User Function RCKHR01()
         Endif
  
         oGrd2  :=  FWTemporaryTable():New(cAlisGr2)
- 
-        /*aAdd(aCposGrd2,{"ID"        ,"C",06,0})
-        aAdd(aCposGrd2,{"ITEM"      ,"C",03,0})
-        aAdd(aCposGrd2,{"DATS"      ,"C",10,0})
-        aAdd(aCposGrd2,{"LOTE"      ,"C",09,0})
-        aAdd(aCposGrd2,{"HIST"      ,"C",50,0})
-        aAdd(aCposGrd2,{"FIN_DEB"   ,"N",18,2})
-        aAdd(aCposGrd2,{"FIN_CRED"  ,"N",18,2})
-        aAdd(aCposGrd2,{"SALDO"     ,"N",18,2})*/
 
+        aAdd(aCposGrd2,{"OK","L",1,0})
         aAdd(aCposGrd2,{"RC3_LEGEND","C",30,0})
         aAdd(aCposGrd2,{"ID","C",8,0})
         aAdd(aCposGrd2,{"RC3_FILIAL","C",2,0})
@@ -176,18 +135,14 @@ User Function RCKHR01()
         aAdd(aCposGrd2,{"RC3_DATA","D",8,0})
         aAdd(aCposGrd2,{"RC3_IMPORT","C",20,0})
 
- 
-        //aTitulos := {'ID Rotina', "Item","Data", "Lote", "Historico","Fin. Debito","Fin. Credito", "Saldo" }
-        aTitulos := {'Legenda','Id','Filial',"NSU","Prefixo", "Numero", "Parcela","Tipo","Status","Recebido","Data","Importacao"}
+        aTitulos := {'OK','Legenda','Id','Filial',"NSU","Prefixo", "Numero", "Parcela","Tipo","Status","Recebido","Data","Importacao"}
         aGrd2 := gerCpBrow(aCposGrd2,aTitulos)
  
  
         oGrd2:SetFields(aCposGrd2)
         oGrd2:AddIndex("1", {"ID"})
-        //oGrd2:AddIndex("1", {"RC3_VENC"})
-        //oGrd2:AddIndex("2", {"DATS"})
-        //oGrd2:AddIndex("3", {"LOTE"})
         oGrd2:Create()
+
         //Obtenho o nome "verdadeiro" da tabela no BD (criada como tempor ria)
         cTableGr2  :=  oGrd2:GetRealName()
  
@@ -252,31 +207,17 @@ User Function RCKHR01()
     FWRestArea(aArea)
 Return
  
-/*/{Protheus.doc} MenuDef
-Menu da rotina
-@type  Function
-@author Fabricio Antunes
-@since 22/09/2021
-/*/
- 
 Static Function MenuDef()
     Local aRot  :=  {}
     Local aSubMenu := {}
 
     aAdd(aSubMenu, {"Redecard",     "U_FRECEB()", 0, 2, 0, NIL})
     aAdd(aSubMenu, {"Pagarme",     "U_FIN011()", 0, 2, 0, NIL})
-         
+
     aAdd(aRot, {"Conciliar", "VIEWDEF.RCKHR01", 0, 4, 0, NIL})
     aAdd(aRot, {"Importar",  aSubMenu,      0, 2, 0, NIL})   
  
 Return(Aclone(aRot))
- 
-/*/{Protheus.doc} ModelDef
-Modelo de dados MVC para edicao da tabela temporaria
-@type  Function
-@author Fabricio Antunes
-@since 22/09/2021
-/*/
  
 Static Function ModelDef()
     Local oModel   :=  Nil
@@ -296,11 +237,11 @@ Static Function ModelDef()
     osCabec:AddTable(cAlisCab, {"ID"}, "Concilicao Financeira")
  
     For nX := 1 to Len(aGrd1)
-        aadd(aGrd1[nX],.F.)
+        aadd(aGrd1[nX],.T.)
     Next
  
     For nX := 1 to Len(aGrd2)
-         aadd(aGrd2[nX],.F.)
+         aadd(aGrd2[nX],.T.)
     Next
  
     /*----------------------------------------------------------------------
@@ -323,9 +264,9 @@ Static Function ModelDef()
  
     oModel  :=  FWFormModel():New( 'mdRCKHR01',,,{|oModel| commit()},{|oModel| cancel()})   
  
-    osGrd1:AddField( " ", " ", "OK", "L", 1, 0, FwBuildFeature(STRUCT_FEATURE_VALID, "AlwaysTrue()"), FwBuildFeature(STRUCT_FEATURE_WHEN, "AlwaysTrue()"), Nil, .F., Nil, .F., .F., .T.)
+    //osGrd1:AddField( " ", " ", "OK", "L", 1, 0, FwBuildFeature(STRUCT_FEATURE_VALID, "AlwaysTrue()"), FwBuildFeature(STRUCT_FEATURE_WHEN, "AlwaysTrue()"), Nil, .F., Nil, .F., .F., .T.)
 
-    osGrd2:AddField( " ", " ", "OK", "L", 1, 0, FwBuildFeature(STRUCT_FEATURE_VALID, "AlwaysTrue()"), FwBuildFeature(STRUCT_FEATURE_WHEN, "AlwaysTrue()"), Nil, .F., Nil, .F., .F., .T.)
+    //osGrd2:AddField( " ", " ", "OK", "L", 1, 0, FwBuildFeature(STRUCT_FEATURE_VALID, "AlwaysTrue()"), FwBuildFeature(STRUCT_FEATURE_WHEN, "AlwaysTrue()"), Nil, .F., Nil, .F., .F., .T.)
 
     // LEGENDAS JANELA 2
     //osGrd2:AddField( AllTrim('') , AllTrim('') ,'RC3_LEGEND' ,'C' ,50 , 0 , NIL ,NIL , NIL ,NIL ,{ || Iif( RC3_STATUS == 'B', "BR_VERDE","BR_VERMELHO") } , NIL , NIL ,.T. )
@@ -353,38 +294,17 @@ Static Function ModelDef()
      
 Return oModel
  
-/*/{Protheus.doc} fieldValidPos
-Funcao de validacao pos carregamento dos dados
-@type  Function
-@author Fabricio Antunes
-@since 22/09/2021
-/*/
- 
 Static Function fieldValidPos(oModel)
     Local lRet  :=  .T.
  
     //oModel:GetModel():SetErrorMessage('mdRCKHR01', "RC1_PERIOD" , 'mdRCKHR01' , 'ID' , "ITEM")      
 Return lRet
  
-/*/{Protheus.doc} validPre
-Funcao de validação dos dados de carregamento
-@type  Function
-@author Fabricio Antunes
-@since 22/09/2021
-/*/
- 
 Static Function validPre(oModel, cAction, cIDField, xValue)
     Local lRet  :=  .T.
  
     //oModel:GetModel():SetErrorMessage('mdRCKHR01', "RC1_PERIOD" , 'mdRCKHR01' , 'ID' , "ITEM")
 Return lRet
- 
-/*/{Protheus.doc} loadField
-Funcao de carregamento dos dados para o Fields
-@type  Function
-@author Fabricio Antunes
-@since 22/09/2021
-/*/
  
 Static Function loadField(oModel, lCopy)
     Local aLoad  :=  {}
@@ -413,40 +333,18 @@ Static Function loadField(oModel, lCopy)
     aAdd(aLoad, 1) //recno
 Return aLoad
  
-/*/{Protheus.doc} Commit
-Funcao de valicao do comit da tela
-@type  Function
-@author Fabricio Antunes
-@since 22/09/2021
-/*/
- 
 Static Function Commit()
 Return .T.
- 
-/*/{Protheus.doc} Cancel
-Funcao de valicao do cancelamento do tela
-@type  Function
-@author Fabricio Antunes
-@since 22/09/2021
-/*/
  
 Static Function Cancel()
 Return .T.
  
-/*/{Protheus.doc} ViewDef
-Visao de dados MVC para montagem da tela da  tabela temporaria
-@type  Function
-@author Fabricio Antunes
-@since 22/09/2021
-/*/
- 
 Static Function ViewDef()
-    Local oModel  :=  FWLoadModel("RCKHR01")
+    
     Local osCabec  :=  FWFormViewStruct():New()
     Local osGrd1  :=  FWFormViewStruct():New()
     Local osGrd2  :=  FWFormViewStruct():New()
-    Local oStruTot := FWCalcStruct(oModel:GetModel("TOTAL"))
-    Local oStruTot2 := FWCalcStruct(oModel:GetModel("TOTAL2"))
+ 
     //Local oStruQtd := FWCalcStruct(oModel:GetModel("QTDE"))
     //Local oStruQtd2 := FWCalcStruct(oModel:GetModel("QTDE2"))
     Local oView  :=  Nil
@@ -454,7 +352,9 @@ Static Function ViewDef()
     Local aDadCab  := {}
     Local aDadGr1  := {}
     Local aDadGr2  := {}
- 
+    Private oModel  :=  FWLoadModel("RCKHR01")
+    Private oStruTot := FWCalcStruct(oModel:GetModel("TOTAL"))
+    Private oStruTot2 := FWCalcStruct(oModel:GetModel("TOTAL2"))
     /*----------------------------------------------------------------------
     Estrutura do array para montagem dos campos usados na funcao MntView
         1 - Nome do Campo
@@ -484,7 +384,7 @@ Static Function ViewDef()
         Else
             cPict := ""
         EnDIF
-        aADD(aDadGr1,{aGrd1[nX,2],StrZero(nX,2),aGrd1[nX,1],aGrd1[nX,3],cPict,.F.})
+        aADD(aDadGr1,{aGrd1[nX,2],StrZero(nX,2),aGrd1[nX,1],aGrd1[nX,3],cPict,.T.})
     Next
  
     For nX := 1 to Len(aGrd2)
@@ -499,7 +399,7 @@ Static Function ViewDef()
          Else
              cPict := ""
          EnDIF
-        aADD(aDadGr2,{aGrd2[nX,2],StrZero(nX,2),aGrd2[nX,1],aGrd2[nX,3],cPict,.F.})
+        aADD(aDadGr2,{aGrd2[nX,2],StrZero(nX,2),aGrd2[nX,1],aGrd2[nX,3],cPict,.T.})
     Next
  
     MntView(@osCabec,aDadCab)
@@ -518,8 +418,8 @@ Static Function ViewDef()
     //oView:AddField("VIEW_QTDE2", oStruQtd2, "QTDE2")
     oView:AddOtherObject('ID_V_FLD',{|oPanel|fBtConc(oPanel)})    
 
-    osGrd1:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
-    osGrd2:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
+    //osGrd1:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
+    //osGrd2:AddField("OK","01","Ok","Ok", Nil,"L","",Nil,Nil,.T.,Nil,Nil,Nil,Nil,Nil,Nil,Nil,Nil)
 
     //LEGENDAS JANELA 2
     //osGrd2:AddField('RC3_LEGEND', "00",AllTrim(''), AllTrim(''),, 'C','@BMP',NIL,'', .T., NIL,NIL, NIL, NIL, NIL, .T., NIL,NIL)
@@ -757,142 +657,6 @@ Static function GrvFin()
         TEMPKHR3->(DbSkip())
     ENDDO
 
-
-
-
-
-    /*Local aCampos  :=  {}
-    Local _oFINR5501
-    Private cSE5KeyAnt     :=  ""
- 
-    aAdd(aCampos,{"CODIGO" ,"C",aTam[1],aTam[2]})
-    aAdd(aCampos,{"SALDOA"  ,"N",18,2})
-    aAdd(aCampos,{"VALORD"  ,"N",18,2})
-    aAdd(aCampos,{"VALORC"  ,"N",18,2})
- 
-    _oFINR5501  :=  FWTemporaryTable():New( "cNomeArq" )
-    _oFINR5501:SetFields(aCampos)
-    _oFINR5501:AddIndex("1", {"CODIGO"})
-    //------------------
-    //Criação da tabela temporaria
-    //------------------
-    _oFINR5501:Create()
- 
-    //------------------
-    //Localiza e grava titulos a receber dentro dos parametros
-    //------------------
- 
-    cQuery  :=  "SELECT * FROM " + RetSqlName("SE2") + " E2  WHERE"
-    cQuery += " E2.D_E_L_E_T_ <> '*' AND rownum <= 100"
- 
-    dbUseArea(.T., "TOPCONN", TCGenQry(,,cQuery), 'TRBSE2', .F., .T.)
-    dbselectarea("TRBSE2")
-    While !TRBSE2->(Eof())
- 
-
-
-        //------------------
-        //Le registros com data anterior a data inicial (para compor
-        //os saldos anteriores) ate a data final.
-        //------------------
- 
-        If TRBSE2->E2_TIPO $ MVABATIM
-            dbSelectArea("TRBSE2")
-            TRBSE2->(dbSkip( ))
-            Loop
-        Endif
- 
- 
-        //------------------
-        //Grava debito no arquivo de trabalho
-        //------------------
-        _dEmissao  :=  stod(TRBSE2->E2_EMIS1)
-        aMOVI  :=  {10,20,30}
- 
-        If( cNomeArq->(dbseek(TRBSE2->E2_FORNECE)))
-            Reclock( "cNomeArq", .F. )
-            cNomeArq->SALDOA   += aMOVI[1]
-            cNomeArq->VALORD   += aMOVI[2]
-            cNomeArq->VALORC   += aMOVI[3]
-            cNomeArq->( MsUnlock() )
- 
-        Else
-            Reclock( "cNomeArq", .T. )
-            cNomeArq->CODIGO   :=  TRBSE2->E2_FORNECE
-            cNomeArq->SALDOA    :=  aMOVI[1]
-            cNomeArq->VALORD    :=  aMOVI[2]
-            cNomeArq->VALORC    :=  aMOVI[3]
-            cNomeArq->( MsUnlock() )
-        Endif
- 
- 
-        dbSelectArea("TRBSE2")
-        TRBSE2->(dbSkip())
- 
-    Enddo
- 
-    dbselectarea("cNomeArq")
-    cNomeArq->(dbgotop())
-    cCodigo         :=  ""
-    nSaldoAtu     :=  0
-    nTotDeb         :=  0
-    nTotCrd         :=  0
- 
-    While cNomeArq->(!Eof())
- 
-        cCodigo         :=  cNomeArq->CODIGO
-        cLoja  :=  ""
-        nSaldoAtu     :=  0
-        nTotDeb         :=  0
-        nTotCrd         :=  0
-        lNoSkip  :=  .f.
-        nSaldoAtu    += cNomeArq->SALDOA
-        nTotDeb   += ABS(cNomeArq->VALORD)
-        nTotCrd   += ABS(cNomeArq->VALORC)
- 
-        cNomeArq->(dbSkip())
-        //cAlisCab := oGrd1:GetRealName()
- 
-        If cNomeArq->(Eof()) .or. cNomeArq->CODIGO <> cCodigo
-            //------------------
-            //Grava debito no arquivo de trabalho
-            //------------------
-            dbSelectArea(cAlisCab)
-            (cAlisCab)->(dbSetOrder(2))
-            Reclock((cAlisCab),.t.)
-            Replace ID          With cCodigo
-            Replace ITEM_TAB      With cCodigo
-            IF SA1->(dbseek(xfilial("SA1")+cCodigo))
-                Replace DESC_ITEM      With SA1->A1_NOME
-            ElseIf SA2->(dbseek(xfilial("SA2")+cCodigo))
-                Replace DESC_ITEM      With SA2->A2_NOME
-            Endif
-            Replace FIN_SLA  With nSaldoAtu
-            Replace FIN_DEB  With nTotDeb
-            Replace FIN_CRE  With nTotCrd
-            Replace FIN_SLF  With FIN_SLA + FIN_DEB - FIN_CRE
-            MsUnlock()
- 
-////grid 1
-            dbSelectArea(cAlisGr1)
-            (cAlisGr1)->(dbSetOrder(2))
-            Reclock((cAlisGr1),.t.)
-            Replace ID          With cCodigo
-            Replace ITEM      With cCodigo
-            Replace FIN_DEB  With nTotDeb
-            MsUnlock()
-///grid 2
- 
-            // dbSelectArea(cAlisGr2)
-            // (cAlisGr2)->(dbSetOrder(2))
-            // Reclock((cAlisGr2),.t.)
-            // Replace ID          With cCodigo
-            // Replace ITEM     With cCodigo
-            // Replace FIN_DEB  With nTotDeb
-            // MsUnlock()
-        Endif
-    EndDo*/
-     
     FWRestArea(aArea)
 Return
  
@@ -960,5 +724,46 @@ STATIC FUNCTION fBtConc(oPanel)
 RETURN
 
 USER FUNCTION Conciliar()
+
+    Local aTitGr1 := {}
+    Local nValGr1 := 0
+    Local aTitGr2 := {}
+    Local nValGr2 := 0
+    Local nPorcen := 0.03
+    Local nValMin := 0
+    
+        DBSELECTAREA(cAlisGr1)
+        DBGOTOP()
+
+        //VARRE A TABELA DO GRID 1
+        WHILE !(cAlisGr1)->(Eof())
+
+            IF (cAlisGr1)->OK
+                aAdd(aTitGr1,(cAlisGr1)->RC2_NUM)
+                nValGr1 := (nValGr1+(cAlisGr1)->RC2_VALOR)
+            ENDIF
+
+            (cAlisGr1)->(DbSkip())
+        ENDDO
+
+        DBSELECTAREA(cAlisGr2)
+        DBGOTOP()
+
+        //VARRE A TABELA DO GRID 2
+        WHILE !(cAlisGr2)->(Eof())
+
+            IF (cAlisGr2)->OK
+                aAdd(aTitGr2,(cAlisGr2)->RC3_NUM)
+                nValGr2 := (nValGr2+(cAlisGr2)->RC3_RECEBI)
+            ENDIF
+
+            (cAlisGr2)->(DbSkip())
+        ENDDO
+
+        nValMin := (nValGr1 * nPorcen)
+
+        IF (nValGr2 >= nValGr1 - nValMin .AND. nValGr2 <= nValGr1)
+
+        ENDIF
 
 RETURN
