@@ -95,10 +95,11 @@ User Function RCKHR01()
         aAdd(aCposGrd1,{"RC2_VALOR","N",10,2})
         aAdd(aCposGrd1,{"RC2_TAXA","N",11,4})
         aAdd(aCposGrd1,{"RC2_EMISSA","D",08,0})
+        aAdd(aCposGrd1,{"RC2_PREFIX","C",3,0})
         aAdd(aCposGrd1,{"RC2_PARCEL","C",3,0})
         aAdd(aCposGrd1,{"RC2_VENC","D",08,0})
  
-        aTitulos := {'OK','Id','Filial','Numero',  "Tipo","Valor","Taxa", "Emissao", "Parcela","Vencimento"}
+        aTitulos := {'OK','Id','Filial','Numero',  "Tipo","Valor","Taxa", "Emissao", "Prefixo","Parcela","Vencimento"}
         aGrd1 := gerCpBrow(aCposGrd1,aTitulos)
  
  
@@ -134,8 +135,11 @@ User Function RCKHR01()
         aAdd(aCposGrd2,{"RC3_RECEBI","N",10,2})
         aAdd(aCposGrd2,{"RC3_DATA","D",8,0})
         aAdd(aCposGrd2,{"RC3_IMPORT","C",20,0})
+        aAdd(aCposGrd2,{"RC3_BANCO","C",3,0})
+        aAdd(aCposGrd2,{"RC3_CONTA","C",10,0})
+        aAdd(aCposGrd2,{"RC3_AGEN","C",5,0})
 
-        aTitulos := {'OK','Legenda','Id','Filial',"NSU","Prefixo", "Numero", "Parcela","Tipo","Status","Recebido","Data","Importacao"}
+        aTitulos := {'OK','Legenda','Id','Filial',"NSU","Prefixo", "Numero", "Parcela","Tipo","Status","Recebido","Data","Importacao","Banco","Conta","Agencia"}
         aGrd2 := gerCpBrow(aCposGrd2,aTitulos)
  
  
@@ -598,7 +602,7 @@ Static function GrvFin()
         TEMPKHR2->(DbCloseArea())
     Endif
 
-    cQuery2 := "SELECT E1_FILORIG FILIAL, E1_NUM RC2_NUM,E1_TIPO RC2_TIPO,E1_VALOR RC2_VALOR,E1_TXMOEDA RC2_TAXA, E1_EMIS1 RC2_EMISSA, E1_PARCELA RC2_PARCEL, E1_VENCREA RC2_VENC "
+    cQuery2 := "SELECT E1_FILORIG FILIAL, E1_NUM RC2_NUM,E1_TIPO RC2_TIPO,E1_VALOR RC2_VALOR,E1_TXMOEDA RC2_TAXA, E1_EMIS1 RC2_EMISSA,E1_PREFIXO RC2_PREFIX, E1_PARCELA RC2_PARCEL, E1_VENCREA RC2_VENC "
     cQuery2 += "FROM "+RetSQLName("SE1")+" " 
     cQuery2 += "WHERE E1_VENCREA >= '"+DTOS(MV_PAR01)+"' AND E1_VENCREA <= '"+DTOS(MV_PAR02)+"' AND E1_NOMCLI = 'REDECARD' "
     cQuery2 += "AND E1_TIPO IN ('MAQ','CC','CD') " 
@@ -620,6 +624,7 @@ Static function GrvFin()
         (cAlisGr1)->RC2_VALOR := TEMPKHR2->RC2_VALOR
         (cAlisGr1)->RC2_TAXA := TEMPKHR2->RC2_TAXA
         (cAlisGr1)->RC2_EMISSA := STOD(TEMPKHR2->RC2_EMISSA)
+        (cAlisGr1)->RC2_PREFIX := TEMPKHR2->RC2_PREFIX
         (cAlisGr1)->RC2_PARCEL := TEMPKHR2->RC2_PARCEL
         (cAlisGr1)->RC2_VENC := STOD(TEMPKHR2->RC2_VENC)
         MSUNLOCK()
@@ -632,7 +637,7 @@ Static function GrvFin()
     Endif
 
 
-    cQuery3 := "SELECT ZR1_FILIAL FILIAL, ZR1_DOCTEF DOCTEF, ZR1_PREFIX PREFIX, ZR1_NUM NUM, ZR1_PARCEL PARCEL, ZR1_TIPO TIPO, ZR1_STATUS STATUS, ZR1_RECEBI RECEBI, ZR1_DATA DTRECEB, ZR1_IMPORT IMPORT FROM "+RetSQLName("ZR1")+" ZR1 WHERE ZR1.D_E_L_E_T_ <> '*' AND ZR1_FILIAL IN "+cfilqry+ " "
+    cQuery3 := "SELECT ZR1_FILIAL FILIAL, ZR1_DOCTEF DOCTEF, ZR1_PREFIX PREFIX, ZR1_NUM NUM, ZR1_PARCEL PARCEL, ZR1_TIPO TIPO, ZR1_STATUS STATUS, ZR1_RECEBI RECEBI, ZR1_DATA DTRECEB, ZR1_IMPORT IMPORT, ZR1_BANCO BANCO, ZR1_CONTA CONTA, ZR1_AGEN AGENCIA FROM "+RetSQLName("ZR1")+" ZR1 WHERE ZR1.D_E_L_E_T_ <> '*' AND ZR1_FILIAL IN "+cfilqry+ " "
 
     TCQuery cQuery3 NEW ALIAS "TEMPKHR3"	
 
@@ -653,6 +658,9 @@ Static function GrvFin()
         (cAlisGr2)->RC3_DATA := STOD(TEMPKHR3->DTRECEB)
         (cAlisGr2)->RC3_IMPORT := TEMPKHR3->IMPORT
         (cAlisGr2)->RC3_LEGEND := "BR_VERDE"
+        (cAlisGr2)->RC3_BANCO := TEMPKHR3->BANCO
+        (cAlisGr2)->RC3_CONTA := TEMPKHR3->CONTA
+        (cAlisGr2)->RC3_AGEN := TEMPKHR3->AGENCIA
         MSUNLOCK()
         TEMPKHR3->(DbSkip())
     ENDDO
@@ -739,7 +747,7 @@ USER FUNCTION Conciliar()
         WHILE !(cAlisGr1)->(Eof())
 
             IF (cAlisGr1)->OK
-                aAdd(aTitGr1,(cAlisGr1)->RC2_NUM)
+                aAdd(aTitGr1,(cAlisGr1)->RC2_PREFIX,(cAlisGr1)->RC2_NUM,(cAlisGr1)->RC2_PARCEL,(cAlisGr1)->RC2_TIPO,"NOR")
                 nValGr1 := (nValGr1+(cAlisGr1)->RC2_VALOR)
             ENDIF
 
@@ -764,6 +772,36 @@ USER FUNCTION Conciliar()
 
         IF (nValGr2 >= nValGr1 - nValMin .AND. nValGr2 <= nValGr1)
 
+            // REALIZAR A BAIXA DOS TITULOS VIA EXECAUTO
+            U_BAIXA070(aTitGr1)
+
         ENDIF
 
 RETURN
+
+//-------------------------------
+// Baixa do titulo a receber
+//-------------------------------
+ 
+User Function BAIXA070(aBaixa)
+  
+
+
+  
+    aBaixa := {{"E1_PREFIXO"  ,"   "                ,Nil    },;
+            {"E1_NUM"      ,"200      "            ,Nil    },;
+            {"E1_PARCELA"  ," "                    ,Nil    },;
+            {"E1_TIPO"     ,"NF "                  ,Nil    },;
+            {"AUTMOTBX"    ,"NOR"                  ,Nil    },;
+            {"AUTBANCO"    ,"001"                  ,Nil    },;
+            {"AUTAGENCIA"  ,"00001"                ,Nil    },;
+            {"AUTCONTA"    ,"0000000001"           ,Nil    },;
+            {"AUTDTBAIXA"  ,dDataBase              ,Nil    },;
+            {"AUTDTCREDITO",dDataBase              ,Nil    },;
+            {"AUTHIST"     ,"BAIXA TESTE"          ,Nil    },;
+            {"AUTJUROS"    ,0                      ,Nil,.T.},;
+            {"AUTVALREC"   ,700                    ,Nil    }}
+  
+    MSExecAuto({|x,y| Fina070(x,y)},aBaixa,3)
+  
+Return

@@ -436,6 +436,9 @@ Static Function ReportPrint(oReport,oDetalhe)
 			ZR1_RECEBI := nReceb
 			ZR1_DATA := dData
 			ZR1_IMPORT := "REDECARD"
+			ZR1_BANCO := cBanco
+			ZR1_CONTA := cConta
+			ZR1_AGEN := cAgencia
 			MSUNLOCK()
 
 			cRDeta   += "-> Titulo não Encontrato"
