@@ -954,9 +954,9 @@ USER FUNCTION fCheckl(dData)
 		ENDIF
 		DBCLOSEAREA()
 	ELSE
-		FWAlertError("Diario não encontrado", "Erro")
-		DBCLOSEAREA()
-		RETURN .F.
+		//FWAlertError("Diario não encontrado", "Erro")
+		//DBCLOSEAREA()
+		//RETURN .F.
 	ENDIF
 RETURN
 
