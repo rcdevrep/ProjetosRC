@@ -152,6 +152,12 @@ WSMETHOD GET MATERIAL WSRECEIVE MATERIAIS_STRUCT WSSERVICE IntegEQM
     Self:SetContentType('application/json')
     Self:SetResponse('{"MATERIAL":"*********"}')
 
+    
+
+
+
+
+
 Return .T.
 
 WSMETHOD GET MOVIMENTOS PATHPARAM id, data_ini, data_fim WSRECEIVE MOVIMENTOS_STRUCT WSSERVICE IntegEQM
