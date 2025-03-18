@@ -124,8 +124,9 @@ WSRESTFUL IntegEQM DESCRIPTION 'Integração EQM x Protheus'
         MATA107 -> Liberação de bloqueio de SA.
 
     */
+    WSDATA Id  AS CHARACTER  OPTIONAL
     
-    WSMETHOD GET MATERIAL DESCRIPTION 'Get Material pela ID' WSSYNTAX "/MATERIAL " PATH '/MATERIAL' PRODUCES APPLICATION_JSON
+    WSMETHOD GET MATERIAL DESCRIPTION 'Get Material pela ID' WSSYNTAX "/?{Id}" PATH "/MATERIAL" PRODUCES APPLICATION_JSON
     WSMETHOD GET MOVIMENTOS DESCRIPTION 'Get movimentos pela ID (material), e range de data.'  WSSYNTAX "/MOVIMENTOS " PATH 'MOVIMENTOS' PRODUCES APPLICATION_JSON
     WSMETHOD GET PED_MATERIAL DESCRIPTION 'Get pedidos de compra pelo ID (material) e range de data.'  WSSYNTAX "/PED_MATERIAL " PATH 'PED_MATERIAL' PRODUCES APPLICATION_JSON
     WSMETHOD GET NOTAS_ID DESCRIPTION 'Get notas fiscais de entrada pelo ID (material) e range de data.'  WSSYNTAX "/NOTAS_ID " PATH 'NOTAS_ID' PRODUCES APPLICATION_JSON
@@ -146,17 +147,82 @@ WSRESTFUL IntegEQM DESCRIPTION 'Integração EQM x Protheus'
 END WSRESTFUL
 
 
-WSMETHOD GET MATERIAL WSRECEIVE MATERIAIS_STRUCT WSSERVICE IntegEQM
+WSMETHOD GET MATERIAL WSSERVICE IntegEQM
    
     CONOUT("WSMETHOD GET MATERIAL PATHPARAM id WSRECEIVE MATERIAIS_STRUCT WSSERVICE IntegEQM")
     Self:SetContentType('application/json')
-    Self:SetResponse('{"MATERIAL":"*********"}')
-
+    oResponse := JsonObject():New()
     
+    cMaterial := ALLTRIM(Self:Id)
 
+    IF(!EMPTY(cMaterial))    
 
+        CONOUT("WSMETHOD GET MATERIAL "+RetSqlName("SB1")+" FILIAL "+xFilial("SB1")+" PATHPARAM "+cMaterial+" WSRECEIVE MATERIAIS_STRUCT WSSERVICE IntegEQM")
 
+        Dbselectarea("SB1")
+        Dbsetorder(1)
+        IF(DbSeek(cMaterial))
+            
+            jMaterial := JsonObject():New()
+            jMaterial["CODIGO"] := ALLTRIM(SB1->B1_FILIAL+SB1->B1_COD)
+            jMaterial["DESCRICAO"] := ALLTRIM(SB1->B1_DESC)
+            jMaterial["COD_UNIT_CSN"] := ALLTRIM(SB1->B1_UM)
+            jMaterial["NUMR_MATERIAL_EXTERNO"] := ALLTRIM(SB1->B1_CODBAR) // MUDAR PARA O CODIGO DA EQM.
 
+            oResponse["Material"] := jMaterial
+        ELSE
+            jErro := JsonObject():New()
+            jErro["CODIGO"] := "100"
+            jErro["DESCRICAO"] := "Material não encontrado."
+            oResponse["Error"] := jErro
+        ENDIF
+    ELSE
+
+        CONOUT("WSMETHOD GET MATERIAL PATHPARAM ALL WSRECEIVE MATERIAIS_STRUCT WSSERVICE IntegEQM")
+
+        cQuery := "SELECT B1_FILIAL, B1_COD, B1_DESC, B1_UM, B1_CODBAR FROM "+RetSqlName("SB1")+" "
+        cQuery += "WHERE B1_UREV >= '"+DTOS(Date()-30)+ "' "
+        cQuery += "AND D_E_L_E_T_ <> '*'  "
+
+        If (Select("SB1G") <> 0)
+            dbSelectArea("SB1G")
+            dbCloseArea()
+	    Endif
+
+        aList := {}
+        TCQuery cQuery NEW ALIAS "SB1G"
+
+        dbSelectArea("SB1G")
+        dbGoTop()
+        WHILE !(SB1G->(Eof()))
+            
+            jMaterial := JsonObject():New()
+            jMaterial["CODIGO"] := ALLTRIM(SB1G->B1_FILIAL+SB1G->B1_COD)
+            jMaterial["DESCRICAO"] := ALLTRIM(SB1G->B1_DESC)
+            jMaterial["COD_UNIT_CSN"] := ALLTRIM(SB1G->B1_UM)
+            jMaterial["NUMR_MATERIAL_EXTERNO"] := ALLTRIM(SB1G->B1_CODBAR)
+
+            AADD(aList,jMaterial)
+
+            SB1G->(dbSkip())
+	    END
+
+        oResponse:set(aList)
+
+    ENDIF
+
+    self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+
+/*
+
+WSSTRUCT MATERIAIS_STRUCT
+    WSDATA CODIGO
+    WSDATA DESCRICAO
+    WSDATA COD_UNIT_CSN
+    WSDATA NUMR_MATERIAL_EXTERNO
+ENDWSSTRUCT
+
+*/
 
 Return .T.
 
@@ -434,12 +500,121 @@ Return Nil
    
 Return .T.
 
-WSMETHOD GET ESTOQUE PATHPARAM material_id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM
+WSMETHOD GET ESTOQUE PATHPARAM id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM
+
+    CONOUT("WSMETHOD GET ESTOQUE PATHPARAM material_id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM")
+    Self:SetContentType('application/json')
+    oResponse := JsonObject():New()
+    
+    cMaterial := ALLTRIM(Self:id)
+
+    CONOUT("WSMETHOD GET ESTOQUE PATHPARAM "+cMaterial+" WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM")
+
+    cQuery := "SELECT B2_FILIAL, B2_COD, B2_LOCAL, B2_QATU, B2_QEMP, B2_RESERVA FROM "+RetSqlName("SB2")+" "
+    cQuery += "WHERE B2_FILIAL + B2_COD = '"+cMaterial+ "' "
+    cQuery += "AND D_E_L_E_T_ <> '*'  "
+
+    If (Select("SB2G") <> 0)
+        dbSelectArea("SB2G")
+        dbCloseArea()
+    Endif
+
+    aList := {}
+    TCQuery cQuery NEW ALIAS "SB2G"
+
+    CONOUT(cQuery)
+
+    dbSelectArea("SB2G")
+    dbGoTop()
+    WHILE !(SB2G->(Eof()))
+        
+        jEstoque := JsonObject():New()
+        jEstoque["MATERIAL"] := ALLTRIM(SB2G->B2_FILIAL+SB2G->B2_COD)
+        jEstoque["ESTOQUE"] := SB2G->B2_QATU
+        jEstoque["EMPENHO"] := SB2G->B2_QEMP
+        jEstoque["RESERVA"] := SB2G->B2_RESERVA
+        jEstoque["DISPONIVEL"] := SB2G->B2_QATU - SB2G->B2_QEMP - SB2G->B2_RESERVA
+                
+        oResponse["Estoque"] := jEstoque
+
+        SB2G->(dbSkip())
+    END
+
+    //oResponse:set(aList)
+
+    self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
    
 Return .T.
 
 WSMETHOD POST RESUPRIMENTO PATHPARAM material_id WSRECEIVE RESUPRIMENTO_STRUCT WSSERVICE IntegEQM
    
+CONOUT("WSMETHOD GET MATERIAL PATHPARAM id WSRECEIVE MATERIAIS_STRUCT WSSERVICE IntegEQM")
+    Self:SetContentType('application/json')
+    oResponse := JsonObject():New()
+    
+    cMaterial := ALLTRIM(Self:Id)
+
+    IF(!EMPTY(cMaterial))    
+
+        CONOUT("WSMETHOD GET MATERIAL "+RetSqlName("SB1")+" FILIAL "+xFilial("SB1")+" PATHPARAM "+cMaterial+" WSRECEIVE MATERIAIS_STRUCT WSSERVICE IntegEQM")
+
+        Dbselectarea("SB1")
+        Dbsetorder(1)
+        IF(DbSeek(cMaterial))
+            
+            jMaterial := JsonObject():New()
+            jMaterial["CODIGO"] := ALLTRIM(SB1->B1_FILIAL+SB1->B1_COD)
+            jMaterial["DESCRICAO"] := ALLTRIM(SB1->B1_DESC)
+            jMaterial["PONTOPEDIDO"] := ALLTRIM(SB1->B1_UM)
+            jMaterial["ESTOQUESEGURANCA"] := ALLTRIM(SB1->B1_CODBAR) 
+            jMaterial["LOTEECONOMICO"] := ALLTRIM(SB1->B1_CODBAR) 
+            
+
+            oResponse["Material"] := jMaterial
+        ELSE
+            jErro := JsonObject():New()
+            jErro["CODIGO"] := "100"
+            jErro["DESCRICAO"] := "Material não encontrado."
+            oResponse["Error"] := jErro
+        ENDIF
+    ELSE
+
+        CONOUT("WSMETHOD GET MATERIAL PATHPARAM ALL WSRECEIVE MATERIAIS_STRUCT WSSERVICE IntegEQM")
+
+        cQuery := "SELECT B1_FILIAL, B1_COD, B1_DESC, B1_UM, B1_CODBAR FROM "+RetSqlName("SB1")+" "
+        cQuery += "WHERE B1_UREV >= '"+DTOS(Date()-30)+ "' "
+        cQuery += "AND D_E_L_E_T_ <> '*'  "
+
+        If (Select("SB1G") <> 0)
+            dbSelectArea("SB1G")
+            dbCloseArea()
+	    Endif
+
+        aList := {}
+        TCQuery cQuery NEW ALIAS "SB1G"
+
+        dbSelectArea("SB1G")
+        dbGoTop()
+        WHILE !(SB1G->(Eof()))
+            
+            jMaterial := JsonObject():New()
+            jMaterial["CODIGO"] := ALLTRIM(SB1G->B1_FILIAL+SB1G->B1_COD)
+            jMaterial["DESCRICAO"] := ALLTRIM(SB1G->B1_DESC)
+            jMaterial["COD_UNIT_CSN"] := ALLTRIM(SB1G->B1_UM)
+            jMaterial["NUMR_MATERIAL_EXTERNO"] := ALLTRIM(SB1G->B1_CODBAR)
+
+            AADD(aList,jMaterial)
+
+            SB1G->(dbSkip())
+	    END
+
+        oResponse:set(aList)
+
+    ENDIF
+
+    self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+
+
 Return .T.
 
 WSMETHOD GET NUMERO_PEDIDO PATHPARAM pedido_id WSRECEIVE PEDIDO_COMPRA_STRUCT WSSERVICE IntegEQM
