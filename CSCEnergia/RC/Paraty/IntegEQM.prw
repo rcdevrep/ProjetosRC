@@ -324,13 +324,11 @@ SCP->( dbSetOrder( 1 ) )
 
 JReserva := JsonObject():New()
 
-If nOpcx == 3
-    While SCP->( dbSeek( xFilial( 'SCP' ) + cNumero ) )
-           ConfirmSx8()
-           cNumero := GetSx8Num('SCP', 'CP_NUM')
-           JReserva["NUMERO"] := cNumero
-    EndDo
-EndIf
+ConfirmSx8()
+cNumero := GetSx8Num('SCP', 'CP_NUM')
+JReserva["FILIAL"] := xFilial("SCP")
+JReserva["NUMERO"] := cNumero
+
 
 Aadd( aCab, { "CP_NUM" ,cNumero , Nil })
 Aadd( aCab, { "CP_EMISSAO" ,dDataBase , Nil })
@@ -453,6 +451,7 @@ Else
     JSucesso := JsonObject():New()
     JSucesso["CODIGO"] := "100"
     JSucesso["DESCRICAO"] := "Reserva incluida com sucesso."
+
     JSucesso["RESERVA"] := JReserva
 
     oResponse["RESERVAR"] := JSucesso
