@@ -21,7 +21,14 @@ USER FUNCTION CHKTES()
 
             cOper := SFM->FM_TIPO
 
-            aCols[n][nTes] := MaTesInt(1,cOper,CFORANTAUT,CLOJANTAUT,"F",aCols[n][nProduto])
+
+            aCols[n][nTes] := SFM->FM_TE
+            //aCols[n][nTes] := MaTesInt(1,cOper,CFORANTAUT,CLOJANTAUT,"F",ALLTRIM(aCols[n][nProduto]))
+
+            //IF EMPTY(aCols[n][nTes])
+            //    aCols[n][nTes] := SFM->FM_TE
+            //ENDIF
+            
             aCols[n][nOper] := cOper
 
         ENDIF
@@ -40,7 +47,12 @@ USER FUNCTION CHKTES2(cConta)
 
             cOper := SFM->FM_TIPO
 
-            aCols[n][nTes] := MaTesInt(1,cOper,CFORANTAUT,CLOJANTAUT,"F",aCols[n][nProduto])
+            aCols[n][nTes] := SFM->FM_TE
+            //aCols[n][nTes] := MaTesInt(1,cOper,CFORANTAUT,CLOJANTAUT,"F",aCols[n][nProduto])
+
+           // IF EMPTY(aCols[n][nTes])
+           //     aCols[n][nTes] := SFM->FM_TE
+           // ENDIF
 
         ENDIF
 RETURN cOper
