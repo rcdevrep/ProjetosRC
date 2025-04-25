@@ -13,25 +13,37 @@ USER FUNCTION CHKTES()
     Local nTes := Ascan(aHeader,{|x|Alltrim(Upper(x[2]))=="C7_TES"})
     Local nConta := Ascan(aHeader,{|x|Alltrim(Upper(x[2]))=="C7_CONTA"})
     Local cConta := aCols[n][nConta]
+ 
+    cQuery := "SELECT SFM.* FROM "+RetSqlName("SFM")+" SFM "
+    cQuery += "WHERE FM_CONTA >= '"+ALLTRIM(cConta)+ "' "
+    cQuery += "AND SFM.D_E_L_E_T_ <> '*'  "
 
-    DBSELECTAREA("SFM")
-    DBSETORDER(4)
+    If (Select("SFMT") <> 0)
+        dbSelectArea("SFMT")
+        dbCloseArea()
+    Endif
 
-        IF DBSEEK(xFilial("SFM")+ALLTRIM(cConta))
+    TCQuery cQuery NEW ALIAS "SFMT"
 
-            cOper := SFM->FM_TIPO
+    dbSelectArea("SFMT")
+    dbGoTop()
+    WHILE !(SFMT->(Eof()))
 
+        cOper := SFM->FM_TIPO
+        aCols[n][nTes] := SFM->FM_TE
+        aCols[n][nOper] := cOper
 
-            aCols[n][nTes] := SFM->FM_TE
-            //aCols[n][nTes] := MaTesInt(1,cOper,CFORANTAUT,CLOJANTAUT,"F",ALLTRIM(aCols[n][nProduto]))
+        SFMT->(dbSkip())
+    END
 
-            //IF EMPTY(aCols[n][nTes])
-            //    aCols[n][nTes] := SFM->FM_TE
-            //ENDIF
-            
-            aCols[n][nOper] := cOper
+    //DBSELECTAREA("SFM")
+    //DBSETORDER(4)
 
-        ENDIF
+    //IF DBSEEK(xFilial("SFM")+ALLTRIM(cConta))
+
+        
+
+    //ENDIF
 RETURN .T.
 
 USER FUNCTION CHKTES2(cConta)
@@ -40,21 +52,42 @@ USER FUNCTION CHKTES2(cConta)
     Local nProduto := Ascan(aHeader,{|x|Alltrim(Upper(x[2]))=="C7_PRODUTO"})
     Local nTes := Ascan(aHeader,{|x|Alltrim(Upper(x[2]))=="C7_TES"})
 
-    DBSELECTAREA("SFM")
-    DBSETORDER(4)
 
-        IF DBSEEK(xFilial("SFM")+ALLTRIM(cConta))
+    cQuery := "SELECT SFM.* FROM "+RetSqlName("SFM")+" SFM "
+    cQuery += "WHERE FM_CONTA >= '"+ALLTRIM(cConta)+ "' "
+    cQuery += "AND SFM.D_E_L_E_T_ <> '*'  "
 
-            cOper := SFM->FM_TIPO
+    If (Select("SFMT") <> 0)
+        dbSelectArea("SFMT")
+        dbCloseArea()
+    Endif
+    
+    TCQuery cQuery NEW ALIAS "SFMT"
 
-            aCols[n][nTes] := SFM->FM_TE
+    dbSelectArea("SFMT")
+    dbGoTop()
+    WHILE !(SFMT->(Eof()))
+
+        cOper := SFM->FM_TIPO
+        aCols[n][nTes] := SFM->FM_TE
+
+        SFMT->(dbSkip())
+    END
+
+    //DBSELECTAREA("SFM")
+    //DBSETORDER(4)
+
+        //IF DBSEEK(xFilial("SFM")+ALLTRIM(cConta))
+
+            //cOper := SFM->FM_TIPO
+            //aCols[n][nTes] := SFM->FM_TE
             //aCols[n][nTes] := MaTesInt(1,cOper,CFORANTAUT,CLOJANTAUT,"F",aCols[n][nProduto])
 
            // IF EMPTY(aCols[n][nTes])
            //     aCols[n][nTes] := SFM->FM_TE
            // ENDIF
 
-        ENDIF
+        //ENDIF
 RETURN cOper
 
 

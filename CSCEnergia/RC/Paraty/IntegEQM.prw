@@ -342,7 +342,7 @@ For i:= 1 to Len(jJson["ITENS"])
     JItem["PRODUTO"] := jJson["ITENS"][i]["PRODUTO"]
     JItem["QTDE"] := jJson["ITENS"][i]["QTDE"] 
     Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , STRZERO(i,2) , Nil } )
-    Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,jJson["ITENS"][i]["PRODUTO"] , Nil } )
+    Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,SUBSTRING(jJson["ITENS"][i]["PRODUTO"],5,LEN(jJson["ITENS"][i]["PRODUTO"])) , Nil } )
     Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" , jJson["ITENS"][i]["QTDE"] , Nil } )
     
     AADD(aJson,JItem)
@@ -503,38 +503,101 @@ WSMETHOD POST CONSUMIR_RESERVA PATHPARAM reserva_id WSRECEIVE MOVIMENTOS_STRUCT 
    
 Local aCamposSCP
 Local aCamposSD3
-Local cNum     := "000085"  // No.da Requisicao
-Local cItem      := "03"        // No.do Item da Req.
 Local aRetCQ  := {}
 Local nOpcAuto:= 1 // BAIXA
+Local nOpcx := 0
+Local cJson := ::GetContent()
+Local n := 1
 
-dbSelectArea("SCP")
-dbSetOrder(1)
-If SCP->(dbSeek(xFilial("SCP")+cNum+cItem))
-    aCamposSCP := {    {"CP_NUM"        ,SCP->CP_NUM    ,Nil     },;
-                    {"CP_ITEM"        ,SCP->CP_ITEM   ,Nil     },;
-                       {"CP_QUANT"        ,SCP->CP_QUANT  ,Nil     }}
+/*
 
-    aCamposSD3 := { {"D3_TM"        ,"501"            ,Nil },;  // Tipo do Mov.
-                    {"D3_COD"        ,SCP->CP_PRODUTO,Nil },;
-                    {"D3_LOCAL"        ,SCP->CP_LOCAL    ,Nil },;
-                    {"D3_DOC"        ,"SK0050"         ,Nil },;  // No.do Docto.
-                    {"D3_EMISSAO"    ,DDATABASE        ,Nil } }
+{
+  "RESERVA": "000006",
+  "ITENS": [
+      {
+        "ITEM" : "01",
+        "PRODUTO": "009167",
+        "QTDE" : 15
+      },
+      {
+        "ITEM" : "02",
+        "PRODUTO": "009269",
+        "QTDE" : 10
+      },
+      {
+        "ITEM" : "03",
+        "PRODUTO": "009393",
+        "QTDE" : 8
+      }
+    ]
+}
 
-    lMSHelpAuto := .F.
-   lMsErroAuto := .F.
 
-    MSExecAuto({|v,x,y,z| mata185(v,x,y)},aCamposSCP,aCamposSD3,nOpcAuto)  // 1 = BAIXA (ROT.AUT)
+*/
 
-    If lMsErroAuto
-        Conout("[MyMata185] Erro na execução da MATA185.")
-        MostraErro()
+Private lMsErroAuto := .F.
+Private lAutoErrNoFile := .T.
+Private lMsHelpAuto :=.T.
+oResponse := JsonObject():New()
+
+
+jJson := JsonObject():New()
+CONOUT("METODO DE RESERVA")
+CONOUT(cJson)
+jJson:FromJson(cJson)
+
+For n := 1 To Len(jJson["ITENS"])
+	
+
+    dbSelectArea("SCP")
+    dbSetOrder(1)
+    If SCP->(dbSeek(xFilial("SCP")+jJson["RESERVA"]+jJson["ITENS"][n]["ITEM"]))
+
+        aCamposSCP := {    {"CP_NUM"        ,SCP->CP_NUM    ,Nil     },;
+                        {"CP_ITEM"        ,SCP->CP_ITEM   ,Nil     },;
+                        {"CP_QUANT"        ,SCP->CP_QUANT  ,Nil     }}
+
+        aCamposSD3 := { {"D3_TM"        ,"501"            ,Nil },;  // Tipo do Mov.
+                        {"D3_COD"        ,SCP->CP_PRODUTO,Nil },;
+                        {"D3_LOCAL"        ,SCP->CP_LOCAL    ,Nil },;
+                        {"D3_DOC"        ,SCP->CP_NUM        ,Nil },;  // No.do Docto.
+                        {"D3_EMISSAO"    ,DDATABASE        ,Nil } }
+
+        lMSHelpAuto := .F.
+        lMsErroAuto := .F.
+
+        MSExecAuto({|v,x,y,z| mata185(v,x,y)},aCamposSCP,aCamposSD3,nOpcAuto)  // 1 = BAIXA (ROT.AUT)
+
+       If lMsErroAuto
+            aAutoErro := GETAUTOGRLOG()
+
+            CONOUT( 'Erro ao Executar o Processo' )
+            jErro := JsonObject():New()
+            jErro["CODIGO"] := "200"
+            jErro["DESCRICAO"] := "Erro ao consumir reserva."
+            jErro["LOG"] := AllTrim(xDatAt() + "[ERRO]" + XCONVERRLOG(aAutoErro))
+            oResponse["Error"] := jErro
+            lRet := .F.
+
+        Else
+            JSucesso := JsonObject():New()
+            JSucesso["CODIGO"] := "100"
+            JSucesso["DESCRICAO"] := "Reserva consumida com sucesso."
+
+            //JSucesso["RESERVA"] := JReserva
+
+            oResponse["CONSUMO"] := JSucesso
+            CONOUT( 'Processo Executado' )
+        EndIf
+
+        self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
     Else
-        Conout("[MyMata185] MATA185 executada com sucesso.")
-    EndIf
-Else
         Conout("[MyMata185] Req. "+cNum +" do item "+cItem+" nao encontrada na base de dados")
-EndIf
+    EndIf
+
+Next n
+
+
 Return Nil
 
 
@@ -588,7 +651,7 @@ WSMETHOD GET ESTOQUE PATHPARAM id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM
 
     CONOUT("WSMETHOD GET ESTOQUE PATHPARAM "+cMaterial+" WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM")
 
-    cQuery := "SELECT B2_FILIAL, B2_COD, B2_LOCAL, B2_QATU, B2_QEMP, B2_RESERVA FROM "+RetSqlName("SB2")+" "
+    cQuery := "SELECT B2_FILIAL, B2_COD, B2_LOCAL, B2_QATU, B2_QEMP, B2_RESERVA, B2_CM1 FROM "+RetSqlName("SB2")+" "
     cQuery += "WHERE B2_FILIAL + B2_COD = '"+cMaterial+ "' "
     cQuery += "AND D_E_L_E_T_ <> '*'  "
 
@@ -612,6 +675,8 @@ WSMETHOD GET ESTOQUE PATHPARAM id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM
         jEstoque["EMPENHO"] := SB2G->B2_QEMP
         jEstoque["RESERVA"] := SB2G->B2_RESERVA
         jEstoque["DISPONIVEL"] := SB2G->B2_QATU - SB2G->B2_QEMP - SB2G->B2_RESERVA
+        jEstoque["CUSTOMEDIO"] := SB2G->B2_CM1 
+        
                 
         oResponse["Estoque"] := jEstoque
 
