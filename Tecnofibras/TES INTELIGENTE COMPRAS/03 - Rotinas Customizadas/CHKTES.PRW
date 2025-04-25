@@ -29,8 +29,8 @@ USER FUNCTION CHKTES()
     dbGoTop()
     WHILE !(SFMT->(Eof()))
 
-        cOper := SFM->FM_TIPO
-        aCols[n][nTes] := SFM->FM_TE
+        cOper := SFMT->FM_TIPO
+        aCols[n][nTes] := SFMT->FM_TE
         aCols[n][nOper] := cOper
 
         SFMT->(dbSkip())
@@ -68,8 +68,8 @@ USER FUNCTION CHKTES2(cConta)
     dbGoTop()
     WHILE !(SFMT->(Eof()))
 
-        cOper := SFM->FM_TIPO
-        aCols[n][nTes] := SFM->FM_TE
+        cOper := SFMT->FM_TIPO
+        aCols[n][nTes] := SFMT->FM_TE
 
         SFMT->(dbSkip())
     END
