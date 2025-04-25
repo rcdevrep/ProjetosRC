@@ -40,7 +40,7 @@ user function MT120FIM()
 			dbGoTop()
 			WHILE !(SFMT->(Eof()))
 
-				SC7->C7_OPER := SFMT->FM_TIPO
+				//SC7->C7_OPER := SFMT->FM_TIPO
 				SC7->C7_TES := SFMT->FM_TE
 
 				SFMT->(dbSkip())
