@@ -15,7 +15,7 @@ USER FUNCTION CHKTES()
     Local cConta := aCols[n][nConta]
  
     cQuery := "SELECT SFM.* FROM "+RetSqlName("SFM")+" SFM "
-    cQuery += "WHERE FM_CONTA >= '"+ALLTRIM(cConta)+ "' "
+    cQuery += "WHERE FM_CONTA = '"+ALLTRIM(cConta)+ "' "
     cQuery += "AND SFM.D_E_L_E_T_ <> '*'  "
 
     If (Select("SFMT") <> 0)
@@ -54,7 +54,7 @@ USER FUNCTION CHKTES2(cConta)
 
 
     cQuery := "SELECT SFM.* FROM "+RetSqlName("SFM")+" SFM "
-    cQuery += "WHERE FM_CONTA >= '"+ALLTRIM(cConta)+ "' "
+    cQuery += "WHERE FM_CONTA = '"+ALLTRIM(cConta)+ "' "
     cQuery += "AND SFM.D_E_L_E_T_ <> '*'  "
 
     If (Select("SFMT") <> 0)
