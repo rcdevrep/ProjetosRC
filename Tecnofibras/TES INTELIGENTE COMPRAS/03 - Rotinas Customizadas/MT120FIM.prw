@@ -12,7 +12,6 @@ user function MT120FIM()
 	
 	
     Local nPosItem   := aScan(aHeader,{|x| AllTrim(x[2]) == "C7_ITEM"})
-    Local nPosQtde   := aScan(aHeader,{|x| AllTrim(x[2]) == "C7_QUJE"})
     Local nPosVlr    := aScan(aHeader,{|x| AllTrim(x[2]) == "C7_PRECO"})
 	Local nPosConta    := aScan(aHeader,{|x| AllTrim(x[2]) == "C7_CONTA"})
 	Local nLinAtu 	 := 1
