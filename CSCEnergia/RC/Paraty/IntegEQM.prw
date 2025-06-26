@@ -507,7 +507,7 @@ Local aRetCQ  := {}
 Local nOpcAuto:= 1 // BAIXA
 Local nOpcx := 0
 Local cJson := ::GetContent()
-Local n := 1
+Local i := 1
 
 /*
 
@@ -546,12 +546,24 @@ CONOUT("METODO DE RESERVA")
 CONOUT(cJson)
 jJson:FromJson(cJson)
 
-For n := 1 To Len(jJson["ITENS"])
+
+JReserva := JsonObject():New()
+JReserva["FILIAL"] := xFilial("SCP")
+JReserva["NUMERO"] := jJson["RESERVA"]
+
+aJson := { }
+
+For i := 1 To Len(jJson["ITENS"])
 	
+    JItem := JsonObject():New()
+    JItem["ITEM"] := STRZERO(i,2)
+    JItem["PRODUTO"] := jJson["ITENS"][i]["PRODUTO"]
+    JItem["QTDE"] := jJson["ITENS"][i]["QTDE"] 
+    
 
     dbSelectArea("SCP")
     dbSetOrder(1)
-    If SCP->(dbSeek(xFilial("SCP")+jJson["RESERVA"]+jJson["ITENS"][n]["ITEM"]))
+    If SCP->(dbSeek(xFilial("SCP")+jJson["RESERVA"]+jJson["ITENS"][i]["ITEM"]))
 
         aCamposSCP := {    {"CP_NUM"        ,SCP->CP_NUM    ,Nil     },;
                         {"CP_ITEM"        ,SCP->CP_ITEM   ,Nil     },;
@@ -574,28 +586,42 @@ For n := 1 To Len(jJson["ITENS"])
             CONOUT( 'Erro ao Executar o Processo' )
             jErro := JsonObject():New()
             jErro["CODIGO"] := "200"
-            jErro["DESCRICAO"] := "Erro ao consumir reserva."
+            jErro["DESCRICAO"] := "Erro ao consumir reserva do item."
             jErro["LOG"] := AllTrim(xDatAt() + "[ERRO]" + XCONVERRLOG(aAutoErro))
-            oResponse["Error"] := jErro
+            
+
+            JItem["ERRO"] := jErro
+
             lRet := .F.
 
         Else
             JSucesso := JsonObject():New()
             JSucesso["CODIGO"] := "100"
             JSucesso["DESCRICAO"] := "Reserva consumida com sucesso."
+            
 
-            //JSucesso["RESERVA"] := JReserva
+            JItem["SUCESSO"] := JSucesso
 
-            oResponse["CONSUMO"] := JSucesso
+            
             CONOUT( 'Processo Executado' )
         EndIf
 
-        self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+        
     Else
         Conout("[MyMata185] Req. "+cNum +" do item "+cItem+" nao encontrada na base de dados")
     EndIf
 
-Next n
+    AADD(aJson,JItem)
+
+Next i
+
+JReserva["EMISSAO"] := DTOC(dDataBase)
+JReserva["ITENS"] := aJson
+
+oResponse["CONSUMO"] := JReserva
+self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+
+
 
 
 Return Nil

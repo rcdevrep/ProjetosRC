@@ -10,7 +10,7 @@ Metas Individuais
 /*/
 
 //Variveis Estaticas
-Static cTitulo := "Metas Individuais"
+Static cTitulo := "Calculo de Comissões"
 Static cAliasMVC := "ZP0"
 
 User Function RCTEP01()
