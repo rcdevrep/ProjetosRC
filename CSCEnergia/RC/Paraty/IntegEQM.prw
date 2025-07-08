@@ -144,6 +144,7 @@ WSRESTFUL IntegEQM DESCRIPTION 'Integração EQM x Protheus'
     WSMETHOD POST CONSUMIR_RESERVA DESCRIPTION 'Consumir Material' WSSYNTAX "/CONSUMIR_RESERVA " PATH 'CONSUMIR_RESERVA' PRODUCES APPLICATION_JSON
     WSMETHOD POST ESTORNAR_CONSUMO DESCRIPTION 'Estornar Consumo' WSSYNTAX "/ESTORNAR_CONSUMO " PATH 'ESTORNAR_CONSUMO' PRODUCES APPLICATION_JSON
     WSMETHOD POST RESUPRIMENTO DESCRIPTION 'Receber dados de resuprimento.' WSSYNTAX "/RESUPRIMENTO " PATH 'RESUPRIMENTO' PRODUCES APPLICATION_JSON
+    WSMETHOD POST LEADTIME DESCRIPTION 'LeadTime' WSSYNTAX "/LEADTIME " PATH 'LEADTIME' PRODUCES APPLICATION_JSON
 
 END WSRESTFUL
 
@@ -278,12 +279,6 @@ WSSTRUCT ITEM_RESERVA_STRUCT
     WSDATA QTD_ATENDIDA
 ENDWSSTRUCT
 
-*/
-
-//
-
-/*
-
 {
   
   "ARMAZEM": "01",
@@ -311,7 +306,6 @@ CONOUT("METODO DE RESERVA")
 CONOUT(cJson)
 jJson:FromJson(cJson)
 
- //---------- nOpcx = 3 Inclusão de Solicitação de Armazém --------------
 nOpcx := 3
 nSaveSx8:= GetSx8Len()
 cNumero := GetSx8Num( 'SCP', 'CP_NUM' )
@@ -350,79 +344,6 @@ Next
 
 JReserva["EMISSAO"] := DTOC(dDataBase)
 JReserva["ITENS"] := aJson
-
-
-
-//---------- nOpcx = 4 Alteração de Solicitação de Armazém -------------
-
-//-----------------------------------------------------------------------------//
-// AUTDELETA - Opcional
-// Atributo para Definir se o Item que pertence a Solicitação de Armazém deve
-// ser Excluído ou Não no processo de Alteração.
-
-// - N = Não Deve Ser Excluído
-// - S = Sim Deve Ser Excluído
-//-----------------------------------------------------------------------------//
-/*nOpcx := 4
-Aadd( aCab, { "CP_NUM" ,cNumero , Nil })
-Aadd( aCab, { "CP_EMISSAO" ,dDataBase , Nil })
-
-Aadd( aItens, {} )
-Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , '01' , Nil } )
-
-Aadd( aItens[ Len( aItens ) ],{"CP_NUM" , 'cNumero' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,'PRD_001' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" ,10 , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"AUTDELETA" ,'N' , Nil } )
-
-Aadd( aItens, {} )
-Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , '02' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,'PRD_002' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" ,120 , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"AUTDELETA" ,'N' , Nil } )
-
-Aadd( aItens, {} )
-Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , '03' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,'PRD_003' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" ,30 , Nil } )
-
-Aadd( aItens[ Len( aItens ) ],{"AUTDELETA" ,'S' , Nil } )
-
-Aadd( aItens, {} )
-Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , '04' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,'PRD_004' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" ,40 , Nil } )
-
-Aadd( aItens[ Len( aItens ) ],{"AUTDELETA" ,'N' , Nil } )
-
-
-//---------- nOpcx = 5 Exclusão de Solicitação de Armazém --------------
-nOpcx := 5
-Aadd( aCab, { "CP_NUM" ,cNumero , Nil })
-Aadd( aCab, { "CP_EMISSAO" ,dDataBase , Nil })
-
-Aadd( aItens, {} )
-Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , '01' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,'PRD_001' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" ,10 , Nil } )
-
-Aadd( aItens, {} )
-Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , '02' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,'PRD_002' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" ,20 , Nil } )
-
-Aadd( aItens, {} )
-Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , '03' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,'PRD_003' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" ,30 , Nil } )
-
-Aadd( aItens, {} )
-Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , '04' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,'PRD_004' , Nil } )
-Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" ,40 , Nil } )
-
-//----------------------------------------------------------------------
-*/
 
 SB1->( dbSetOrder( 1 ) )
 SCP->( dbSetOrder( 1 ) )
@@ -482,10 +403,284 @@ Return cRet
 
 WSMETHOD PUT ALTERACAO_RESERVA PATHPARAM RESERVA_STRUCT WSRECEIVE RETORNO WSSERVICE IntegEQM
    
+Local lRet := .T.
+Local aCab := {}
+Local aItens := {}
+Local nSaveSx8 := 0
+Local cNumero := ''
+Local i 
+Local nOpcx := 4
+Local cJson := ::GetContent()
+oResponse := JsonObject():New()
+
+Private lMsErroAuto := .F.
+Private lAutoErrNoFile := .T.
+Private lMsHelpAuto :=.T.
+
+/*
+
+WSSTRUCT RESERVA_STRUCT
+    WSDATA NUM_RESERVA
+    WSDATA COD_EMPRESA
+    WSDATA COD_ALMOXARIFADO
+    WSDATA DATA_CRIACAO
+    WSDATA DATA_ATUALIZACAO
+    WSDATA COD_SITUACAO
+    WSDATA OBSERVACAO
+ENDWSSTRUCT
+
+WSSTRUCT ITEM_RESERVA_STRUCT
+    WSDATA NUM_RESERVA
+    WSDATA CODIGO
+    WSDATA QTD_MOVIMENTACAO
+    WSDATA QTD_ATENDIDA
+ENDWSSTRUCT
+
+{
+  "NUMERO": "000001",
+  "ARMAZEM": "01",
+  "OBSERVACAO": "SOLICITAÇÃO DE TESTES",
+   "ITENS": [
+      {
+        "PRODUTO": "0102009867",
+        "QTDE" : 15
+      },
+      {
+        "PRODUTO": "0102009869",
+        "QTDE" : 10
+      },
+      {
+        "PRODUTO": "0102009870",
+        "QTDE" : 8
+      }
+    ]
+}
+
+*/
+
+jJson := JsonObject():New()
+CONOUT("METODO DE RESERVA")
+CONOUT(cJson)
+jJson:FromJson(cJson)
+
+ //---------- nOpcx = 3 Inclusão de Solicitação de Armazém --------------
+nOpcx := 3
+nSaveSx8:= GetSx8Len()
+cNumero := GetSx8Num( 'SCP', 'CP_NUM' )
+
+dbSelectArea( 'SB1' )
+SB1->( dbSetOrder( 1 ) )
+
+dbSelectArea( 'SCP' )
+SCP->( dbSetOrder( 1 ) )
+
+JReserva := JsonObject():New()
+
+
+cNumero := jJson["NUMERO"]
+JReserva["FILIAL"] := xFilial("SCP")
+JReserva["NUMERO"] := cNumero
+
+
+Aadd( aCab, { "CP_NUM" ,cNumero , Nil })
+Aadd( aCab, { "CP_EMISSAO" ,dDataBase , Nil })
+
+aJson := { }
+
+For i:= 1 to Len(jJson["ITENS"])
+    Aadd( aItens, {} )
+    JItem := JsonObject():New()
+    JItem["ITEM"] := STRZERO(i,2)
+    JItem["PRODUTO"] := jJson["ITENS"][i]["PRODUTO"]
+    JItem["QTDE"] := jJson["ITENS"][i]["QTDE"] 
+    Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , STRZERO(i,2) , Nil } )
+    Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,SUBSTRING(jJson["ITENS"][i]["PRODUTO"],5,LEN(jJson["ITENS"][i]["PRODUTO"])) , Nil } )
+    Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" , jJson["ITENS"][i]["QTDE"] , Nil } )
+    
+    AADD(aJson,JItem)
+Next
+
+JReserva["EMISSAO"] := DTOC(dDataBase)
+JReserva["ITENS"] := aJson
+
+SB1->( dbSetOrder( 1 ) )
+SCP->( dbSetOrder( 1 ) )
+MsExecAuto( { | x, y, z | Mata105( x, y , z ) }, aCab, aItens , nOpcx )
+
+If lMsErroAuto
+    If !__lSX8
+        RollBackSx8()
+    EndIf
+
+    aAutoErro := GETAUTOGRLOG()
+
+    CONOUT( 'Erro ao Executar o Processo' )
+    jErro := JsonObject():New()
+    jErro["CODIGO"] := "200"
+    jErro["DESCRICAO"] := "Erro ao alterar reserva."
+    jErro["LOG"] := AllTrim(xDatAt() + "[ERRO]" + XCONVERRLOG(aAutoErro))
+    oResponse["Error"] := jErro
+    lRet := .F.
+
+Else
+    While ( GetSx8Len() > nSaveSx8 )
+        ConfirmSx8()
+    End
+
+    JSucesso := JsonObject():New()
+    JSucesso["CODIGO"] := "100"
+    JSucesso["DESCRICAO"] := "Reserva alterada com sucesso."
+
+    JSucesso["RESERVA"] := JReserva
+
+    oResponse["RESERVAR"] := JSucesso
+    CONOUT( 'Processo Executado' )
+EndIf
+
+self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+
+
 Return .T.
 
 WSMETHOD POST EXCLUSAO_RESERVA PATHPARAM id  WSSERVICE IntegEQM
    
+  
+Local lRet := .T.
+Local aCab := {}
+Local aItens := {}
+Local nSaveSx8 := 0
+Local cNumero := ''
+Local i 
+Local nOpcx := 5
+Local cJson := ::GetContent()
+oResponse := JsonObject():New()
+
+Private lMsErroAuto := .F.
+Private lAutoErrNoFile := .T.
+Private lMsHelpAuto :=.T.
+
+/*
+
+WSSTRUCT RESERVA_STRUCT
+    WSDATA NUM_RESERVA
+    WSDATA COD_EMPRESA
+    WSDATA COD_ALMOXARIFADO
+    WSDATA DATA_CRIACAO
+    WSDATA DATA_ATUALIZACAO
+    WSDATA COD_SITUACAO
+    WSDATA OBSERVACAO
+ENDWSSTRUCT
+
+WSSTRUCT ITEM_RESERVA_STRUCT
+    WSDATA NUM_RESERVA
+    WSDATA CODIGO
+    WSDATA QTD_MOVIMENTACAO
+    WSDATA QTD_ATENDIDA
+ENDWSSTRUCT
+
+{
+  "NUMERO": "000001",
+  "ARMAZEM": "01",
+  "OBSERVACAO": "SOLICITAÇÃO DE TESTES",
+   "ITENS": [
+      {
+        "PRODUTO": "0102009867",
+        "QTDE" : 15
+      },
+      {
+        "PRODUTO": "0102009869",
+        "QTDE" : 10
+      },
+      {
+        "PRODUTO": "0102009870",
+        "QTDE" : 8
+      }
+    ]
+}
+
+*/
+
+jJson := JsonObject():New()
+CONOUT("METODO DE RESERVA")
+CONOUT(cJson)
+jJson:FromJson(cJson)
+
+ //---------- nOpcx = 3 Inclusão de Solicitação de Armazém --------------
+nOpcx := 3
+nSaveSx8:= GetSx8Len()
+cNumero := GetSx8Num( 'SCP', 'CP_NUM' )
+
+dbSelectArea( 'SB1' )
+SB1->( dbSetOrder( 1 ) )
+
+dbSelectArea( 'SCP' )
+SCP->( dbSetOrder( 1 ) )
+
+JReserva := JsonObject():New()
+
+
+cNumero := jJson["NUMERO"]
+JReserva["FILIAL"] := xFilial("SCP")
+JReserva["NUMERO"] := cNumero
+
+
+Aadd( aCab, { "CP_NUM" ,cNumero , Nil })
+Aadd( aCab, { "CP_EMISSAO" ,dDataBase , Nil })
+
+aJson := { }
+
+For i:= 1 to Len(jJson["ITENS"])
+    Aadd( aItens, {} )
+    JItem := JsonObject():New()
+    JItem["ITEM"] := STRZERO(i,2)
+    JItem["PRODUTO"] := jJson["ITENS"][i]["PRODUTO"]
+    JItem["QTDE"] := jJson["ITENS"][i]["QTDE"] 
+    Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , STRZERO(i,2) , Nil } )
+    Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,SUBSTRING(jJson["ITENS"][i]["PRODUTO"],5,LEN(jJson["ITENS"][i]["PRODUTO"])) , Nil } )
+    Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" , jJson["ITENS"][i]["QTDE"] , Nil } )
+    
+    AADD(aJson,JItem)
+Next
+
+JReserva["EMISSAO"] := DTOC(dDataBase)
+JReserva["ITENS"] := aJson
+
+SB1->( dbSetOrder( 1 ) )
+SCP->( dbSetOrder( 1 ) )
+MsExecAuto( { | x, y, z | Mata105( x, y , z ) }, aCab, aItens , nOpcx )
+
+If lMsErroAuto
+    If !__lSX8
+        RollBackSx8()
+    EndIf
+
+    aAutoErro := GETAUTOGRLOG()
+
+    CONOUT( 'Erro ao Executar o Processo' )
+    jErro := JsonObject():New()
+    jErro["CODIGO"] := "200"
+    jErro["DESCRICAO"] := "Erro ao excluir reserva."
+    jErro["LOG"] := AllTrim(xDatAt() + "[ERRO]" + XCONVERRLOG(aAutoErro))
+    oResponse["Error"] := jErro
+    lRet := .F.
+
+Else
+    While ( GetSx8Len() > nSaveSx8 )
+        ConfirmSx8()
+    End
+
+    JSucesso := JsonObject():New()
+    JSucesso["CODIGO"] := "100"
+    JSucesso["DESCRICAO"] := "Reserva excluida com sucesso."
+
+    JSucesso["RESERVA"] := JReserva
+
+    oResponse["RESERVAR"] := JSucesso
+    CONOUT( 'Processo Executado' )
+EndIf
+
+self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+
 Return .T.
 
 WSMETHOD GET RESERVA PATHPARAM id, data_ini, data_fim WSRECEIVE RESERVA_STRUCT  WSSERVICE IntegEQM
@@ -494,6 +689,128 @@ Return .T.
 
 WSMETHOD POST DEVOLVER_MATERIAL PATHPARAM id, data_ini, data_fim WSRECEIVE MOVIMENTOS_STRUCT  WSSERVICE IntegEQM
    
+
+Local aCamposSCP
+Local aCamposSD3
+Local aRetCQ  := {}
+Local nOpcAuto:= 2 // ESTORNO
+Local nOpcx := 0
+Local cJson := ::GetContent()
+Local i := 1
+
+/*
+
+{
+  "RESERVA": "000006",
+  "ITENS": [
+      {
+        "ITEM" : "01",
+        "PRODUTO": "009167",
+        "QTDE" : 15
+      },
+      {
+        "ITEM" : "02",
+        "PRODUTO": "009269",
+        "QTDE" : 10
+      },
+      {
+        "ITEM" : "03",
+        "PRODUTO": "009393",
+        "QTDE" : 8
+      }
+    ]
+}
+
+
+*/
+
+Private lMsErroAuto := .F.
+Private lAutoErrNoFile := .T.
+Private lMsHelpAuto :=.T.
+oResponse := JsonObject():New()
+
+
+jJson := JsonObject():New()
+CONOUT("METODO DE RESERVA")
+CONOUT(cJson)
+jJson:FromJson(cJson)
+
+
+JReserva := JsonObject():New()
+JReserva["FILIAL"] := xFilial("SCP")
+JReserva["NUMERO"] := jJson["RESERVA"]
+
+aJson := { }
+
+For i := 1 To Len(jJson["ITENS"])
+	
+    JItem := JsonObject():New()
+    JItem["ITEM"] := STRZERO(i,2)
+    JItem["PRODUTO"] := jJson["ITENS"][i]["PRODUTO"]
+    JItem["QTDE"] := jJson["ITENS"][i]["QTDE"] 
+    
+
+    dbSelectArea("SCP")
+    dbSetOrder(1)
+    If SCP->(dbSeek(xFilial("SCP")+jJson["RESERVA"]+jJson["ITENS"][i]["ITEM"]))
+
+        aCamposSCP := {    {"CP_NUM"        ,SCP->CP_NUM    ,Nil     },;
+                        {"CP_ITEM"        ,SCP->CP_ITEM   ,Nil     },;
+                        {"CP_QUANT"        ,SCP->CP_QUANT  ,Nil     }}
+
+        aCamposSD3 := { {"D3_TM"        ,"501"            ,Nil },;  // Tipo do Mov.
+                        {"D3_COD"        ,SCP->CP_PRODUTO,Nil },;
+                        {"D3_LOCAL"        ,SCP->CP_LOCAL    ,Nil },;
+                        {"D3_DOC"        ,SCP->CP_NUM        ,Nil },;  // No.do Docto.
+                        {"D3_EMISSAO"    ,DDATABASE        ,Nil } }
+
+        lMSHelpAuto := .F.
+        lMsErroAuto := .F.
+
+        MSExecAuto({|v,x,y,z| mata185(v,x,y)},aCamposSCP,aCamposSD3,nOpcAuto)  // 2 = ESTORNO
+
+       If lMsErroAuto
+            aAutoErro := GETAUTOGRLOG()
+
+            CONOUT( 'Erro ao Executar o Processo' )
+            jErro := JsonObject():New()
+            jErro["CODIGO"] := "200"
+            jErro["DESCRICAO"] := "Erro ao estornar reserva do item."
+            jErro["LOG"] := AllTrim(xDatAt() + "[ERRO]" + XCONVERRLOG(aAutoErro))
+            
+
+            JItem["ERRO"] := jErro
+
+            lRet := .F.
+
+        Else
+            JSucesso := JsonObject():New()
+            JSucesso["CODIGO"] := "100"
+            JSucesso["DESCRICAO"] := "Reserva estornada com sucesso."
+            
+
+            JItem["SUCESSO"] := JSucesso
+
+            
+            CONOUT( 'Processo Executado' )
+        EndIf
+
+        
+    Else
+        Conout("[MyMata185] Req. "+cNum +" do item "+cItem+" nao encontrada na base de dados")
+    EndIf
+
+    AADD(aJson,JItem)
+
+Next i
+
+JReserva["EMISSAO"] := DTOC(dDataBase)
+JReserva["ITENS"] := aJson
+
+oResponse["CONSUMO"] := JReserva
+self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+
+
 Return .T.
 
 // BAIXA DE PRÉ REQUISIÇÕES
@@ -620,9 +937,6 @@ JReserva["ITENS"] := aJson
 
 oResponse["CONSUMO"] := JReserva
 self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
-
-
-
 
 Return Nil
 
