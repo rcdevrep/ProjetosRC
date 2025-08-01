@@ -20,6 +20,9 @@ User Function STACOMP()
     Local xPar2     := '01'
     Local xPar3     := 0
     Local cDescContr    := ''     
+
+
+    
     //
     //Adicionando os parametros do ParamBox
     //
@@ -392,10 +395,11 @@ Static Function CargaNF()
            AND E2_FILIAL    = %xFilial:SE2%
            AND E2_TIPO      = %Exp:'NF'%
            AND E2_SALDO     > %Exp:0%
+           AND ((E2_DATALIB   = %Exp:''% AND E2_SALDO = E2_VALOR) OR (E2_SALDO <> E2_VALOR)) // SE ESTIVER LIBERADO, OU SE ESTIVER BAIXADO PARCIAL.
            AND (E2_MDCONTR  = %Exp:MV_PAR01% OR E2_MDCONTR = %Exp:''%) 
            AND E2_FORNECE   = %Exp:MV_PAR02%
            AND E2_LOJA      = %Exp:MV_PAR03%
-           AND E2_DATALIB   = %Exp:''%
+           
 
    EndSql
 
@@ -575,7 +579,7 @@ Static Function TotalNF()
 
     For _ni := 1 to len(aNF)
         If aNF[_ni, 01]
-            nTotalNF += aNF[_ni, 07] 
+            nTotalNF += aNF[_ni, 06] 
         EndIf    
     Next
 
@@ -690,8 +694,12 @@ Static Function FProcessa(nTxAcorda)
 
                         If aAdt[nAdt, 7] >= aNF[nNf, 7]
                             nSldComp := aNF[nNf, 7]
+                            nValComp := aNF[nNf, 6] / nTxAcorda
                         Else
-                            nSldComp := aAdt[nAdt, 7]
+                            nSldComp := aAdt[nAdt, 6]
+                            nValComp := aAdt[nAdt, 6] 
+                            //MSGSTOP("Valor da NF superior ao Adiantamento, não é possivel fazer a compensação.")
+                            //return .F.
                         EndIf
                         
                         nCmpAdt  := nSldComp * aAdt[nAdt, 9] 
@@ -699,7 +707,7 @@ Static Function FProcessa(nTxAcorda)
                         nCmpAco  := nSldComp * nTxAcorda
 
                         //Valor da nota / Taxa do Aditivo
-                        nValComp := aNF[ nNf,  6] / nTxAcorda //aAdt[nAdt, 9]
+                        //aAdt[nAdt, 9]
 
                         aPA_NDF  := {aAdt[nAdt, 11]}
                         aNF_Comp := {aNF[ nNf,  11]}
@@ -711,17 +719,55 @@ Static Function FProcessa(nTxAcorda)
                         
                         nRecSE2 := SE2->(Recno())
 
+                        //nVrTaxa := (nVrComp / nTaxaPA) - nVrComp
+                        //nVrComp := nVrComp + nVrTaxa
+
                         
                         SE2->(DbGoTo(aNF[nNf, 11]))
                         Reclock("SE2", .F.)
                             SE2->E2_DATALIB := Date()
+                            SE2->E2_XVALCMP := nValComp
                         SE2->(MsUnlock())
 
  
                         ARECSE5 := {}
+                        nTaxaADT := aAdt[nAdt, 9] 
                         
+                        //_aParametrosJob := {cFilAnt, aNF_Comp, aPA_NDF, aContabil, nSldComp, dDatabase, aNF[nNf, 14]}
                         _aParametrosJob := {cFilAnt, aNF_Comp, aPA_NDF, aContabil, nValComp, dDatabase, aNF[nNf, 14]}
                         lRet 			:= U_CompAuto(_aParametrosJob, nTxAcorda )
+
+                       // FOR 
+                       /* SE2->(dbGoTo(aNF_Comp[nNf]))
+                        IF (round(0 ,0) <> round(SE2->E2_SALDO,0)) 
+                            Aviso("Compensação Automática","A compensação automática da NF com o adiantamento "+SE2->E2_NUM+" não foi realizada, informar ao requisitante. Verificar o título de adiantamento no financeiro.",{"OK"})					
+                            //Notifica requisitante do erro na compensação
+                            U_MTMAILCP()
+                            DisarmTransaction()							
+                        endif
+
+                        //Posiciona no PA para validar os saldos
+                        SE2->(dbGoTo(aPA_NDF[nNf,1]))
+                        If (0 == SE2->E2_SALDO) 
+                            Aviso("Compensação Automática","A compensação automática da NF com o adiantamento "+SE2->E2_NUM+" via contrato não foi realizada. Verificar o título de adiantamento no financeiro.",{"OK"})
+                            //Notifica requisitante do erro na compensação
+                            U_MTMAILCP()
+                            DisarmTransaction()
+                        EndIf
+
+
+                        //Verifica se o valor compensado é menor que o valor original e atualiza a ZZ1.
+                        DbSelectArea("ZZ1")
+                        DbGoTo(aValCmp[nY][2])
+                        IF ZZ1->ZZ1_VLCOMP <> nVrComp
+                            ZZ1->(RecLock("ZZ1",.F.))
+                                ZZ1->ZZ1_VLCOMP := nVrComp
+                            ZZ1->(MsUnlock())
+                        ENDIF
+                        */
+
+
+
 
 
                         If lRet
@@ -741,12 +787,13 @@ Static Function FProcessa(nTxAcorda)
 
                                 If nValCont < 0
                                     cPadrao := "V02"
-                                    cHistoric   := "VALOR REF. VARIACAO CAMBIAL PASSIVA"
+                                    cHistoric   := "VARIACAO CAMBIAL PASSIVA "
                                 Else
                                     cPadrao := "V01"
-                                    cHistoric   := "VALOR REF. VARIACAO CAMBIAL ATIVA"
+                                    cHistoric   := "VARIACAO CAMBIAL ATIVA "
                                 EndIf
-                                cHistori2 := "S/NF "+aNF[nNf, 2]+" FORNECEDOR "+aNF[nNf, 15]
+                                cNReduz  :=	Posicione("SA2",1,xFilial("SA2")+aNF[nNf, 15]+aNF[nNf, 16],"A2_NREDUZ")
+                                cHistori2 := "S/NF "+aNF[nNf, 2]+" FORNECEDOR "+ cNReduz
 
                                 cQuery := "SELECT ISNULL(MAX(CT2_DOC),'000000') AS DOC "
                                 cQuery += "FROM "+RetSqlName("CT2")+" (NOLOCK) "
@@ -781,7 +828,7 @@ Static Function FProcessa(nTxAcorda)
                                             {'CT2_DC'			, '3'										                            , NIL},;
                                             {'CT2_VALOR'		, Abs(nValCont)                                                         , NIL},;
                                             {'CT2_CONVER'		, "155  "                                                               , NIL},;
-                                            {'CT2_ORIGEM'		, 'STACOMP - ' + UsrFullName(RetCodUsr())                               , NIL},;
+                                            {'CT2_ORIGEM'		, cPadrao+'STACOMP - ' + UsrFullName(RetCodUsr())                               , NIL},;
                                             {'CT2_HP'			, ''										                            , NIL},;
                                             {'CT2_HIST'			, cHistoric                                                             , NIL},;
                                             {'CT2_DEBITO'		, iif(cPadrao=="V01",SE2->E2_DEBITO,"630520602001")	                    , NIL},;
@@ -792,6 +839,7 @@ Static Function FProcessa(nTxAcorda)
                                             {'CT2_CCC'			, SE2->E2_CCD	                                                        , NIL},;
                                             {'CT2_ITEMD'		, SE2->E2_ITEMD	                                                        , NIL},;
                                             {'CT2_ITEMC'		, SE2->E2_ITEMD	                                                        , NIL},;
+                                            {'CT2_LP'		    , cPadrao	                                                            , NIL},;
                                             {'CT2_EC06CR'		, SE2->E2_MDCONTR	                                                    , NIL},;
                                             {'CT2_EC06DB'		, SE2->E2_MDCONTR                                                       , NIL}})
                                             
