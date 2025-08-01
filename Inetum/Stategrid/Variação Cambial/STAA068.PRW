@@ -2,7 +2,7 @@
 #INCLUDE "RWMAKE.CH"
 #INCLUDE "TBICONN.CH"
  
-User Function CompAuto( _aParametrosJob, nTaxAcord )
+User Function CompAuto( _aParametrosJob, nTaxAcord)
 
     Local cFilCmp	:= _aParametrosJob[01]
     Local aNF       := _aParametrosJob[02] // Rencno titulo
@@ -25,10 +25,12 @@ User Function CompAuto( _aParametrosJob, nTaxAcord )
     Local cIdFK2    := ""
     Local cFilIni   := cFilAnt
     Default nTaxAcord := 0
+    Default nTaxaADT := 0
     
     If nTaxAcord <> 0
         nTaxaPA := nTaxAcord
     EndIf
+
     //PREPARE ENVIRONMENT EMPRESA "01" FILIAL cFilCmp MODULO "FIN"
     cFilAnt  := cFilCmp
     Pergunte("AFI340", .F.)
@@ -38,12 +40,15 @@ User Function CompAuto( _aParametrosJob, nTaxAcord )
 
     //lRet := FinCmpAut(aNF, aPA_NDF, aContabil, bBlock, aEstorno, nVrComp, dDataComp, nTaxaPA ,nTaxaNF,;
     //     nHdl, nOperacao, aRecSE5, aNDFDados, lHelp)
+    //nVrTaxa := (nVrComp / nTaxaPA) - nVrComp
+    //nVrComp := nVrComp + nVrTaxa
 
-    if FinCmpAut(aNF, aPA_NDF, {lContabiliza,lAglutina,lDigita}, /*bBlock*/, aEstorno, nVrComp, dDataComp, nTaxaPA,/*nTaxaNF*/, nHdl, nOperacao, /*aRecSE5*/, /*aNDFDados*/, lHelp)          
-        conOut("Processo concluido com exito.")
+    if FinCmpAut(aNF, aPA_NDF, {lContabiliza,lAglutina,lDigita}, /*bBlock*/, aEstorno, nVrComp, dDataComp, nTaxaPA ,/*nTaxaNF*/, nHdl, nOperacao, /*aRecSE5*/, /*aNDFDados*/, lHelp)          
+    //if FinCmpAut(aNF, aPA_NDF, {lContabiliza,lAglutina,lDigita}, /*bBlock*/, aEstorno, , dDataComp, nTaxaPA, , nHdl, nOperacao, /*aRecSE5*/, /*aNDFDados*/, lHelp)          
+        MSGALERT("Processo concluido com exito.")
         lRet := .T.
     else
-        conOut("Processo nao concluido.")    
+        MSGSTOP("Processo nao concluido.")    
         lRet := .F.       
     endif
 

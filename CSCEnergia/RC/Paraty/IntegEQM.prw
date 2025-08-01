@@ -126,6 +126,7 @@ WSRESTFUL IntegEQM DESCRIPTION 'Integração EQM x Protheus'
     */
     WSDATA Id  AS CHARACTER  OPTIONAL
     WSDATA RESERVA AS CHARACTER OPTIONAL
+    WSDATA data_ini as CHARACTER OPTIONAL
     
     WSMETHOD GET MATERIAL DESCRIPTION 'Get Material pela ID' WSSYNTAX "/?{Id}" PATH "/MATERIAL" PRODUCES APPLICATION_JSON
     WSMETHOD GET MOVIMENTOS DESCRIPTION 'Get movimentos pela ID (material), e range de data.'  WSSYNTAX "/MOVIMENTOS " PATH 'MOVIMENTOS' PRODUCES APPLICATION_JSON
@@ -135,6 +136,8 @@ WSRESTFUL IntegEQM DESCRIPTION 'Integração EQM x Protheus'
     WSMETHOD GET ESTOQUE DESCRIPTION 'Consulta de estoque' WSSYNTAX "/ESTOQUE " PATH 'ESTOQUE' PRODUCES APPLICATION_JSON
     WSMETHOD GET NUMERO_PEDIDO DESCRIPTION 'Get pedidos de compra pelo numero do pedido.' WSSYNTAX "/NUMERO_PEDIDO " PATH 'NUMERO_PEDIDO' PRODUCES APPLICATION_JSON
     WSMETHOD GET NUM_NOTA DESCRIPTION 'Get notas fiscais pelo numero da nf ' WSSYNTAX "/NUM_NOTA " PATH 'NUM_NOTA' PRODUCES APPLICATION_JSON
+    WSMETHOD GET LEADTIME DESCRIPTION 'LeadTime' WSSYNTAX "/LEADTIME " PATH 'LEADTIME' PRODUCES APPLICATION_JSON
+    WSMETHOD GET RESUPRIMENTO DESCRIPTION 'Receber dados de resuprimento.' WSSYNTAX "/RESUPRIMENTO " PATH 'RESUPRIMENTO' PRODUCES APPLICATION_JSON
 
     WSMETHOD PUT ALTERACAO_RESERVA DESCRIPTION 'Alterar reserva' WSSYNTAX "/ALTERACAO_RESERVA " PATH 'ALTERACAO_RESERVA' PRODUCES APPLICATION_JSON
 
@@ -143,8 +146,8 @@ WSRESTFUL IntegEQM DESCRIPTION 'Integração EQM x Protheus'
     WSMETHOD POST DEVOLVER_MATERIAL DESCRIPTION 'Devolução de material' WSSYNTAX "/DEVOLVER_MATERIAL " PATH 'DEVOLVER_MATERIAL' PRODUCES APPLICATION_JSON
     WSMETHOD POST CONSUMIR_RESERVA DESCRIPTION 'Consumir Material' WSSYNTAX "/CONSUMIR_RESERVA " PATH 'CONSUMIR_RESERVA' PRODUCES APPLICATION_JSON
     WSMETHOD POST ESTORNAR_CONSUMO DESCRIPTION 'Estornar Consumo' WSSYNTAX "/ESTORNAR_CONSUMO " PATH 'ESTORNAR_CONSUMO' PRODUCES APPLICATION_JSON
-    WSMETHOD POST RESUPRIMENTO DESCRIPTION 'Receber dados de resuprimento.' WSSYNTAX "/RESUPRIMENTO " PATH 'RESUPRIMENTO' PRODUCES APPLICATION_JSON
-    WSMETHOD POST LEADTIME DESCRIPTION 'LeadTime' WSSYNTAX "/LEADTIME " PATH 'LEADTIME' PRODUCES APPLICATION_JSON
+    WSMETHOD POST ALTERA_RESUPRIMENTO DESCRIPTION 'Altera dados de resuprimento.' WSSYNTAX "/ALTERA_RESUPRIMENTO " PATH 'ALTERA_RESUPRIMENTO' PRODUCES APPLICATION_JSON
+    
 
 END WSRESTFUL
 
@@ -683,7 +686,88 @@ self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
 
 Return .T.
 
-WSMETHOD GET RESERVA PATHPARAM id, data_ini, data_fim WSRECEIVE RESERVA_STRUCT  WSSERVICE IntegEQM
+WSMETHOD GET RESERVA PATHPARAM id WSRECEIVE RESERVA_STRUCT  WSSERVICE IntegEQM
+
+
+Local lRet := .T.
+Local aCab := {}
+Local aItens := {}
+Local nSaveSx8 := 0
+Local cNumero := ''
+Local i 
+Local nOpcx := 5
+Local cJson := ::GetContent()
+Local lEncontrado := .F.
+oResponse := JsonObject():New()
+
+Private lMsErroAuto := .F.
+Private lAutoErrNoFile := .T.
+Private lMsHelpAuto :=.T.
+
+
+jJson := JsonObject():New()
+CONOUT("METODO DE RESERVA")
+CONOUT(cJson)
+jJson:FromJson(cJson)
+
+ //---------- nOpcx = 3 Inclusão de Solicitação de Armazém --------------
+
+dbSelectArea( 'SB1' )
+SB1->( dbSetOrder( 1 ) )
+
+dbSelectArea( 'SCP' )
+SCP->( dbSetOrder( 1 ) )
+
+JReserva := JsonObject():New()
+aJson := { }
+
+cNumero := jJson["NUMERO"]
+JReserva["FILIAL"] := xFilial("SCP")
+JReserva["NUMERO"] := cNumero
+
+
+dbSelectArea("SCP")
+dbSetOrder(1)
+SCP->(dbSeek(xFilial("SCP")+cNumero))
+
+while SCP->CP_NUM == cNumero
+    lEncontrado := .T.
+    JReserva["EMISSAO"] := DTOC(SCP->CP_EMISSAO)
+    JReserva["ARMAZEM"] := SCP->CP_LOCAL
+    JReserva["STATUS"] := IF(SCP->CP_QUJE < SCP->CP_QUANT, "PENDENTE", "ATENDIDA")
+
+    Aadd( aItens, {} )
+    JItem := JsonObject():New()
+    JItem["ITEM"] := SCP->CP_ITEM
+    JItem["PRODUTO"] := SCP->CP_PRODUTO
+    JItem["DESCRICAO"] := SCP->CP_DESCRI
+    JItem["QTDE"] := SCP->CP_QUANT
+    AADD(aJson,JItem)
+
+dbskip()
+end
+
+JReserva["ITENS"] := aJson
+
+IF(!lEncontrado)
+
+    CONOUT( 'Erro ao Executar o Processo' )
+    jErro := JsonObject():New()
+    jErro["CODIGO"] := "200"
+    jErro["DESCRICAO"] := "Erro ao consultar reserva."
+    jErro["LOG"] := AllTrim(xDatAt() + "[ERRO] RESERVA NÃO ENCONTRADA" )
+    oResponse["Error"] := jErro
+    lRet := .F.
+
+ELSE
+
+    oResponse["RESERVAR"] := JReserva
+    CONOUT( 'Processo Executado' )
+
+ENDIF
+
+self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+
 
 Return .T.
 
@@ -1029,7 +1113,7 @@ WSMETHOD GET ESTOQUE PATHPARAM id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM
    
 Return .T.
 
-WSMETHOD POST RESUPRIMENTO PATHPARAM material_id WSRECEIVE RESUPRIMENTO_STRUCT WSSERVICE IntegEQM
+WSMETHOD GET RESUPRIMENTO PATHPARAM Id WSSERVICE IntegEQM
    
 CONOUT("WSMETHOD GET MATERIAL PATHPARAM id WSRECEIVE MATERIAIS_STRUCT WSSERVICE IntegEQM")
     Self:SetContentType('application/json')
@@ -1048,9 +1132,9 @@ CONOUT("WSMETHOD GET MATERIAL PATHPARAM id WSRECEIVE MATERIAIS_STRUCT WSSERVICE 
             jMaterial := JsonObject():New()
             jMaterial["CODIGO"] := ALLTRIM(SB1->B1_FILIAL+SB1->B1_COD)
             jMaterial["DESCRICAO"] := ALLTRIM(SB1->B1_DESC)
-            jMaterial["PONTOPEDIDO"] := ALLTRIM(SB1->B1_UM)
-            jMaterial["ESTOQUESEGURANCA"] := ALLTRIM(SB1->B1_CODBAR) 
-            jMaterial["LOTEECONOMICO"] := ALLTRIM(SB1->B1_CODBAR) 
+            jMaterial["PONTOPEDIDO"] := SB1->B1_EMIN
+            jMaterial["ESTOQUESEGURANCA"] := SB1->B1_ESTSEG
+            jMaterial["LOTEECONOMICO"] := SB1->B1_LE
             
 
             oResponse["MATERIAL"] := jMaterial
@@ -1100,6 +1184,44 @@ CONOUT("WSMETHOD GET MATERIAL PATHPARAM id WSRECEIVE MATERIAIS_STRUCT WSSERVICE 
 
 Return .T.
 
+
+WSMETHOD POST ALTERA_RESUPRIMENTO PATHPARAM RESUPRIMENTO_STRUCT WSRECEIVE RETORNO WSSERVICE IntegEQM
+Local cJson := ::GetContent()
+oResponse := JsonObject():New()
+
+jJson := JsonObject():New()
+CONOUT("METODO DE RESUPRIMENTO")
+CONOUT(cJson)
+jJson:FromJson(cJson)
+
+Dbselectarea("SB1")
+Dbsetorder(1)
+IF(DBSeek(jJson["CODIGO"]))
+
+    RECLOCK("SB1",.F.)
+    SB1->B1_EMIN := jJson["PONTOPEDIDO"]
+    SB1->B1_ESTSEG := jJson["ESTOQUESEGURANCA"] 
+    SB1->B1_LE := jJson["LOTEECONOMICO"] 
+    MSUNLOCK()
+
+    cMsg := "Parametros atualizados com sucesso!"
+
+ELSE
+
+    cMsg := "Produto não foi encontrado"
+
+ENDIF
+  
+    
+
+oResponse["RETORNO"] := cMsg
+self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+
+Return .T.
+
+
+
+
 WSMETHOD GET NUMERO_PEDIDO PATHPARAM pedido_id WSRECEIVE PEDIDO_COMPRA_STRUCT WSSERVICE IntegEQM
    
 Return .T.
@@ -1107,3 +1229,51 @@ Return .T.
 WSMETHOD GET NUM_NOTA PATHPARAM nota_id WSRECEIVE NOTA_FISCAL_STRUCT WSSERVICE IntegEQM
    
 Return .T.
+
+WSMETHOD GET LEADTIME PATHPARAM data_ini WSSERVICE IntegEQM
+    
+    cData := " "
+    CONOUT("WSMETHOD GET LEADTIME ")
+    Self:SetContentType('application/json')
+    oResponse := JsonObject():New()
+     IF(!EMPTY(Self:data_ini))
+        cData := Self:data_ini
+   ENDIF
+
+    CONOUT("WSMETHOD GET LEADTIME "+RetSqlName("SA2")+" FILIAL "+xFilial("SA2")+" PATHPARAM "+cData+" WSRECEIVE MATERIAIS_STRUCT WSSERVICE IntegEQM")
+
+ 
+
+   cQuery := "SELECT A2_FILIAL, A2_COD,A2_LOJA, A2_CGC,A2_NOME,A2_NREDUZ, A2_LEADTIM FROM "+RetSqlName("SA2")+" "
+   cQuery += "WHERE A2_DTINIV >= '"+DTOS(Date()-30)+ "' AND A2_DTINIV >= '"+cData+ "' "
+   cQuery += "AND D_E_L_E_T_ <> '*'  "
+
+    If (Select("SA2G") <> 0)
+        dbSelectArea("SA2G")
+        dbCloseArea()
+	Endif
+
+    aList := {}
+    TCQuery cQuery NEW ALIAS "SA2G"
+
+    dbSelectArea("SA2G")
+    dbGoTop()
+    WHILE !(SA2G->(Eof()))
+            
+        jMaterial := JsonObject():New()
+        jMaterial["CODIGO"] := ALLTRIM(SA2G->A2_FILIAL+SA2G->A2_COD)
+        jMaterial["LOJA"] := ALLTRIM(SA2G->A2_LOJA)
+        jMaterial["CNPJ"] := ALLTRIM(SA2G->A2_CGC)
+        jMaterial["RAZAO"] := ALLTRIM(SA2G->A2_NOME)
+        jMaterial["FANTASIA"] := ALLTRIM(SA2G->A2_NREDUZ)
+        jMaterial["LEADTIME"] := SA2G->A2_LEADTIM
+
+        AADD(aList,jMaterial)
+
+        SA2G->(dbSkip())
+    END
+    oResponse:set(aList)
+
+    self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+
+RETURN .T.
