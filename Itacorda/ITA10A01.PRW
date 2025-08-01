@@ -71,7 +71,7 @@ User Function ITA10A01()
 	aAdd(aSeek,{"PRODUTO"	,{{"","C",006,0,"Produto"	,"@!"}} } )
 	Processa({||GeraDados()},'Gerando informacoes...')
 
-	DEFINE MSDIALOG oDlgExemp TITLE "TAcompanhamento de OPs"  FROM 0, 0 TO nJanAltu, nJanLarg PIXEL
+	//DEFINE MSDIALOG oDlgExemp TITLE "TAcompanhamento de OPs"  FROM 0, 0 TO nJanAltu, nJanLarg PIXEL
 	oFwLayer := FwLayer():New()
 	oFwLayer:init(oDlgExemp,.F.)
 
@@ -263,7 +263,7 @@ User Function ITA10A01()
 	oMark:Activate()
 	oMark:oBrowse:Setfocus()
 
-	Activate MsDialog oDlgExemp Centered
+	//Activate MsDialog oDlgExemp Centered
 
 
 Return

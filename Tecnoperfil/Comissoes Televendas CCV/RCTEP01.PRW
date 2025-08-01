@@ -1,10 +1,14 @@
 //Bibliotecas
 #Include "Totvs.ch"
 #Include "FWMVCDef.ch"
+#Include "RESTFul.ch"
+#Include "TopConn.ch"
 
 /*/{Protheus.doc} User Function RCTEP01
 Metas Individuais
 @author Evandro Burlin
+admin
+@SenhaSegura9&@
 @since 03/02/2025
 @version 1.0
 /*/
@@ -94,3 +98,37 @@ Static Function CallRnw()
 	_oProc		:= MsNewProcess():New({ || fCalcula() },"Processando","Aguarde...",.F.)
 
 Return
+
+static function fCalcula
+
+	cQueryTab := "  "
+	cQueryTab += " select C5_FILIAL FILIAL, C5_EMISSAO EMISSAO, C5_VEND1 VEND1,SA3.A3_NOME PRINCIPAL, C5_VEND4 VEND2, NVL(SA32.A3_NOME,' ') SECUNDARIO, C5_NUM PEDIDO,A1_NOME NOME,  "
+	cQueryTab += "A1_COD CLIENTE, A1_LOJA LOJA, "
+	cQueryTab += "SUM(C6_VALOR) TOTAL,  "
+	cQueryTab += "SUM(CASE WHEN C5_VEND4 <> ' ' THEN C6_VALOR/2 ELSE C6_VALOR END) VALOR,  "
+	cQueryTab += "CASE WHEN C5_VEND4 <> ' ' THEN 'METADE' ELSE 'TOTAL' END TIPO  "
+	cQueryTab += "from SC5010 SC5  "
+	cQueryTab += "inner join SC6010 SC6 on C6_FILIAL = C5_FILIAL AND C6_NUM = C5_NUM AND C6_CLI = C5_CLIENTE AND C6_LOJA = C5_LOJACLI AND SC6.D_E_L_E_T_ <> '*' "
+	cQueryTab += "left join SA3010 SA3 on SA3.A3_COD = C5_VEND1 AND SA3.D_E_L_E_T_ <> '*' "
+	cQueryTab += "left join SA3010 SA32 on SA32.A3_COD = C5_VEND4 AND SA32.D_E_L_E_T_ <> '*' "
+	cQueryTab += "inner join SA1010 SA1 on A1_COD = C5_CLIENTE AND A1_LOJA = C5_LOJACLI AND SA1.D_E_L_E_T_ <> '*' "
+	cQueryTab += "where C5_EMISSAO >= '20250601' AND C5_EMISSAO <= '20250630' AND SC5.D_E_L_E_T_ <> '*' "
+	cQueryTab += "AND (C5_VEND1 = '9996' OR C5_VEND4 = '9996') "
+	cQueryTab += "AND C5_VEND1 NOT IN ('113396','110641', '6001') "
+	cQueryTab += "AND A1_NREDUZ <> 'MRV' "
+	cQueryTab += "AND C6_TES <> '598' AND C5_NUM <> '004298' "
+	cQueryTab += "GROUP BY C5_FILIAL, C5_EMISSAO, C5_VEND1, C5_VEND4, C5_NUM,A1_NOME, A1_COD, A1_LOJA, SA3.A3_NOME, SA32.A3_NOME "
+	cQueryTab += "ORDER BY C5_EMISSAO "
+	
+	TCQuery cQueryTab New Alias 'QRY_TAB'
+
+	
+
+
+
+
+
+
+
+
+return

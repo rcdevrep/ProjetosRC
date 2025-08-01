@@ -4,12 +4,19 @@
 
 user function RCXCAD01
 
-	AxCadastro("ZP0","Remuneração Sobre Vendas",".T.",".T.")
+	AxCadastro("ZP2","Remuneração Sobre Vendas",".T.",".T.")
 
 return
 
 user function RCXCAD02
 
-	AxCadastro("ZP1","Metas individuais",".T.",".T.")
+	AxCadastro("ZP0","Metas individuais",".T.",".T.")
+
+return
+
+
+user function RCXCAD03
+
+	AxCadastro("ZP1","Histórico",".T.",".T.")
 
 return
