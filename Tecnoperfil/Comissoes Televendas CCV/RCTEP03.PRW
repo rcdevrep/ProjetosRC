@@ -20,3 +20,11 @@ user function RCXCAD03
 	AxCadastro("ZP1","Histórico",".T.",".T.")
 
 return
+
+
+user function RCXCAD04
+
+	AxCadastro("ZP3","Log",".T.",".T.")
+
+return
+

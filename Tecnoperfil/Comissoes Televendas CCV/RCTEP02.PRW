@@ -27,10 +27,10 @@ User Function RCTEP02()
 Local   oReport
 Local   aRegs  := {}
 Private cPerg  := "RCTEP02"
-//Private _oUtil := TUtil():New()
+Private _oUtil := TUtil():New()
 
 
-//_oUtil:registraAnaliseUso("RCTEP02")
+_oUtil:registraAnaliseUso("RCTEP02")
 cPerg := PADR(cPerg,10)
 
 AADD(aRegs,{cPerg,"01","Ano         ","","","mv_ch1","C",04,0,0,"G","","mv_par01","","","","","","","","","","","","","","","","","","","","","","","","","",""})
@@ -41,8 +41,10 @@ AADD(aRegs,{cPerg,"02","Competência ","","","mv_ch2","C",02,0,0,"G","","mv_par02
 //Atualiza parametro
 fAtuParam(cPerg)
 If pergunte(cPerg,.T.)
-	oReport := ReportDef()
-	oReport:PrintDialog()	
+	
+	PRINTEXCEL()
+
+
 Endif
 
 	
@@ -81,52 +83,18 @@ Return
 //±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
 //±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
 //ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-Static Function ReportDef()
+static Function PRINTEXCEL()
 
-Local oReport
-Local oSection1
-Local aOrdem := {"Código","Nome"}
+oExcel := FwMsExcelXlsx():New()
 
-oReport := TReport():New("VEIR005","Cálculo Comissão Competência","VEIR005",{|oReport| ReportPrint(oReport)},"Cálculo Comissão Competência")
-oReport:SetPortrait(.T.)
-oReport:SetTotalInLine(.F.)
+lRet := oExcel:IsWorkSheet("Comissoes")
+oExcel:AddworkSheet("Comissoes")
 
-
-oSection1 := TRSection():New(oReport,"Relatório Cálculo Comissão",{},aOrdem)
-oSection1:SetLineBreak(.F.)
-
-TRCell():New(oSection1,"COD",,"Código"			,"@!"				,20,.F.)
-TRCell():New(oSection1,"NOM",,"Nome"			,"@!"				,50,.F.)
-TRCell():New(oSection1,"FIX",,"Perc. Fixo"		,"@E 9,999,999.99"	,12,.F.,,"RIGHT")
-TRCell():New(oSection1,"SAL",,"Perc. Saldo"		,"@E 9,999,999.99"	,12,.F.,,"RIGHT")
-TRCell():New(oSection1,"MAR",,"Perc. Margem"	,"@E 9,999,999.99"	,12,.F.,,"RIGHT") 
-TRCell():New(oSection1,"LIN",,"Perc. Linhas"	,"@E 9,999,999.99"	,12,.F.,,"RIGHT") 
-TRCell():New(oSection1,"MET",,"Perc. Meta"		,"@E 9,999,999.99"	,12,.F.,,"RIGHT") 
-TRCell():New(oSection1,"TOT",,"Perc. Total"		,"@E 9,999,999.99"	,12,.F.,,"RIGHT") 
-
-	
-Return oReport
-//ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-//±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-//±±ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿±±
-//±±³STATIC FUNCTION ³ REPORTPRINT                                          ³±±
-//±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-//±±³FAZ A IMPRESSAO DO RELATORIO CONFOME LAYOUT                            ³±±
-//±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-//±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-//ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-Static Function ReportPrint(oReport)
-
-Local oSection1 := oReport:Section(1)
-Local nOrdem 	  := oSection1:GetOrder()
 
 Local _cAliasCom := GetNextAlias()
 
-//Verifica Competencia se existe mais de um fechamento
-_dDtFec := fVerifComp()
   
-  
-_cQuery := " SELECT       SA3.A3_COD AS CODIGO, SA3.A3_NOME AS NOME, ZP1.ZP1_FIXO, ZP1.ZP1_SALDO, ZP1.ZP1_MARGEM, ZP1.ZP1_LINHA, ZP1.ZP1_META "
+_cQuery := " SELECT       SA3.A3_COD AS CODIGO, SA3.A3_NOME AS NOME, ZP1.ZP1_META META, ZP1_VALOR VALOR, ZP1_BONUS BONUS "
 _cQuery += " FROM         "+RetSqlName("ZP1")+" ZP1 "
 _cQuery += " INNER JOIN   "+RetSqlName("SA3")+" SA3 "	
 _cQuery += "         ON   SA3.A3_FILIAL   = '"+ xFilial("SA3") +"' "	
@@ -136,110 +104,96 @@ _cQuery += " WHERE        ZP1.D_E_L_E_T_  = ' ' "
 _cQuery += " AND          ZP1.ZP1_FILIAL  = '"+ xFilial("ZP1") +"' "
 _cQuery += " AND          ZP1.ZP1_ANO     = '"+ mv_par01 +"' "
 _cQuery += " AND          ZP1.ZP1_MES     = '"+ mv_par02 +"' "
-If Type("_dDtFec") == "D"
-	_cQuery += " AND      ZP1.ZP1_DTFEC   = '"+ DtoS(_dDtFec) +"' "	
-Endif
-If nOrdem == 1
-	_cQuery += " ORDER BY SA3.A3_COD "
-ElseIf nOrdem == 2
-	_cQuery += " ORDER BY SA3.A3_NOME " 
-Endif
+_cQuery += " ORDER BY SA3.A3_NOME " 
 
 Conout(_cQuery)
 _nRegs := _oUtil:executaQuery(_cQuery,(_cAliasCom),.T.)
 
+lRet := oExcel:IsWorkSheet("Comissoes")
+oExcel:AddTable ("Comissoes","Fechamento de Comissões")
+
+oExcel:AddColumn("Comissoes","Table1","Codigo",1,1,.F., "")
+oExcel:AddColumn("Comissoes","Table1","Nome",2,2,.F., "")
+oExcel:AddColumn("Comissoes","Table1","Meta",3,3,.F., "")
+oExcel:AddColumn("Comissoes","Table1","Valor",1,1,.T., "")
+oExcel:AddColumn("Comissoes","Table1","Bonus",1,1,.T., "")
+
 If _nRegs > 0
-	oSection1:Init()
-	
-	oReport:SetMeter(_nRegs)
-	
 	While (_cAliasCom)->(!Eof())
-		oReport:IncMeter()
 		
-		_nPercTot := ((_cAliasCom)->(ZP1_FIXO) + (_cAliasCom)->(ZP1_SALDO) + (_cAliasCom)->(ZP1_MARGEM) + (_cAliasCom)->(ZP1_LINHA) + (_cAliasCom)->(ZP1_META))	
-		
-			
-		oSection1:Cell("COD"):SetValue({ || (_cAliasCom)->(CODIGO)		})
-		oSection1:Cell("NOM"):SetValue({ || (_cAliasCom)->(NOME)		})
-		oSection1:Cell("FIX"):SetValue({ || (_cAliasCom)->(ZP1_FIXO)	}) 
-		oSection1:Cell("SAL"):SetValue({ || (_cAliasCom)->(ZP1_SALDO)	}) 
-		oSection1:Cell("MAR"):SetValue({ || (_cAliasCom)->(ZP1_MARGEM)	}) 
-		oSection1:Cell("LIN"):SetValue({ || (_cAliasCom)->(ZP1_LINHA)	}) 
-		oSection1:Cell("MET"):SetValue({ || (_cAliasCom)->(ZP1_META)	}) 
-		oSection1:Cell("TOT"):SetValue({ || _nPercTot					})  
-		
-		
-		oSection1:PrintLine()
+		oExcel:AddRow("Comissoes","Table1",{(_cAliasCom)->(CODIGO),(_cAliasCom)->(NOME), (_cAliasCom)->(META),(_cAliasCom)->(VALOR),  (_cAliasCom)->(BONUS)})
 		
 	   (_cAliasCom)->(dbSkip())      
 	End
 	(_cAliasCom)->(dbCloseArea())
-	
-	oSection1:Finish()
-	
-	oReport:EndPage()
 Endif	
 
+/*oExcel:SetFont("arial")
+oExcel:SetFontSize(20)
+oExcel:SetItalic(.T.)
+oExcel:SetBold(.T.)
+oExcel:SetUnderline(.T.)*/
+
+
+
+	cQueryTab := "  "
+	cQueryTab += "select C5_FILIAL FILIAL, C5_EMISSAO EMISSAO, C5_VEND1 VEND1,SA3.A3_NOME PRINCIPAL, C5_VEND4 VEND2, NVL(SA32.A3_NOME,' ') SECUNDARIO, C5_NUM PEDIDO,A1_NOME NOME,  "
+	cQueryTab += "A1_COD CLIENTE, A1_LOJA LOJA, "
+	cQueryTab += "SUM(C6_VALOR) TOTAL,  "
+	cQueryTab += "SUM(CASE WHEN C5_VEND4 <> ' ' THEN C6_VALOR/2 ELSE C6_VALOR END) VALOR,  "
+	cQueryTab += "CASE WHEN C5_VEND4 <> ' ' THEN 'METADE' ELSE 'TOTAL' END TIPO  "
+	cQueryTab += "from "+RETSQLNAME("SC5")+" SC5  "
+	cQueryTab += "inner join "+RETSQLNAME("SC6")+" SC6 on C6_FILIAL = C5_FILIAL AND C6_NUM = C5_NUM AND C6_CLI = C5_CLIENTE AND C6_LOJA = C5_LOJACLI AND SC6.D_E_L_E_T_ <> '*' "
+	cQueryTab += "left join "+RETSQLNAME("SA3")+" SA3 on SA3.A3_COD = C5_VEND1 AND SA3.D_E_L_E_T_ <> '*' "
+	cQueryTab += "left join "+RETSQLNAME("SA3")+" SA32 on SA32.A3_COD = C5_VEND4 AND SA32.D_E_L_E_T_ <> '*' "
+	cQueryTab += "inner join "+RETSQLNAME("SA1")+" SA1 on A1_COD = C5_CLIENTE AND A1_LOJA = C5_LOJACLI AND SA1.D_E_L_E_T_ <> '*' "
+	cQueryTab += "where C5_EMISSAO > '"+DTOS(_dFecMes)+"' AND C5_EMISSAO <= '"+DTOS(_dDtFec)+"' AND SC5.D_E_L_E_T_ <> '*' "
+	//cQueryTab += "AND (C5_VEND1 = '9996' OR C5_VEND4 = '9996') "
+	cQueryTab += "	AND C5_VEND1 <> ' ' "
+	cQueryTab += "AND C5_VEND1 NOT IN ('113396','110641', '6001') "
+	cQueryTab += "AND A1_NREDUZ <> 'MRV' " 
+	cQueryTab += "AND C6_TES <> '598' AND C6_TES <> '905' AND C6_TES <> '921' AND C5_NUM <> '004298' " //Exceções
+	cQueryTab += "GROUP BY C5_FILIAL, C5_EMISSAO, C5_VEND1, C5_VEND4, C5_NUM,A1_NOME, A1_COD, A1_LOJA, SA3.A3_NOME, SA32.A3_NOME "
+	cQueryTab += "ORDER BY C5_VEND1 "
 	
+	TCQuery cQueryTab New Alias 'QRY_TAB'
+	cVend := ""
+	dbselectarea("QRY_TAB")
+	dbgotop()
+	WHILE QRY_TAB->(!EOF())
+		
+		IF(cVend != QRY_TAB->C5_VEND1)
+			oExcel:AddworkSheet(QRY_TAB->PRINCIPAL)
+			oExcel:AddTable(QRY_TAB->PRINCIPAL,"Table1")
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Filial",1, 1)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Emissao",2, 2)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Vend1",3, 3)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Principal",1, 4)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Vend2",1)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Secundario",1)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Pedido",1)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Nome",1)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Cliente",1)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Loja",1)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Vend2",1)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Total",1)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Valor",1)
+			oExcel:AddColumn(QRY_TAB->PRINCIPAL,"Table1","Tipo",1)
+
+		ELSE
+			oExcel:AddRow(QRY_TAB->PRINCIPAL,"Table1",{  })
+		ENDIF
+				
+		
+
+		QRY_TAB->(DBSKIP())
+	END
+
+oExcel:Activate()
+
+oExcel:GetXMLFile("C:\temp\TESTE.xlsx")
+
+oExcel:DeActivate()
 Return
-//ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
-//±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-//±±ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿±±
-//±±³STATIC FUNCTION ³ FVERIFCOMP                                           ³±±
-//±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
-//±±³                                                                       ³±±
-//±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
-//±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
-//ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
-Static Function fVerifComp()
 
-Local _dDtSel
-Local _cAlias := GetNextAlias()
 
-_aArrData := {}
- 
-
-_cQuery := " SELECT    ZP1.ZP1_DTFEC "
-_cQuery += " FROM      "+RetSqlName("ZP1")+" ZP1 "	
-_cQuery += " WHERE     ZP1.D_E_L_E_T_  = ' ' "
-_cQuery += " AND       ZP1.ZP1_FILIAL  = '"+ xFilial("ZP1") +"' "
-_cQuery += " AND       ZP1.ZP1_ANO     = '"+ mv_par01 +"' "
-_cQuery += " AND       ZP1.ZP1_MES     = '"+ mv_par02 +"' "
-_cQuery += " GROUP BY  ZP1.ZP1_DTFEC "
-_cQuery += " ORDER BY  ZP1.ZP1_DTFEC "
-
-_nRegs := _oUtil:executaQuery(_cQuery,(_cAlias),.T.)
-
-If _nRegs > 1
-	While (_cAlias)->(!Eof())
-		aadd(_aArrData, StoD((_cAlias)->ZP1_DTFEC))
-	
-		(_cAlias)->(dbSkip())
-	End
-	(_cAlias)->(dbCloseArea())
-	
-	
-	_oDlg := TDialog():New(000,000,300,400,"Data de Fechamento",,,,,CLR_BLACK,CLR_WHITE,,,.T.)
-	
-	_oSay1	:= TSay():New(015,004,{|| "Encontrado mais de um Fechamento para o Período escolhido, escolha a Data de Fechamento para impressão do relatório!" },_oDlg,,,,,,.T.,CLR_BLACK,CLR_WHITE,190,30)
-		
-	_oPanel := TPanel():New(050,005,,_oDlg,,,,,,190,080)
-	_oLb := FWBrowse():New(_oPanel)
-	
-	_oLb:AddColumn({"Data de Fechamento",{|| _aArrData[_oLb:nAt] },"C","@!","LEFT",20,0,.F.})
-	
-	_oLb:nAt := 1
-	_oLb:DisableReport()
-	_oLb:DisableConfig()
-	_oLb:SetDataArray()
-	_oLb:SetArray(_aArrData)
-	_oLb:bLDblClick := {|| (_dDtSel := _aArrData[_oLb:nAt], _oDlg:End()) }
-	_oLb:Activate()
-	
-	_oBtConf := TButton():New(135,005,"Confirmar",_oDlg,{|| (_dDtSel := _aArrData[_oLb:nAt], _oDlg:End()) },60,12,,,.F.,.T.,.F.,,.F.,,,.F.) 	
-		
-	_oDlg:Activate(,,,.T.,{|| .T.},,{|| .T.} )
-
-Endif
-
-Return _dDtSel

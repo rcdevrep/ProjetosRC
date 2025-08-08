@@ -102,33 +102,100 @@ Return
 static function fCalcula
 
 	cQueryTab := "  "
-	cQueryTab += " select C5_FILIAL FILIAL, C5_EMISSAO EMISSAO, C5_VEND1 VEND1,SA3.A3_NOME PRINCIPAL, C5_VEND4 VEND2, NVL(SA32.A3_NOME,' ') SECUNDARIO, C5_NUM PEDIDO,A1_NOME NOME,  "
+	cQueryTab += "select C5_FILIAL FILIAL, C5_EMISSAO EMISSAO, C5_VEND1 VEND1,SA3.A3_NOME PRINCIPAL, C5_VEND4 VEND2, NVL(SA32.A3_NOME,' ') SECUNDARIO, C5_NUM PEDIDO,A1_NOME NOME,  "
 	cQueryTab += "A1_COD CLIENTE, A1_LOJA LOJA, "
 	cQueryTab += "SUM(C6_VALOR) TOTAL,  "
 	cQueryTab += "SUM(CASE WHEN C5_VEND4 <> ' ' THEN C6_VALOR/2 ELSE C6_VALOR END) VALOR,  "
 	cQueryTab += "CASE WHEN C5_VEND4 <> ' ' THEN 'METADE' ELSE 'TOTAL' END TIPO  "
-	cQueryTab += "from SC5010 SC5  "
-	cQueryTab += "inner join SC6010 SC6 on C6_FILIAL = C5_FILIAL AND C6_NUM = C5_NUM AND C6_CLI = C5_CLIENTE AND C6_LOJA = C5_LOJACLI AND SC6.D_E_L_E_T_ <> '*' "
-	cQueryTab += "left join SA3010 SA3 on SA3.A3_COD = C5_VEND1 AND SA3.D_E_L_E_T_ <> '*' "
-	cQueryTab += "left join SA3010 SA32 on SA32.A3_COD = C5_VEND4 AND SA32.D_E_L_E_T_ <> '*' "
-	cQueryTab += "inner join SA1010 SA1 on A1_COD = C5_CLIENTE AND A1_LOJA = C5_LOJACLI AND SA1.D_E_L_E_T_ <> '*' "
-	cQueryTab += "where C5_EMISSAO >= '20250601' AND C5_EMISSAO <= '20250630' AND SC5.D_E_L_E_T_ <> '*' "
-	cQueryTab += "AND (C5_VEND1 = '9996' OR C5_VEND4 = '9996') "
+	cQueryTab += "from "+RETSQLNAME("SC5")+" SC5  "
+	cQueryTab += "inner join "+RETSQLNAME("SC6")+" SC6 on C6_FILIAL = C5_FILIAL AND C6_NUM = C5_NUM AND C6_CLI = C5_CLIENTE AND C6_LOJA = C5_LOJACLI AND SC6.D_E_L_E_T_ <> '*' "
+	cQueryTab += "left join "+RETSQLNAME("SA3")+" SA3 on SA3.A3_COD = C5_VEND1 AND SA3.D_E_L_E_T_ <> '*' "
+	cQueryTab += "left join "+RETSQLNAME("SA3")+" SA32 on SA32.A3_COD = C5_VEND4 AND SA32.D_E_L_E_T_ <> '*' "
+	cQueryTab += "inner join "+RETSQLNAME("SA1")+" SA1 on A1_COD = C5_CLIENTE AND A1_LOJA = C5_LOJACLI AND SA1.D_E_L_E_T_ <> '*' "
+	cQueryTab += "where C5_EMISSAO > '"+DTOS(_dFecMes)+"' AND C5_EMISSAO <= '"+DTOS(_dDtFec)+"' AND SC5.D_E_L_E_T_ <> '*' "
+	//cQueryTab += "AND (C5_VEND1 = '9996' OR C5_VEND4 = '9996') "
+	cQueryTab += "	AND C5_VEND1 <> ' ' "
 	cQueryTab += "AND C5_VEND1 NOT IN ('113396','110641', '6001') "
-	cQueryTab += "AND A1_NREDUZ <> 'MRV' "
-	cQueryTab += "AND C6_TES <> '598' AND C5_NUM <> '004298' "
+	cQueryTab += "AND A1_NREDUZ <> 'MRV' " 
+	cQueryTab += "AND C6_TES <> '598' AND C6_TES <> '905' AND C6_TES <> '921' AND C5_NUM <> '004298' " //Exceções
 	cQueryTab += "GROUP BY C5_FILIAL, C5_EMISSAO, C5_VEND1, C5_VEND4, C5_NUM,A1_NOME, A1_COD, A1_LOJA, SA3.A3_NOME, SA32.A3_NOME "
-	cQueryTab += "ORDER BY C5_EMISSAO "
+	cQueryTab += "ORDER BY C5_VEND1 "
 	
 	TCQuery cQueryTab New Alias 'QRY_TAB'
 
-	
+	cUpdQry := " UPDATE ZP3010 SET D_E_L_E_T_ = '*' WHERE ZP3_ANO = '"+Year2Str(_dDtFec)+"' AND ZP3_MES = '"+Month2Str(_dDtFec)+"' AND D_E_L_E_T_ <> '*' "
+	If (TCSQLExec(cUpdQry) < 0)
+		Return MsgStop("TCSQLError() " + TCSQLError())
+	EndIf
 
+	dbselectarea("QRY_TAB")
+	dbgotop()
+	WHILE QRY_TAB->(!EOF())
+		
+		RECLOCK("ZP3",.T.)
 
+		ZP3_FILIAL := QRY_TAB->FILIAL
+		ZP3_VEND1 := QRY_TAB->VEND1
+		ZP3_ANO := Year2Str(STOD(QRY_TAB->EMISSAO))
+		ZP3_MES := Month2Str(STOD(QRY_TAB->EMISSAO))
+		ZP3_EMISSAO := STOD(QRY_TAB->EMISSAO)
+		ZP3_VEND2 := QRY_TAB->VEND2
+		ZP3_PEDIDO := QRY_TAB->PEDIDO
+		ZP3_CLIENT := QRY_TAB->CLIENTE
+		ZP3_LOJA := QRY_TAB->LOJA
+		ZP3_TOTAL := QRY_TAB->TOTAL
+		ZP3_VALOR := QRY_TAB->VALOR
+		ZP3_TIPO := QRY_TAB->TIPO
 
+		MSUNLOCK()
 
+		/*
+		PRINCIPAL
+		SECUNDARIO
+		NOME
+		//METADE TOTAL
+		*/
 
+		QRY_TAB->(DBSKIP())
+	END
 
+	FWAlertSuccess("Calculado com Sucesso", "Sucesso")
+
+	cQueryZP3 := " SELECT ZP3_VEND1,ZP0_PERC, SUM(ZP3_VALOR) VALOR FROM ZP3010 ZP3 "
+	cQueryZP3 += "inner join ZP0010 on ZP0_CODIGO = ZP3_MES AND ZP0_ANO = ZP3_ANO AND ZP0_CODSA3 = ZP3_VEND1 "
+	cQueryZP3 += "WHERE ZP3_ANO = '"+Year2Str(_dDtFec)+"' AND ZP3_MES = '"+Month2Str(_dDtFec)+"' AND ZP3.D_E_L_E_T_ <> '*' "
+	cQueryZP3 += "group by ZP3_VEND1,ZP0_PERC"
+
+	TCQuery cQueryZP3 New Alias 'ZP3_TAB'
+
+	cUpdZP1 := " UPDATE ZP1010 SET D_E_L_E_T_ = '*' WHERE ZP1_ANO = '"+Year2Str(_dDtFec)+"' AND ZP1_MES = '"+Month2Str(_dDtFec)+"' AND D_E_L_E_T_ <> '*' "
+	If (TCSQLExec(cUpdZP1) < 0)
+		Return MsgStop("TCSQLError() " + TCSQLError())
+	EndIf
+
+	dbselectarea("ZP3_TAB")
+	dbgotop()
+	WHILE ZP3_TAB->(!EOF())
+
+		RECLOCK("ZP1",.T.)
+		ZP1_CODSA3 := ZP3_TAB->ZP3_VEND1
+		ZP1_ANO := Year2Str(_dDtFec)
+		ZP1_MES := Month2Str(_dDtFec)
+		ZP1_DTINI := _dDtFec
+		ZP1_DTFECH := _dDtFec
+		ZP1_DTPAG := _dDtFec
+		ZP1_TICKET := 0
+		ZP1_METAEQ := 0
+		ZP1_PROSPE := 0
+		ZP1_POSITI := 0 
+		ZP1_META := ZP3_TAB->ZP0_PERC
+		ZP1_VALOR := ZP3_TAB->VALOR
+		ZP1_BONUS := 0
+
+		MSUNLOCK()
+
+	ZP3_TAB->(DBSKIP())
+	END
 
 
 return
