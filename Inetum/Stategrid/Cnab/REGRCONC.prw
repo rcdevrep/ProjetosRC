@@ -244,13 +244,15 @@ Local cSeq
          return
     EndIf
 
-    DbSelectArea("SA6")
-    SA6->(DbSetOrder(1))
+    IF(cCbProc1 != '2')
+        DbSelectArea("SA6")
+        SA6->(DbSetOrder(1))
 
-    If !SA6->(DbSeek(PADR(SubStr(cTextFIL,1,2),4) + PADR(cTextBanc,TamSx3("A6_COD")[1]) + PADR(cTextAgen,TamSx3("A6_AGENCIA")[1]) + PADR(cTextCont,TamSx3("A6_NUMCON")[1])))
-         FWAlertError("Conta bancária "+cTextBanc+" "+cTextAgen+" "+cTextCont +" não cadastrada na filial "+cTextFIL+".", "Seleção incorreta")
-         return
-    EndIf
+        If !SA6->(DbSeek(PADR(SubStr(cTextFIL,1,2),4) + PADR(cTextBanc,TamSx3("A6_COD")[1]) + PADR(cTextAgen,TamSx3("A6_AGENCIA")[1]) + PADR(cTextCont,TamSx3("A6_NUMCON")[1])))
+            FWAlertError("Conta bancária "+cTextBanc+" "+cTextAgen+" "+cTextCont +" não cadastrada na filial "+cTextFIL+".", "Seleção incorreta")
+            return
+        EndIf
+    ENDIF
 	
 	
 

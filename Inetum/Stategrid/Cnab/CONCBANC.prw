@@ -697,7 +697,8 @@ Private cHistBaixa := ""
                                         Aadd(aBaixa, {"E1_PREFIXO" , SE1->E1_PREFIXO           , nil})
                                         Aadd(aBaixa, {"E1_NUM"     , SE1->E1_NUM               , nil})
                                         Aadd(aBaixa, {"E1_PARCELA" , SE1->E1_PARCELA           , nil})
-                                        Aadd(aBaixa, {"E1_TIPO"    , SE1->E1_TIPO              , nil})   
+                                        Aadd(aBaixa, {"E1_TIPO"    , SE1->E1_TIPO              , nil})
+                                        //Aadd(aBaixa, {"E1_DTDISPO"    , ZX6->ZX6_BAIXA              , nil})
 
 
                                         //Consultar cliente
@@ -882,7 +883,12 @@ Private cHistBaixa := ""
                                     ElseIf ZX6->ZX6_MVEXEC # ZX6->ZX6_MVEXE2 .AND. !Empty(ZX6->ZX6_MVEXE2) .AND. ZX6->ZX6_MVEXE2 # "0"
                                         cStatus := "2"
                                     EndIf
+                                    //FAZER UM CONTEM A EXPRESSÃO NO CRET PARA RECUPERAR SE O TITULO JÁ FOI BAIXADO.
 
+                                    IF("Baixado" $ cRet)
+                                        cStatus := "1"
+                                    ENDIF
+                                    
                                     ZX6->ZX6_RESULT := cRet
                                     ZX6->ZX6_STATUS := cStatus
                                     ZX6->ZX6_FILPRC := cFilReg
@@ -978,7 +984,7 @@ Local nTot   := 0
 
         cQuery += "SELECT R_E_C_N_O_ REC FROM "+RetSqlName("SE1")+" "+CRLF
         cQuery += "WHERE D_E_L_E_T_ <> '*' "+CRLF
-        cQuery += "AND E1_BAIXA = '' "+CRLF
+        cQuery += "AND E1_BAIXA = ' ' "+CRLF
         //
         IF(!EMPTY(ZX6->ZX6_CDTVEN))
             cQuery += "AND E1_VENCTO >= '"+DTOS(ZX6->ZX6_CDTVEN-5)+"' "+CRLF 
