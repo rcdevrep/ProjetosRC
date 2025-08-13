@@ -64,9 +64,6 @@ https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/
         jJson := JsonObject():New()
         jJson:FromJson(cJson)
 
-
-
-
     ELSE
         
     ENDIF

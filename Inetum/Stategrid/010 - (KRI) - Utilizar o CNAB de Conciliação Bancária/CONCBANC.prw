@@ -75,7 +75,7 @@ oPanelLeft := oFWLayer:GetColPanel( 'LEFT' , 'DOWN' ) // Pego o objeto do pedaço
     oBrowseUp:SetProfileID('1')   
     oBrowseUp:ForceQuitButton()
     oBrowseUp:SetIgnoreARotina( .T. )
-    oBrowseUp:AddButton("Importar" ,{|| MsAguarde({|| fImp() },'Importando Extrato...'),oBrowseUp:GoBottom(),oBrwDown:Gotop()  },,2,,.F.)
+    //oBrowseUp:AddButton("Importar" ,{|| MsAguarde({|| fImp() },'Importando Extrato...'),oBrowseUp:GoBottom(),oBrwDown:Gotop()  },,2,,.F.)
     oBrowseUp:AddButton("Conf.Cnab",{||  fArqCnab()  },,2,,.F.)
     oBrowseUp:AddButton("Regras"   ,{||  U_REGRCONC()  },,2,,.F.)
     oBrowseUp:AddButton("APAGA TUDO"   ,{||  U_APAGA()  },,2,,.F.)
@@ -201,7 +201,7 @@ Private cTpArq
 
 
     aAdd( aParamBox,{1,"Banco"              ,Space(3)  ,""                   ,"",""     ,"",0,.T.}) 
-    aAdd( aParamBox,{1,"Tipo de Layout"    ,Space(2)  ,""                   ,"","Z9SX5"          ,"",0,.T.}) 
+    aAdd( aParamBox,{1,"Tipo de Layout"    ,Space(2)  ,""                   ,"","SX5Z9"          ,"",0,.T.}) 
     aAdd( aParamBox,{6,"Aponte o arquivo:"  ,Space(100),"","","",70,.F.,"Todos os arquivos (*.*) |*.*"})
 
     DbSelectArea("ZZV")
@@ -444,9 +444,8 @@ Private cHistBaixa := ""
 
             //????? REMOVIDA A VALIDAÇÃO DE IMPORTAÇÃO DUPLICADA
             
-            //DBseek("ZX6")
 
-          
+            
             
             nItCampo:= 1
             Begin Transaction
@@ -493,15 +492,12 @@ Private cHistBaixa := ""
                     ZX6->ZX6_FILIAL := cFilSA6
                 ZX6->(MsUnlock())
 
-
+                /*
                 If ZX3->(Dbseek(cFilSA6 + ALLTRIM(cArqCort)))
                     DisarmTransaction()
-                    lDisarm := .T.
                     FT_FSKIP()
+                    LOOP 1
                 EndIf
-            
-                /*
-                
                 */
 
                 If nImp == 0
@@ -513,11 +509,9 @@ Private cHistBaixa := ""
                     ZX3->(MsUnlock())
                 EndIf
 
-               
-
                 //Desfaz a transação e retorna para a próxima linha do arquivo, caso o registro já tenha sido importado para a Filial
                 /*
-                 If ZX6->(DbSeek(cFilSA6 + PADR(cArqCort, TamSx3("ZX6_ARQUIV")[1]) + cLinArq))
+                If ZX6->(DbSeek(cFilSA6 + PADR(cArqCort, TamSx3("ZX6_ARQUIV")[1]) + cLinArq))
 
                     DisarmTransaction()
                     lDisarm := .T.
@@ -527,14 +521,13 @@ Private cHistBaixa := ""
 
             End Transaction
 
+            /*
             If lDisarm
                 cLinArq := Soma1(cLinArq)    
                 nImp++
                 FT_FSKIP()
                 Loop
             EndIf
-            /*
-            
             */
             
 
@@ -544,7 +537,6 @@ Private cHistBaixa := ""
             //Execução das Regras de Movimentos--------------------------------------------------------------------------------------
             nRegra := 1
             For nRegra := 1 To Len(aRegras)
-
 
                 cMovExec := ""
                 lMsErroAuto := .F.
@@ -566,6 +558,9 @@ Private cHistBaixa := ""
 
                     aMov := aRegras[nRegra][2]
 
+
+
+
                     For nMov := 1 to Len(aMov)
 
                         /*
@@ -580,7 +575,7 @@ Private cHistBaixa := ""
 
                         
                         If nMov == 1 .AND. ZX6->ZX6_STATUS # "1" .AND. (ZX6->ZX6_MVEXEC == "X" .OR. Empty(ZX6->ZX6_MVEXEC)) .OR.;
-                           nMov == 2 .AND. (ZX6->ZX6_MVEXE2 == "X" .OR. Empty(ZX6->ZX6_MVEXE2))
+                           nMov == 2 .AND. ZX6->ZX6_STATUS # "1" .AND. (ZX6->ZX6_MVEXE2 == "X" .OR. Empty(ZX6->ZX6_MVEXE2))
 
                             lSucesso  := .F.
                             cNomProc  := ""
@@ -599,9 +594,9 @@ Private cHistBaixa := ""
 
                                 nRecE1E2 := fSearch(aMov[nMov], ZX6->ZX6_FILIAL, PADR(aRegras[nRegra][3], TamSx3("A2_COD")[1]), PADR(aRegras[nRegra][4], TamSx3("A2_LOJA")[1]))
                                 
-                                //If !Empty(aRegras[nRegra][6])
-                                    //cTextBanc := aRegras[nRegra][6]
-                                //EndIf
+                                If !Empty(aRegras[nRegra][6])
+                                    cTextBanc := aRegras[nRegra][6]
+                                EndIf
                                 If !Empty(aRegras[nRegra][7])
                                     cTextAgen := aRegras[nRegra][7]
                                 EndIf
@@ -648,8 +643,8 @@ Private cHistBaixa := ""
                                         Aadd(aBaixa, {"AUTBANCO", "001",            nil})
                                         Aadd(aBaixa, {"AUTAGENCIA", "AG001",          nil})
                                         Aadd(aBaixa, {"AUTCONTA", "CTA001 ",     nil})
-                                        Aadd(aBaixa, {"AUTDTBAIXA", ZX6->ZX6_BAIXA   ,        nil})
-                                        Aadd(aBaixa, {"AUTDTCREDITO", ZX6->ZX6_BAIXA   ,        nil})
+                                        Aadd(aBaixa, {"AUTDTBAIXA", dDataBase,        nil})
+                                        Aadd(aBaixa, {"AUTDTCREDITO", dDataBase,        nil})
                                         Aadd(aBaixa, {"AUTHIST", cHistBaixa,       nil})
                                         Aadd(aBaixa, {"AUTVLRPG", nVlrPag,          nil})
 
@@ -693,21 +688,11 @@ Private cHistBaixa := ""
 
                                         SE1->(DbGoto(nRecE1E2))
 
-
-                                        RECLOCK("SE1",.F.)
-                                        SE1->E1_PORTADO := cTextBanc
-                                        SE1->E1_AGEDEP  := cValToChar(val(cTextAgen))
-                                        SE1->E1_CONTA   := cValToChar(val(cTextCont))
-                                        MSUNLOCK()
-
                                         Aadd(aBaixa, {"E1_FILIAL"  , SE1->E1_FILIAL           , nil})
                                         Aadd(aBaixa, {"E1_PREFIXO" , SE1->E1_PREFIXO           , nil})
                                         Aadd(aBaixa, {"E1_NUM"     , SE1->E1_NUM               , nil})
                                         Aadd(aBaixa, {"E1_PARCELA" , SE1->E1_PARCELA           , nil})
-                                        Aadd(aBaixa, {"E1_TIPO"    , SE1->E1_TIPO              , nil})
-                                        //Aadd(aBaixa, {"E1_DTDISPO"    , ZX6->ZX6_BAIXA         , nil})
-
-                                        //dDataBase := ZX6->ZX6_BAIXA
+                                        Aadd(aBaixa, {"E1_TIPO"    , SE1->E1_TIPO              , nil})   
 
 
                                         //Consultar cliente
@@ -724,9 +709,8 @@ Private cHistBaixa := ""
                                         Aadd(aBaixa, {"AUTJUROS"    , nJuros                         , nil})
                                         Aadd(aBaixa, {"AUTMULTA"    , nMulta                         , nil})
                                         Aadd(aBaixa, {"AUTVALREC"   , nValRec                        , nil})     
-                                        Aadd(aBaixa, {"AUTMOTBX"    , "NOR"                          , nil})
-                                        Aadd(aBaixa, {"AUTDTBAIXA"  , ZX6->ZX6_BAIXA                 , nil})
-                                        Aadd(aBaixa, {"AUTDTCREDITO"  , ZX6->ZX6_BAIXA                 , nil})
+                                        Aadd(aBaixa, {"AUTMOTBX"    , "FAT"                          , nil})
+                                        Aadd(aBaixa, {"AUTDTBAIXA"  , dDatabase                      , nil})
                                         Aadd(aBaixa, {"AUTHIST"     , cHistBaixa                     , nil})     
 
 
@@ -763,7 +747,7 @@ Private cHistBaixa := ""
                                             aLinha   := {}
                                             
                                             AADD(aLinha, {"E5_FILIAL"       ,cFilReg                                                   ,Nil})
-                                            AADD(aLinha, {"E5_DATA"         ,ZX6->ZX6_BAIXA                                                 ,Nil})
+                                            AADD(aLinha, {"E5_DATA"         ,dDataBase                                                 ,Nil})
                                             AADD(aLinha, {"E5_VALOR"        ,ZX6->ZX6_VLPAGO                                           ,Nil})
                                             AADD(aLinha, {"E5_NATUREZ"      ,aRegras[nRegra][5]                                        ,Nil})
                                             If nMov == 1
@@ -771,16 +755,16 @@ Private cHistBaixa := ""
                                                 AADD(aLinha, {"E5_AGENCIA"  ,cValToChar(val(cTextAgen))                              ,Nil})
                                                 AADD(aLinha, {"E5_CONTA"    ,cValToChar(val(cTextCont))                              ,Nil})
                                             Else
-                                                AADD(aLinha, {"E5_BANCO"    ,aRegras[4][6]                                        ,Nil})
-                                                AADD(aLinha, {"E5_AGENCIA"  ,aRegras[4][7]                              ,Nil})
-                                                AADD(aLinha, {"E5_CONTA"    ,aRegras[4][9]                               ,Nil})
+                                                AADD(aLinha, {"E5_BANCO"    ,ZX6->ZX6_CODBAN                                               ,Nil})
+                                                AADD(aLinha, {"E5_AGENCIA"  ,cValToChar(val(ZX6->ZX6_AGENCI))                              ,Nil})
+                                                AADD(aLinha, {"E5_CONTA"    ,cValToChar(val(ZX6->ZX6_CCORRE))                              ,Nil})
                                             EndIf
                                             AADD(aLinha, {"E5_HISTOR"       ,ZX6->ZX6_DESLAN                                           ,Nil})
                                             AADD(aLinha, {"E5_CCC"          ,IF(cFilReg="2901","90505000","40000401")                  ,Nil})
                                             AADD(aLinha, {"E5_RECPAG"       ,"P"                                                       ,Nil})
                                             AADD(aLinha, {"E5_MOEDA"        ,"M1"                                                      ,Nil})
-                                            AADD(aLinha, {"E5_DTDIGIT"      ,ZX6->ZX6_BAIXA                                                 ,Nil})
-                                            AADD(aLinha, {"E5_DTDISPO"      , DataValida(ZX6->ZX6_BAIXA)                                    ,Nil})
+                                            AADD(aLinha, {"E5_DTDIGIT"      ,dDataBase                                                 ,Nil})
+                                            AADD(aLinha, {"E5_DTDISPO"      , DataValida(dDatabase)                                    ,Nil})
 
                                             MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aLinha,3)
                                             
@@ -819,7 +803,7 @@ Private cHistBaixa := ""
                                             aLinha   := {}
 
                                             AADD(aLinha, {"E5_FILIAL"   ,cFilReg                                                 ,Nil})
-                                            AADD(aLinha, {"E5_DATA"     ,ZX6->ZX6_BAIXA                                               ,Nil})
+                                            AADD(aLinha, {"E5_DATA"     ,dDataBase                                               ,Nil})
                                             AADD(aLinha, {"E5_VALOR"    ,ZX6->ZX6_VLPAGO                                         ,Nil})
                                             AADD(aLinha, {"E5_NATUREZ"  ,aRegras[nRegra][5]                                      ,Nil})
                                             If nMov == 1
@@ -827,16 +811,16 @@ Private cHistBaixa := ""
                                                 AADD(aLinha, {"E5_AGENCIA"  ,cValToChar(val(cTextAgen))                              ,Nil})
                                                 AADD(aLinha, {"E5_CONTA"    ,cValToChar(val(cTextCont))                              ,Nil})
                                             Else
-                                                AADD(aLinha, {"E5_BANCO"    ,aRegras[4][6]                                               ,Nil})
-                                                AADD(aLinha, {"E5_AGENCIA"  ,aRegras[4][7]                               ,Nil})
-                                                AADD(aLinha, {"E5_CONTA"    ,aRegras[4][9]                              ,Nil})
+                                                AADD(aLinha, {"E5_BANCO"    ,ZX6->ZX6_CODBAN                                               ,Nil})
+                                                AADD(aLinha, {"E5_AGENCIA"  ,cValToChar(val(ZX6->ZX6_AGENCI))                              ,Nil})
+                                                AADD(aLinha, {"E5_CONTA"    ,cValToChar(val(ZX6->ZX6_CCORRE))                              ,Nil})
                                             EndIf
                                             AADD(aLinha, {"E5_HISTOR"   ,ZX6->ZX6_DESLAN                                         ,Nil})
                                             AADD(aLinha, {"E5_CCC"      ,IF(cFilReg="2901","90505000","40000401")                ,Nil})
                                             AADD(aLinha, {"E5_RECPAG"   ,"R"                                                     ,Nil})
                                             AADD(aLinha, {"E5_MOEDA"    ,"M1"                                                    ,Nil})
-                                            AADD(aLinha, {"E5_DTDIGIT"  ,ZX6->ZX6_BAIXA                                               ,Nil})
-                                            AADD(aLinha, {"E5_DTDISPO"  , DataValida(ZX6->ZX6_BAIXA)                                  ,Nil})
+                                            AADD(aLinha, {"E5_DTDIGIT"  ,dDataBase                                               ,Nil})
+                                            AADD(aLinha, {"E5_DTDISPO"  , DataValida(dDatabase)                                  ,Nil})
 
 
                                             //AADD(aFINA100, aLinha)
@@ -893,12 +877,7 @@ Private cHistBaixa := ""
                                     ElseIf ZX6->ZX6_MVEXEC # ZX6->ZX6_MVEXE2 .AND. !Empty(ZX6->ZX6_MVEXE2) .AND. ZX6->ZX6_MVEXE2 # "0"
                                         cStatus := "2"
                                     EndIf
-                                    //FAZER UM CONTEM A EXPRESSÃO NO CRET PARA RECUPERAR SE O TITULO JÁ FOI BAIXADO.
 
-                                    IF("Baixado" $ cRet)
-                                        cStatus := "1"
-                                    ENDIF
-                                    
                                     ZX6->ZX6_RESULT := cRet
                                     ZX6->ZX6_STATUS := cStatus
                                     ZX6->ZX6_FILPRC := cFilReg
@@ -949,7 +928,7 @@ Private cHistBaixa := ""
 Return
 
 
-// 
+
 Static Function fArqCnab()
 Local aArea   := GetArea()
 Local cTabela     := "ZZV"
@@ -994,17 +973,11 @@ Local nTot   := 0
 
         cQuery += "SELECT R_E_C_N_O_ REC FROM "+RetSqlName("SE1")+" "+CRLF
         cQuery += "WHERE D_E_L_E_T_ <> '*' "+CRLF
-        cQuery += "AND E1_BAIXA = ' ' "+CRLF
-        //
-        IF(!EMPTY(ZX6->ZX6_CDTVEN))
-            cQuery += "AND E1_VENCTO >= '"+DTOS(ZX6->ZX6_CDTVEN-5)+"' "+CRLF 
-            cQuery += "AND E1_VENCTO <= '"+DTOS(ZX6->ZX6_CDTVEN+5)+"' "+CRLF
-        ELse
-            cQuery += "AND E1_VENCTO >= '"+DTOS(ZX6->ZX6_BAIXA-5)+"' "+CRLF 
-            cQuery += "AND E1_VENCTO <= '"+DTOS(ZX6->ZX6_BAIXA+5)+"' "+CRLF
-        ENDIF
+        cQuery += "AND E1_BAIXA = '' "+CRLF
+        cQuery += "AND E1_VENCTO >= '"+DTOS(ZX6->ZX6_CDTVEN-5)+"' "+CRLF 
+        cQuery += "AND E1_VENCTO <= '"+DTOS(ZX6->ZX6_CDTVEN+5)+"' "+CRLF
         cQuery += "AND E1_VALOR = "+cValtoChar(ZX6->ZX6_VLPAGO)
-        cQuery += "AND SUBSTRING(E1_FILIAL,1,2) = '"+ALLTRIM(cXFilial)+"' "+CRLF
+        cQuery += "AND E1_FILIAL = '"+cXFilial+"' "+CRLF
         cQuery += "AND E1_CLIENTE = '"+cCliFor+"' "+CRLF
         cQuery += "AND E1_LOJA = '"+cLoja+"' "+CRLF
 
@@ -1079,10 +1052,7 @@ Local cAlias		:= GetNextAlias()
 	cQuery += "D_E_L_E_T_ = '' AND A6_COD = '"+xBanco+"' AND "
     cQuery += "A6_BLOCKED <> '1' AND "
     //cQuery += "A6_FILPROC <> '' AND "
-	cQuery += " ((SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
-    
-    cQuery += " (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
-
+	cQuery += " SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"' "
 	TCQuery cQuery NEW ALIAS (cAlias)
 
 	if !(cAlias)->(Eof())
