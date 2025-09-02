@@ -10,10 +10,23 @@ USER FUNCTION ITAUNI01
 
     Local cUrlLista := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/"
     Local cUrlRecebe := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/recebe/"
+    Local cUrlConfirma := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/confirm/"
     Local nTimeOut := 120
     Local aHeadOut := {}
     Local cHeadRet := ""
-    Local cJson := ""
+    Local cJsonLista := ""
+    Local cJsonRecebe := ""
+    Local n,m := 1
+    Local lSuccess := .T.
+    Local lContinua := .T.
+    Local aCab      := array(0)
+	Local aItem     := array(0)
+	Local aItens    := array(0)
+    Local nCount := 0
+
+    Private lMsHelpAuto     := .T. as logical
+	Private lAutoErrNoFile  := .T. as logical
+	private lMsErroAuto := .f.   as logical
 
 /*
 
@@ -50,22 +63,117 @@ https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/
 */
 
     
-    cMyData := '{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"}'
+    cLista := '{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"}'
 
     Aadd(aHeadOut,'User-Agent: Mozilla/4.0 (compatible; Protheus '+GetBuild()+')')
     Aadd(aHeadOut,'Accept: */*') 
     Aadd(aHeadOut,'Content-Type: application/json')
 
-    cMyData := EncodeUTF8(cMyData)
+    cLista := EncodeUTF8(cLista)
 
-    cJson := HttpPost(cUrlLista,"",cMyData,nTimeOut,aHeadOut,@cHeadRet)
-    IF !empty(cJson)
+    cJsonLista := HttpPost(cUrlLista,"",cLista,nTimeOut,aHeadOut,@cHeadRet)
+    IF !empty(cJsonLista)
         
-        jJson := JsonObject():New()
-        jJson:FromJson(cJson)
+        jJsonLista := JsonObject():New()
+        jJsonLista:FromJson(cJsonLista)
+
+        FOR n := 1 TO LEN(jJsonLista["dados"])
+            cFileName := jJsonLista["dados"][n]["filename"]
+            aItens    := array(0)
+
+
+            cRecebe := '{"Usuario":{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"},"filename":"'+cFileName+'"} '
+            cRecebe := EncodeUTF8(cRecebe)
+            cJsonRecebe := HttpPost(cUrlRecebe,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
+            IF !empty(cJsonRecebe)
+
+                jJsonRecebe := JsonObject():New()
+                jJsonRecebe:FromJson(cJsonRecebe)     
+
+                IF(jJsonRecebe:hasProperty("status"))
+                    IF(jJsonRecebe["status"] == 404)
+                        FWAlertError("Pedido "+cFileName,"ITAUNI01")
+                        lContinua := .F.
+                    ENDIF
+                ENDIF
+
+                CONOUT("GERA O PEDIDO")
+                IF(lContinua)
+                    AADD(aCab, {"C5_FILIAL"  , XFILIAL('SC5'), Nil})
+                    AADD(aCab, {"C5_TIPO"    , 'N' , Nil})
+
+                    cCnpj := jJsonRecebe["Header"]["CNPJCliente"]
+
+                    dbSelectArea("SA1")
+                    dbSetOrder(3)
+                    IF dbSeek(xFilial("SA1")+cCnpj)
+                        AADD(aCab, {"C5_CLIENTE" , SA1->A1_COD   , Nil})
+                        AADD(aCab, {"C5_LOJACLI" , SA1->A1_LOJA   , Nil})
+                        AADD(aCab, {"C5_CLIENT " , SA1->A1_COD   , Nil})
+                        AADD(aCab, {"C5_LOJAENT" , SA1->A1_LOJA   , Nil})
+                        AADD(aCab, {"C5_TIPOCLI" , SA1->A1_TIPO , Nil})
+                    ELSE 
+                        FWAlertError("Cliente não encontrado, CNPJ: "+cCnpj , "ITAUNI01")
+                        EXIT                   
+                    ENDIF 
+
+                    cPedido := jJsonRecebe["Header"]["NumeroPedido"]
+                    
+                    AADD(aCab, {"C5_CONDPAG" , jJsonRecebe["Header"]["CondicaoPagto"]       , Nil})
+                    AADD(aCab, {"C5_EMISSAO" , dDataBase, Nil})
+                    AADD(aCab, {"C5_DTFATU" , dDataBase, Nil})                
+                    AADD(aCab, {"C5_XORIGEM" , "2"    , Nil}) // EXPEDIÇÃO
+                    AADD(aCab, {"C5_TPFRETE" , IIF(jJsonRecebe["Header"]["TipoFrete"]=="CIF","C","F")    , Nil})
+                    AADD(aCab, {"C5_XCODINT" , cPedido , Nil})
+                                    
+                    FOR m := 1 TO LEN(jJsonRecebe["Item"]) 
+
+                        aItem    := array(0)                    
+                        aadd(aItem,{"C6_ITEM"   ,StrZero(jJsonRecebe["Item"][m]["Sequencial"]/10,2)                ,Nil})
+                        aadd(aItem,{"C6_PRODUTO",jJsonRecebe["Item"][m]["CodProdutoFornecedor"]                ,Nil})
+                        aadd(aItem,{"C6_QTDVEN" ,jJsonRecebe["Item"][m]["Quantidade"]                ,Nil})
+                        aadd(aItem,{"C6_PRCVEN" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
+                        aadd(aItem,{"C6_PRUNIT" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
+                        aadd(aItem,{"C6_OPER"   ,"01"                 ,Nil})
+                        aadd(aItem,{"C6_TES"    ,"519"                 ,Nil})
+                        aadd(aItem,{"C6_LOCAL"  ,"01"                 ,Nil})
+                        aadd(aItem,{"C6_ENTREG" ,dDataBase                 ,Nil})
+
+                        aadd(aItens,aItem)                   
+
+                    NEXT m            
+
+                    MSExecAuto({|x,y,z|Mata410(x,y,z)},aCab,aItens,3) 
+
+                    IF lMsErroAuto
+                        lSuccess := .F.
+                        DisarmTransaction()
+                        mostraerro()
+                        Break
+                    Endif
+
+                    IF(lSuccess)
+                        cJsonConfirma := HttpPost(cUrlConfirma,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
+                        nCount ++
+                        //FWAlertSuccess("Pedido Integrado: " + cPedido + " ")
+                        
+                    ENDIF
+                ENDIF
+
+            ELSE
+
+
+            ENDIF
+
+
+        NEXT n
 
     ELSE
         
+    ENDIF
+
+    IF(nCount > 0)
+        FWAlertSuccess(ALLTRIM(STR(nCount)) + " Pedidos Integrados com sucesso.")
     ENDIF
 
 
@@ -266,6 +374,6 @@ https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/recebe/
 
 */
 
-cMyData := '{"Usuario":{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"},"filename":"PED_4500320418_20250731103324.json"}'
+//cMyData := '{"Usuario":{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"},"filename":"PED_4500320418_20250731103324.json"}'
 
 RETURN
