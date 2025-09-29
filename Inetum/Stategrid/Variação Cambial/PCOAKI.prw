@@ -155,7 +155,7 @@ User Function PCOAKI(cAKIPROCES,cAKIITEM,cAKISEQ)
             Else
                 IF GETMV("MV_XPCOBL")==.T. .AND. POSICIONE("AK5",1,XFILIAL("AK5")+GDFIELDGET('D1_XCO'),"AK5_XPCOBL")=="1"
                     IF POSICIONE("CTT",1,XFILIAL("CTT")+GDFIELDGET("D1_CC"),"CTT_XBLOQU")=='2'
-                    nRet :=  0
+                        nRet :=  0
                     Else
                         nRet :=  GDFIELDGET("D1_TOTAL")+GDFIELDGET("D1_VALIPI")+GDFIELDGET("D1_VALINP")-GDFIELDGET("D1_VALDESC")
                     EndIf
@@ -213,7 +213,7 @@ User Function PCOAKI(cAKIPROCES,cAKIITEM,cAKISEQ)
         cTESPar := GetMv("MV_XTESVC")
         cTES    := GDFIELDGET('D1_TES')
 
-        If (cTES $ cTESPar)
+        If !(cTES $ cTESPar)
 
 
             IF GETMV("MV_XPCOBL")==.T. .AND. POSICIONE("AK5",1,XFILIAL("AK5")+GDFIELDGET('D1_XCO'),"AK5_XPCOBL") =="1"

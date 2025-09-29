@@ -516,14 +516,13 @@ Private cHistBaixa := ""
                
 
                 //Desfaz a transação e retorna para a próxima linha do arquivo, caso o registro já tenha sido importado para a Filial
-                /*
-                 If ZX6->(DbSeek(cFilSA6 + PADR(cArqCort, TamSx3("ZX6_ARQUIV")[1]) + cLinArq))
+                
+                /*If ZX6->(DbSeek(cFilSA6 + PADR(cArqCort, TamSx3("ZX6_ARQUIV")[1]) + cLinArq))
 
                     DisarmTransaction()
                     lDisarm := .T.
             
-                EndIf
-                */
+                EndIf     */           
 
             End Transaction
 
@@ -562,7 +561,7 @@ Private cHistBaixa := ""
                 
                 
 
-                If &(aRegras[nRegra][1])
+                If &(aRegras[nRegra][1]) .AND. substr(cFilSA6,1,2) == substr(aRegras[nRegra][13],1,2)
 
                     aMov := aRegras[nRegra][2]
 
@@ -575,6 +574,7 @@ Private cHistBaixa := ""
                             cFilReg := aRegras[nRegra][13]
                         Endif
                         */
+
                         cFilReg := aRegras[nRegra][13]
                         cFilAnt := cFilReg
 
@@ -696,7 +696,7 @@ Private cHistBaixa := ""
 
                                         RECLOCK("SE1",.F.)
                                         SE1->E1_PORTADO := cTextBanc
-                                        SE1->E1_AGEDEP  := cValToChar(val(cTextAgen))
+                                        SE1->E1_AGEDEP  := cTextAgen
                                         SE1->E1_CONTA   := cValToChar(val(cTextCont))
                                         MSUNLOCK()
 
@@ -757,51 +757,47 @@ Private cHistBaixa := ""
                                     cMovExec := aMov[nMov]
 
                                     If !VldImp(cTextBanc, cValToChar(val(cTextAgen)), cValToChar(val(cTextCont)) , ZX6->ZX6_BAIXA, ZX6->ZX6_VLPAGO, cFilReg)
+                                                                
+                                        aLinha   := {}
+
+                                        //ZX6->ZX6_CODBAN, Alltrim(ZX6->ZX6_AGENCI), Alltrim(ZX6->ZX6_CCORRE)
                                         
-                                        If !SA6->(DbSeek(cFilReg + PADR(cTextBanc,TamSx3("A6_COD")[1]) + PADR(cTextAgen,TamSx3("A6_AGENCIA")[1]) + PADR(cTextCont,TamSx3("A6_NUMCON")[1])))
+                                        AADD(aLinha, {"E5_FILIAL"       ,cFilReg                                                   ,Nil})
+                                        AADD(aLinha, {"E5_DATA"         ,ZX6->ZX6_BAIXA                                                 ,Nil})
+                                        AADD(aLinha, {"E5_VALOR"        ,ZX6->ZX6_VLPAGO                                           ,Nil})
+                                        AADD(aLinha, {"E5_NATUREZ"      ,aRegras[nRegra][5]                                        ,Nil})
+                                        If nMov == 1
+                                            AADD(aLinha, {"E5_BANCO"    ,cTextBanc                                               ,Nil})
+                                            AADD(aLinha, {"E5_AGENCIA"  ,cValToChar(val(cTextAgen))                              ,Nil})
+                                            AADD(aLinha, {"E5_CONTA"    ,fBuscConta(cTextBanc,cTextAgen,cTextCont)                             ,Nil})
+                                        Else
+                                            AADD(aLinha, {"E5_BANCO"    ,aRegras[nRegra][6]                                        ,Nil})
+                                            AADD(aLinha, {"E5_AGENCIA"  ,aRegras[nRegra][7]                              ,Nil})
+                                            AADD(aLinha, {"E5_CONTA"    ,aRegras[nRegra][9]                               ,Nil})
+                                        EndIf
+                                        AADD(aLinha, {"E5_HISTOR"       ,ZX6->ZX6_DESLAN                                           ,Nil})
+                                        AADD(aLinha, {"E5_CCC"          ,IF(cFilReg="2901","90505000","40000401")                  ,Nil})
+                                        AADD(aLinha, {"E5_RECPAG"       ,"P"                                                       ,Nil})
+                                        AADD(aLinha, {"E5_MOEDA"        ,"M1"                                                      ,Nil})
+                                        AADD(aLinha, {"E5_DTDIGIT"      ,ZX6->ZX6_BAIXA                                                 ,Nil})
+                                        AADD(aLinha, {"E5_DTDISPO"      , DataValida(ZX6->ZX6_BAIXA)                                    ,Nil})
 
-                                            aLinha   := {}
+                                        MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aLinha,3)
+                                        
+                                        If lMsErroAuto
                                             
-                                            AADD(aLinha, {"E5_FILIAL"       ,cFilReg                                                   ,Nil})
-                                            AADD(aLinha, {"E5_DATA"         ,ZX6->ZX6_BAIXA                                                 ,Nil})
-                                            AADD(aLinha, {"E5_VALOR"        ,ZX6->ZX6_VLPAGO                                           ,Nil})
-                                            AADD(aLinha, {"E5_NATUREZ"      ,aRegras[nRegra][5]                                        ,Nil})
-                                            If nMov == 1
-                                                AADD(aLinha, {"E5_BANCO"    ,cTextBanc                                               ,Nil})
-                                                AADD(aLinha, {"E5_AGENCIA"  ,cValToChar(val(cTextAgen))                              ,Nil})
-                                                AADD(aLinha, {"E5_CONTA"    ,cValToChar(val(cTextCont))                              ,Nil})
-                                            Else
-                                                AADD(aLinha, {"E5_BANCO"    ,aRegras[4][6]                                        ,Nil})
-                                                AADD(aLinha, {"E5_AGENCIA"  ,aRegras[4][7]                              ,Nil})
-                                                AADD(aLinha, {"E5_CONTA"    ,aRegras[4][9]                               ,Nil})
-                                            EndIf
-                                            AADD(aLinha, {"E5_HISTOR"       ,ZX6->ZX6_DESLAN                                           ,Nil})
-                                            AADD(aLinha, {"E5_CCC"          ,IF(cFilReg="2901","90505000","40000401")                  ,Nil})
-                                            AADD(aLinha, {"E5_RECPAG"       ,"P"                                                       ,Nil})
-                                            AADD(aLinha, {"E5_MOEDA"        ,"M1"                                                      ,Nil})
-                                            AADD(aLinha, {"E5_DTDIGIT"      ,ZX6->ZX6_BAIXA                                                 ,Nil})
-                                            AADD(aLinha, {"E5_DTDISPO"      , DataValida(ZX6->ZX6_BAIXA)                                    ,Nil})
+                                            aLogAuto := GetAutoGRLog()
 
-                                            MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aLinha,3)
-                                            
-                                            If lMsErroAuto
-                                                
-                                                aLogAuto := GetAutoGRLog()
+                                            nAuto := 1
+                                            For nAuto := 1 To Len(aLogAuto)
+                                                cRet +=  aLogAuto[nAuto] + CRLF
+                                            Next nAuto
 
-                                                nAuto := 1
-                                                For nAuto := 1 To Len(aLogAuto)
-                                                    cRet +=  aLogAuto[nAuto] + CRLF
-                                                Next nAuto
-
-
-                                            Else
-                                                cRet     += "MOVIMENTO REALIZADO COM SUCESSO"
-                                                lSucesso  := .T.
-
-                                            EndIf
 
                                         Else
-                                            cRet +=  "Conta Bancária (Banco: "+cTextBanc+"/ Agência: "+cTextAgen+"/Conta: "+Alltrim(cTextCont)+") não cadastrada para a filial "+cFilReg+"."
+                                            cRet     += "MOVIMENTO REALIZADO COM SUCESSO"
+                                            lSucesso  := .T.
+
                                         EndIf
 
                                     Else
@@ -814,8 +810,6 @@ Private cHistBaixa := ""
 
                                     If !VldImp(cTextBanc, cValToChar(val(cTextAgen)), cValToChar(val(cTextCont)) , ZX6->ZX6_BAIXA, ZX6->ZX6_VLPAGO, cFilReg )
                                         
-                                        If !SA6->(DbSeek(cFilReg + PADR(cTextBanc,TamSx3("A6_COD")[1]) + PADR(cTextAgen,TamSx3("A6_AGENCIA")[1]) + PADR(cTextCont,TamSx3("A6_NUMCON")[1])))
-
                                             aLinha   := {}
 
                                             AADD(aLinha, {"E5_FILIAL"   ,cFilReg                                                 ,Nil})
@@ -825,11 +819,11 @@ Private cHistBaixa := ""
                                             If nMov == 1
                                                 AADD(aLinha, {"E5_BANCO"    ,cTextBanc                                               ,Nil})
                                                 AADD(aLinha, {"E5_AGENCIA"  ,cValToChar(val(cTextAgen))                              ,Nil})
-                                                AADD(aLinha, {"E5_CONTA"    ,cValToChar(val(cTextCont))                              ,Nil})
+                                                AADD(aLinha, {"E5_CONTA"    ,fBuscConta(cTextBanc,cTextAgen,cTextCont)                              ,Nil})
                                             Else
-                                                AADD(aLinha, {"E5_BANCO"    ,aRegras[4][6]                                               ,Nil})
-                                                AADD(aLinha, {"E5_AGENCIA"  ,aRegras[4][7]                               ,Nil})
-                                                AADD(aLinha, {"E5_CONTA"    ,aRegras[4][9]                              ,Nil})
+                                                AADD(aLinha, {"E5_BANCO"    ,aRegras[nRegra][6]                                               ,Nil})
+                                                AADD(aLinha, {"E5_AGENCIA"  ,aRegras[nRegra][7]                               ,Nil})
+                                                AADD(aLinha, {"E5_CONTA"    ,aRegras[nRegra][9]                              ,Nil})
                                             EndIf
                                             AADD(aLinha, {"E5_HISTOR"   ,ZX6->ZX6_DESLAN                                         ,Nil})
                                             AADD(aLinha, {"E5_CCC"      ,IF(cFilReg="2901","90505000","40000401")                ,Nil})
@@ -861,11 +855,7 @@ Private cHistBaixa := ""
                                                 cRet      += "MOVIMENTO REALIZADO COM SUCESSO"
                                                 lSucesso  := .T.
 
-                                            EndIf
-
-                                        Else
-                                            cRet +=  "Conta Bancária (Banco: "+cTextBanc+"/ Agência: "+cTextAgen+"/Conta: "+Alltrim(cTextCont)+") não cadastrada para a filial "+cFilReg+"."
-                                        EndIf
+                                            EndIf                                      
 
                                     Else
                                         cRet +=  "Movimento já realizado pela rotina padrão."
@@ -1074,7 +1064,7 @@ Local xFil          := xFilial("ZX3")
 Local cQuery		:= ""
 Local cAlias		:= GetNextAlias()
 
-    cQuery := "SELECT  TOP 1 A6_FILIAL "
+    cQuery := "SELECT  TOP 1 A6_FILIAL, CASE WHEN (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') THEN 1 ELSE 2 END PRIOR  "
 	cQuery += "FROM "+RETSQLNAME("SA6")+" (NOLOCK) WHERE "
 	cQuery += "D_E_L_E_T_ = '' AND A6_COD = '"+xBanco+"' AND "
     cQuery += "A6_BLOCKED <> '1' AND "
@@ -1082,17 +1072,20 @@ Local cAlias		:= GetNextAlias()
 	cQuery += " ((SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
     
     cQuery += " (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
+    cQuery += " ORDER BY PRIOR"
+
+
 
 	TCQuery cQuery NEW ALIAS (cAlias)
 
 	if !(cAlias)->(Eof())
-        /*
-        If Empty((cAlias)->A6_FILPROC)
-            xFil := Alltrm((cAlias)->A6_FILIAL)+"01"
-        ELse
-            xFil := (cAlias)->A6_FILPROC
-        EndIf
-        */
+        
+        //If Empty((cAlias)->A6_FILPROC)
+            //xFil := Alltrm((cAlias)->A6_FILIAL)+"01"
+        //ELse
+            //xFil := (cAlias)->A6_FILPROC
+        //EndIf
+        
         xFil := (cAlias)->A6_FILIAL
     Endif
 
@@ -1103,3 +1096,35 @@ Local cAlias		:= GetNextAlias()
     EndIf
 
 Return xFil
+
+
+Static Function fBuscConta(xBanco, xAgencia, xConta)
+Local cConta        := xConta
+Local cQuery		:= ""
+Local cAlias		:= GetNextAlias()
+
+    cQuery := "SELECT  TOP 1 A6_NUMCON, CASE WHEN (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') THEN 1 ELSE 2 END PRIOR  "
+	cQuery += "FROM "+RETSQLNAME("SA6")+" (NOLOCK) WHERE "
+	cQuery += "D_E_L_E_T_ = '' AND A6_COD = '"+xBanco+"' AND "
+    cQuery += "A6_BLOCKED <> '1' AND "
+    //cQuery += "A6_FILPROC <> '' AND "
+	cQuery += " ((SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
+    
+    cQuery += " (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
+    cQuery += " ORDER BY PRIOR"
+
+
+
+	TCQuery cQuery NEW ALIAS (cAlias)
+
+	if !(cAlias)->(Eof())
+        cConta := (cAlias)->A6_NUMCON
+    Endif
+
+    (cAlias)->(DbCloseArea())
+
+    If Empty(cConta)
+        cConta := xConta
+    EndIf
+
+Return cConta

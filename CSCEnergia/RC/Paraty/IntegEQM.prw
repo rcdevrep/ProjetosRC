@@ -127,6 +127,7 @@ WSRESTFUL IntegEQM DESCRIPTION 'Integração EQM x Protheus'
     WSDATA Id  AS CHARACTER  OPTIONAL
     WSDATA RESERVA AS CHARACTER OPTIONAL
     WSDATA data_ini as CHARACTER OPTIONAL
+    WSDATA data_fim as CHARACTER OPTIONAL
     
     WSMETHOD GET MATERIAL DESCRIPTION 'Get Material pela ID' WSSYNTAX "/?{Id}" PATH "/MATERIAL" PRODUCES APPLICATION_JSON
     WSMETHOD GET MOVIMENTOS DESCRIPTION 'Get movimentos pela ID (material), e range de data.'  WSSYNTAX "/MOVIMENTOS " PATH 'MOVIMENTOS' PRODUCES APPLICATION_JSON
@@ -194,6 +195,8 @@ WSMETHOD GET MATERIAL WSSERVICE IntegEQM
             dbCloseArea()
 	    Endif
 
+        CONOUT(cQuery)
+
         aList := {}
         TCQuery cQuery NEW ALIAS "SB1G"
 
@@ -234,14 +237,185 @@ Return .T.
 
 WSMETHOD GET MOVIMENTOS PATHPARAM id, data_ini, data_fim WSRECEIVE MOVIMENTOS_STRUCT WSSERVICE IntegEQM
    
+
+    CONOUT("WSMETHOD GET MOVIMENTOS PATHPARAM material_id WSRECEIVE MOVIMENTOS WSSERVICE IntegEQM")
+    Self:SetContentType('application/json')
+    oResponse := JsonObject():New()
+    
+    cMaterial := ALLTRIM(Self:id)
+    cDataIni :=  ALLTRIM(Self:data_ini)
+    cDataFim :=  ALLTRIM(Self:data_fim)
+
+    CONOUT("WSMETHOD GET MOVIMENTOS PATHPARAM "+cMaterial+" WSRECEIVE MOVIMENTOS WSSERVICE IntegEQM")
+
+    cQuery := "SELECT D3_FILIAL FILIAL, D3_COD PRODUTO, D3_LOCAL LOCAL, D3_QUANT QUANT, D3_EMISSAO EMISSAO, D3_TM TIPO FROM "+RetSqlName("SD3")+" "
+    cQuery += "WHERE D3_FILIAL + D3_COD = '"+cMaterial+ "' "
+    cQuery += "AND D3_EMISSAO >= '"+cDataIni+"' AND D3_EMISSAO <= '"+cDataFim+"'   "
+    cQuery += "AND D_E_L_E_T_ <> '*'  "
+
+    If (Select("SD3G") <> 0)
+        dbSelectArea("SD3G")
+        dbCloseArea()
+    Endif
+
+    aList := {}
+    TCQuery cQuery NEW ALIAS "SD3G"
+
+    CONOUT(cQuery)
+
+     JMovimentos := JsonObject():New()
+     aItens := {}
+
+    dbSelectArea("SD3G")
+    dbGoTop()
+    WHILE !(SD3G->(Eof()))
+        
+        JItem := JsonObject():New()
+        JItem["FILIAL"] :=   SD3G->FILIAL    
+        JItem["PRODUTO"] :=  ALLTRIM(SD3G->FILIAL) + SD3G->PRODUTO  
+        JItem["LOCAL"] :=    SD3G->LOCAL  
+        JItem["QUANT"] :=    SD3G->QUANT  
+        JItem["EMISSAO"] :=  DTOC(STOD(SD3G->EMISSAO))
+        JItem["TIPO"] :=     SD3G->TIPO    
+
+        AADD(aItens, JItem)
+                        
+        oResponse["MOVIMENTOS"] := aItens
+
+        SD3G->(dbSkip())
+    END
+
+    //oResponse:set(aList)
+
+    self:SetResponse( EncodeUTF8(oResponse:ToJson()) ) 
+
+
 Return .T.
 
 WSMETHOD GET PED_MATERIAL PATHPARAM id, data_ini, data_fim WSRECEIVE PEDIDO_COMPRA_STRUCT WSSERVICE IntegEQM
    
+    
+    CONOUT("WSMETHOD GET MOVIMENTOS PATHPARAM material_id WSRECEIVE MOVIMENTOS WSSERVICE IntegEQM")
+    Self:SetContentType('application/json')
+    oResponse := JsonObject():New()
+    
+    cMaterial := ALLTRIM(Self:id)
+    cDataIni :=  ALLTRIM(Self:data_ini)
+    cDataFim :=  ALLTRIM(Self:data_fim)
+
+    CONOUT("WSMETHOD GET MOVIMENTOS PATHPARAM "+cMaterial+" WSRECEIVE MOVIMENTOS WSSERVICE IntegEQM")
+
+    cQuery := "select C7_FILIAL FILIAL, C7_NUM PEDIDO, C7_ITEM ITEMPEDIDO, C7_PRODUTO PRODUTO, C7_QUANT QUANT, C7_QUJE ATENDIDA, C7_PRECO PRECO, C7_TOTAL TOTAL, C7_DATPRF PREVISAO, C7_EMISSAO EMISSAO, C7_RESIDUO RESIDUO, "
+    cQuery += "ISNULL((select top 1 D1_EMISSAO from "+RetSqlName("SD1")+" SD1 where D1_PEDIDO = C7_NUM AND D1_ITEMPC = C7_ITEM AND SD1.D_E_L_E_T_ <> '*' AND C7_FILIAL = D1_FILIAL ),' ') DTATENDI  "
+    cQuery += "from "+RetSqlName("SC7")+" "
+    cQuery += "where C7_FILIAL + C7_PRODUTO = '"+cMaterial+"' AND C7_EMISSAO >= '"+cDataIni+"' AND C7_EMISSAO <= '"+cDataFim+"' AND D_E_L_E_T_ <> '*'  " 
+
+    If (Select("SC73G"))
+        dbCloseArea()
+    Endif
+
+    aList := {}
+    TCQuery cQuery NEW ALIAS "SC73G"
+
+    CONOUT(cQuery)
+
+     JMovimentos := JsonObject():New()
+     aItens := {}
+
+    dbSelectArea("SC73G")
+    dbGoTop()
+    WHILE !(SC73G->(Eof()))
+        
+        JItem := JsonObject():New()
+        JItem["FILIAL"] :=   SC73G->FILIAL    
+        JItem["PEDIDO"] :=   SC73G->PEDIDO 
+        JItem["ITEM"] :=   SC73G->ITEMPEDIDO 
+        JItem["PRODUTO"] :=  ALLTRIM(SC73G->FILIAL) + SC73G->PRODUTO  
+        JItem["QUANT"] :=    SC73G->QUANT  
+        JItem["ATENDIDA"] := SC73G->ATENDIDA  
+        JItem["PRECO"] :=    SC73G->PRECO  
+        JItem["TOTAL"] :=    SC73G->TOTAL  
+        JItem["EMISSAO"] :=  DTOC(STOD(SC73G->EMISSAO))
+        JItem["PREVISAO"] := DTOC(STOD(SC73G->PREVISAO))     
+        JItem["RESIDUO"] := SC73G->RESIDUO
+        JItem["DTATENDI"] := IIF(EMPTY(SC73G->DTATENDI),' ',DTOC(STOD(SC73G->DTATENDI)))
+
+        AADD(aItens, JItem)
+                        
+        oResponse["PEDIDOS"] := aItens
+
+        SC73G->(dbSkip())
+    END
+
+    //oResponse:set(aList)
+
+    self:SetResponse( EncodeUTF8(oResponse:ToJson()) ) 
+
+
 Return .T.
 
 WSMETHOD GET NOTAS_ID PATHPARAM id, data_ini, data_fim WSRECEIVE NOTA_FISCAL_STRUCT WSSERVICE IntegEQM
    
+
+
+    CONOUT("WSMETHOD GET NOTAS_ID PATHPARAM material_id WSRECEIVE MOVIMENTOS WSSERVICE IntegEQM")
+    Self:SetContentType('application/json')
+    oResponse := JsonObject():New()
+    
+    cMaterial := ALLTRIM(Self:id)
+    cDataIni :=  ALLTRIM(Self:data_ini)
+    cDataFim :=  ALLTRIM(Self:data_fim)
+
+    CONOUT("WSMETHOD GET NOTAS_ID PATHPARAM "+cMaterial+" WSRECEIVE MOVIMENTOS WSSERVICE IntegEQM")
+
+    cQuery := "SELECT D1_FILIAL FILIAL, D1_COD PRODUTO, D1_DOC DOCUMENTO, D1_SERIE SERIE, D1_LOCAL LOCAL, D1_QUANT QUANT, D1_EMISSAO EMISSAO, D1_TES TIPO, D1_PEDIDO PEDIDO, D1_ITEMPC ITEMPEDIDO FROM "+RetSqlName("SD1")+" "
+    cQuery += "WHERE D1_FILIAL + D1_COD = '"+cMaterial+ "' "
+    cQuery += "AND D1_EMISSAO >= '"+cDataIni+"' AND D1_EMISSAO <= '"+cDataFim+"'   "
+    cQuery += "AND D_E_L_E_T_ <> '*'  "
+
+    If (Select("SD1G") <> 0)
+        dbSelectArea("SD1G")
+        dbCloseArea()
+    Endif
+
+    aList := {}
+    TCQuery cQuery NEW ALIAS "SD1G"
+
+    CONOUT(cQuery)
+
+     JMovimentos := JsonObject():New()
+     aItens := {}
+
+    dbSelectArea("SD1G")
+    dbGoTop()
+    WHILE !(SD1G->(Eof()))
+        
+        JItem := JsonObject():New()
+        JItem["FILIAL"] :=   SD1G->FILIAL    
+        JItem["PRODUTO"] :=  ALLTRIM(SD1G->FILIAL)+SD1G->PRODUTO  
+        JItem["LOCAL"] :=    SD1G->LOCAL  
+        JItem["QUANT"] :=    SD1G->QUANT  
+        JItem["EMISSAO"] :=  DTOC(STOD(SD1G->EMISSAO))
+        JItem["DOCUMENTO"]:= SD1G->DOCUMENTO
+        JItem["SERIE"] :=    SD1G->SERIE  
+        JItem["TIPO"] :=     SD1G->TIPO 
+        JItem["PEDIDO"] :=   SD1G->PEDIDO
+        JItem["ITEM"] :=     SD1G->ITEMPEDIDO      
+
+
+        AADD(aItens, JItem)
+                        
+        oResponse["NOTAS"] := aItens
+
+        SD1G->(dbSkip())
+    END
+
+    //oResponse:set(aList)
+
+    self:SetResponse( EncodeUTF8(oResponse:ToJson()) ) 
+
+
+
 Return .T.
 
 // GERAÇÃO DE UMA SA (SOLICITAÇÃO AO ARMAZEM) MATA105
@@ -859,7 +1033,7 @@ For i := 1 To Len(jJson["ITENS"])
             CONOUT( 'Erro ao Executar o Processo' )
             jErro := JsonObject():New()
             jErro["CODIGO"] := "200"
-            jErro["DESCRICAO"] := "Erro ao estornar reserva do item."
+            jErro["DESCRICAO"] := "Erro ao devolver o item."
             jErro["LOG"] := AllTrim(xDatAt() + "[ERRO]" + XCONVERRLOG(aAutoErro))
             
 
@@ -870,7 +1044,7 @@ For i := 1 To Len(jJson["ITENS"])
         Else
             JSucesso := JsonObject():New()
             JSucesso["CODIGO"] := "100"
-            JSucesso["DESCRICAO"] := "Reserva estornada com sucesso."
+            JSucesso["DESCRICAO"] := "Item devolvido com sucesso."
             
 
             JItem["SUCESSO"] := JSucesso
@@ -881,7 +1055,7 @@ For i := 1 To Len(jJson["ITENS"])
 
         
     Else
-        Conout("[MyMata185] Req. "+cNum +" do item "+cItem+" nao encontrada na base de dados")
+        Conout("[MyMata185] Req. "+JReserva["NUMERO"] +" do item "+jJson["ITENS"][i]["ITEM"]+" nao encontrada na base de dados")
     EndIf
 
     AADD(aJson,JItem)
@@ -891,7 +1065,7 @@ Next i
 JReserva["EMISSAO"] := DTOC(dDataBase)
 JReserva["ITENS"] := aJson
 
-oResponse["CONSUMO"] := JReserva
+oResponse["RESERVA"] := JReserva
 self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
 
 
@@ -1029,40 +1203,94 @@ WSMETHOD POST ESTORNAR_CONSUMO PATHPARAM reserva_id WSRECEIVE MOVIMENTOS_STRUCT 
 
 Local aCamposSCP
 Local aCamposSD3
-Local cNum     := "000085"  // No.da Requisicao
-Local cItem      := "03"        // No.do Item da Req.
+//Local cNum     := "000085"  // No.da Requisicao
+//Local cItem      := "03"        // No.do Item da Req.
+
+Local cJson := ::GetContent()
+
 Local aRetCQ  := {}
-Local nOpcAuto:= 1 // BAIXA
+Local nOpcAuto:= 2 // BAIXA
+Local i := 1
 
-dbSelectArea("SCP")
-dbSetOrder(1)
-If SCP->(dbSeek(xFilial("SCP")+cNum+cItem))
-    aCamposSCP := {    {"CP_NUM"        ,SCP->CP_NUM    ,Nil     },;
+
+oResponse := JsonObject():New()
+
+
+jJson := JsonObject():New()
+CONOUT("METODO DE ESTORNAR_CONSUMO")
+CONOUT(cJson)
+jJson:FromJson(cJson)
+
+
+JReserva := JsonObject():New()
+JReserva["FILIAL"] := xFilial("SCP")
+JReserva["NUMERO"] := jJson["RESERVA"]
+
+aJson := { }
+
+For i := 1 To Len(jJson["ITENS"])
+	
+    JItem := JsonObject():New()
+    JItem["ITEM"] := STRZERO(i,2)
+    JItem["PRODUTO"] := jJson["ITENS"][i]["PRODUTO"]
+    JItem["QTDE"] := jJson["ITENS"][i]["QTDE"] 
+
+    dbSelectArea("SCP")
+    dbSetOrder(1)
+    If SCP->(dbSeek(xFilial("SCP")+jJson["RESERVA"]+jJson["ITENS"][i]["ITEM"]))
+        aCamposSCP := {    {"CP_NUM"        ,SCP->CP_NUM    ,Nil     },;
                     {"CP_ITEM"        ,SCP->CP_ITEM   ,Nil     },;
-                       {"CP_QUANT"        ,SCP->CP_QUANT  ,Nil     }}
+                        {"CP_QUANT"        ,SCP->CP_QUANT  ,Nil     }}
 
-    aCamposSD3 := { {"D3_TM"        ,"501"            ,Nil },;  // Tipo do Mov.
+        aCamposSD3 := { {"D3_TM"        ,"501"            ,Nil },;  // Tipo do Mov.
                     {"D3_COD"        ,SCP->CP_PRODUTO,Nil },;
                     {"D3_LOCAL"        ,SCP->CP_LOCAL    ,Nil },;
                     {"D3_DOC"        ,"SK0050"         ,Nil },;  // No.do Docto.
                     {"D3_EMISSAO"    ,DDATABASE        ,Nil } }
 
-    lMSHelpAuto := .F.
-   lMsErroAuto := .F.
+        lMSHelpAuto := .F.
+        lMsErroAuto := .F.
+        MSExecAuto({|v,x,y,z| mata185(v,x,y)},aCamposSCP,aCamposSD3,nOpcAuto)  // 1 = BAIXA (ROT.AUT)
 
-    MSExecAuto({|v,x,y,z| mata185(v,x,y)},aCamposSCP,aCamposSD3,nOpcAuto)  // 1 = BAIXA (ROT.AUT)
+        If lMsErroAuto
+            aAutoErro := GETAUTOGRLOG()
 
-    If lMsErroAuto
-        Conout("[MyMata185] Erro na execução da MATA185.")
-        MostraErro()
+            CONOUT( 'Erro ao Executar o Processo' )
+            jErro := JsonObject():New()
+            jErro["CODIGO"] := "200"
+            jErro["DESCRICAO"] := "Erro ao estornar consumo do item."
+            jErro["LOG"] := AllTrim(xDatAt() + "[ERRO]" + XCONVERRLOG(aAutoErro))
+            
+
+            JItem["ERRO"] := jErro
+
+            lRet := .F.
+
+        Else
+            JSucesso := JsonObject():New()
+            JSucesso["CODIGO"] := "100"
+            JSucesso["DESCRICAO"] := "Consumo estornado com sucesso."
+            
+
+            JItem["SUCESSO"] := JSucesso
+
+            
+            CONOUT( 'Processo Executado' )
+        EndIf
     Else
-        Conout("[MyMata185] MATA185 executada com sucesso.")
+            Conout("[MyMata185] Req. "+cNum +" do item "+cItem+" nao encontrada na base de dados")
     EndIf
-Else
-        Conout("[MyMata185] Req. "+cNum +" do item "+cItem+" nao encontrada na base de dados")
-EndIf
-Return Nil
-   
+
+        AADD(aJson,JItem)
+
+Next i
+
+JReserva["EMISSAO"] := DTOC(dDataBase)
+JReserva["ITENS"] := aJson
+
+oResponse["CONSUMO"] := JReserva
+self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
+  
 Return .T.
 
 WSMETHOD GET ESTOQUE PATHPARAM id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM

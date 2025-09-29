@@ -127,7 +127,7 @@ oPrint:lPDFasPNG		:= .F.
         FreeObj(oPrint)
 
         If !ExistDir(cPathServ)
-            Make(cPathServ)
+            //Make(cPathServ)
         EndIf
         __CopyFile(cPathPDF + cNomFile + '.pdf', cPathServ + cNomFile + '.pdf')
         AAdd(aArqMod, cPathServ + cNomFile+".pdf")

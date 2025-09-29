@@ -128,8 +128,11 @@ https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/
                                     
                     FOR m := 1 TO LEN(jJsonRecebe["Item"]) 
 
-                        aItem    := array(0)                    
-                        aadd(aItem,{"C6_ITEM"   ,StrZero(jJsonRecebe["Item"][m]["Sequencial"]/10,2)                ,Nil})
+                        aItem    := array(0)        
+
+                        cSequencial := StrZero(jJsonRecebe["Item"][m]["Sequencial"]/10,2)
+
+                        aadd(aItem,{"C6_ITEM"   ,cSequencial             ,Nil})
                         aadd(aItem,{"C6_PRODUTO",jJsonRecebe["Item"][m]["CodProdutoFornecedor"]                ,Nil})
                         aadd(aItem,{"C6_QTDVEN" ,jJsonRecebe["Item"][m]["Quantidade"]                ,Nil})
                         aadd(aItem,{"C6_PRCVEN" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
@@ -138,6 +141,9 @@ https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/
                         aadd(aItem,{"C6_TES"    ,"519"                 ,Nil})
                         aadd(aItem,{"C6_LOCAL"  ,"01"                 ,Nil})
                         aadd(aItem,{"C6_ENTREG" ,dDataBase                 ,Nil})
+                        aadd(aItem,{"C6_PEDCOM " ,SUBSTRING(cPedido,1,6)                 ,Nil})
+                        aadd(aItem,{"C6_ITEMPED" ,cSequencial                 ,Nil})
+
 
                         aadd(aItens,aItem)                   
 

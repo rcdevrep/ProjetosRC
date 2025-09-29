@@ -89,8 +89,6 @@ Method Enviar() Class OKEA_Integracao
         
             Self:Retorno := .T.
 
-            
-
         ELSE
 
             Self:Retorno := .F.

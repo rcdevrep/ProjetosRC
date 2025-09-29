@@ -2,6 +2,8 @@
 #INCLUDE "RWMAKE.CH"
 #INCLUDE "TBICONN.CH"
 #INCLUDE 'TOPCONN.CH'
+#Include "FWMVCDEF.CH"
+
  
 /*/{Protheus.doc} STACOMP
 Função Para Compensação de Títulos
@@ -187,7 +189,7 @@ Static Function fMontaTela(cDescContr)
         //Create Mark Column
         //
         oAdtBrw:AddMarkColumns(  {|| IIf(aAdt[oAdtBrw:nAt,01], "LBOK", "LBNO")},;  //Code-Block image
-                                 {|| SelectOne(oAdtBrw, aAdt)                 },;  //Code-Block Double Click
+                                 {|| SelectOneAdt(oAdtBrw, aAdt)                 },;  //Code-Block Double Click
                                  {|| SelectAll(oAdtBrw, 01, aAdt)             })   //Code-Block Header Click
     
         oAdtBrw:addColumn({RetTitle("E2_NUM"    ), {||aAdt[oAdtBrw:nAt,02]}, "C", X3PICTURE("E2_NUM"    ), 1, TamSx3("E2_NUM"    )[1], , .T. , , .F.,, "aAdt[oAdtBrw:nAt,02]",, .F., .T., , "ETAdt02"})
@@ -219,8 +221,9 @@ Static Function fMontaTela(cDescContr)
         //Create Mark Column
         //
         oNFBrw:AddMarkColumns(  {|| IIf(aNF[oNFBrw:nAt,01], "LBOK", "LBNO")},;  //Code-Block image
-                                {|| SelectOne(oNFBrw, aNF)                 },;  //Code-Block Double Click
-                                {|| SelectAll(oNFBrw, 01, aNF)             })   //Code-Block Header Click
+                                {|| SelectOneNF(oNFBrw, aNF)                 },;  //Code-Block Double Click                                
+                             )   //Code-Block Header Click
+                                //{|| SelectAll(oNFBrw, 01, aNF)             
     
         oNFBrw:addColumn({RetTitle("E2_NUM"    ), {||aNF[oNFBrw:nAt,02]}, "C", X3PICTURE("E2_NUM"    ), 1, TamSx3('E2_NUM'    )[1], , .T. , , .F.,, "aNF[oNFBrw:nAt,02]",, .F., .T., , "ETNF02"})
         oNFBrw:addColumn({RetTitle("E2_PREFIXO"), {||aNF[oNFBrw:nAt,03]}, "C", X3PICTURE("E2_PREFIXO"), 1, TamSx3('E2_PREFIXO')[1], , .T. , , .F.,, "aNF[oNFBrw:nAt,03]",, .F., .T., , "ETNF03"})
@@ -231,6 +234,7 @@ Static Function fMontaTela(cDescContr)
         oNFBrw:addColumn({RetTitle("E2_EMISSAO"), {||aNF[oNFBrw:nAt,08]}, "D", X3PICTURE("E2_EMISSAO"), 1, TamSx3('E2_EMISSAO')[1], , .T. , , .F.,, "aNF[oNFBrw:nAt,08]",, .F., .T., , "ETNF08"})
         oNFBrw:addColumn({RetTitle("E2_TXMOEDA"), {||aNF[oNFBrw:nAt,09]}, "D", X3PICTURE("E2_TXMOEDA"), 1, TamSx3('E2_TXMOEDA')[1], , .T. , , .F.,, "aNF[oNFBrw:nAt,09]",, .F., .T., , "ETNF09"})
         oNFBrw:addColumn({RetTitle("E2_VENCREA"), {||aNF[oNFBrw:nAt,10]}, "D", X3PICTURE("E2_VENCREA"), 1, TamSx3('E2_VENCREA')[1], , .T. , , .F.,, "aNF[oNFBrw:nAt,10]",, .F., .T., , "ETNF10"})
+        oNFBrw:addColumn({"Valor a Compensar",    {||aNF[oNFBrw:nAt,20]}, "N", X3PICTURE("E2_VALOR"  ), 1, TamSx3('E2_VALOR'  )[1], , .T. , , .F.,, "aNF[oNFBrw:nAt,20",, .F., .T., , "ETNF11"})
 
         oNFBrw:Activate(.T.)
 
@@ -247,11 +251,21 @@ Função Para Marcar/Desmarcar Item Selecionado
 @version Protheus 12
 @since Nov|2024
 /*/ 
-Static Function SelectOne(oBrowse, aArquivo)
+Static Function SelectOneNF(oBrowse, aArquivo)
 
     aArquivo[oBrowse:nAt,1] := !aArquivo[oBrowse:nAt,1]
 
-    TotalNF()
+    TotalNF(oBrowse:nAt) 
+    TotalAdt()   
+    
+    oBrowse:Refresh()
+
+Return .T.
+
+Static Function SelectOneADT(oBrowse, aArquivo)
+
+    aArquivo[oBrowse:nAt,1] := !aArquivo[oBrowse:nAt,1]    
+    
     TotalAdt()
     
     oBrowse:Refresh()
@@ -267,7 +281,7 @@ Função Para Marcar/Desmarcar Todos os itens do Browse
 @version Protheus 12
 @since Nov|2024
 /*/ 
-Static Function SelectAll(oBrowse, nCol, aArquivo)
+/*Static Function SelectAll(oBrowse, nCol, aArquivo)
 
     Local _ni := 1
 
@@ -275,13 +289,13 @@ Static Function SelectAll(oBrowse, nCol, aArquivo)
         aArquivo[_ni,1] := lMarker
     Next
 
-    TotalAdt()
+    TotalAdt(0)
     TotalNF()
 
     lMarker:=!lMarker
     oBrowse:Refresh()
 
-Return .T.
+Return .T.*/
  
 /*/{Protheus.doc} SelectAll
 Função Para Carregar a tabela de Adiantamento
@@ -426,7 +440,7 @@ Static Function CargaNF()
                       QRYTMPNF->E2_LOJA,                                 ;  //15
                       QRYTMPNF->E2_ITEMD,                                ;  //16
                       QRYTMPNF->E2_DEBITO,                               ;  //17
-                      QRYTMPNF->E2_CREDIT })                                //18
+                      QRYTMPNF->E2_CREDIT, 0 })                          //18
 
         QRYTMPNF->(DbSkip())
 
@@ -549,8 +563,6 @@ Static Function TotalAdt()
 
     Local _ni   := 1
 
-    nTotalAdt   := 0
-
     For _ni := 1 to len(aAdt)   
 
         If aAdt[_ni, 01]
@@ -571,15 +583,33 @@ Função  Para Calcular o Total das Notas Fiscais Selecionadas
 @version Protheus 12
 @since Nov|2024
 /*/ 
-Static Function TotalNF()
+Static Function TotalNF(nPosicao)
 
     Local _ni   := 1
+     Local aSize := {}
+    Local nSldCmp := 0
+    Local nOpca := 0
+
+    nTotalAdt   := 0
+
+    aSize := MSADVSIZE()
+
+    DEFINE MSDIALOG oDlg2 TITLE "Compensação" From 0,0 To 300,500 PIXEL //"Selecao de Adiantamento"
+    
+    @ 35,05  SAY "Saldo a Compensar" PIXEL OF oDlg2 SIZE 100,7 
+	@ 65,05  MSGET oGetUser VAR nSldCmp PICTURE "@E 999,999,999.99" WHEN .T. PIXEL OF oDlg2 SIZE 100,7
+
+    ACTIVATE MSDIALOG oDlg2 ON INIT EnchoiceBar(oDlg2,	{|| If(nSldCmp > 0, (nOpca := 1, oDlg2:End()), .F.)},{|| nOpca := 2,oDlg2:End()},,)
+
+    IF(nPosicao > 0 .AND. nOpca == 1)
+        aNF[nPosicao, 20] := nSldCmp
+    ENDIF
 
     nTotalNF    := 0
 
     For _ni := 1 to len(aNF)
         If aNF[_ni, 01]
-            nTotalNF += aNF[_ni, 06] 
+            nTotalNF += aNF[_ni, 20] 
         EndIf    
     Next
 
@@ -693,8 +723,8 @@ Static Function FProcessa(nTxAcorda)
                     If aNF[nNf, 01]
 
                         If aAdt[nAdt, 7] >= aNF[nNf, 7]
-                            nSldComp := aNF[nNf, 7]
-                            nValComp := aNF[nNf, 6] / nTxAcorda
+                            nSldComp := aNF[nNf, 20]
+                            nValComp := aNF[nNf, 20] / nTxAcorda
                         Else
                             nSldComp := aAdt[nAdt, 6]
                             nValComp := aAdt[nAdt, 6] 
