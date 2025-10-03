@@ -249,7 +249,7 @@ cQryTotais += ")) ULT on ULT.CODIGO = C5_CLIENTE AND ULT.LOJA = C5_LOJACLI "
 
 cQryTotais += "where C5_EMISSAO >= '20250801' AND C5_EMISSAO <= '20250931' AND SC5.D_E_L_E_T_ <> '*' 	 "
 cQryTotais += "AND C5_VEND1 <> ' '  "
-cQryTotais += "AND C5_VEND1 NOT IN ('113396','110641', '6001')  "
+cQryTotais += "AND C5_VEND1 NOT IN ('6001')  "
 cQryTotais += "AND A1_NREDUZ <> 'MRV'   "
 cQryTotais += "AND C6_TES <> '598' AND C6_TES <> '905' AND C6_TES <> '921' AND C5_NUM <> '004298'  "
 

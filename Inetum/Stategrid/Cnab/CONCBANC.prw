@@ -565,282 +565,245 @@ Private cHistBaixa := ""
 
                     aMov := aRegras[nRegra][2]
 
-                    For nMov := 1 to Len(aMov)
+                    IF(Len(aMov) > 1) 
+                        IF((aMov[1] == "3" .AND. aMov[2] == "4") .OR. (aMov[1] == "4" .AND. aMov[2] == "3") )
+                            If !VldImp(cTextBanc, cValToChar(val(cTextAgen)), cValToChar(val(cTextCont)) , ZX6->ZX6_BAIXA, ZX6->ZX6_VLPAGO, cFilReg)
 
-                        /*
-                        If nMov := 1
-                            cFilReg := ZX6->ZX6_FILIAL 
-                        Else
+                                /*aLinha   := {}
+                                AADD(aLinha, {"E5_FILIAL"       ,cFilReg                                                   ,Nil})
+                                AADD(aLinha, {"E5_DATA"         ,ZX6->ZX6_BAIXA                                                 ,Nil})
+                                AADD(aLinha, {"E5_VALOR"        ,ZX6->ZX6_VLPAGO                                           ,Nil})
+                                AADD(aLinha, {"E5_NATUREZ"      ,aRegras[nRegra][5]                                        ,Nil})
+                                If nMov == 1
+                                    AADD(aLinha, {"E5_BANCO"    ,cTextBanc                                               ,Nil})
+                                    AADD(aLinha, {"E5_AGENCIA"  ,cValToChar(val(cTextAgen))                              ,Nil})
+                                    AADD(aLinha, {"E5_CONTA"    ,fBuscConta(cTextBanc,cTextAgen,cTextCont)                             ,Nil})
+                                Else
+                                    AADD(aLinha, {"E5_BANCO"    ,aRegras[nRegra][6]                                        ,Nil})
+                                    AADD(aLinha, {"E5_AGENCIA"  ,aRegras[nRegra][7]                              ,Nil})
+                                    AADD(aLinha, {"E5_CONTA"    ,aRegras[nRegra][9]                               ,Nil})
+                                EndIf
+                                AADD(aLinha, {"E5_HISTOR"       ,ZX6->ZX6_DESLAN                                           ,Nil})
+                                AADD(aLinha, {"E5_CCC"          ,IF(cFilReg="2901","90505000","40000401")                  ,Nil})
+                                AADD(aLinha, {"E5_RECPAG"       ,"P"                                                       ,Nil})
+                                AADD(aLinha, {"E5_MOEDA"        ,"M1"                                                      ,Nil})
+                                AADD(aLinha, {"E5_DTDIGIT"      ,ZX6->ZX6_BAIXA                                                 ,Nil})
+                                AADD(aLinha, {"E5_DTDISPO"      , DataValida(ZX6->ZX6_BAIXA)                                    ,Nil})
+                                MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aLinha,3)*/
+
+
+
+                                 aFINA100 := {  {"CBCOORIG"          ,cTextBanc                                 ,Nil},;
+                                                {"CAGENORIG"         ,cValToChar(val(cTextAgen))                ,Nil},;
+                                                {"CCTAORIG"          ,fBuscConta(cTextBanc,cTextAgen,cTextCont) ,Nil},;
+                                                {"CNATURORI"         ,aRegras[nRegra][5]                     ,Nil},;
+                                                {"CBCODEST"          ,aRegras[nRegra][6]                     ,Nil},;
+                                                {"CAGENDEST"         ,aRegras[nRegra][7]                     ,Nil},;
+                                                {"CCTADEST"          ,aRegras[nRegra][9]                     ,Nil},;
+                                                {"CNATURDES"         ,aRegras[nRegra][5]                     ,Nil},;
+                                                {"CTIPOTRAN"         ,"TB"                      ,Nil},;
+                                                {"CDOCTRAN"          ,"    "                  ,Nil},;
+                                                {"NVALORTRAN"        ,ZX6->ZX6_VLPAGO                      ,Nil},;
+                                                {"CHIST100"          ,"TESTE CNAB"  ,Nil},;
+                                                {"CBENEF100"         ,"TESTE CNAB"  ,Nil},;
+                                                {"NAGLUTINA"         ,2                         ,Nil},; 
+                                                {"NCTBONLINE"        ,1                         ,Nil},; 
+                                                {"DDATACRED"         ,DataValida(ZX6->ZX6_BAIXA)          ,Nil}}
+     
+                                MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aFINA100,7)
+
+                                
+                                If lMsErroAuto                                    
+                                    aLogAuto := GetAutoGRLog()
+                                    nAuto := 1
+                                    For nAuto := 1 To Len(aLogAuto)
+                                        cRet +=  aLogAuto[nAuto] + CRLF
+                                    Next nAuto
+                                Else
+                                    cRet     += "TRANSFERENCIA REALIZADO COM SUCESSO"
+                                    lSucesso  := .T.
+
+                                EndIf
+
+                            Else
+                                cRet +=  "Movimento já realizado pela rotina padrão."
+                            EndIf
+
+
+
+
+                        ENDIF
+                    ELSE
+
+                        For nMov := 1 to Len(aMov)
+
+                            /*
+                            If nMov := 1
+                                cFilReg := ZX6->ZX6_FILIAL 
+                            Else
+                                cFilReg := aRegras[nRegra][13]
+                            Endif
+                            */
+
                             cFilReg := aRegras[nRegra][13]
-                        Endif
-                        */
+                            cFilAnt := cFilReg
 
-                        cFilReg := aRegras[nRegra][13]
-                        cFilAnt := cFilReg
+                            
+                            If nMov == 1 .AND. ZX6->ZX6_STATUS # "1" .AND. (ZX6->ZX6_MVEXEC == "X" .OR. Empty(ZX6->ZX6_MVEXEC)) .OR.;
+                            nMov == 2 .AND. (ZX6->ZX6_MVEXE2 == "X" .OR. Empty(ZX6->ZX6_MVEXE2))
 
-                        
-                        If nMov == 1 .AND. ZX6->ZX6_STATUS # "1" .AND. (ZX6->ZX6_MVEXEC == "X" .OR. Empty(ZX6->ZX6_MVEXEC)) .OR.;
-                           nMov == 2 .AND. (ZX6->ZX6_MVEXE2 == "X" .OR. Empty(ZX6->ZX6_MVEXE2))
+                                lSucesso  := .F.
+                                cNomProc  := ""
 
-                            lSucesso  := .F.
-                            cNomProc  := ""
+                                If aMov[nMov] # "0"
 
-                            If aMov[nMov] # "0"
-
-                                If aMov[nMov] == "1"
-                                    cNomProc := "Baixa a Pagar"
-                                ElseIf aMov[nMov] == "2"
-                                    cNomProc := "Baixa a Receber"
-                                ElseIf aMov[nMov] == "3"
-                                    cNomProc := "Mov.Ban.Deb"
-                                ElseIf aMov[nMov] == "4"
-                                    cNomProc := "Mov.Ban.Cred"
-                                EndIf
-
-                                nRecE1E2 := fSearch(aMov[nMov], ZX6->ZX6_FILIAL, PADR(aRegras[nRegra][3], TamSx3("A2_COD")[1]), PADR(aRegras[nRegra][4], TamSx3("A2_LOJA")[1]))
-                                
-                                //If !Empty(aRegras[nRegra][6])
-                                    //cTextBanc := aRegras[nRegra][6]
-                                //EndIf
-                                If !Empty(aRegras[nRegra][7])
-                                    cTextAgen := aRegras[nRegra][7]
-                                EndIf
-                                If !Empty(aRegras[nRegra][8])
-                                    cTextDVA := aRegras[nRegra][8]
-                                EndIf
-                                If !Empty(aRegras[nRegra][9])
-                                    cTextCont := aRegras[nRegra][9]
-                                EndIf
-                                If !Empty(aRegras[nRegra][10])
-                                    cTextDVC := aRegras[nRegra][10]
-                                EndIf
-                                
-                                If !Empty(cRet)
-                                    cRet += CRLF+Replicate("-",140)+CRLF+CRLF
-                                EndIf
-
-                                cRet += "[Linha "+cLinArq+" | Processo: "+cNomProc+" | Regra aplicada: "+Alltrim(aRegras[nRegra][12])+" - "+Alltrim(aRegras[nRegra][11])+"]"+CRLF
-
-                                //Baixa a Pagar
-                                If aMov[nMov] == "1"
-
-                                    If nRecE1E2 > 0
-
-                                        cMovExec := aMov[nMov]
-
-                                        cHistBaixa := "Teste Baixa fina080"
-
-                                        DbSelectArea("SE2")
-                                        SE2->(dbSetOrder(1))
-                                        
-                                        SE2->(DbGo(nRecE1E2))
-
-                                        aBaixa := {}        
-                                        
-                                        Aadd(aBaixa, {"E2_FILIAL", SE2->E2_FILIAL,  nil})
-                                        Aadd(aBaixa, {"E2_PREFIXO", SE2->E2_PREFIXO,  nil})
-                                        Aadd(aBaixa, {"E2_NUM", SE2->E2_NUM,      nil})
-                                        Aadd(aBaixa, {"E2_PARCELA", SE2->E2_PARCELA,  nil})
-                                        Aadd(aBaixa, {"E2_TIPO", SE2->E2_TIPO,     nil})
-                                        Aadd(aBaixa, {"E2_FORNECE", SE2->E2_FORNECE,  nil})
-                                        Aadd(aBaixa, {"E2_LOJA", SE2->E2_LOJA ,    nil})
-                                        Aadd(aBaixa, {"AUTMOTBX", "NOR",            nil})
-                                        Aadd(aBaixa, {"AUTBANCO", "001",            nil})
-                                        Aadd(aBaixa, {"AUTAGENCIA", "AG001",          nil})
-                                        Aadd(aBaixa, {"AUTCONTA", "CTA001 ",     nil})
-                                        Aadd(aBaixa, {"AUTDTBAIXA", ZX6->ZX6_BAIXA   ,        nil})
-                                        Aadd(aBaixa, {"AUTDTCREDITO", ZX6->ZX6_BAIXA   ,        nil})
-                                        Aadd(aBaixa, {"AUTHIST", cHistBaixa,       nil})
-                                        Aadd(aBaixa, {"AUTVLRPG", nVlrPag,          nil})
-
-                                        //Pergunte da rotina
-                                        AcessaPerg("FINA080", .F.)                  
-                                        
-                                        //Chama a execauto da rotina de baixa manual (FINA080)
-                                        MsExecauto({|x,y,z,v| FINA080(x,y,z,v)}, aBaixa, nOpc, .F., nSeqBx)
-                                        
-                                        If lMsErroAuto
-                                            
-                                            aLogAuto := GetAutoGRLog()
-                                            
-                                            nAuto := 1
-                                            For nAuto := 1 To Len(aLogAuto)
-                                                cRet +=  aLogAuto[nAuto] + CRLF
-                                            Next nAuto
-
-
-                                        Else
-                                            cRet      += "Baixa efetuada com sucesso"
-                                            lSucesso  := .T.
-
-                                        EndIf
-
-                                    Else
-                                        cRet     += "Foram encontrados mais de 1 ou nenhum título para baixa."
-
+                                    If aMov[nMov] == "1"
+                                        cNomProc := "Baixa a Pagar"
+                                    ElseIf aMov[nMov] == "2"
+                                        cNomProc := "Baixa a Receber"
+                                    ElseIf aMov[nMov] == "3"
+                                        cNomProc := "Mov.Ban.Deb"
+                                    ElseIf aMov[nMov] == "4"
+                                        cNomProc := "Mov.Ban.Cred"
                                     EndIf
 
-
-                                //Baixa a Receber
-                                ElseIf aMov[nMov] == "2"            //Baixa a Receber - FINA070
-                                    cMovExec := aMov[nMov]
-
-                                    If nRecE1E2 > 0
-
-                                        cHistBaixa := "Teste Baixa fina080"
-
-                                        aBaixa := {} 
-
-                                        SE1->(DbGoto(nRecE1E2))
-
-
-                                        RECLOCK("SE1",.F.)
-                                        SE1->E1_PORTADO := cTextBanc
-                                        SE1->E1_AGEDEP  := cTextAgen
-                                        SE1->E1_CONTA   := cValToChar(val(cTextCont))
-                                        MSUNLOCK()
-
-                                        Aadd(aBaixa, {"E1_FILIAL"  , SE1->E1_FILIAL           , nil})
-                                        Aadd(aBaixa, {"E1_PREFIXO" , SE1->E1_PREFIXO           , nil})
-                                        Aadd(aBaixa, {"E1_NUM"     , SE1->E1_NUM               , nil})
-                                        Aadd(aBaixa, {"E1_PARCELA" , SE1->E1_PARCELA           , nil})
-                                        Aadd(aBaixa, {"E1_TIPO"    , SE1->E1_TIPO              , nil})
-                                        //Aadd(aBaixa, {"E1_DTDISPO"    , ZX6->ZX6_BAIXA         , nil})
-
-                                        //dDataBase := ZX6->ZX6_BAIXA
-
-
-                                        //Consultar cliente
-                                        If !Empty(aRegras[nRegra][3])
-                                                
-                                            SA1->(DbSetOrder(1))   
-                                            If SA1->(DBSeek(xFilial("SA1")+PADR(aRegras[nRegra][3], TamSx3("A2_COD")[1])+PADR(aRegras[nRegra][4], TamSx3("A2_LOJA")[1])))
-                                            
-                                                Aadd(aBaixa, {"E1_CLIENTE"      , SA1->A1_COD           , nil})
-                                                Aadd(aBaixa, {"E1_LOJA"         , SA1->A1_LOJA          , nil})
-                                            EndIf
-                                        EndIf
-
-                                        Aadd(aBaixa, {"AUTJUROS"    , nJuros                         , nil})
-                                        Aadd(aBaixa, {"AUTMULTA"    , nMulta                         , nil})
-                                        Aadd(aBaixa, {"AUTVALREC"   , nValRec                        , nil})     
-                                        Aadd(aBaixa, {"AUTMOTBX"    , "NOR"                          , nil})
-                                        Aadd(aBaixa, {"AUTDTBAIXA"  , ZX6->ZX6_BAIXA                 , nil})
-                                        Aadd(aBaixa, {"AUTDTCREDITO"  , ZX6->ZX6_BAIXA                 , nil})
-                                        Aadd(aBaixa, {"AUTHIST"     , cHistBaixa                     , nil})     
-
-
-                                        
-                                        MSExecAuto({|a,b| FINA070(a,b)},aBaixa,3) //3-Inclusao
-                                        
-                                        If lMsErroAuto
-                                            
-                                            aLogAuto := GetAutoGRLog()
-
-                                            nAuto := 1
-                                            For nAuto := 1 To Len(aLogAuto)
-                                                cRet +=  aLogAuto[nAuto] + CRLF
-                                            Next nAuto
-
-                                        Else
-                                            cRet      += "BAIXA REALIZADA COM SUCESSO"+CRLF+"Título: "+SE1->E1_NUM+CRLF+"Prefixo: "+SE1->E1_PREFIXO+CRLF+"Cliente: "+SA1->A1_COD+"/"+SA1->A1_LOJA
-                                            lSucesso  := .T.
-
-                                        EndIf
-                                    Else
-                                        cRet     += "Foram encontrados mais de 1 ou nenhum título para baixa."
-
+                                    nRecE1E2 := fSearch(aMov[nMov], ZX6->ZX6_FILIAL, PADR(aRegras[nRegra][3], TamSx3("A2_COD")[1]), PADR(aRegras[nRegra][4], TamSx3("A2_LOJA")[1]))
+                                    
+                                    //If !Empty(aRegras[nRegra][6])
+                                        //cTextBanc := aRegras[nRegra][6]
+                                    //EndIf
+                                    If !Empty(aRegras[nRegra][7])
+                                        cTextAgen := aRegras[nRegra][7]
                                     EndIf
-
-                                //Mov.Ban.Deb
-                                ElseIf aMov[nMov] == "3"            //Mov.Ban.Deb - FINA100
-                                    cMovExec := aMov[nMov]
-
-                                    If !VldImp(cTextBanc, cValToChar(val(cTextAgen)), cValToChar(val(cTextCont)) , ZX6->ZX6_BAIXA, ZX6->ZX6_VLPAGO, cFilReg)
-                                                                
-                                        aLinha   := {}
-
-                                        //ZX6->ZX6_CODBAN, Alltrim(ZX6->ZX6_AGENCI), Alltrim(ZX6->ZX6_CCORRE)
-                                        
-                                        AADD(aLinha, {"E5_FILIAL"       ,cFilReg                                                   ,Nil})
-                                        AADD(aLinha, {"E5_DATA"         ,ZX6->ZX6_BAIXA                                                 ,Nil})
-                                        AADD(aLinha, {"E5_VALOR"        ,ZX6->ZX6_VLPAGO                                           ,Nil})
-                                        AADD(aLinha, {"E5_NATUREZ"      ,aRegras[nRegra][5]                                        ,Nil})
-                                        If nMov == 1
-                                            AADD(aLinha, {"E5_BANCO"    ,cTextBanc                                               ,Nil})
-                                            AADD(aLinha, {"E5_AGENCIA"  ,cValToChar(val(cTextAgen))                              ,Nil})
-                                            AADD(aLinha, {"E5_CONTA"    ,fBuscConta(cTextBanc,cTextAgen,cTextCont)                             ,Nil})
-                                        Else
-                                            AADD(aLinha, {"E5_BANCO"    ,aRegras[nRegra][6]                                        ,Nil})
-                                            AADD(aLinha, {"E5_AGENCIA"  ,aRegras[nRegra][7]                              ,Nil})
-                                            AADD(aLinha, {"E5_CONTA"    ,aRegras[nRegra][9]                               ,Nil})
-                                        EndIf
-                                        AADD(aLinha, {"E5_HISTOR"       ,ZX6->ZX6_DESLAN                                           ,Nil})
-                                        AADD(aLinha, {"E5_CCC"          ,IF(cFilReg="2901","90505000","40000401")                  ,Nil})
-                                        AADD(aLinha, {"E5_RECPAG"       ,"P"                                                       ,Nil})
-                                        AADD(aLinha, {"E5_MOEDA"        ,"M1"                                                      ,Nil})
-                                        AADD(aLinha, {"E5_DTDIGIT"      ,ZX6->ZX6_BAIXA                                                 ,Nil})
-                                        AADD(aLinha, {"E5_DTDISPO"      , DataValida(ZX6->ZX6_BAIXA)                                    ,Nil})
-
-                                        MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aLinha,3)
-                                        
-                                        If lMsErroAuto
-                                            
-                                            aLogAuto := GetAutoGRLog()
-
-                                            nAuto := 1
-                                            For nAuto := 1 To Len(aLogAuto)
-                                                cRet +=  aLogAuto[nAuto] + CRLF
-                                            Next nAuto
-
-
-                                        Else
-                                            cRet     += "MOVIMENTO REALIZADO COM SUCESSO"
-                                            lSucesso  := .T.
-
-                                        EndIf
-
-                                    Else
-                                        cRet +=  "Movimento já realizado pela rotina padrão."
+                                    If !Empty(aRegras[nRegra][8])
+                                        cTextDVA := aRegras[nRegra][8]
+                                    EndIf
+                                    If !Empty(aRegras[nRegra][9])
+                                        cTextCont := aRegras[nRegra][9]
+                                    EndIf
+                                    If !Empty(aRegras[nRegra][10])
+                                        cTextDVC := aRegras[nRegra][10]
                                     EndIf
                                     
-                                //Mov.Ban.Cred
-                                ElseIf aMov[nMov] == "4"            //Mov.Ban.Cred -  FINA100
-                                    cMovExec := aMov[nMov]
+                                    If !Empty(cRet)
+                                        cRet += CRLF+Replicate("-",140)+CRLF+CRLF
+                                    EndIf
 
-                                    If !VldImp(cTextBanc, cValToChar(val(cTextAgen)), cValToChar(val(cTextCont)) , ZX6->ZX6_BAIXA, ZX6->ZX6_VLPAGO, cFilReg )
-                                        
-                                            aLinha   := {}
+                                    cRet += "[Linha "+cLinArq+" | Processo: "+cNomProc+" | Regra aplicada: "+Alltrim(aRegras[nRegra][12])+" - "+Alltrim(aRegras[nRegra][11])+"]"+CRLF
 
-                                            AADD(aLinha, {"E5_FILIAL"   ,cFilReg                                                 ,Nil})
-                                            AADD(aLinha, {"E5_DATA"     ,ZX6->ZX6_BAIXA                                               ,Nil})
-                                            AADD(aLinha, {"E5_VALOR"    ,ZX6->ZX6_VLPAGO                                         ,Nil})
-                                            AADD(aLinha, {"E5_NATUREZ"  ,aRegras[nRegra][5]                                      ,Nil})
-                                            If nMov == 1
-                                                AADD(aLinha, {"E5_BANCO"    ,cTextBanc                                               ,Nil})
-                                                AADD(aLinha, {"E5_AGENCIA"  ,cValToChar(val(cTextAgen))                              ,Nil})
-                                                AADD(aLinha, {"E5_CONTA"    ,fBuscConta(cTextBanc,cTextAgen,cTextCont)                              ,Nil})
-                                            Else
-                                                AADD(aLinha, {"E5_BANCO"    ,aRegras[nRegra][6]                                               ,Nil})
-                                                AADD(aLinha, {"E5_AGENCIA"  ,aRegras[nRegra][7]                               ,Nil})
-                                                AADD(aLinha, {"E5_CONTA"    ,aRegras[nRegra][9]                              ,Nil})
-                                            EndIf
-                                            AADD(aLinha, {"E5_HISTOR"   ,ZX6->ZX6_DESLAN                                         ,Nil})
-                                            AADD(aLinha, {"E5_CCC"      ,IF(cFilReg="2901","90505000","40000401")                ,Nil})
-                                            AADD(aLinha, {"E5_RECPAG"   ,"R"                                                     ,Nil})
-                                            AADD(aLinha, {"E5_MOEDA"    ,"M1"                                                    ,Nil})
-                                            AADD(aLinha, {"E5_DTDIGIT"  ,ZX6->ZX6_BAIXA                                               ,Nil})
-                                            AADD(aLinha, {"E5_DTDISPO"  , DataValida(ZX6->ZX6_BAIXA)                                  ,Nil})
+                                    //Baixa a Pagar
+                                    If aMov[nMov] == "1"
 
+                                        If nRecE1E2 > 0
 
-                                            //AADD(aFINA100, aLinha)
+                                            cMovExec := aMov[nMov]
 
+                                            cHistBaixa := "Teste Baixa fina080"
 
+                                            DbSelectArea("SE2")
+                                            SE2->(dbSetOrder(1))
+                                            
+                                            SE2->(DbGo(nRecE1E2))
 
-                                            MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aLinha,4)
+                                            aBaixa := {}        
+                                            
+                                            Aadd(aBaixa, {"E2_FILIAL", SE2->E2_FILIAL,  nil})
+                                            Aadd(aBaixa, {"E2_PREFIXO", SE2->E2_PREFIXO,  nil})
+                                            Aadd(aBaixa, {"E2_NUM", SE2->E2_NUM,      nil})
+                                            Aadd(aBaixa, {"E2_PARCELA", SE2->E2_PARCELA,  nil})
+                                            Aadd(aBaixa, {"E2_TIPO", SE2->E2_TIPO,     nil})
+                                            Aadd(aBaixa, {"E2_FORNECE", SE2->E2_FORNECE,  nil})
+                                            Aadd(aBaixa, {"E2_LOJA", SE2->E2_LOJA ,    nil})
+                                            Aadd(aBaixa, {"AUTMOTBX", "NOR",            nil})
+                                            Aadd(aBaixa, {"AUTBANCO", "001",            nil})
+                                            Aadd(aBaixa, {"AUTAGENCIA", "AG001",          nil})
+                                            Aadd(aBaixa, {"AUTCONTA", "CTA001 ",     nil})
+                                            Aadd(aBaixa, {"AUTDTBAIXA", ZX6->ZX6_BAIXA   ,        nil})
+                                            Aadd(aBaixa, {"AUTDTCREDITO", ZX6->ZX6_BAIXA   ,        nil})
+                                            Aadd(aBaixa, {"AUTHIST", cHistBaixa,       nil})
+                                            Aadd(aBaixa, {"AUTVLRPG", nVlrPag,          nil})
 
+                                            //Pergunte da rotina
+                                            AcessaPerg("FINA080", .F.)                  
+                                            
+                                            //Chama a execauto da rotina de baixa manual (FINA080)
+                                            MsExecauto({|x,y,z,v| FINA080(x,y,z,v)}, aBaixa, nOpc, .F., nSeqBx)
+                                            
                                             If lMsErroAuto
-                                                //MostraErro()
+                                                
+                                                aLogAuto := GetAutoGRLog()
+                                                
+                                                nAuto := 1
+                                                For nAuto := 1 To Len(aLogAuto)
+                                                    cRet +=  aLogAuto[nAuto] + CRLF
+                                                Next nAuto
+
+
+                                            Else
+                                                cRet      += "Baixa efetuada com sucesso"
+                                                lSucesso  := .T.
+
+                                            EndIf
+
+                                        Else
+                                            cRet     += "Foram encontrados mais de 1 ou nenhum título para baixa."
+
+                                        EndIf
+
+
+                                    //Baixa a Receber
+                                    ElseIf aMov[nMov] == "2"            //Baixa a Receber - FINA070
+                                        cMovExec := aMov[nMov]
+
+                                        If nRecE1E2 > 0
+
+                                            cHistBaixa := "Teste Baixa fina080"
+
+                                            aBaixa := {} 
+
+                                            SE1->(DbGoto(nRecE1E2))
+
+
+                                            RECLOCK("SE1",.F.)
+                                            SE1->E1_PORTADO := cTextBanc
+                                            SE1->E1_AGEDEP  := fBuscAgenc(cTextBanc,cTextAgen,cTextCont)//cTextAgen
+                                            SE1->E1_CONTA   := fBuscConta(cTextBanc,cTextAgen,cTextCont)//cValToChar(val(cTextCont))
+                                            MSUNLOCK()
+
+                                            Aadd(aBaixa, {"E1_FILIAL"  , SE1->E1_FILIAL           , nil})
+                                            Aadd(aBaixa, {"E1_PREFIXO" , SE1->E1_PREFIXO           , nil})
+                                            Aadd(aBaixa, {"E1_NUM"     , SE1->E1_NUM               , nil})
+                                            Aadd(aBaixa, {"E1_PARCELA" , SE1->E1_PARCELA           , nil})
+                                            Aadd(aBaixa, {"E1_TIPO"    , SE1->E1_TIPO              , nil})
+                                            //Aadd(aBaixa, {"E1_DTDISPO"    , ZX6->ZX6_BAIXA         , nil})
+
+                                            //dDataBase := ZX6->ZX6_BAIXA
+
+
+                                            //Consultar cliente
+                                            If !Empty(aRegras[nRegra][3])
+                                                    
+                                                SA1->(DbSetOrder(1))   
+                                                If SA1->(DBSeek(xFilial("SA1")+PADR(aRegras[nRegra][3], TamSx3("A2_COD")[1])+PADR(aRegras[nRegra][4], TamSx3("A2_LOJA")[1])))
+                                                
+                                                    Aadd(aBaixa, {"E1_CLIENTE"      , SA1->A1_COD           , nil})
+                                                    Aadd(aBaixa, {"E1_LOJA"         , SA1->A1_LOJA          , nil})
+                                                EndIf
+                                            EndIf
+
+                                            Aadd(aBaixa, {"AUTJUROS"    , nJuros                         , nil})
+                                            Aadd(aBaixa, {"AUTMULTA"    , nMulta                         , nil})
+                                            Aadd(aBaixa, {"AUTVALREC"   , nValRec                        , nil})     
+                                            Aadd(aBaixa, {"AUTMOTBX"    , "NOR"                          , nil})
+                                            Aadd(aBaixa, {"AUTDTBAIXA"  , ZX6->ZX6_BAIXA                 , nil})
+                                            Aadd(aBaixa, {"AUTDTCREDITO"  , ZX6->ZX6_BAIXA                 , nil})
+                                            Aadd(aBaixa, {"AUTHIST"     , cHistBaixa                     , nil})     
+
+
+                                            
+                                            MSExecAuto({|a,b| FINA070(a,b)},aBaixa,3) //3-Inclusao
+                                            
+                                            If lMsErroAuto
                                                 
                                                 aLogAuto := GetAutoGRLog()
 
@@ -849,65 +812,171 @@ Private cHistBaixa := ""
                                                     cRet +=  aLogAuto[nAuto] + CRLF
                                                 Next nAuto
 
-                                                
-
                                             Else
-                                                cRet      += "MOVIMENTO REALIZADO COM SUCESSO"
+                                                cRet      += "BAIXA REALIZADA COM SUCESSO"+CRLF+"Título: "+SE1->E1_NUM+CRLF+"Prefixo: "+SE1->E1_PREFIXO+CRLF+"Cliente: "+SA1->A1_COD+"/"+SA1->A1_LOJA
                                                 lSucesso  := .T.
 
-                                            EndIf                                      
+                                            EndIf
+                                        Else
+                                            cRet     += "Foram encontrados mais de 1 ou nenhum título para baixa."
 
-                                    Else
-                                        cRet +=  "Movimento já realizado pela rotina padrão."
-                                    EndIf
-                        
-                                
-                                EndIf
+                                        EndIf
 
-                                If !lSucesso
-                                    cMovExec := "X"
-                                EndIf
+                                    //Mov.Ban.Deb
+                                    ElseIf aMov[nMov] == "3"            //Mov.Ban.Deb - FINA100
+                                        cMovExec := aMov[nMov]
+
+                                        If !VldImp(cTextBanc, cValToChar(val(cTextAgen)), cValToChar(val(cTextCont)) , ZX6->ZX6_BAIXA, ZX6->ZX6_VLPAGO, cFilReg)
+                                                                    
+                                            aLinha   := {}
+
+                                            //ZX6->ZX6_CODBAN, Alltrim(ZX6->ZX6_AGENCI), Alltrim(ZX6->ZX6_CCORRE)
+                                            
+                                            AADD(aLinha, {"E5_FILIAL"       ,cFilReg                                                   ,Nil})
+                                            AADD(aLinha, {"E5_DATA"         ,ZX6->ZX6_BAIXA                                                 ,Nil})
+                                            AADD(aLinha, {"E5_VALOR"        ,ZX6->ZX6_VLPAGO                                           ,Nil})
+                                            AADD(aLinha, {"E5_NATUREZ"      ,aRegras[nRegra][5]                                        ,Nil})
+                                            If nMov == 1
+                                                AADD(aLinha, {"E5_BANCO"    ,cTextBanc                                               ,Nil})
+                                                AADD(aLinha, {"E5_AGENCIA"  ,fBuscAgenc(cTextBanc,cTextAgen,cTextCont)                              ,Nil})
+                                                AADD(aLinha, {"E5_CONTA"    ,fBuscConta(cTextBanc,cTextAgen,cTextCont)                             ,Nil})
+                                            Else
+                                                AADD(aLinha, {"E5_BANCO"    ,aRegras[nRegra][6]                                        ,Nil})
+                                                AADD(aLinha, {"E5_AGENCIA"  ,aRegras[nRegra][7]                              ,Nil})
+                                                AADD(aLinha, {"E5_CONTA"    ,aRegras[nRegra][9]                               ,Nil})
+                                            EndIf
+                                            AADD(aLinha, {"E5_HISTOR"       ,ZX6->ZX6_DESLAN                                           ,Nil})
+                                            AADD(aLinha, {"E5_CCC"          ,IF(cFilReg="2901","90505000","40000401")                  ,Nil})
+                                            AADD(aLinha, {"E5_RECPAG"       ,"P"                                                       ,Nil})
+                                            AADD(aLinha, {"E5_MOEDA"        ,"M1"                                                      ,Nil})
+                                            AADD(aLinha, {"E5_DTDIGIT"      ,ZX6->ZX6_BAIXA                                                 ,Nil})
+                                            AADD(aLinha, {"E5_DTDISPO"      , DataValida(ZX6->ZX6_BAIXA)                                    ,Nil})
+
+                                            MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aLinha,3)
+                                            
+                                            If lMsErroAuto
+                                                
+                                                aLogAuto := GetAutoGRLog()
+
+                                                nAuto := 1
+                                                For nAuto := 1 To Len(aLogAuto)
+                                                    cRet +=  aLogAuto[nAuto] + CRLF
+                                                Next nAuto
 
 
-                                Reclock("ZX6", .F.)
-                                    If nMov == 1
-                                        ZX6->ZX6_MVEXEC := cMovExec
-                                    Else
-                                        ZX6->ZX6_MVEXE2 := cMovExec
-                                    EndIf
-                                  
-                                    If ZX6->ZX6_MVEXEC # "X" .AND. ZX6->ZX6_MVEXE2 # "X"
-                                        cStatus := "1"
-                                    ElseIf ZX6->ZX6_MVEXEC == "X" .AND. (ZX6->ZX6_MVEXE2 == "X" .OR. Empty(ZX6->ZX6_MVEXE2) .OR. ZX6_MVEXE2 == "0")
-                                        cStatus := "3"
-                                    ElseIf ZX6->ZX6_MVEXEC # ZX6->ZX6_MVEXE2 .AND. !Empty(ZX6->ZX6_MVEXE2) .AND. ZX6->ZX6_MVEXE2 # "0"
-                                        cStatus := "2"
-                                    EndIf
-                                    //FAZER UM CONTEM A EXPRESSÃO NO CRET PARA RECUPERAR SE O TITULO JÁ FOI BAIXADO.
+                                            Else
+                                                cRet     += "MOVIMENTO REALIZADO COM SUCESSO"
+                                                lSucesso  := .T.
 
-                                    IF("Baixado" $ cRet)
-                                        cStatus := "1"
-                                    ENDIF
+                                            EndIf
+
+                                        Else
+                                            cRet +=  "Movimento já realizado pela rotina padrão."
+                                        EndIf
+                                        
+                                    //Mov.Ban.Cred
+                                    ElseIf aMov[nMov] == "4"            //Mov.Ban.Cred -  FINA100
+                                        cMovExec := aMov[nMov]
+
+                                        If !VldImp(cTextBanc, cValToChar(val(cTextAgen)), cValToChar(val(cTextCont)) , ZX6->ZX6_BAIXA, ZX6->ZX6_VLPAGO, cFilReg )
+                                            
+                                                aLinha   := {}
+
+                                                AADD(aLinha, {"E5_FILIAL"   ,cFilReg                                                 ,Nil})
+                                                AADD(aLinha, {"E5_DATA"     ,ZX6->ZX6_BAIXA                                               ,Nil})
+                                                AADD(aLinha, {"E5_VALOR"    ,ZX6->ZX6_VLPAGO                                         ,Nil})
+                                                AADD(aLinha, {"E5_NATUREZ"  ,aRegras[nRegra][5]                                      ,Nil})
+                                                If nMov == 1
+                                                    AADD(aLinha, {"E5_BANCO"    ,cTextBanc                                               ,Nil})
+                                                    AADD(aLinha, {"E5_AGENCIA"  ,fBuscAgenc(cTextBanc,cTextAgen,cTextCont)                              ,Nil})
+                                                    AADD(aLinha, {"E5_CONTA"    ,fBuscConta(cTextBanc,cTextAgen,cTextCont)                              ,Nil})
+                                                Else
+                                                    AADD(aLinha, {"E5_BANCO"    ,aRegras[nRegra][6]                                               ,Nil})
+                                                    AADD(aLinha, {"E5_AGENCIA"  ,aRegras[nRegra][7]                               ,Nil})
+                                                    AADD(aLinha, {"E5_CONTA"    ,aRegras[nRegra][9]                              ,Nil})
+                                                EndIf
+                                                AADD(aLinha, {"E5_HISTOR"   ,ZX6->ZX6_DESLAN                                         ,Nil})
+                                                AADD(aLinha, {"E5_CCC"      ,IF(cFilReg="2901","90505000","40000401")                ,Nil})
+                                                AADD(aLinha, {"E5_RECPAG"   ,"R"                                                     ,Nil})
+                                                AADD(aLinha, {"E5_MOEDA"    ,"M1"                                                    ,Nil})
+                                                AADD(aLinha, {"E5_DTDIGIT"  ,ZX6->ZX6_BAIXA                                               ,Nil})
+                                                AADD(aLinha, {"E5_DTDISPO"  , DataValida(ZX6->ZX6_BAIXA)                                  ,Nil})
+
+
+                                                //AADD(aFINA100, aLinha)
+
+
+
+                                                MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aLinha,4)
+
+                                                If lMsErroAuto
+                                                    //MostraErro()
+                                                    
+                                                    aLogAuto := GetAutoGRLog()
+
+                                                    nAuto := 1
+                                                    For nAuto := 1 To Len(aLogAuto)
+                                                        cRet +=  aLogAuto[nAuto] + CRLF
+                                                    Next nAuto
+
+                                                    
+
+                                                Else
+                                                    cRet      += "MOVIMENTO REALIZADO COM SUCESSO"
+                                                    lSucesso  := .T.
+
+                                                EndIf                                      
+
+                                        Else
+                                            cRet +=  "Movimento já realizado pela rotina padrão."
+                                        EndIf
+                            
                                     
-                                    ZX6->ZX6_RESULT := cRet
-                                    ZX6->ZX6_STATUS := cStatus
-                                    ZX6->ZX6_FILPRC := cFilReg
-                                    ZX6->ZX6_USER   := UsrFullName()
-                                ZX6->(MsUnlock())
+                                    EndIf
+
+                                    If !lSucesso
+                                        cMovExec := "X"
+                                    EndIf
 
 
+                                    Reclock("ZX6", .F.)
+                                        If nMov == 1
+                                            ZX6->ZX6_MVEXEC := cMovExec
+                                        Else
+                                            ZX6->ZX6_MVEXE2 := cMovExec
+                                        EndIf
+                                    
+                                        If ZX6->ZX6_MVEXEC # "X" .AND. ZX6->ZX6_MVEXE2 # "X"
+                                            cStatus := "1"
+                                        ElseIf ZX6->ZX6_MVEXEC == "X" .AND. (ZX6->ZX6_MVEXE2 == "X" .OR. Empty(ZX6->ZX6_MVEXE2) .OR. ZX6_MVEXE2 == "0")
+                                            cStatus := "3"
+                                        ElseIf ZX6->ZX6_MVEXEC # ZX6->ZX6_MVEXE2 .AND. !Empty(ZX6->ZX6_MVEXE2) .AND. ZX6->ZX6_MVEXE2 # "0"
+                                            cStatus := "2"
+                                        EndIf
+                                        //FAZER UM CONTEM A EXPRESSÃO NO CRET PARA RECUPERAR SE O TITULO JÁ FOI BAIXADO.
+
+                                        IF("Baixado" $ cRet)
+                                            cStatus := "1"
+                                        ENDIF
+                                        
+                                        ZX6->ZX6_RESULT := cRet
+                                        ZX6->ZX6_STATUS := cStatus
+                                        ZX6->ZX6_FILPRC := cFilReg
+                                        ZX6->ZX6_USER   := UsrFullName()
+                                    ZX6->(MsUnlock())
+
+
+                                EndIf
                             EndIf
-                        EndIf
-                    Next nMov
+                        Next nMov
+                    ENDIF
 
+                        cFilAnt := cFilBkp
 
-                    cFilAnt := cFilBkp
+                    EndIf
 
-                EndIf
-
-            Next nRegra
-            //-----------------------------------------------------------------------------------------------------------------------
-
+                Next nRegra
+            //-----------------------------------------------------------------------------------------------------------------------            
             
             cLinArq := Soma1(cLinArq)
 
@@ -1109,7 +1178,6 @@ Local cAlias		:= GetNextAlias()
     cQuery += "A6_BLOCKED <> '1' AND "
     //cQuery += "A6_FILPROC <> '' AND "
 	cQuery += " ((SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
-    
     cQuery += " (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
     cQuery += " ORDER BY PRIOR"
 
@@ -1128,3 +1196,35 @@ Local cAlias		:= GetNextAlias()
     EndIf
 
 Return cConta
+
+
+Static Function fBuscAgenc(xBanco, xAgencia, xConta)
+Local cConta        := xConta
+Local cQuery		:= ""
+Local cAlias		:= GetNextAlias()
+
+    cQuery := "SELECT  TOP 1 A6_AGENCIA, CASE WHEN (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') THEN 1 ELSE 2 END PRIOR  "
+	cQuery += "FROM "+RETSQLNAME("SA6")+" (NOLOCK) WHERE "
+	cQuery += "D_E_L_E_T_ = '' AND A6_COD = '"+xBanco+"' AND "
+    cQuery += "A6_BLOCKED <> '1' AND "
+    //cQuery += "A6_FILPROC <> '' AND "
+	cQuery += " ((SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
+    cQuery += " (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
+    cQuery += " ORDER BY PRIOR"
+
+
+
+	TCQuery cQuery NEW ALIAS (cAlias)
+
+	if !(cAlias)->(Eof())
+        cConta := (cAlias)->A6_AGENCIA
+    Endif
+
+    (cAlias)->(DbCloseArea())
+
+    If Empty(cConta)
+        cConta := xConta
+    EndIf
+
+Return cConta
+

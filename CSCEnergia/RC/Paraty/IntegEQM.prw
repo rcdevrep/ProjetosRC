@@ -1354,9 +1354,13 @@ WSMETHOD GET ESTOQUE PATHPARAM id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM
 
     CONOUT("WSMETHOD GET ESTOQUE PATHPARAM "+cMaterial+" WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM")
 
-    cQuery := "SELECT B2_FILIAL, B2_COD, B2_LOCAL, B2_QATU, B2_QEMP, B2_RESERVA, B2_CM1 FROM "+RetSqlName("SB2")+" "
+    cQuery := "SELECT B2_FILIAL, B2_COD, B2_LOCAL, B2_QATU, B2_QEMP, B2_RESERVA, B2_CM1 FROM "+RetSqlName("SB2")+" SB2 WHERE "
     //cQuery += "WHERE B2_FILIAL + B2_COD = '"+cMaterial+ "' "
-    cQuery += "WHERE D_E_L_E_T_ <> '*' AND B2_LOCAL = '01' AND B2_FILIAL = '0102' "
+    IF(!EMPTY(cMaterial))
+        cQuery += "B2_FILIAL + B2_COD = '"+cMaterial+ "' AND "
+    ENDIF
+    cQuery += "D_E_L_E_T_ <> '*' AND B2_LOCAL = '01' AND B2_FILIAL = '0102' "
+
 
     If (Select("SB2G") <> 0)
         dbSelectArea("SB2G")
