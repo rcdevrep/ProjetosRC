@@ -1,16 +1,30 @@
 #include 'protheus.ch'
 #include 'parmtype.ch'
 #include "topconn.ch"
-
+#include "totvs.ch"
 
 //user function MTA650I()
 
-	//PONTO DE ENTRADA DESATIVADO DEVIDO IMPLEMENTAÇÃO DO MRP
-	//U_OKEAMES()
+//PONTO DE ENTRADA DESATIVADO DEVIDO IMPLEMENTAÇÃO DO MRP
+//U_OKEAMES(SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN)
 
 //return
 
-User Function MA651GRV
+User Function MA651GRV()
+// GERA ETIQUETAS SE PRODUTO PA E USUARIO QUISER GERAR.
+	if !isblind()
+	
+		DBSelectArea('SB1')
+		SB1->(DBSETORDER(1))
+		IF SB1->(DBSEEK(XFILIAL('SB1')+SC2->C2_PRODUTO))
+
+			IF SB1->B1_TIPO == 'PA' .AND. !SB1->B1_XMEADA
+				if	fwalertyesno('Gostaria de imprimir as etiquetas para a ordem'+SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+'?','Etiquetas PA')
+					u_IMPETQPA()
+				Endif
+			ENDIF
+		ENDIF
+	Endif
 
 
 //EXECUTADO APÓS A TROCA DO STATUS DE FIRME
@@ -24,7 +38,7 @@ USER FUNCTION OKEATESTE()
 	RpcSetType(3)
 	RPCSetEnv("01", "0101", , , , , , .T., .T., .T.)
 
-	U_OKEAMES("03307301001")
+	U_OKEAMES("08762501001")
 
 RETURN
 
@@ -50,7 +64,7 @@ USER FUNCTION OKEAMES(cNumOP)
 	cQuery += "inner join "+RETSQLNAME("SB1")+" SB1 on B1_COD = C2_PRODUTO AND SB1.D_E_L_E_T_ <> '*' "
 	//cQuery += "where CONCAT(CONCAT(C2_NUM,C2_ITEM),C2_SEQUEN) = '"+SC2->C2_NUM+SC2->C2_ITEM+SC2->C2_SEQUEN+"' AND C2_FILIAL = '"+xFilial("SC2")+"' "
 	cQuery += "where CONCAT(CONCAT(C2_NUM,C2_ITEM),C2_SEQUEN) = '"+cNumOp+"' AND C2_FILIAL = '"+xFilial("SC2")+"' "
-
+	cQuery += "AND SUBSTR(C2_PRODUTO,1,7) NOT IN("+SuperGetMv("MV_PRODMES",.F.," ")+") "
 
 	conout(cQuery)
 
@@ -89,29 +103,29 @@ USER FUNCTION OKEAMES(cNumOP)
 
 		oIntegrador := oIntegrador:Enviar()
 
-		Dbselectarea("SC2")
-		DbSetOrder(1)
-		dbGotop()
-		IF(DbSeek(xFilial("SC2")+cNumOp))
+		//Dbselectarea("SC2")
+		//DbSetOrder(1)
+		//dbGotop()
+		//IF(DbSeek(xFilial("SC2")+cNumOp))
 			If(oIntegrador:Retorno)
 
-				cMensagem := RetornoIntegracao:Mensagem
-				RECLOCK("SC2",.F.)
-				SC2->C2_STATMES := "1" // ENVIADO OK
-				MSUNLOCK()
+				cMensagem := "Enviado ao MES"
+				//RECLOCK("SC2",.F.)
+				//SC2->C2_STATMES := "1" // ENVIADO OK
+				//MSUNLOCK()
 				FWAlertSuccess(cMensagem, FunName())
 
 			ELSE
 
-				cMensagem := RetornoIntegracao:Mensagem
-				RECLOCK("SC2",.F.)
-				SC2->C2_STATMES := "2" // ERRO NO ENVIO
-				MSUNLOCK()
+				cMensagem := "ERRO NO MES " + oIntegrador:RetornoIntegracao:Mensagem
+				//RECLOCK("SC2",.F.)
+				//SC2->C2_STATMES := "2" // ERRO NO ENVIO
+				//MSUNLOCK()
 				FWAlertError(cMensagem, FunName())
 
 			ENDIF
 
-		ENDIF
+		//ENDIF
 
 	EndIf
 	dbCloseArea()

@@ -249,8 +249,11 @@ WSMETHOD GET MOVIMENTOS PATHPARAM id, data_ini, data_fim WSRECEIVE MOVIMENTOS_ST
     CONOUT("WSMETHOD GET MOVIMENTOS PATHPARAM "+cMaterial+" WSRECEIVE MOVIMENTOS WSSERVICE IntegEQM")
 
     cQuery := "SELECT D3_FILIAL FILIAL, D3_COD PRODUTO, D3_LOCAL LOCAL, D3_QUANT QUANT, D3_EMISSAO EMISSAO, D3_TM TIPO FROM "+RetSqlName("SD3")+" "
-    cQuery += "WHERE D3_FILIAL + D3_COD = '"+cMaterial+ "' "
-    cQuery += "AND D3_EMISSAO >= '"+cDataIni+"' AND D3_EMISSAO <= '"+cDataFim+"'   "
+    cQuery += "WHERE "
+    IF(!EMPTY(cMaterial))
+        cQuery := "D3_FILIAL + D3_COD = '"+cMaterial+ "' AND "
+    ENDIF
+    cQuery += "D3_EMISSAO >= '"+cDataIni+"' AND D3_EMISSAO <= '"+cDataFim+"'   "
     cQuery += "AND D_E_L_E_T_ <> '*'  "
 
     If (Select("SD3G") <> 0)
@@ -277,13 +280,13 @@ WSMETHOD GET MOVIMENTOS PATHPARAM id, data_ini, data_fim WSRECEIVE MOVIMENTOS_ST
         JItem["QUANT"] :=    SD3G->QUANT  
         JItem["EMISSAO"] :=  DTOC(STOD(SD3G->EMISSAO))
         JItem["TIPO"] :=     SD3G->TIPO    
+        JItem["KARDEX"] := IIF(SD3G->TIPO > "499","SAIDA", "ENTRADA")
 
         AADD(aItens, JItem)
-                        
-        oResponse["MOVIMENTOS"] := aItens
-
         SD3G->(dbSkip())
     END
+
+    oResponse["MOVIMENTOS"] := aItens
 
     //oResponse:set(aList)
 
@@ -307,45 +310,68 @@ WSMETHOD GET PED_MATERIAL PATHPARAM id, data_ini, data_fim WSRECEIVE PEDIDO_COMP
 
     cQuery := "select C7_FILIAL FILIAL, C7_NUM PEDIDO, C7_ITEM ITEMPEDIDO, C7_PRODUTO PRODUTO, C7_QUANT QUANT, C7_QUJE ATENDIDA, C7_PRECO PRECO, C7_TOTAL TOTAL, C7_DATPRF PREVISAO, C7_EMISSAO EMISSAO, C7_RESIDUO RESIDUO, "
     cQuery += "ISNULL((select top 1 D1_EMISSAO from "+RetSqlName("SD1")+" SD1 where D1_PEDIDO = C7_NUM AND D1_ITEMPC = C7_ITEM AND SD1.D_E_L_E_T_ <> '*' AND C7_FILIAL = D1_FILIAL ),' ') DTATENDI  "
-    cQuery += "from "+RetSqlName("SC7")+" "
-    cQuery += "where C7_FILIAL + C7_PRODUTO = '"+cMaterial+"' AND C7_EMISSAO >= '"+cDataIni+"' AND C7_EMISSAO <= '"+cDataFim+"' AND D_E_L_E_T_ <> '*'  " 
+    cQuery += "from "+RetSqlName("SC7")+" where "
+     IF(!EMPTY(cMaterial))
+        cQuery += "C7_FILIAL + C7_PRODUTO = '"+cMaterial+"' AND "
+    ENDIF
+    cQuery += " C7_EMISSAO >= '"+cDataIni+"' AND C7_EMISSAO <= '"+cDataFim+"' AND D_E_L_E_T_ <> '*'  " 
 
     If (Select("SC73G"))
         dbCloseArea()
     Endif
 
     aList := {}
+    n := 0
     TCQuery cQuery NEW ALIAS "SC73G"
 
     CONOUT(cQuery)
 
      JMovimentos := JsonObject():New()
+     aPedidos := {}
      aItens := {}
+     cDocumento := ""   
 
     dbSelectArea("SC73G")
     dbGoTop()
     WHILE !(SC73G->(Eof()))
-        
+
+        n++
+        IF(cDocumento != SC73G->PEDIDO)
+            If(n > 1)
+               JCapa["ITENS"] := aItens
+               AADD(aPedidos,JCapa)
+            ENDIF
+            cDocumento := SC73G->PEDIDO
+            JCapa := JsonObject():New()
+            JCapa["FILIAL"] :=   SC73G->FILIAL    
+            JCapa["PEDIDO"] :=   SC73G->PEDIDO 
+            JCapa["EMISSAO"] :=  DTOC(STOD(SC73G->EMISSAO))                        
+
+            aItens := {}
+        ENDIF
+
         JItem := JsonObject():New()
-        JItem["FILIAL"] :=   SC73G->FILIAL    
-        JItem["PEDIDO"] :=   SC73G->PEDIDO 
+      
         JItem["ITEM"] :=   SC73G->ITEMPEDIDO 
         JItem["PRODUTO"] :=  ALLTRIM(SC73G->FILIAL) + SC73G->PRODUTO  
         JItem["QUANT"] :=    SC73G->QUANT  
         JItem["ATENDIDA"] := SC73G->ATENDIDA  
         JItem["PRECO"] :=    SC73G->PRECO  
         JItem["TOTAL"] :=    SC73G->TOTAL  
-        JItem["EMISSAO"] :=  DTOC(STOD(SC73G->EMISSAO))
         JItem["PREVISAO"] := DTOC(STOD(SC73G->PREVISAO))     
         JItem["RESIDUO"] := SC73G->RESIDUO
         JItem["DTATENDI"] := IIF(EMPTY(SC73G->DTATENDI),' ',DTOC(STOD(SC73G->DTATENDI)))
-
         AADD(aItens, JItem)
-                        
-        oResponse["PEDIDOS"] := aItens
 
         SC73G->(dbSkip())
     END
+
+    IF(LEN(aItens) > 0 .OR. LEN(aNotas) > 0)
+        JCapa["ITENS"] := aItens
+        AADD(aPedidos,JCapa)
+    ENDIF
+                       
+    oResponse["PEDIDOS"] := aPedidos
 
     //oResponse:set(aList)
 
@@ -368,10 +394,16 @@ WSMETHOD GET NOTAS_ID PATHPARAM id, data_ini, data_fim WSRECEIVE NOTA_FISCAL_STR
 
     CONOUT("WSMETHOD GET NOTAS_ID PATHPARAM "+cMaterial+" WSRECEIVE MOVIMENTOS WSSERVICE IntegEQM")
 
-    cQuery := "SELECT D1_FILIAL FILIAL, D1_COD PRODUTO, D1_DOC DOCUMENTO, D1_SERIE SERIE, D1_LOCAL LOCAL, D1_QUANT QUANT, D1_EMISSAO EMISSAO, D1_TES TIPO, D1_PEDIDO PEDIDO, D1_ITEMPC ITEMPEDIDO FROM "+RetSqlName("SD1")+" "
-    cQuery += "WHERE D1_FILIAL + D1_COD = '"+cMaterial+ "' "
-    cQuery += "AND D1_EMISSAO >= '"+cDataIni+"' AND D1_EMISSAO <= '"+cDataFim+"'   "
-    cQuery += "AND D_E_L_E_T_ <> '*'  "
+    cQuery := "SELECT D1_FILIAL FILIAL, D1_COD PRODUTO, D1_DOC DOCUMENTO, D1_SERIE SERIE, D1_LOCAL LOCAL, F1_FORNECE CODIGO, F1_LOJA LOJA, F1_VALMERC GERAL, "
+    cQuery += "D1_QUANT QUANT, D1_VUNIT UNITARIO, D1_TOTAL TOTAL, D1_EMISSAO EMISSAO, D1_TES TIPO, D1_PEDIDO PEDIDO, D1_ITEMPC ITEMPEDIDO, A2_NOME FORNECEDOR FROM "+RetSqlName("SD1")+" SD1 "
+    cQuery += "INNER JOIN "+RetSqlName("SF1")+" SF1 ON F1_FILIAL = D1_FILIAL AND D1_DOC = F1_DOC AND D1_SERIE = F1_SERIE AND D1_FORNECE = F1_FORNECE AND D1_LOJA = F1_LOJA AND SF1.D_E_L_E_T_ <> '*' "
+    cQuery += "INNER JOIN "+RetSqlName("SA2")+" SA2 ON A2_COD = F1_FORNECE AND A2_LOJA = F1_LOJA AND SA2.D_E_L_E_T_ <> '*' "
+    cQuery += "WHERE "
+    IF(!EMPTY(cMaterial))
+        cQuery += "D1_FILIAL + D1_COD = '"+cMaterial+ "' AND "
+    ENDIF
+    cQuery += "D1_EMISSAO >= '"+cDataIni+"' AND D1_EMISSAO <= '"+cDataFim+"'   "
+    cQuery += "AND SD1.D_E_L_E_T_ <> '*'  "
 
     If (Select("SD1G") <> 0)
         dbSelectArea("SD1G")
@@ -379,42 +411,61 @@ WSMETHOD GET NOTAS_ID PATHPARAM id, data_ini, data_fim WSRECEIVE NOTA_FISCAL_STR
     Endif
 
     aList := {}
+    n := 0
     TCQuery cQuery NEW ALIAS "SD1G"
 
     CONOUT(cQuery)
 
-     JMovimentos := JsonObject():New()
-     aItens := {}
+    JMovimentos := JsonObject():New()
+    aNotas := {}
+    aItens := {}
+
+    cDocumento := ""    
 
     dbSelectArea("SD1G")
     dbGoTop()
     WHILE !(SD1G->(Eof()))
-        
-        JItem := JsonObject():New()
-        JItem["FILIAL"] :=   SD1G->FILIAL    
+        n++
+        IF(cDocumento != SD1G->DOCUMENTO)
+            If(n > 1)
+               JCapa["ITENS"] := aItens
+               AADD(aNotas,JCapa)
+            ENDIF
+            cDocumento := SD1G->DOCUMENTO
+            JCapa := JsonObject():New()
+            JCapa["FILIAL"] :=   SD1G->FILIAL 
+            JCapa["EMISSAO"] :=  DTOC(STOD(SD1G->EMISSAO))
+            JCapa["DOCUMENTO"]:= SD1G->DOCUMENTO
+            JCapa["SERIE"] :=    SD1G->SERIE  
+            JCapa["TIPO"] :=     SD1G->TIPO 
+            JCapa["CODFOR"] :=  SD1G->CODIGO 
+            JCapa["LOJA"] :=  SD1G->LOJA 
+            JCapa["FORNECEDOR"] :=  SD1G->FORNECEDOR 
+            JCapa["TOTALGERAL"] :=  SD1G->GERAL     
+            JCapa["ITENS"] :=  {} 
+            aItens := {}
+        ENDIF
+
+        JItem := JsonObject():New()           
         JItem["PRODUTO"] :=  ALLTRIM(SD1G->FILIAL)+SD1G->PRODUTO  
         JItem["LOCAL"] :=    SD1G->LOCAL  
         JItem["QUANT"] :=    SD1G->QUANT  
-        JItem["EMISSAO"] :=  DTOC(STOD(SD1G->EMISSAO))
-        JItem["DOCUMENTO"]:= SD1G->DOCUMENTO
-        JItem["SERIE"] :=    SD1G->SERIE  
-        JItem["TIPO"] :=     SD1G->TIPO 
+        JItem["PRECO"] :=    SD1G->UNITARIO  
+        JItem["TOTAL"] :=    SD1G->TOTAL          
         JItem["PEDIDO"] :=   SD1G->PEDIDO
         JItem["ITEM"] :=     SD1G->ITEMPEDIDO      
-
-
         AADD(aItens, JItem)
-                        
-        oResponse["NOTAS"] := aItens
 
         SD1G->(dbSkip())
     END
 
-    //oResponse:set(aList)
+    IF(LEN(aItens) > 0 .OR. LEN(aNotas) > 0)
+        JCapa["ITENS"] := aItens
+        AADD(aNotas,JCapa)
+    ENDIF
 
+    oResponse["NOTAS"] := aNotas
     self:SetResponse( EncodeUTF8(oResponse:ToJson()) ) 
-
-
 
 Return .T.
 
@@ -1304,8 +1355,8 @@ WSMETHOD GET ESTOQUE PATHPARAM id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM
     CONOUT("WSMETHOD GET ESTOQUE PATHPARAM "+cMaterial+" WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM")
 
     cQuery := "SELECT B2_FILIAL, B2_COD, B2_LOCAL, B2_QATU, B2_QEMP, B2_RESERVA, B2_CM1 FROM "+RetSqlName("SB2")+" "
-    cQuery += "WHERE B2_FILIAL + B2_COD = '"+cMaterial+ "' "
-    cQuery += "AND D_E_L_E_T_ <> '*'  "
+    //cQuery += "WHERE B2_FILIAL + B2_COD = '"+cMaterial+ "' "
+    cQuery += "WHERE D_E_L_E_T_ <> '*' AND B2_LOCAL = '01' AND B2_FILIAL = '0102' "
 
     If (Select("SB2G") <> 0)
         dbSelectArea("SB2G")
@@ -1316,6 +1367,7 @@ WSMETHOD GET ESTOQUE PATHPARAM id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM
     TCQuery cQuery NEW ALIAS "SB2G"
 
     CONOUT(cQuery)
+    aEstoque := {}
 
     dbSelectArea("SB2G")
     dbGoTop()
@@ -1329,13 +1381,13 @@ WSMETHOD GET ESTOQUE PATHPARAM id WSRECEIVE ESTOQUE_STRUCT WSSERVICE IntegEQM
         jEstoque["DISPONIVEL"] := SB2G->B2_QATU - SB2G->B2_QEMP - SB2G->B2_RESERVA
         jEstoque["CUSTOMEDIO"] := SB2G->B2_CM1 
         
-                
-        oResponse["Estoque"] := jEstoque
+        AADD(aEstoque,jEstoque)                
 
         SB2G->(dbSkip())
     END
 
     //oResponse:set(aList)
+    oResponse["Estoque"] := aEstoque
 
     self:SetResponse( EncodeUTF8(oResponse:ToJson()) )
    
