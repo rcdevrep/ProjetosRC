@@ -567,6 +567,8 @@ Private cHistBaixa := ""
 
                     IF(Len(aMov) > 1) 
                         IF((aMov[1] == "3" .AND. aMov[2] == "4") .OR. (aMov[1] == "4" .AND. aMov[2] == "3") )
+                            cFilReg := aRegras[nRegra][13]
+                            cFilAnt := cFilReg
                             If !VldImp(cTextBanc, cValToChar(val(cTextAgen)), cValToChar(val(cTextCont)) , ZX6->ZX6_BAIXA, ZX6->ZX6_VLPAGO, cFilReg)
 
                                 /*aLinha   := {}
@@ -591,28 +593,56 @@ Private cHistBaixa := ""
                                 AADD(aLinha, {"E5_DTDISPO"      , DataValida(ZX6->ZX6_BAIXA)                                    ,Nil})
                                 MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aLinha,3)*/
 
+                                dDataOrig := dDataBase
+                                dDataBase := DataValida(ZX6->ZX6_BAIXA)
+                                cNumero := GetMV("MV_TRANAUT")
+                                cNumero := SOMA1(cNumero)
 
+                                IF(aMov[1] == "3")
 
-                                 aFINA100 := {  {"CBCOORIG"          ,cTextBanc                                 ,Nil},;
-                                                {"CAGENORIG"         ,cValToChar(val(cTextAgen))                ,Nil},;
-                                                {"CCTAORIG"          ,fBuscConta(cTextBanc,cTextAgen,cTextCont) ,Nil},;
-                                                {"CNATURORI"         ,aRegras[nRegra][5]                     ,Nil},;
-                                                {"CBCODEST"          ,aRegras[nRegra][6]                     ,Nil},;
-                                                {"CAGENDEST"         ,aRegras[nRegra][7]                     ,Nil},;
-                                                {"CCTADEST"          ,aRegras[nRegra][9]                     ,Nil},;
-                                                {"CNATURDES"         ,aRegras[nRegra][5]                     ,Nil},;
-                                                {"CTIPOTRAN"         ,"TB"                      ,Nil},;
-                                                {"CDOCTRAN"          ,"    "                  ,Nil},;
-                                                {"NVALORTRAN"        ,ZX6->ZX6_VLPAGO                      ,Nil},;
-                                                {"CHIST100"          ,"TESTE CNAB"  ,Nil},;
-                                                {"CBENEF100"         ,"TESTE CNAB"  ,Nil},;
-                                                {"NAGLUTINA"         ,2                         ,Nil},; 
-                                                {"NCTBONLINE"        ,1                         ,Nil},; 
-                                                {"DDATACRED"         ,DataValida(ZX6->ZX6_BAIXA)          ,Nil}}
+                                    aFINA100 := {  {"CBCOORIG"          ,cTextBanc                                 ,Nil},;
+                                                    {"CAGENORIG"         ,cValToChar(val(cTextAgen))                ,Nil},;
+                                                    {"CCTAORIG"          ,fBuscConta(cTextBanc,cTextAgen,cTextCont) ,Nil},;
+                                                    {"CNATURORI"         ,aRegras[nRegra][5]                     ,Nil},;
+                                                    {"CBCODEST"          ,aRegras[nRegra][6]                     ,Nil},;
+                                                    {"CAGENDEST"         ,aRegras[nRegra][7]                     ,Nil},;
+                                                    {"CCTADEST"          ,aRegras[nRegra][9]                     ,Nil},;
+                                                    {"CNATURDES"         ,aRegras[nRegra][5]                     ,Nil},;
+                                                    {"CTIPOTRAN"         ,"TB"                      ,Nil},;
+                                                    {"CDOCTRAN"          ,cNumero             ,Nil},;
+                                                    {"NVALORTRAN"        ,ZX6->ZX6_VLPAGO                      ,Nil},;
+                                                    {"CHIST100"          ,"TESTE CNAB"  ,Nil},;
+                                                    {"CBENEF100"         ,"TESTE CNAB"  ,Nil},;
+                                                    {"NAGLUTINA"         ,2                         ,Nil},; 
+                                                    {"NCTBONLINE"        ,1                         ,Nil},;                                                 
+                                                    {"DDATACRED"         ,DataValida(ZX6->ZX6_BAIXA)          ,Nil}}
+
+                                ELSE
+
+                                    aFINA100 := {  {"CBCOORIG"           ,aRegras[nRegra][6]                                 ,Nil},;
+                                                    {"CAGENORIG"         ,aRegras[nRegra][7]                ,Nil},;
+                                                    {"CCTAORIG"          ,aRegras[nRegra][9]  ,Nil},;
+                                                    {"CNATURORI"         ,aRegras[nRegra][5]                     ,Nil},;
+                                                    {"CBCODEST"          ,cTextBanc                     ,Nil},;
+                                                    {"CAGENDEST"         ,cValToChar(val(cTextAgen))                     ,Nil},;
+                                                    {"CCTADEST"          ,fBuscConta(cTextBanc,cTextAgen,cTextCont)                     ,Nil},;
+                                                    {"CNATURDES"         ,aRegras[nRegra][5]                     ,Nil},;
+                                                    {"CTIPOTRAN"         ,"TB"                      ,Nil},;
+                                                    {"CDOCTRAN"          ,cNumero             ,Nil},;
+                                                    {"NVALORTRAN"        ,ZX6->ZX6_VLPAGO                      ,Nil},;
+                                                    {"CHIST100"          ,"TESTE CNAB"  ,Nil},;
+                                                    {"CBENEF100"         ,"TESTE CNAB"  ,Nil},;
+                                                    {"NAGLUTINA"         ,2                         ,Nil},; 
+                                                    {"NCTBONLINE"        ,1                         ,Nil},;                                                 
+                                                    {"DDATACRED"         ,DataValida(ZX6->ZX6_BAIXA)          ,Nil}}
+
+                                ENDIF
      
                                 MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aFINA100,7)
 
-                                
+                                PUTMV("MV_TRANAUT",cNumero)
+
+                                dDataBase := dDataOrig
                                 If lMsErroAuto                                    
                                     aLogAuto := GetAutoGRLog()
                                     nAuto := 1
@@ -628,6 +658,23 @@ Private cHistBaixa := ""
                             Else
                                 cRet +=  "Movimento já realizado pela rotina padrão."
                             EndIf
+
+                            If !lSucesso
+                                cMovExec := "X"
+                            EndIf
+
+
+                            Reclock("ZX6", .F.)
+                            
+                            IF("SUCESSO" $ cRet)
+                                cStatus := "1"
+                            ENDIF
+                            
+                            ZX6->ZX6_RESULT := cRet
+                            ZX6->ZX6_STATUS := cStatus
+                            ZX6->ZX6_FILPRC := cFilReg
+                            ZX6->ZX6_USER   := UsrFullName()
+                            ZX6->(MsUnlock())
 
 
 
@@ -879,7 +926,7 @@ Private cHistBaixa := ""
                                         cMovExec := aMov[nMov]
 
                                         If !VldImp(cTextBanc, cValToChar(val(cTextAgen)), cValToChar(val(cTextCont)) , ZX6->ZX6_BAIXA, ZX6->ZX6_VLPAGO, cFilReg )
-                                            
+                                                
                                                 aLinha   := {}
 
                                                 AADD(aLinha, {"E5_FILIAL"   ,cFilReg                                                 ,Nil})
@@ -1138,9 +1185,9 @@ Local cAlias		:= GetNextAlias()
 	cQuery += "D_E_L_E_T_ = '' AND A6_COD = '"+xBanco+"' AND "
     cQuery += "A6_BLOCKED <> '1' AND "
     //cQuery += "A6_FILPROC <> '' AND "
-	cQuery += " ((SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
+	cQuery += " ((CAST(A6_AGENCIA AS INT) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
     
-    cQuery += " (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
+    cQuery += " (CAST(A6_AGENCIA AS INT) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
     cQuery += " ORDER BY PRIOR"
 
 
@@ -1177,8 +1224,8 @@ Local cAlias		:= GetNextAlias()
 	cQuery += "D_E_L_E_T_ = '' AND A6_COD = '"+xBanco+"' AND "
     cQuery += "A6_BLOCKED <> '1' AND "
     //cQuery += "A6_FILPROC <> '' AND "
-	cQuery += " ((SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
-    cQuery += " (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
+	cQuery += " ((CAST(A6_AGENCIA AS INT) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
+    cQuery += " (CAST(A6_AGENCIA AS INT) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
     cQuery += " ORDER BY PRIOR"
 
 
@@ -1208,8 +1255,8 @@ Local cAlias		:= GetNextAlias()
 	cQuery += "D_E_L_E_T_ = '' AND A6_COD = '"+xBanco+"' AND "
     cQuery += "A6_BLOCKED <> '1' AND "
     //cQuery += "A6_FILPROC <> '' AND "
-	cQuery += " ((SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
-    cQuery += " (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
+	cQuery += " ((CAST(A6_AGENCIA AS INT) = "+cValtoChar(val(xAgencia))+" AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') OR "
+    cQuery += " (CAST(A6_AGENCIA AS INT) = "+cValtoChar(val(xAgencia))+" AND TRIM(A6_NUMCON) like '%"+SUBSTR(cValtoChar(val(xConta)),1,5)+"%')) "
     cQuery += " ORDER BY PRIOR"
 
 

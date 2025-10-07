@@ -248,13 +248,13 @@ WSMETHOD GET MOVIMENTOS PATHPARAM id, data_ini, data_fim WSRECEIVE MOVIMENTOS_ST
 
     CONOUT("WSMETHOD GET MOVIMENTOS PATHPARAM "+cMaterial+" WSRECEIVE MOVIMENTOS WSSERVICE IntegEQM")
 
-    cQuery := "SELECT D3_FILIAL FILIAL, D3_COD PRODUTO, D3_LOCAL LOCAL, D3_QUANT QUANT, D3_EMISSAO EMISSAO, D3_TM TIPO FROM "+RetSqlName("SD3")+" "
+    cQuery := "SELECT D3_FILIAL FILIAL, R_E_C_N_O_ RECNO, D3_COD PRODUTO, D3_LOCAL LOCAL, D3_QUANT QUANT, D3_CUSTO1 CUSTO, D3_EMISSAO EMISSAO, D3_TM TIPO FROM "+RetSqlName("SD3")+" "
     cQuery += "WHERE "
     IF(!EMPTY(cMaterial))
         cQuery := "D3_FILIAL + D3_COD = '"+cMaterial+ "' AND "
     ENDIF
     cQuery += "D3_EMISSAO >= '"+cDataIni+"' AND D3_EMISSAO <= '"+cDataFim+"'   "
-    cQuery += "AND D_E_L_E_T_ <> '*'  "
+    cQuery += "AND D_E_L_E_T_ <> '*' order by R_E_C_N_O_  "
 
     If (Select("SD3G") <> 0)
         dbSelectArea("SD3G")
@@ -278,9 +278,11 @@ WSMETHOD GET MOVIMENTOS PATHPARAM id, data_ini, data_fim WSRECEIVE MOVIMENTOS_ST
         JItem["PRODUTO"] :=  ALLTRIM(SD3G->FILIAL) + SD3G->PRODUTO  
         JItem["LOCAL"] :=    SD3G->LOCAL  
         JItem["QUANT"] :=    SD3G->QUANT  
+        JItem["CUSTO"] :=   SD3G->CUSTO
         JItem["EMISSAO"] :=  DTOC(STOD(SD3G->EMISSAO))
         JItem["TIPO"] :=     SD3G->TIPO    
         JItem["KARDEX"] := IIF(SD3G->TIPO > "499","SAIDA", "ENTRADA")
+        JItem["REGISTRO"] := SD3G->RECNO
 
         AADD(aItens, JItem)
         SD3G->(dbSkip())
