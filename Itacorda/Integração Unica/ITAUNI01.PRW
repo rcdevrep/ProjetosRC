@@ -1,4 +1,4 @@
-#Include 'Protheus.ch'
+@#Include 'Protheus.ch'
 #INCLUDE "FWMVCDEF.CH"
 #include "topconn.ch"
 #INCLUDE "RWMAKE.CH"
@@ -81,7 +81,7 @@ https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/
             cFileName := jJsonLista["dados"][n]["filename"]
             aItens    := array(0)
 
-
+            
             cRecebe := '{"Usuario":{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"},"filename":"'+cFileName+'"} '
             cRecebe := EncodeUTF8(cRecebe)
             cJsonRecebe := HttpPost(cUrlRecebe,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
@@ -383,3 +383,237 @@ https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/recebe/
 //cMyData := '{"Usuario":{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"},"filename":"PED_4500320418_20250731103324.json"}'
 
 RETURN
+
+
+Static Function fCriaCols()
+	Local nAtual       := 0
+	Local aColunas := {}
+	Local aEstrut  := {}
+	Local oColumn
+
+	aAdd(aEstrut, { 'PREFIXO', 'Prefixo', 'C', 3, 0, ''})
+	aAdd(aEstrut, { 'NUMERO', 'Numero', 'C', 9, 0, ''})
+	aAdd(aEstrut, { 'PARCELA', 'Parcela', 'C', 3, 0, ''})
+	aAdd(aEstrut, { 'TIPO', 'Tipo', 'C', 3, 0, ''})
+	aAdd(aEstrut, { 'CLIENTE', 'Cliente', 'C', 8, 0, ''})
+	aAdd(aEstrut, { 'LOJA', 'Loja', 'C', 4, 0, ''})
+	aAdd(aEstrut, { 'NOME', 'Fantasia', 'C', 20, 0, ''})
+	aAdd(aEstrut, { 'FANTASIA', 'Nome', 'C', 60, 0, ''})
+	aAdd(aEstrut, { 'VENCIMENTO', 'Vencimento', 'D', 8, 0, ''})
+	aAdd(aEstrut, { 'BLOQUEADO', 'Bloqueado', 'C', 1, 0, ''})
+	aAdd(aEstrut, { 'RETIRADA', 'Retirada', 'C', 1, 0, ''})
+	aAdd(aEstrut, { 'NEGATIVADO', 'Negativado', 'C', 1, 0, ''})
+	aAdd(aEstrut, { 'SALDO', 'Saldo', 'N', 16, 2, ''})
+	aAdd(aEstrut, { 'JUROS', 'Juros', 'N', 16, 2, ''})
+	aAdd(aEstrut, { 'MULTA', 'Multa', 'N', 16, 2, ''})
+	aAdd(aEstrut, { 'EMISSAO', 'Emissao', 'D', 8, 0, ''})
+	aAdd(aEstrut, { 'PORTADOR', 'Portador', 'C', 6, 0, ''})
+	aAdd(aEstrut, { 'VENCIDOS', 'Dias Vencidos', 'C', 3, 0, ''})
+	aAdd(aEstrut, { 'RETENCAO', 'Retencao', 'N', 16, 2, ''})
+	aAdd(aEstrut, { 'STATUSTIT', 'Status', 'C', 60, 0, ''})
+	aAdd(aEstrut, { 'DESCONTOS', 'Desconto', 'N', 16, 2, ''})
+
+	For nAtual := 1 To Len(aEstrut)
+		oColumn := FWBrwColumn():New()
+		oColumn:SetData(&('{|| ' + cAliasTmp + '->' + aEstrut[nAtual][1] +'}'))
+		oColumn:SetTitle(aEstrut[nAtual][2])
+		oColumn:SetType(aEstrut[nAtual][3])
+		oColumn:SetSize(aEstrut[nAtual][4])
+		oColumn:SetDecimal(aEstrut[nAtual][5])
+		oColumn:SetPicture(aEstrut[nAtual][6])
+		If aEstrut[nAtual][3] == 'D'
+			oColumn:nAlign := 0
+		ElseIf aEstrut[nAtual][3] == 'N'
+			oColumn:nAlign := 2
+		Else
+			oColumn:nAlign := 1
+		EndIf
+		aAdd(aColunas, oColumn)
+	Next
+Return aColunas
+
+Static Function fMontaTela()
+	Local aArea         := GetArea()
+	Local aCampos := {}
+	Local aColunas := {}
+	Local cFontPad    := 'Tahoma'
+	Local oFontGrid   := TFont():New(cFontPad, /*uPar2*/, -14)
+	Private oTempTable := Nil
+	Private oDlgMark
+	Private oPanGrid
+	Private oMarkBrowse
+	Private cAliasTmp := GetNextAlias()
+	Private aRotina   := MenuDef()
+	
+	Private aTamanho := MsAdvSize()
+	Private nJanLarg := aTamanho[5]
+	Private nJanAltu := aTamanho[6]
+
+	aAdd(aCampos, { 'OK', 'C', 2, 0}) 
+	aAdd(aCampos, { 'PREFIXO', 'C', 3, 0}) 
+	aAdd(aCampos, { 'NUMERO', 'C', 9, 0}) //Numero
+	aAdd(aCampos, { 'PARCELA', 'C', 3, 0}) //Parcela
+	aAdd(aCampos, { 'TIPO', 'C', 3, 0}) //Tipo
+	aAdd(aCampos, { 'CLIENTE', 'C', 8, 0}) //Cliente
+	aAdd(aCampos, { 'LOJA', 'C', 4, 0}) //Loja
+	aAdd(aCampos, { 'NOME', 'C', 20, 0}) //Nome
+	aAdd(aCampos, { 'FANTASIA', 'C', 60, 0}) //Cliente
+	aAdd(aCampos, { 'VENCIMENTO', 'D', 8, 0}) //Nome
+	aAdd(aCampos, { 'NEGATIVADO', 'C', 3, 0}) //Nome
+	aAdd(aCampos, { 'RETIRADA', 'C', 3, 0}) //Nome
+	aAdd(aCampos, { 'BLOQUEADO', 'C', 3, 0}) //Nome
+	aAdd(aCampos, { 'SALDO', 'N', 16, 2}) //Nome
+	aAdd(aCampos, { 'MULTA', 'N', 16, 2}) //Nome
+	aAdd(aCampos, { 'JUROS', 'N', 16, 2}) //Nome
+	aAdd(aCampos, { 'EMISSAO', 'D', 8, 0}) //Nome
+	aAdd(aCampos, { 'PORTADOR', 'C', 6, 0}) //Nome
+	aAdd(aCampos, { 'VENCIDOS', 'C', 3, 0}) //Nome
+	aAdd(aCampos, { 'RETENCAO', 'N', 16, 2}) //Nome
+	aAdd(aCampos, { 'STATUSTIT', 'C', 60, 0}) //Nome
+	aAdd(aCampos, { 'DESCONTOS', 'N', 16, 2}) //Nome
+
+	//Cria a tabela temporária
+	oTempTable:= FWTemporaryTable():New(cAliasTmp)
+	oTempTable:SetFields( aCampos )
+	oTempTable:Create()
+
+	//Popula a tabela temporária
+	Processa({|| fPopula()}, 'Processando...')
+
+	//Adiciona as colunas que serão exibidas no FWMarkBrowse
+	aColunas := fCriaCols()
+
+	//Criando a janela
+	DEFINE MSDIALOG oDlgMark TITLE 'Selecao de titulos' FROM 000, 000  TO nJanAltu, nJanLarg COLORS 0, 16777215 PIXEL
+	//Dados
+	oPanGrid := tPanel():New(001, 001, '', oDlgMark, /*oFont*/, /*lCentered*/, /*uParam7*/, RGB(000,000,000), RGB(254,254,254), (nJanLarg/2) - 1, (nJanAltu/2) - 1)
+	oMarkBrowse := FWMarkBrowse():New()
+	oMarkBrowse:SetAlias(cAliasTmp)
+	oMarkBrowse:SetDescription('Seleciona titulos')
+	oMarkBrowse:oBrowse:SetDBFFilter(.T.)
+	oMarkBrowse:oBrowse:SetUseFilter(.T.) //Habilita a utilização do filtro no Browse
+	// oMarkBrowse:DisableConfig()
+	// oMarkBrowse:DisableSaveConfig()
+	oMarkBrowse:SetFontBrowse(oFontGrid)
+	oMarkBrowse:SetFieldMark('OK')
+	oMarkBrowse:SetTemporary(.T.)
+	oMarkBrowse:SetColumns(aColunas)
+	//oMarkBrowse:AllMark()
+	oMarkBrowse:SetOwner(oPanGrid)
+	oMarkBrowse:Activate()
+	ACTIVATE MsDialog oDlgMark CENTERED
+
+	//Deleta a temporária e desativa a tela de marcação
+	oTempTable:Delete()
+	oMarkBrowse:DeActivate()
+	TEDA018btn('1')
+
+	RestArea(aArea)
+Return
+
+User Function fSelTitO()
+	Processa({|| fProcessa()}, 'Processando...')
+Return
+
+/*/{Protheus.doc} fProcessa
+Função que percorre os registros da tela
+@author Caio Monteiro
+@since 06/12/2024
+@version 1.0
+/*/
+
+Static Function fProcessa()
+	Local aArea     := FWGetArea()
+	Local cMarca    := oMarkBrowse:Mark()
+	Local nAtual    := 0
+	Local nTotal    := 0
+	Local nTotMarc := 0
+	local valor := 0
+	local nX
+	Private cNum
+	Private aTits := {}
+
+	//Define o tamanho da régua
+	DbSelectArea(cAliasTmp)
+	(cAliasTmp)->(DbGoTop())
+	Count To nTotal
+	ProcRegua(nTotal)
+
+	//Percorrendo os registros
+	(cAliasTmp)->(DbGoTop())
+	While ! (cAliasTmp)->(EoF())
+		nAtual++
+		IncProc('Analisando registro ' + cValToChar(nAtual) + ' de ' + cValToChar(nTotal) + '...')
+
+		//Caso esteja marcado
+		If oMarkBrowse:IsMark(cMarca)
+			nTotMarc++
+			if (cAliasTmp)->NEGATIVADO == "Sim"
+				negat := "1"
+			elseif (cAliasTmp)->NEGATIVADO == "Nao"
+				negat := "2"
+			else
+				negat := ""
+			endif
+			if (cAliasTmp)->RETIRADA == "Sim"
+				retir := "1"
+			elseif (cAliasTmp)->RETIRADA == "Nao"
+				retir := "2"
+			else
+				retir := ""
+			endif
+			if (cAliasTmp)->BLOQUEADO == "Sim"
+				BLOQ := "1"
+			elseif (cAliasTmp)->BLOQUEADO == "Nao"
+				BLOQ := "2"
+			else
+				BLOQ := ""
+			endif
+			Aadd(aTits,{(cAliasTmp)->PREFIXO,(cAliasTmp)->NUMERO,(cAliasTmp)->PARCELA,(cAliasTmp)->TIPO,(cAliasTmp)->CLIENTE,(cAliasTmp)->LOJA,(cAliasTmp)->NOME,(cAliasTmp)->VENCIMENTO,negat,retir,BLOQ,(cAliasTmp)->SALDO,(cAliasTmp)->JUROS,(cAliasTmp)->MULTA})
+			valor := valor + (cAliasTmp)->SALDO
+		EndIf
+
+		(cAliasTmp)->(DbSkip())
+	EndDo
+	if len(aTits) > 0
+		cNum := getsxenum("ZZ1","ZZ1_ATENDI")
+		confirmSx8()
+
+		for nX := 1 to len(aTits)
+			if date() < aTits[nx][8]
+				cDias := cvaltochar(DateDiffDay(date(),aTits[nx][8]))
+
+			else
+				cDias := cvaltochar(DateDiffDay(date(),aTits[nx][8]))
+				cDias := "-" + cDias
+			endif
+			//cdias := ""
+			RecLock("ZZ1", .T.)
+			ZZ1->ZZ1_FILIAL := xFilial("SE1")
+			ZZ1->ZZ1_STATUS := ""
+			ZZ1->ZZ1_PREFIX := aTits[nx][1]
+			ZZ1->ZZ1_NUM := aTits[nx][2]
+			ZZ1->ZZ1_PARCEL := aTits[nx][3]
+			ZZ1->ZZ1_TIPO := aTits[nx][4]
+			ZZ1->ZZ1_CLI := aTits[nx][5]
+			ZZ1->ZZ1_LOJA := aTits[nx][6]
+			ZZ1->ZZ1_NOMCLI := aTits[nx][7]
+			ZZ1->ZZ1_RETIR := aTits[nx][10]
+			ZZ1->ZZ1_BLOQ := aTits[nx][11]
+			ZZ1->ZZ1_NEGATI := aTits[nx][9]
+			ZZ1->ZZ1_VENCIM := aTits[nx][8]
+			ZZ1->ZZ1_SALDO := aTits[nx][12]
+			ZZ1->ZZ1_JUROS := aTits[nx][13]
+			ZZ1->ZZ1_MULTA := aTits[nx][14]
+			ZZ1->ZZ1_ATENDI := alltrim(cNum)
+			ZZ1->ZZ1_USUARI := UsrFullName(RetCodUsr())
+			ZZ1->ZZ1_DIAS := cDias
+			ZZ1->ZZ1_DATA := Date()
+			ZZ1->ZZ1_HORA := Substr(Time(),1,5)
+			ZZ1->(MsUnlock())
+		next
+	endif
+	oDlgMark:End()
+	fAttTbls()
+	FWRestArea(aArea)
+Return
