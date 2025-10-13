@@ -392,6 +392,7 @@ Static Function fProcessa()
     Local nCount := 0
     Local n,m := 1
 	local nX
+    local lContinua := .T.
 	Private cNum
 	Private aTits := {}
     Private lMsHelpAuto     := .T. as logical
@@ -458,6 +459,7 @@ Static Function fProcessa()
                     cProduto := SB1->B1_COD
                 ELSE 
                     FWAlertError("Produto não existe: "+ALLTRIM(jJsonRecebe["Item"][m]["CodProdutoFornecedor"]) , "ITAUNI01")
+                    lContinua := .F.
                     EXIT                   
                 ENDIF 
 
@@ -477,21 +479,23 @@ Static Function fProcessa()
 
                 aadd(aItens,aItem)                   
 
-            NEXT m            
+            NEXT m    
 
-            MSExecAuto({|x,y,z|Mata410(x,y,z)},aCab,aItens,3) 
+            if(lContinua)       
+                MSExecAuto({|x,y,z|Mata410(x,y,z)},aCab,aItens,3) 
 
-            IF lMsErroAuto
-                lSuccess := .F.
-                DisarmTransaction()
-                mostraerro()
-            Endif
+                IF lMsErroAuto
+                    lSuccess := .F.
+                    DisarmTransaction()
+                    mostraerro()
+                Endif
 
-            IF(lSuccess)
-                cJsonConfirma := HttpPost(cUrlConfirma,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
-                nCount ++
-                //FWAlertSuccess("Pedido Integrado: " + cPedido + " ")
-                
+                IF(lSuccess)
+                    cJsonConfirma := HttpPost(cUrlConfirma,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
+                    nCount ++
+                    //FWAlertSuccess("Pedido Integrado: " + cPedido + " ")
+                    
+                ENDIF
             ENDIF
         ENDIF
 
