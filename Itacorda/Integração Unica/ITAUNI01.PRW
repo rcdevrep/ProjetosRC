@@ -1,4 +1,4 @@
-@#Include 'Protheus.ch'
+#Include 'Protheus.ch'
 #INCLUDE "FWMVCDEF.CH"
 #include "topconn.ch"
 #INCLUDE "RWMAKE.CH"
@@ -8,25 +8,7 @@
 
 USER FUNCTION ITAUNI01
 
-    Local cUrlLista := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/"
-    Local cUrlRecebe := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/recebe/"
-    Local cUrlConfirma := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/confirm/"
-    Local nTimeOut := 120
-    Local aHeadOut := {}
-    Local cHeadRet := ""
-    Local cJsonLista := ""
-    Local cJsonRecebe := ""
-    Local n,m := 1
-    Local lSuccess := .T.
-    Local lContinua := .T.
-    Local aCab      := array(0)
-	Local aItem     := array(0)
-	Local aItens    := array(0)
-    Local nCount := 0
-
-    Private lMsHelpAuto     := .T. as logical
-	Private lAutoErrNoFile  := .T. as logical
-	private lMsErroAuto := .f.   as logical
+    
 
 /*
 
@@ -62,127 +44,9 @@ https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/
 
 */
 
+    fMontaTela()
+        
     
-    cLista := '{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"}'
-
-    Aadd(aHeadOut,'User-Agent: Mozilla/4.0 (compatible; Protheus '+GetBuild()+')')
-    Aadd(aHeadOut,'Accept: */*') 
-    Aadd(aHeadOut,'Content-Type: application/json')
-
-    cLista := EncodeUTF8(cLista)
-
-    cJsonLista := HttpPost(cUrlLista,"",cLista,nTimeOut,aHeadOut,@cHeadRet)
-    IF !empty(cJsonLista)
-        
-        jJsonLista := JsonObject():New()
-        jJsonLista:FromJson(cJsonLista)
-
-        FOR n := 1 TO LEN(jJsonLista["dados"])
-            cFileName := jJsonLista["dados"][n]["filename"]
-            aItens    := array(0)
-
-            
-            cRecebe := '{"Usuario":{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"},"filename":"'+cFileName+'"} '
-            cRecebe := EncodeUTF8(cRecebe)
-            cJsonRecebe := HttpPost(cUrlRecebe,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
-            IF !empty(cJsonRecebe)
-
-                jJsonRecebe := JsonObject():New()
-                jJsonRecebe:FromJson(cJsonRecebe)     
-
-                IF(jJsonRecebe:hasProperty("status"))
-                    IF(jJsonRecebe["status"] == 404)
-                        FWAlertError("Pedido "+cFileName,"ITAUNI01")
-                        lContinua := .F.
-                    ENDIF
-                ENDIF
-
-                CONOUT("GERA O PEDIDO")
-                IF(lContinua)
-                    AADD(aCab, {"C5_FILIAL"  , XFILIAL('SC5'), Nil})
-                    AADD(aCab, {"C5_TIPO"    , 'N' , Nil})
-
-                    cCnpj := jJsonRecebe["Header"]["CNPJCliente"]
-
-                    dbSelectArea("SA1")
-                    dbSetOrder(3)
-                    IF dbSeek(xFilial("SA1")+cCnpj)
-                        AADD(aCab, {"C5_CLIENTE" , SA1->A1_COD   , Nil})
-                        AADD(aCab, {"C5_LOJACLI" , SA1->A1_LOJA   , Nil})
-                        AADD(aCab, {"C5_CLIENT " , SA1->A1_COD   , Nil})
-                        AADD(aCab, {"C5_LOJAENT" , SA1->A1_LOJA   , Nil})
-                        AADD(aCab, {"C5_TIPOCLI" , SA1->A1_TIPO , Nil})
-                    ELSE 
-                        FWAlertError("Cliente não encontrado, CNPJ: "+cCnpj , "ITAUNI01")
-                        EXIT                   
-                    ENDIF 
-
-                    cPedido := jJsonRecebe["Header"]["NumeroPedido"]
-                    
-                    AADD(aCab, {"C5_CONDPAG" , jJsonRecebe["Header"]["CondicaoPagto"]       , Nil})
-                    AADD(aCab, {"C5_EMISSAO" , dDataBase, Nil})
-                    AADD(aCab, {"C5_DTFATU" , dDataBase, Nil})                
-                    AADD(aCab, {"C5_XORIGEM" , "2"    , Nil}) // EXPEDIÇÃO
-                    AADD(aCab, {"C5_TPFRETE" , IIF(jJsonRecebe["Header"]["TipoFrete"]=="CIF","C","F")    , Nil})
-                    AADD(aCab, {"C5_XCODINT" , cPedido , Nil})
-                                    
-                    FOR m := 1 TO LEN(jJsonRecebe["Item"]) 
-
-                        aItem    := array(0)        
-
-                        cSequencial := StrZero(jJsonRecebe["Item"][m]["Sequencial"]/10,2)
-
-                        aadd(aItem,{"C6_ITEM"   ,cSequencial             ,Nil})
-                        aadd(aItem,{"C6_PRODUTO",jJsonRecebe["Item"][m]["CodProdutoFornecedor"]                ,Nil})
-                        aadd(aItem,{"C6_QTDVEN" ,jJsonRecebe["Item"][m]["Quantidade"]                ,Nil})
-                        aadd(aItem,{"C6_PRCVEN" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
-                        aadd(aItem,{"C6_PRUNIT" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
-                        aadd(aItem,{"C6_OPER"   ,"01"                 ,Nil})
-                        aadd(aItem,{"C6_TES"    ,"519"                 ,Nil})
-                        aadd(aItem,{"C6_LOCAL"  ,"01"                 ,Nil})
-                        aadd(aItem,{"C6_ENTREG" ,dDataBase                 ,Nil})
-                        aadd(aItem,{"C6_PEDCOM " ,SUBSTRING(cPedido,1,6)                 ,Nil})
-                        aadd(aItem,{"C6_ITEMPED" ,cSequencial                 ,Nil})
-
-
-                        aadd(aItens,aItem)                   
-
-                    NEXT m            
-
-                    MSExecAuto({|x,y,z|Mata410(x,y,z)},aCab,aItens,3) 
-
-                    IF lMsErroAuto
-                        lSuccess := .F.
-                        DisarmTransaction()
-                        mostraerro()
-                        Break
-                    Endif
-
-                    IF(lSuccess)
-                        cJsonConfirma := HttpPost(cUrlConfirma,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
-                        nCount ++
-                        //FWAlertSuccess("Pedido Integrado: " + cPedido + " ")
-                        
-                    ENDIF
-                ENDIF
-
-            ELSE
-
-
-            ENDIF
-
-
-        NEXT n
-
-    ELSE
-        
-    ENDIF
-
-    IF(nCount > 0)
-        FWAlertSuccess(ALLTRIM(STR(nCount)) + " Pedidos Integrados com sucesso.")
-    ENDIF
-
-
 /*
 
 POST
@@ -391,27 +255,19 @@ Static Function fCriaCols()
 	Local aEstrut  := {}
 	Local oColumn
 
-	aAdd(aEstrut, { 'PREFIXO', 'Prefixo', 'C', 3, 0, ''})
-	aAdd(aEstrut, { 'NUMERO', 'Numero', 'C', 9, 0, ''})
-	aAdd(aEstrut, { 'PARCELA', 'Parcela', 'C', 3, 0, ''})
 	aAdd(aEstrut, { 'TIPO', 'Tipo', 'C', 3, 0, ''})
-	aAdd(aEstrut, { 'CLIENTE', 'Cliente', 'C', 8, 0, ''})
-	aAdd(aEstrut, { 'LOJA', 'Loja', 'C', 4, 0, ''})
-	aAdd(aEstrut, { 'NOME', 'Fantasia', 'C', 20, 0, ''})
-	aAdd(aEstrut, { 'FANTASIA', 'Nome', 'C', 60, 0, ''})
-	aAdd(aEstrut, { 'VENCIMENTO', 'Vencimento', 'D', 8, 0, ''})
-	aAdd(aEstrut, { 'BLOQUEADO', 'Bloqueado', 'C', 1, 0, ''})
-	aAdd(aEstrut, { 'RETIRADA', 'Retirada', 'C', 1, 0, ''})
-	aAdd(aEstrut, { 'NEGATIVADO', 'Negativado', 'C', 1, 0, ''})
-	aAdd(aEstrut, { 'SALDO', 'Saldo', 'N', 16, 2, ''})
-	aAdd(aEstrut, { 'JUROS', 'Juros', 'N', 16, 2, ''})
-	aAdd(aEstrut, { 'MULTA', 'Multa', 'N', 16, 2, ''})
-	aAdd(aEstrut, { 'EMISSAO', 'Emissao', 'D', 8, 0, ''})
-	aAdd(aEstrut, { 'PORTADOR', 'Portador', 'C', 6, 0, ''})
-	aAdd(aEstrut, { 'VENCIDOS', 'Dias Vencidos', 'C', 3, 0, ''})
-	aAdd(aEstrut, { 'RETENCAO', 'Retencao', 'N', 16, 2, ''})
-	aAdd(aEstrut, { 'STATUSTIT', 'Status', 'C', 60, 0, ''})
-	aAdd(aEstrut, { 'DESCONTOS', 'Desconto', 'N', 16, 2, ''})
+	aAdd(aEstrut, { 'CNPJ', 'Cnpj Cli', 'C', 14, 0, ''})
+	aAdd(aEstrut, { 'RAZAOCLI', 'Cliente', 'C', 20, 0, ''})
+	//aAdd(aEstrut, { 'CNPJENT', 'Cnpj Ent', 'C', 14, 0, ''})
+	//aAdd(aEstrut, { 'CNPJFOR', 'Cnpj For', 'C', 14, 0, ''})
+	//aAdd(aEstrut, { 'RAZAOFOR', 'Fornecedor', 'C', 40, 0, ''})
+	aAdd(aEstrut, { 'NUMERO', 'Numero', 'C', 20, 0, ''})
+	aAdd(aEstrut, { 'DATAEMIS', 'Emissao', 'D', 8, 0, ''})
+	aAdd(aEstrut, { 'DATAENT', 'Entrega', 'D', 8, 0, ''})
+	aAdd(aEstrut, { 'CONDPAG', 'Cond. Pgto', 'C', 3, 0, ''})
+	aAdd(aEstrut, { 'FRETE', 'Frete', 'C', 3, 0, ''})
+	aAdd(aEstrut, { 'VALOR', 'Valor', 'N', 16, 2, '@E 999999999.99'})
+	aAdd(aEstrut, { 'OBS', 'Observação', 'C', 40, 0, ''})	
 
 	For nAtual := 1 To Len(aEstrut)
 		oColumn := FWBrwColumn():New()
@@ -450,27 +306,21 @@ Static Function fMontaTela()
 	Private nJanAltu := aTamanho[6]
 
 	aAdd(aCampos, { 'OK', 'C', 2, 0}) 
-	aAdd(aCampos, { 'PREFIXO', 'C', 3, 0}) 
-	aAdd(aCampos, { 'NUMERO', 'C', 9, 0}) //Numero
-	aAdd(aCampos, { 'PARCELA', 'C', 3, 0}) //Parcela
-	aAdd(aCampos, { 'TIPO', 'C', 3, 0}) //Tipo
-	aAdd(aCampos, { 'CLIENTE', 'C', 8, 0}) //Cliente
-	aAdd(aCampos, { 'LOJA', 'C', 4, 0}) //Loja
-	aAdd(aCampos, { 'NOME', 'C', 20, 0}) //Nome
-	aAdd(aCampos, { 'FANTASIA', 'C', 60, 0}) //Cliente
-	aAdd(aCampos, { 'VENCIMENTO', 'D', 8, 0}) //Nome
-	aAdd(aCampos, { 'NEGATIVADO', 'C', 3, 0}) //Nome
-	aAdd(aCampos, { 'RETIRADA', 'C', 3, 0}) //Nome
-	aAdd(aCampos, { 'BLOQUEADO', 'C', 3, 0}) //Nome
-	aAdd(aCampos, { 'SALDO', 'N', 16, 2}) //Nome
-	aAdd(aCampos, { 'MULTA', 'N', 16, 2}) //Nome
-	aAdd(aCampos, { 'JUROS', 'N', 16, 2}) //Nome
-	aAdd(aCampos, { 'EMISSAO', 'D', 8, 0}) //Nome
-	aAdd(aCampos, { 'PORTADOR', 'C', 6, 0}) //Nome
-	aAdd(aCampos, { 'VENCIDOS', 'C', 3, 0}) //Nome
-	aAdd(aCampos, { 'RETENCAO', 'N', 16, 2}) //Nome
-	aAdd(aCampos, { 'STATUSTIT', 'C', 60, 0}) //Nome
-	aAdd(aCampos, { 'DESCONTOS', 'N', 16, 2}) //Nome
+	aAdd(aCampos, { 'TIPO', 'C', 2, 0}) //TipoPedido
+	aAdd(aCampos, { 'CNPJ', 'C', 14, 0}) //CNPJCliente
+	aAdd(aCampos, { 'RAZAOCLI', 'C', 200, 0}) //RazaoSocialCliente
+	aAdd(aCampos, { 'CNPJENT', 'C', 14, 0}) //CNPJEntrega
+	aAdd(aCampos, { 'CNPJFOR', 'C', 14, 0}) //CNPJFornecedor
+	aAdd(aCampos, { 'RAZAOFOR', 'C', 200, 0}) //RazaoSocialFornecedor
+	aAdd(aCampos, { 'NUMERO', 'C', 20, 0}) //NumeroPedido
+	aAdd(aCampos, { 'DATAEMIS', 'D', 8, 0}) //DataEmissao
+	aAdd(aCampos, { 'DATAENT', 'D', 8, 0}) //DataEntrega
+	aAdd(aCampos, { 'CONDPAG', 'C', 3, 0}) //CondicaoPagto
+	aAdd(aCampos, { 'FRETE', 'C', 3, 0}) //TipoFrete
+	aAdd(aCampos, { 'VALOR', 'N', 16, 2}) //ValorTotalPedido
+	aAdd(aCampos, { 'OBS', 'C', 200, 2}) //Observacao
+    aAdd(aCampos, { 'JSON', 'M', 200, 2}) //Observacao
+	
 
 	//Cria a tabela temporária
 	oTempTable:= FWTemporaryTable():New(cAliasTmp)
@@ -484,12 +334,12 @@ Static Function fMontaTela()
 	aColunas := fCriaCols()
 
 	//Criando a janela
-	DEFINE MSDIALOG oDlgMark TITLE 'Selecao de titulos' FROM 000, 000  TO nJanAltu, nJanLarg COLORS 0, 16777215 PIXEL
+	DEFINE MSDIALOG oDlgMark TITLE 'Selecao de pedidos' FROM 000, 000  TO nJanAltu, nJanLarg COLORS 0, 16777215 PIXEL
 	//Dados
 	oPanGrid := tPanel():New(001, 001, '', oDlgMark, /*oFont*/, /*lCentered*/, /*uParam7*/, RGB(000,000,000), RGB(254,254,254), (nJanLarg/2) - 1, (nJanAltu/2) - 1)
 	oMarkBrowse := FWMarkBrowse():New()
 	oMarkBrowse:SetAlias(cAliasTmp)
-	oMarkBrowse:SetDescription('Seleciona titulos')
+	oMarkBrowse:SetDescription('Seleciona pedidos')
 	oMarkBrowse:oBrowse:SetDBFFilter(.T.)
 	oMarkBrowse:oBrowse:SetUseFilter(.T.) //Habilita a utilização do filtro no Browse
 	// oMarkBrowse:DisableConfig()
@@ -505,8 +355,7 @@ Static Function fMontaTela()
 
 	//Deleta a temporária e desativa a tela de marcação
 	oTempTable:Delete()
-	oMarkBrowse:DeActivate()
-	TEDA018btn('1')
+	oMarkBrowse:DeActivate()	
 
 	RestArea(aArea)
 Return
@@ -514,6 +363,14 @@ Return
 User Function fSelTitO()
 	Processa({|| fProcessa()}, 'Processando...')
 Return
+
+Static Function MenuDef()
+	Local aRotina := {}
+
+	//Criação das opções
+	ADD OPTION aRotina TITLE 'Continuar'  ACTION 'u_fSelTitO'     OPERATION 2 ACCESS 0
+Return aRotina
+
 
 /*/{Protheus.doc} fProcessa
 Função que percorre os registros da tela
@@ -529,9 +386,17 @@ Static Function fProcessa()
 	Local nTotal    := 0
 	Local nTotMarc := 0
 	local valor := 0
+    Local aCab      := array(0)
+	Local aItem     := array(0)
+	Local aItens    := array(0)
+    Local nCount := 0
+    Local n,m := 1
 	local nX
 	Private cNum
 	Private aTits := {}
+    Private lMsHelpAuto     := .T. as logical
+	Private lAutoErrNoFile  := .T. as logical
+	private lMsErroAuto := .f.   as logical
 
 	//Define o tamanho da régua
 	DbSelectArea(cAliasTmp)
@@ -548,72 +413,182 @@ Static Function fProcessa()
 		//Caso esteja marcado
 		If oMarkBrowse:IsMark(cMarca)
 			nTotMarc++
-			if (cAliasTmp)->NEGATIVADO == "Sim"
-				negat := "1"
-			elseif (cAliasTmp)->NEGATIVADO == "Nao"
-				negat := "2"
-			else
-				negat := ""
-			endif
-			if (cAliasTmp)->RETIRADA == "Sim"
-				retir := "1"
-			elseif (cAliasTmp)->RETIRADA == "Nao"
-				retir := "2"
-			else
-				retir := ""
-			endif
-			if (cAliasTmp)->BLOQUEADO == "Sim"
-				BLOQ := "1"
-			elseif (cAliasTmp)->BLOQUEADO == "Nao"
-				BLOQ := "2"
-			else
-				BLOQ := ""
-			endif
-			Aadd(aTits,{(cAliasTmp)->PREFIXO,(cAliasTmp)->NUMERO,(cAliasTmp)->PARCELA,(cAliasTmp)->TIPO,(cAliasTmp)->CLIENTE,(cAliasTmp)->LOJA,(cAliasTmp)->NOME,(cAliasTmp)->VENCIMENTO,negat,retir,BLOQ,(cAliasTmp)->SALDO,(cAliasTmp)->JUROS,(cAliasTmp)->MULTA})
-			valor := valor + (cAliasTmp)->SALDO
-		EndIf
+			
+            
 
+            CONOUT("GERA O PEDIDO")
+            AADD(aCab, {"C5_FILIAL"  , XFILIAL('SC5'), Nil})
+            AADD(aCab, {"C5_TIPO"    , 'N' , Nil})
+            
+            dbSelectArea("SA1")
+            dbSetOrder(3)
+            IF dbSeek(xFilial("SA1")+ALLTRIM((cAliasTmp)->CNPJ))
+                AADD(aCab, {"C5_CLIENTE" , SA1->A1_COD   , Nil})
+                AADD(aCab, {"C5_LOJACLI" , SA1->A1_LOJA   , Nil})
+                AADD(aCab, {"C5_CLIENT " , SA1->A1_COD   , Nil})
+                AADD(aCab, {"C5_LOJAENT" , SA1->A1_LOJA   , Nil})
+                AADD(aCab, {"C5_TIPOCLI" , SA1->A1_TIPO , Nil})
+            ELSE 
+                FWAlertError("Cliente não encontrado, CNPJ: "+ALLTRIM((cAliasTmp)->CNPJ) , "ITAUNI01")
+                EXIT                   
+            ENDIF 
+
+            
+            
+            AADD(aCab, {"C5_CONDPAG" ,        , Nil})
+            AADD(aCab, {"C5_EMISSAO" , dDataBase, Nil})
+            AADD(aCab, {"C5_DTFATU" , dDataBase, Nil})                
+            AADD(aCab, {"C5_XORIGEM" , "2"    , Nil}) // EXPEDIÇÃO
+            AADD(aCab, {"C5_TPFRETE" ,     , Nil})
+            AADD(aCab, {"C5_XCODINT" , (cAliasTmp)->NUMERO , Nil})
+
+            jJsonRecebe := JsonObject():New()
+            jJsonRecebe:FromJson((cAliasTmp)->JSON)
+                            
+            FOR m := 1 TO LEN(jJsonRecebe["Item"]) 
+
+                aItem    := array(0)        
+
+                cSequencial := StrZero(jJsonRecebe["Item"][m]["Sequencial"]/10,2)
+
+                aadd(aItem,{"C6_ITEM"   ,cSequencial             ,Nil})
+                aadd(aItem,{"C6_PRODUTO",jJsonRecebe["Item"][m]["CodProdutoFornecedor"]                ,Nil})
+                aadd(aItem,{"C6_QTDVEN" ,jJsonRecebe["Item"][m]["Quantidade"]                ,Nil})
+                aadd(aItem,{"C6_PRCVEN" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
+                aadd(aItem,{"C6_PRUNIT" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
+                aadd(aItem,{"C6_OPER"   ,"01"                 ,Nil})
+                aadd(aItem,{"C6_TES"    ,"519"                 ,Nil})
+                aadd(aItem,{"C6_LOCAL"  ,"01"                 ,Nil})
+                aadd(aItem,{"C6_ENTREG" ,dDataBase                 ,Nil})
+                aadd(aItem,{"C6_PEDCOM " ,(cAliasTmp)->NUMERO                 ,Nil})
+                aadd(aItem,{"C6_ITEMPED" ,cSequencial                 ,Nil})
+
+
+                aadd(aItens,aItem)                   
+
+            NEXT m            
+
+            MSExecAuto({|x,y,z|Mata410(x,y,z)},aCab,aItens,3) 
+
+            IF lMsErroAuto
+                lSuccess := .F.
+                DisarmTransaction()
+                mostraerro()
+            Endif
+
+            IF(lSuccess)
+                cJsonConfirma := HttpPost(cUrlConfirma,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
+                nCount ++
+                //FWAlertSuccess("Pedido Integrado: " + cPedido + " ")
+                
+            ENDIF
+        ENDIF
+
+        IF(nCount > 0)
+            FWAlertSuccess(ALLTRIM(STR(nCount)) + " Pedidos Integrados com sucesso.")
+        ENDIF
+      
 		(cAliasTmp)->(DbSkip())
-	EndDo
-	if len(aTits) > 0
-		cNum := getsxenum("ZZ1","ZZ1_ATENDI")
-		confirmSx8()
-
-		for nX := 1 to len(aTits)
-			if date() < aTits[nx][8]
-				cDias := cvaltochar(DateDiffDay(date(),aTits[nx][8]))
-
-			else
-				cDias := cvaltochar(DateDiffDay(date(),aTits[nx][8]))
-				cDias := "-" + cDias
-			endif
-			//cdias := ""
-			RecLock("ZZ1", .T.)
-			ZZ1->ZZ1_FILIAL := xFilial("SE1")
-			ZZ1->ZZ1_STATUS := ""
-			ZZ1->ZZ1_PREFIX := aTits[nx][1]
-			ZZ1->ZZ1_NUM := aTits[nx][2]
-			ZZ1->ZZ1_PARCEL := aTits[nx][3]
-			ZZ1->ZZ1_TIPO := aTits[nx][4]
-			ZZ1->ZZ1_CLI := aTits[nx][5]
-			ZZ1->ZZ1_LOJA := aTits[nx][6]
-			ZZ1->ZZ1_NOMCLI := aTits[nx][7]
-			ZZ1->ZZ1_RETIR := aTits[nx][10]
-			ZZ1->ZZ1_BLOQ := aTits[nx][11]
-			ZZ1->ZZ1_NEGATI := aTits[nx][9]
-			ZZ1->ZZ1_VENCIM := aTits[nx][8]
-			ZZ1->ZZ1_SALDO := aTits[nx][12]
-			ZZ1->ZZ1_JUROS := aTits[nx][13]
-			ZZ1->ZZ1_MULTA := aTits[nx][14]
-			ZZ1->ZZ1_ATENDI := alltrim(cNum)
-			ZZ1->ZZ1_USUARI := UsrFullName(RetCodUsr())
-			ZZ1->ZZ1_DIAS := cDias
-			ZZ1->ZZ1_DATA := Date()
-			ZZ1->ZZ1_HORA := Substr(Time(),1,5)
-			ZZ1->(MsUnlock())
-		next
-	endif
-	oDlgMark:End()
-	fAttTbls()
+	EndDo	
+	oDlgMark:End()	
 	FWRestArea(aArea)
+Return
+
+Static Function fPopula()
+    Local cUrlLista := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/"
+    Local cUrlRecebe := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/recebe/"
+    Local cUrlConfirma := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/confirm/"
+    Local nTimeOut := 120
+    Local aHeadOut := {}
+    Local cHeadRet := ""
+    Local cJsonLista := ""
+    Local cJsonRecebe := ""
+    Local n,m := 1
+    Local lSuccess := .T.
+    Local lContinua := .T.
+    Local aCab      := array(0)
+	Local aItem     := array(0)
+	Local aItens    := array(0)
+    Local nCount := 0
+
+   
+
+    cLista := '{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"}'
+    Aadd(aHeadOut,'User-Agent: Mozilla/4.0 (compatible; Protheus '+GetBuild()+')')
+    Aadd(aHeadOut,'Accept: */*') 
+    Aadd(aHeadOut,'Content-Type: application/json')
+
+    cLista := EncodeUTF8(cLista)
+
+    cJsonLista := HttpPost(cUrlLista,"",cLista,nTimeOut,aHeadOut,@cHeadRet)
+    IF !empty(cJsonLista)
+        jJsonLista := JsonObject():New()
+        jJsonLista:FromJson(cJsonLista)
+        FOR n := 1 TO LEN(jJsonLista["dados"])
+            cFileName := jJsonLista["dados"][n]["filename"]
+            aItens    := array(0)
+            cRecebe := '{"Usuario":{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"},"filename":"'+cFileName+'"} '
+            cRecebe := EncodeUTF8(cRecebe)
+            cJsonRecebe := HttpPost(cUrlRecebe,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
+            IF !empty(cJsonRecebe)
+
+                jJsonRecebe := JsonObject():New()
+                jJsonRecebe:FromJson(cJsonRecebe)     
+                IF(jJsonRecebe:hasProperty("status"))
+                    IF(jJsonRecebe["status"] == 404)
+                        FWAlertError("Pedido "+cFileName+", invalido.","ITAUNI01")
+                        lContinua := .F.
+                    ENDIF
+                ENDIF
+
+                IF(lContinua)
+                    cCnpj := jJsonRecebe["Header"]["CNPJCliente"]
+                    dbSelectArea("SA1")
+                    dbSetOrder(3)
+                    IF !dbSeek(xFilial("SA1")+cCnpj)
+                        FWAlertError("Cliente não encontrado, CNPJ: "+cCnpj , "ITAUNI01")
+                        EXIT    
+                    ENDIF 
+
+                    RecLock(cAliasTmp, .T.)
+                    
+                    (cAliasTmp)->OK   := " "
+                    (cAliasTmp)->TIPO   := jJsonRecebe["Header"]["TipoPedido"]
+                    (cAliasTmp)->CNPJ   := jJsonRecebe["Header"]["CNPJCliente"]
+                    (cAliasTmp)->RAZAOCLI  := jJsonRecebe["Header"]["RazaoSocialCliente"]
+                    (cAliasTmp)->CNPJENT := jJsonRecebe["Header"]["CNPJEntrega"]
+                    (cAliasTmp)->CNPJFOR := jJsonRecebe["Header"]["CNPJFornecedor"]
+                    (cAliasTmp)->RAZAOFOR := jJsonRecebe["Header"]["RazaoSocialFornecedor"]
+                    (cAliasTmp)->NUMERO := jJsonRecebe["Header"]["NumeroPedido"]
+                    cDataEmis := SUBSTRING(jJsonRecebe["Header"]["DataEmissao"],1,10)
+                    cDataEmis := SUBSTRING(cDataEmis,1,4)+SUBSTRING(cDataEmis,6,2)+SUBSTRING(cDataEmis,9,2)
+                    (cAliasTmp)->DATAEMIS := STOD(cDataEmis)//
+                    cDataEnt := SUBSTRING(jJsonRecebe["Header"]["DataEntrega"],1,10)
+                    cDataEnt := SUBSTRING(cDataEnt,1,4)+SUBSTRING(cDataEnt,6,2)+SUBSTRING(cDataEnt,9,2)
+                    (cAliasTmp)->DATAENT := dDataBase//jJsonRecebe["Header"]["DataEntrega"]
+                    (cAliasTmp)->CONDPAG := jJsonRecebe["Header"]["CondicaoPagto"]
+                    (cAliasTmp)->FRETE := IIF(jJsonRecebe["Header"]["TipoFrete"]=="CIF","C","F")
+                    (cAliasTmp)->VALOR := ROUND(jJsonRecebe["Header"]["ValorTotalPedido"],2)
+                    (cAliasTmp)->OBS := jJsonRecebe["Header"]["Observacao"]
+                    (cAliasTmp)->JSON := cJsonRecebe
+
+                    (cAliasTmp)->(MsUnlock())
+                    
+ 
+
+                ENDIF
+
+            ELSE
+                lContinua := .F.
+                FWAlertError("Arquivo "+cFileName+" não possui pedidos.","ITAUNI01")
+            ENDIF
+        NEXT n
+    ELSE
+        lContinua := .F.
+        FWAlertError("Não há pedidos disponiveis, ou a integração falhou.","ITAUNI01")
+    ENDIF
+
+    (cAliasTmp)->(DbGoTop())
+
+
 Return
