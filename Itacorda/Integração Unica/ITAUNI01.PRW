@@ -457,7 +457,7 @@ Static Function fProcessa()
                 IF dbSeek(xFilial("SB1")+ALLTRIM(jJsonRecebe["Item"][m]["CodProdutoFornecedor"]))
                     cProduto := SB1->B1_COD
                 ELSE 
-                    FWAlertError("Cliente não encontrado, CNPJ: "+ALLTRIM((cAliasTmp)->CNPJ) , "ITAUNI01")
+                    FWAlertError("Produto não existe: "+ALLTRIM(jJsonRecebe["Item"][m]["CodProdutoFornecedor"]) , "ITAUNI01")
                     EXIT                   
                 ENDIF 
 
