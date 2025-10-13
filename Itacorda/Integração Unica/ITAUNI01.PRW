@@ -450,9 +450,20 @@ Static Function fProcessa()
                 aItem    := array(0)        
 
                 cSequencial := StrZero(jJsonRecebe["Item"][m]["Sequencial"]/10,2)
+                cProduto := " "
+
+                dbSelectArea("SB1")
+                dbSetOrder(1)
+                IF dbSeek(xFilial("SB1")+ALLTRIM(jJsonRecebe["Item"][m]["CodProdutoFornecedor"]))
+                    cProduto := SB1->B1_COD
+                ELSE 
+                    FWAlertError("Cliente não encontrado, CNPJ: "+ALLTRIM((cAliasTmp)->CNPJ) , "ITAUNI01")
+                    EXIT                   
+                ENDIF 
+
 
                 aadd(aItem,{"C6_ITEM"   ,cSequencial             ,Nil})
-                aadd(aItem,{"C6_PRODUTO",jJsonRecebe["Item"][m]["CodProdutoFornecedor"]                ,Nil})
+                aadd(aItem,{"C6_PRODUTO",cProduto                ,Nil})
                 aadd(aItem,{"C6_QTDVEN" ,jJsonRecebe["Item"][m]["Quantidade"]                ,Nil})
                 aadd(aItem,{"C6_PRCVEN" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
                 aadd(aItem,{"C6_PRUNIT" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
