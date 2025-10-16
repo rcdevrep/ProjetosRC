@@ -436,11 +436,11 @@ Static Function fProcessa()
 
             
             
-            AADD(aCab, {"C5_CONDPAG" ,        , Nil})
+            AADD(aCab, {"C5_CONDPAG" ,(cAliasTmp)->CONDPAG, Nil})
             AADD(aCab, {"C5_EMISSAO" , dDataBase, Nil})
             AADD(aCab, {"C5_DTFATU" , dDataBase, Nil})                
             AADD(aCab, {"C5_XORIGEM" , "2"    , Nil}) // EXPEDIÇÃO
-            AADD(aCab, {"C5_TPFRETE" ,     , Nil})
+            AADD(aCab, {"C5_TPFRETE" ,(cAliasTmp)->FRETE, Nil})
             AADD(aCab, {"C5_XCODINT" , (cAliasTmp)->NUMERO , Nil})
 
             jJsonRecebe := JsonObject():New()
@@ -473,8 +473,13 @@ Static Function fProcessa()
                 aadd(aItem,{"C6_TES"    ,"519"                 ,Nil})
                 aadd(aItem,{"C6_LOCAL"  ,"01"                 ,Nil})
                 aadd(aItem,{"C6_ENTREG" ,dDataBase                 ,Nil})
-                aadd(aItem,{"C6_PEDCOM " ,(cAliasTmp)->NUMERO                 ,Nil})
-                aadd(aItem,{"C6_ITEMPED" ,cSequencial                 ,Nil})
+                //aadd(aItem,{"C6_PEDCOM " ,(cAliasTmp)->NUMERO                 ,Nil})
+                aadd(aItem,{"C6_SERVIC" ,"051",Nil})
+                aadd(aItem,{"C6_ENDPAD" ,"DOCSEP",Nil})
+                aadd(aItem,{"C6_TPESTR" ,"000004",Nil})
+                aadd(aItem,{"C6_TPOP" ,"F",Nil})
+                aadd(aItem,{"C6_CF" ,"5101",Nil})
+                aadd(aItem,{"C6_ZOPER" ,"01",Nil})
 
 
                 aadd(aItens,aItem)                   
