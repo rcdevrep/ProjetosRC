@@ -37,7 +37,7 @@ User Function MT103FIM
 	Local _nConfirm	:= PARAMIXB[2]
 	Local cRefCode  := ""
 	Local nRecnoSE2 := 0
-	Local cTESPar   := GetMv("MV_XTESVC") //Tes de Nacionalização
+
 	Local cEmpresas		:= SuperGetMV("MV_XEMPCOS",.F.,"04/06/07/08/09/10/11/12/13/14/15/16/17/21/22/23/24/25")
 	Local lIntRJ		:= SuperGetMV("MV_XRJCOSW",.F.,.F.)
 	Local cCCustos		:= SuperGetMV("MV_XCCCOSW",.F.,"20000200/20000213")
@@ -59,23 +59,7 @@ User Function MT103FIM
 	SF1->(DbSetOrder(1))
 	SF1->(DbSeek(xFilial("SF1")+CNFISCAL+CSERIE+CA100FOR+CLOJA+CTIPO))
 
-
-	
-	SD1->(DbSetOrder(1))
-	SD1->(DbSeek(xFilial("SD1")+CNFISCAL+CSERIE+CA100FOR+CLOJA))
-
-
-	SF1->(RecLock("SF1",.F.))
-
-	//Se TES for de Nacionalização - F1_XHOLD recebe S
-	If SD1->D1_TES $ cTESPar
-		SF1->F1_XHOLD := 'S'
-	EndIf
-
-	SF1->(MsUnLock("SF1"))
-
-
-	cQry := "SELECT C7_XOEMLOC, C7_TES FROM "+RETSQLNAME("SC7")+" SC7,"+RETSQLNAME("SD1")+" SD1"
+	cQry := "SELECT C7_XOEMLOC FROM "+RETSQLNAME("SC7")+" SC7,"+RETSQLNAME("SD1")+" SD1"
 	cQry += " WHERE C7_FILIAL = '"+xFilial("SC7")+"'"
 	cQry += " AND D1_FILIAL   = '"+xFilial("SD1")+"'"
 	cQry += " AND C7_ITEM     = D1_ITEMPC"
@@ -351,7 +335,6 @@ User Function MT103FIM
 		EndIf
 		
 	EndIf
-
 
 		/*/Alexander dos Santos - 04/05/2022 
 			Ajuste solicitado pela equipe de classificação de notas, 
@@ -656,12 +639,20 @@ User Function xPCO17(nOpc)
 //			  	.AND. 	(SE2->E2_PREFIXO <> 'SPG'	.AND. SE2->E2_PREFIXO <> 'PCA')
 				nValCpdo := U_xMedComp() 
 		  		IF nValCpdo > 0
-					xRet := SE5->E5_VALOR
+					IF(SE5->E5_MOEDA > '01')
+						xRet := SE5->E5_VALOR * SE5->E5_TXMOEDA
+					ELSE
+						xRet := SE5->E5_VALOR
+					ENDIF
 				ELSE
 					xRet := 0
 				endif	
 			else	
-				xRet := SE5->E5_VALOR
+				IF(SE5->E5_MOEDA > '01')
+					xRet := SE5->E5_VALOR * SE5->E5_TXMOEDA
+				ELSE
+					xRet := SE5->E5_VALOR
+				ENDIF
 			endif	 
 		elseif Type("xVal_PCO") <> "U" 
 			xRet := xVal_PCO

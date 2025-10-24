@@ -52,44 +52,7 @@ User Function CompAuto( _aParametrosJob, nTaxAcord)
         lRet := .F.       
     endif
 
-    //ANF[1] = 452537
-    //APA_NDF[1] = 443195
-    //74491113.9550163
-
-    /*If lRet .And. Len(aRecSE5) > 0
-        If Len(aRecSE5[1]) > 0
-            For nI:= 1 To Len(aRecSE5[1])
-                SE5->(DbGoTo(aRecSE5[1][nI]))
-                cIdFK2:= SE5->E5_IDORIG
-
-                SE5->(RecLock("SE5",.F.))
-                SE5->E5_FILIAL := _cFilNF
-
-                If nTaxaPA <> 0
-                    SE5->E5_TXMOEDA := nTaxaPA
-                EndIf
-
-                SE5->E5_ORIGEM := "FINA340"
-                SE5->(MsUnLock())
-
-                FK2->(DbSetOrder(1))
-                IF(FK2->(DBSeek(xFilial("FK2")+cIdFK2)))
-                    FK2->(RecLock("FK2",.F.))
-                    FK2->FK2_FILIAL:= _cFilNF
-                    FK2->FK2_ORIGEM:= "FINA340"
-                    FK2->(MsUnLock())
-                ENDIF
-            Next nI
-            ConOut("Compensação realizada com sucesso")
-        Else
-            ConOut("1 - Ocorreu um erro no processo de compensação")
-        Endif
-    Else
-        ConOut("2 - Ocorreu um erro no processo de compensação")
-    EndIf
-    */
     cFilAnt := cFilIni 
-//    RESET ENVIRONMENT
 
 Return lRet
  

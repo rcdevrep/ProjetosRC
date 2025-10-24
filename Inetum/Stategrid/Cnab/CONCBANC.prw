@@ -601,7 +601,7 @@ Private cHistBaixa := ""
                                 IF(aMov[1] == "3")
 
                                     aFINA100 := {  {"CBCOORIG"          ,cTextBanc                                 ,Nil},;
-                                                    {"CAGENORIG"         ,cValToChar(val(cTextAgen))                ,Nil},;
+                                                    {"CAGENORIG"         ,fBuscAgenc(cTextBanc,cTextAgen,cTextCont) ,Nil},;
                                                     {"CCTAORIG"          ,fBuscConta(cTextBanc,cTextAgen,cTextCont) ,Nil},;
                                                     {"CNATURORI"         ,aRegras[nRegra][5]                     ,Nil},;
                                                     {"CBCODEST"          ,aRegras[nRegra][6]                     ,Nil},;
@@ -624,7 +624,7 @@ Private cHistBaixa := ""
                                                     {"CCTAORIG"          ,aRegras[nRegra][9]  ,Nil},;
                                                     {"CNATURORI"         ,aRegras[nRegra][5]                     ,Nil},;
                                                     {"CBCODEST"          ,cTextBanc                     ,Nil},;
-                                                    {"CAGENDEST"         ,cValToChar(val(cTextAgen))                     ,Nil},;
+                                                    {"CAGENDEST"         ,fBuscAgenc(cTextBanc,cTextAgen,cTextCont)                     ,Nil},;
                                                     {"CCTADEST"          ,fBuscConta(cTextBanc,cTextAgen,cTextCont)                     ,Nil},;
                                                     {"CNATURDES"         ,aRegras[nRegra][5]                     ,Nil},;
                                                     {"CTIPOTRAN"         ,"TB"                      ,Nil},;
@@ -1180,7 +1180,7 @@ Local xFil          := xFilial("ZX3")
 Local cQuery		:= ""
 Local cAlias		:= GetNextAlias()
 
-    cQuery := "SELECT  TOP 1 A6_FILIAL, CASE WHEN (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') THEN 1 ELSE 2 END PRIOR  "
+    cQuery := "SELECT  TOP 1 A6_FILIAL, CASE WHEN (CAST(A6_AGENCIA AS INT) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') THEN 1 ELSE 2 END PRIOR  "
 	cQuery += "FROM "+RETSQLNAME("SA6")+" (NOLOCK) WHERE "
 	cQuery += "D_E_L_E_T_ = '' AND A6_COD = '"+xBanco+"' AND "
     cQuery += "A6_BLOCKED <> '1' AND "
@@ -1219,7 +1219,7 @@ Local cConta        := xConta
 Local cQuery		:= ""
 Local cAlias		:= GetNextAlias()
 
-    cQuery := "SELECT  TOP 1 A6_NUMCON, CASE WHEN (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') THEN 1 ELSE 2 END PRIOR  "
+    cQuery := "SELECT  TOP 1 A6_NUMCON, CASE WHEN (CAST(A6_AGENCIA AS INT) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') THEN 1 ELSE 2 END PRIOR  "
 	cQuery += "FROM "+RETSQLNAME("SA6")+" (NOLOCK) WHERE "
 	cQuery += "D_E_L_E_T_ = '' AND A6_COD = '"+xBanco+"' AND "
     cQuery += "A6_BLOCKED <> '1' AND "
@@ -1250,7 +1250,7 @@ Local cConta        := xConta
 Local cQuery		:= ""
 Local cAlias		:= GetNextAlias()
 
-    cQuery := "SELECT  TOP 1 A6_AGENCIA, CASE WHEN (SUBSTRING(A6_AGENCIA,1,4) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') THEN 1 ELSE 2 END PRIOR  "
+    cQuery := "SELECT  TOP 1 A6_AGENCIA, CASE WHEN (CAST(A6_AGENCIA AS INT) = '"+cValtoChar(val(xAgencia))+"' AND TRIM(A6_NUMCON) like '%"+cValtoChar(val(xConta))+"') THEN 1 ELSE 2 END PRIOR  "
 	cQuery += "FROM "+RETSQLNAME("SA6")+" (NOLOCK) WHERE "
 	cQuery += "D_E_L_E_T_ = '' AND A6_COD = '"+xBanco+"' AND "
     cQuery += "A6_BLOCKED <> '1' AND "

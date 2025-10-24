@@ -368,7 +368,7 @@ WSMETHOD GET PED_MATERIAL PATHPARAM id, data_ini, data_fim WSRECEIVE PEDIDO_COMP
         SC73G->(dbSkip())
     END
 
-    IF(LEN(aItens) > 0 .OR. LEN(aNotas) > 0)
+    IF(LEN(aItens) > 0)
         JCapa["ITENS"] := aItens
         AADD(aPedidos,JCapa)
     ENDIF
@@ -549,7 +549,7 @@ SCP->( dbSetOrder( 1 ) )
 JReserva := JsonObject():New()
 
 ConfirmSx8()
-cNumero := GetSx8Num('SCP', 'CP_NUM')
+
 JReserva["FILIAL"] := xFilial("SCP")
 JReserva["NUMERO"] := cNumero
 
@@ -598,6 +598,14 @@ Else
     While ( GetSx8Len() > nSaveSx8 )
         ConfirmSx8()
     End
+
+    /*
+
+
+
+
+
+    */
 
     JSucesso := JsonObject():New()
     JSucesso["CODIGO"] := "100"
@@ -694,7 +702,7 @@ CONOUT(cJson)
 jJson:FromJson(cJson)
 
  //---------- nOpcx = 3 Inclusão de Solicitação de Armazém --------------
-nOpcx := 3
+//nOpcx := 3
 nSaveSx8:= GetSx8Len()
 cNumero := GetSx8Num( 'SCP', 'CP_NUM' )
 
@@ -712,10 +720,15 @@ JReserva["FILIAL"] := xFilial("SCP")
 JReserva["NUMERO"] := cNumero
 
 
+aadd( aCab, { "CP_FILIAL", xFilial("SCP"), Nil})
 Aadd( aCab, { "CP_NUM" ,cNumero , Nil })
 Aadd( aCab, { "CP_EMISSAO" ,dDataBase , Nil })
 
 aJson := { }
+
+dbSelectArea("SCP")
+dbSetOrder(1)
+SCP->(dbSeek(xFilial("SCP")+cNumero))
 
 For i:= 1 to Len(jJson["ITENS"])
     Aadd( aItens, {} )
@@ -724,6 +737,7 @@ For i:= 1 to Len(jJson["ITENS"])
     JItem["PRODUTO"] := jJson["ITENS"][i]["PRODUTO"]
     JItem["QTDE"] := jJson["ITENS"][i]["QTDE"] 
     Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , STRZERO(i,2) , Nil } )
+    Aadd( aItens[ Len( aItens ) ],{"CP_NUM" , cNumero , Nil } )
     Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,SUBSTRING(jJson["ITENS"][i]["PRODUTO"],5,LEN(jJson["ITENS"][i]["PRODUTO"])) , Nil } )
     Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" , jJson["ITENS"][i]["QTDE"] , Nil } )
     
@@ -734,7 +748,7 @@ JReserva["EMISSAO"] := DTOC(dDataBase)
 JReserva["ITENS"] := aJson
 
 SB1->( dbSetOrder( 1 ) )
-SCP->( dbSetOrder( 1 ) )
+
 MsExecAuto( { | x, y, z | Mata105( x, y , z ) }, aCab, aItens , nOpcx )
 
 If lMsErroAuto
@@ -836,7 +850,7 @@ CONOUT(cJson)
 jJson:FromJson(cJson)
 
  //---------- nOpcx = 3 Inclusão de Solicitação de Armazém --------------
-nOpcx := 3
+nOpcx := 5
 nSaveSx8:= GetSx8Len()
 cNumero := GetSx8Num( 'SCP', 'CP_NUM' )
 
@@ -853,7 +867,7 @@ cNumero := jJson["NUMERO"]
 JReserva["FILIAL"] := xFilial("SCP")
 JReserva["NUMERO"] := cNumero
 
-
+aadd( aCab, { "CP_FILIAL", xFilial("SCP"), Nil})
 Aadd( aCab, { "CP_NUM" ,cNumero , Nil })
 Aadd( aCab, { "CP_EMISSAO" ,dDataBase , Nil })
 
@@ -866,6 +880,7 @@ For i:= 1 to Len(jJson["ITENS"])
     JItem["PRODUTO"] := jJson["ITENS"][i]["PRODUTO"]
     JItem["QTDE"] := jJson["ITENS"][i]["QTDE"] 
     Aadd( aItens[ Len( aItens ) ],{"CP_ITEM" , STRZERO(i,2) , Nil } )
+    Aadd( aItens[ Len( aItens ) ],{"CP_NUM" , cNumero , Nil } )
     Aadd( aItens[ Len( aItens ) ],{"CP_PRODUTO" ,SUBSTRING(jJson["ITENS"][i]["PRODUTO"],5,LEN(jJson["ITENS"][i]["PRODUTO"])) , Nil } )
     Aadd( aItens[ Len( aItens ) ],{"CP_QUANT" , jJson["ITENS"][i]["QTDE"] , Nil } )
     
@@ -966,7 +981,7 @@ while SCP->CP_NUM == cNumero
     Aadd( aItens, {} )
     JItem := JsonObject():New()
     JItem["ITEM"] := SCP->CP_ITEM
-    JItem["PRODUTO"] := SCP->CP_PRODUTO
+    JItem["PRODUTO"] := ALLTRIM(SCP->CP_FILIAL + SCP->CP_PRODUTO)
     JItem["DESCRICAO"] := SCP->CP_DESCRI
     JItem["QTDE"] := SCP->CP_QUANT
     AADD(aJson,JItem)
@@ -1293,7 +1308,7 @@ For i := 1 To Len(jJson["ITENS"])
     If SCP->(dbSeek(xFilial("SCP")+jJson["RESERVA"]+jJson["ITENS"][i]["ITEM"]))
         aCamposSCP := {    {"CP_NUM"        ,SCP->CP_NUM    ,Nil     },;
                     {"CP_ITEM"        ,SCP->CP_ITEM   ,Nil     },;
-                        {"CP_QUANT"        ,SCP->CP_QUANT  ,Nil     }}
+                        {"CP_QUANT"        ,JItem["QTDE"]  ,Nil     }}
 
         aCamposSD3 := { {"D3_TM"        ,"501"            ,Nil },;  // Tipo do Mov.
                     {"D3_COD"        ,SCP->CP_PRODUTO,Nil },;

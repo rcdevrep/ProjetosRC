@@ -256,12 +256,12 @@ Static Function fCriaCols()
 	Local oColumn
 
 	aAdd(aEstrut, { 'TIPO', 'Tipo', 'C', 3, 0, ''})
-	aAdd(aEstrut, { 'CNPJ', 'Cnpj Cli', 'C', 14, 0, ''})
+    aAdd(aEstrut, { 'NUMERO', 'Numero', 'C', 20, 0, ''})
 	aAdd(aEstrut, { 'RAZAOCLI', 'Cliente', 'C', 20, 0, ''})
+    aAdd(aEstrut, { 'CNPJ', 'Cnpj Cli', 'C', 14, 0, ''})
 	//aAdd(aEstrut, { 'CNPJENT', 'Cnpj Ent', 'C', 14, 0, ''})
 	//aAdd(aEstrut, { 'CNPJFOR', 'Cnpj For', 'C', 14, 0, ''})
-	//aAdd(aEstrut, { 'RAZAOFOR', 'Fornecedor', 'C', 40, 0, ''})
-	aAdd(aEstrut, { 'NUMERO', 'Numero', 'C', 20, 0, ''})
+	//aAdd(aEstrut, { 'RAZAOFOR', 'Fornecedor', 'C', 40, 0, ''})	
 	aAdd(aEstrut, { 'DATAEMIS', 'Emissao', 'D', 8, 0, ''})
 	aAdd(aEstrut, { 'DATAENT', 'Entrega', 'D', 8, 0, ''})
 	aAdd(aEstrut, { 'CONDPAG', 'Cond. Pgto', 'C', 3, 0, ''})
@@ -319,7 +319,9 @@ Static Function fMontaTela()
 	aAdd(aCampos, { 'FRETE', 'C', 3, 0}) //TipoFrete
 	aAdd(aCampos, { 'VALOR', 'N', 16, 2}) //ValorTotalPedido
 	aAdd(aCampos, { 'OBS', 'C', 200, 2}) //Observacao
+    aAdd(aCampos, { 'CONFJSON', 'M', 200, 2}) //Observacao
     aAdd(aCampos, { 'JSON', 'M', 200, 2}) //Observacao
+    
 	
 
 	//Cria a tabela temporária
@@ -393,12 +395,20 @@ Static Function fProcessa()
     Local n,m := 1
 	local nX
     local lContinua := .T.
+    local lSuccess := .T.
+     Local nTimeOut := 120
+    Local aHeadOut := {}
+    Local cHeadRet := ""
+    Local cUrlConfirma := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/confirm/"
 	Private cNum
 	Private aTits := {}
     Private lMsHelpAuto     := .T. as logical
-	Private lAutoErrNoFile  := .T. as logical
+	Private lAutoErrNoFile  := .F. as logical
 	private lMsErroAuto := .f.   as logical
 
+    Aadd(aHeadOut,'User-Agent: Mozilla/4.0 (compatible; Protheus '+GetBuild()+')')
+    Aadd(aHeadOut,'Accept: */*') 
+    Aadd(aHeadOut,'Content-Type: application/json')
 	//Define o tamanho da régua
 	DbSelectArea(cAliasTmp)
 	(cAliasTmp)->(DbGoTop())
@@ -434,17 +444,21 @@ Static Function fProcessa()
                 EXIT                   
             ENDIF 
 
+            cRecebe := (cAliasTmp)->CONFJSON
+
             
             
             AADD(aCab, {"C5_CONDPAG" ,(cAliasTmp)->CONDPAG, Nil})
             AADD(aCab, {"C5_EMISSAO" , dDataBase, Nil})
             AADD(aCab, {"C5_DTFATU" , dDataBase, Nil})                
             AADD(aCab, {"C5_XORIGEM" , "2"    , Nil}) // EXPEDIÇÃO
-            AADD(aCab, {"C5_TPFRETE" ,(cAliasTmp)->FRETE, Nil})
+            AADD(aCab, {"C5_TPFRETE" ,alltrim((cAliasTmp)->FRETE), Nil})
             AADD(aCab, {"C5_XCODINT" , (cAliasTmp)->NUMERO , Nil})
 
             jJsonRecebe := JsonObject():New()
             jJsonRecebe:FromJson((cAliasTmp)->JSON)
+
+            aItens := {}
                             
             FOR m := 1 TO LEN(jJsonRecebe["Item"]) 
 
@@ -473,7 +487,8 @@ Static Function fProcessa()
                 aadd(aItem,{"C6_TES"    ,"519"                 ,Nil})
                 aadd(aItem,{"C6_LOCAL"  ,"01"                 ,Nil})
                 aadd(aItem,{"C6_ENTREG" ,dDataBase                 ,Nil})
-                //aadd(aItem,{"C6_PEDCOM " ,(cAliasTmp)->NUMERO                 ,Nil})
+                aadd(aItem,{"C6_NUMPCOM " ,(cAliasTmp)->NUMERO                 ,Nil})
+                aadd(aItem,{"C6_ITEMPC " ,StrZero(cSequencial,5)+"0"           ,Nil})
                 aadd(aItem,{"C6_SERVIC" ,"051",Nil})
                 aadd(aItem,{"C6_ENDPAD" ,"DOCSEP",Nil})
                 aadd(aItem,{"C6_TPESTR" ,"000004",Nil})
@@ -498,18 +513,22 @@ Static Function fProcessa()
                 IF(lSuccess)
                     cJsonConfirma := HttpPost(cUrlConfirma,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
                     nCount ++
+                    IF empty(cJsonConfirma)                    
+                        FwAlertError("Não foi possivel confirmar o recebimento do pedido!!","ERRO NA API")                        
+                    ENDIF
                     //FWAlertSuccess("Pedido Integrado: " + cPedido + " ")
                     
                 ENDIF
             ENDIF
         ENDIF
 
-        IF(nCount > 0)
-            FWAlertSuccess(ALLTRIM(STR(nCount)) + " Pedidos Integrados com sucesso.")
-        ENDIF
-      
+     
 		(cAliasTmp)->(DbSkip())
 	EndDo	
+
+    IF(nCount > 0)
+        FWAlertSuccess(ALLTRIM(STR(nCount)) + " Pedidos Integrados com sucesso.")
+    ENDIF
 	oDlgMark:End()	
 	FWRestArea(aArea)
 Return
@@ -517,7 +536,6 @@ Return
 Static Function fPopula()
     Local cUrlLista := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/"
     Local cUrlRecebe := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/recebe/"
-    Local cUrlConfirma := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/confirm/"
     Local nTimeOut := 120
     Local aHeadOut := {}
     Local cHeadRet := ""
@@ -575,7 +593,7 @@ Static Function fPopula()
                     (cAliasTmp)->OK   := " "
                     (cAliasTmp)->TIPO   := jJsonRecebe["Header"]["TipoPedido"]
                     (cAliasTmp)->CNPJ   := jJsonRecebe["Header"]["CNPJCliente"]
-                    (cAliasTmp)->RAZAOCLI  := jJsonRecebe["Header"]["RazaoSocialCliente"]
+                    (cAliasTmp)->RAZAOCLI  := UPPER(jJsonRecebe["Header"]["RazaoSocialCliente"])
                     (cAliasTmp)->CNPJENT := jJsonRecebe["Header"]["CNPJEntrega"]
                     (cAliasTmp)->CNPJFOR := jJsonRecebe["Header"]["CNPJFornecedor"]
                     (cAliasTmp)->RAZAOFOR := jJsonRecebe["Header"]["RazaoSocialFornecedor"]
@@ -590,7 +608,9 @@ Static Function fPopula()
                     (cAliasTmp)->FRETE := IIF(jJsonRecebe["Header"]["TipoFrete"]=="CIF","C","F")
                     (cAliasTmp)->VALOR := ROUND(jJsonRecebe["Header"]["ValorTotalPedido"],2)
                     (cAliasTmp)->OBS := jJsonRecebe["Header"]["Observacao"]
+                    (cAliasTmp)->CONFJSON := cRecebe
                     (cAliasTmp)->JSON := cJsonRecebe
+                    
 
                     (cAliasTmp)->(MsUnlock())
                     

@@ -808,6 +808,12 @@ Static Function FProcessa(nTxAcorda)
                             nAcomp      -= nSldComp
                             nValCont    := (nValComp * aAdt[nAdt, 9]) - (nValComp * nTxAcorda)
 
+                            RECLOCK("SE5",.F.)
+
+                            SE5->E5_CAMBIO := nValCont
+
+                            MSUNLOCK()
+
                             //---INCLUIR A CONTABILIZAÇÃO DA VARIAÇÃO CAMBIAL---------------------------------------------------------
                             
                             If nValCont <> 0
@@ -815,7 +821,7 @@ Static Function FProcessa(nTxAcorda)
 
                                 cAlias	    := GetNextAlias()
 
-                                If nValCont < 0
+                                If nValCont > 0
                                     cPadrao := "V02"
                                     cHistoric   := "VARIACAO CAMBIAL PASSIVA "
                                 Else
@@ -823,7 +829,7 @@ Static Function FProcessa(nTxAcorda)
                                     cHistoric   := "VARIACAO CAMBIAL ATIVA "
                                 EndIf
                                 cNReduz  :=	Posicione("SA2",1,xFilial("SA2")+aNF[nNf, 15]+aNF[nNf, 16],"A2_NREDUZ")
-                                cHistori2 := "S/NF "+aNF[nNf, 2]+" FORNECEDOR "+ cNReduz
+                                cHistori2 := "S/NF "+aNF[nNf, 2]+" "+ cNReduz
 
                                 cQuery := "SELECT ISNULL(MAX(CT2_DOC),'000000') AS DOC "
                                 cQuery += "FROM "+RetSqlName("CT2")+" (NOLOCK) "
@@ -870,10 +876,12 @@ Static Function FProcessa(nTxAcorda)
                                             {'CT2_ITEMD'		, SE2->E2_ITEMD	                                                        , NIL},;
                                             {'CT2_ITEMC'		, SE2->E2_ITEMD	                                                        , NIL},;
                                             {'CT2_LP'		    , cPadrao	                                                            , NIL},;
+                                            {'CT2_KEY'		    , cHistoric + " " + cHistori2                                           , NIL},;
                                             {'CT2_EC06CR'		, SE2->E2_MDCONTR	                                                    , NIL},;
                                             {'CT2_EC06DB'		, SE2->E2_MDCONTR                                                       , NIL}})
                                             
                                 aAdd(aItem, {{'CT2_FILIAL'      ,cFilAnt                                                                , NIL},;
+                                            {'CT2_LINHA'		, '002'										                            , NIL},;
                                             {'CT2_DC'			, '4'										                            , NIL},;
                                             {'CT2_HIST'			, cHistori2                                                             , NIL}})
                                 

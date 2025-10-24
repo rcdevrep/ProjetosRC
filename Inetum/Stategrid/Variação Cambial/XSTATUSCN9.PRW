@@ -20,8 +20,8 @@ User Function XSTATUSCN9()
 	Local dDtBloq	
 
 	
-	RPCSetType(3)
-	RpcSetEnv("01", "3001" , , , , GetEnvServer() , {} )
+	//RPCSetType(3)
+	//RpcSetEnv("01", "3001" , , , , GetEnvServer() , {} )
 
 
 	aArea		:= FWGetArea()

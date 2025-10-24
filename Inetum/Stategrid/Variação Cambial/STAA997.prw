@@ -47,7 +47,7 @@ Static Function FValContra(cGet1)
     Local lRet  := .T.
     Local cUser := RetCodUsr()
 
-    BeginSQL Alias 'CN9TEMP'
+    /*BeginSQL Alias 'CN9TEMP'
 
         SELECT CN9.CN9_NUMERO
              , CN9.CN9_SITUAC
@@ -71,8 +71,8 @@ Static Function FValContra(cGet1)
         BeginSQL Alias 'CNNTEMP'
 
             SELECT CNN_CONTRA
-              FROM %table:CNN% CNN
-             WHERE CNN.%notDel%
+            FROM %table:CNN% CNN
+            WHERE CNN.%notDel%
                AND CNN_FILIAL   = %xfilial:CNN% 
                AND CNN_CONTRA   = %exp:cGet1% 
                AND CNN_USRCOD   = %exp:cUser% 
@@ -86,7 +86,7 @@ Static Function FValContra(cGet1)
 
         CNNTEMP->(DBCloseArea())
 
-    EndIf
+    EndIf*/
 
 Return(lRet)
 
@@ -98,9 +98,9 @@ Static Function FAtuContra(cGet1, lAtu, oDlg)
                         " E2_NUM     = '" + SF1->F1_DOC     + "' %"
                
     If lAtu
-		RecLock("SF1", .F.)
-			SF1->F1_XCONTRA := cGet1
-		SF1->(MsUnlock())
+		//RecLock("SF1", .F.)
+        //SF1->F1_XCONTRA := cGet1
+		//SF1->(MsUnlock())
 
         BeginSql Alias 'QRYSE2'
 

@@ -639,12 +639,20 @@ User Function xPCO17(nOpc)
 //			  	.AND. 	(SE2->E2_PREFIXO <> 'SPG'	.AND. SE2->E2_PREFIXO <> 'PCA')
 				nValCpdo := U_xMedComp() 
 		  		IF nValCpdo > 0
-					xRet := SE5->E5_VALOR
+					IF(SE5->E5_MOEDA > '01')
+						xRet := SE5->E5_VALOR * SE5->E5_TXMOEDA
+					ELSE
+						xRet := SE5->E5_VALOR
+					ENDIF
 				ELSE
 					xRet := 0
 				endif	
 			else	
-				xRet := SE5->E5_VALOR
+				IF(SE5->E5_MOEDA > '01')
+					xRet := SE5->E5_VALOR * SE5->E5_TXMOEDA
+				ELSE
+					xRet := SE5->E5_VALOR
+				ENDIF
 			endif	 
 		elseif Type("xVal_PCO") <> "U" 
 			xRet := xVal_PCO

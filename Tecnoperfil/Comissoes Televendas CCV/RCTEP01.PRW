@@ -163,12 +163,12 @@ static function fCalcula
 
 	cQueryZP3 := " SELECT ZP3_VEND1,ZP0_PERC, SUM(ZP3_VALOR) VALOR FROM ZP3010 ZP3 "
 	cQueryZP3 += "inner join ZP0010 on ZP0_CODIGO = ZP3_MES AND ZP0_ANO = ZP3_ANO AND ZP0_CODSA3 = ZP3_VEND1 "
-	cQueryZP3 += "WHERE ZP3_ANO = '"+Year2Str(_dDtFec)+"' AND ZP3_MES = '"+Month2Str(_dDtFec)+"' AND ZP3.D_E_L_E_T_ <> '*' "
+	cQueryZP3 += "WHERE ZP3_ANO = '"+Year2Str(_dDtFec)+"' AND ZP3_MES = '"+Month2Str(_dDtFec)+"' AND ZP0_LOCAL = 'I' AND ZP3.D_E_L_E_T_ <> '*' "
 	cQueryZP3 += "group by ZP3_VEND1,ZP0_PERC"
 
 	TCQuery cQueryZP3 New Alias 'ZP3_TAB'
 
-	cUpdZP1 := " UPDATE ZP1010 SET D_E_L_E_T_ = '*' WHERE ZP1_ANO = '"+Year2Str(_dDtFec)+"' AND ZP1_MES = '"+Month2Str(_dDtFec)+"' AND D_E_L_E_T_ <> '*' "
+	cUpdZP1 := " UPDATE ZP1010 SET D_E_L_E_T_ = '*' WHERE ZP1_ANO = '"+Year2Str(_dDtFec)+"' AND ZP1_MES = '"+Month2Str(_dDtFec)+"' AND ZP0_LOCAL = 'I' AND D_E_L_E_T_ <> '*' "
 	If (TCSQLExec(cUpdZP1) < 0)
 		Return MsgStop("TCSQLError() " + TCSQLError())
 	EndIf
