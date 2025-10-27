@@ -305,8 +305,6 @@ TCQuery cQryTotais New Alias 'QRY2_TAB'
 		ELSE
 			oExcel:AddRow(QRY2_TAB->PRINCIPAL,"Table1",{  })
 		ENDIF
-				
-		
 
 		QRY2_TAB->(DBSKIP())
 	END

@@ -19,9 +19,9 @@ Static cAliasMVC := "ZP0"
 
 User Function RCTEP01()
 	Private _oProc		:= MsNewProcess():New({ || fCalcula() },"Processando","Aguarde...",.F.)
-	Private _dFecAno	:= SuperGetMV("FL_FECANO",,STOD("20241231"))
-	Private _dFecMes	:= SuperGetMV("FL_FECMES",,STOD("20250131"))
-	Private _dData		:= SuperGetMV("FL_COMMES",,STOD("20250131"))
+	Private _dFecAno	:= SuperGetMV("FL_FECANO",,STOD("20241231")) //TROCAR
+	Private _dFecMes	:= SuperGetMV("FL_FECMES",,STOD("20250131")) //TROCAR
+	Private _dData		:= SuperGetMV("FL_COMMES",,STOD("20250131")) //TROCAR
 	Private _dDtIni		:= (_dFecAno + 1)
 	Private _dDtFec		:= LastDay(Date())
 	Private _dDtPag		:= (_dDtFec + 1)
@@ -29,7 +29,7 @@ User Function RCTEP01()
 
 	///ADICIONAR CAMPO NOME DO VENDEDOR.
 
-	_oDlgIni := TDialog():New(000,000,350,350,"Cálculo Período Comissão - Televendas CCV",,,,,CLR_BLACK,CLR_WHITE,,,.T.)
+	_oDlgIni := TDialog():New(000,000,350,350,"Cálculo Período Comissão - Representantes",,,,,CLR_BLACK,CLR_WHITE,,,.T.)
 
 	_oGroup1 := TGroup():New(005,005,050,170,'',_oDlgIni,,,.T.)
 

@@ -399,7 +399,12 @@ Static Function fProcessa()
      Local nTimeOut := 120
     Local aHeadOut := {}
     Local cHeadRet := ""
-    Local cUrlConfirma := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/confirm/"
+    Local cUrlConfirma := SUPERGETMV("IT_URLUNI","https://api-tst.unicasolucoes.com.br/")+"_portal/api/arquivos/confirm/"
+    Local cSegUnid := ""
+    Local nConversao := 1
+    Local cTipoConv := ""
+    Local cUnidade := ""
+    Local nQuantidade := 0
 	Private cNum
 	Private aTits := {}
     Private lMsHelpAuto     := .T. as logical
@@ -467,33 +472,49 @@ Static Function fProcessa()
                 cSequencial := StrZero(jJsonRecebe["Item"][m]["Sequencial"]/10,2)
                 cProduto := " "
 
+                nQuantidade := jJsonRecebe["Item"][m]["Quantidade"]
+
                 dbSelectArea("SB1")
                 dbSetOrder(1)
                 IF dbSeek(xFilial("SB1")+ALLTRIM(jJsonRecebe["Item"][m]["CodProdutoFornecedor"]))
                     cProduto := SB1->B1_COD
+                    cSegUnid := SB1->B1_SEGUM
+                    nConversao := SB1->B1_CONV
+                    cTipoConv := SB1->B1_TIPCONV
                 ELSE 
                     FWAlertError("Produto não existe: "+ALLTRIM(jJsonRecebe["Item"][m]["CodProdutoFornecedor"]) , "ITAUNI01")
                     lContinua := .F.
                     EXIT                   
                 ENDIF 
 
+                cUnidade := jJsonRecebe["Item"][m]["UnidadeMedida"]
+
+                IF(cUnidade == "M")
+                    IF(cTipoConv == "M")
+                        nQuantidade := nQuantidade * nConversao
+                    ELSE
+                        nQuantidade := nQuantidade / nConversao
+                    END
+                    cUnidade := "UN"
+                ENDIF
 
                 aadd(aItem,{"C6_ITEM"   ,cSequencial             ,Nil})
                 aadd(aItem,{"C6_PRODUTO",cProduto                ,Nil})
-                aadd(aItem,{"C6_QTDVEN" ,jJsonRecebe["Item"][m]["Quantidade"]                ,Nil})
+                aadd(aItem,{"C6_QTDVEN" ,nQuantidade                ,Nil})
                 aadd(aItem,{"C6_PRCVEN" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
                 aadd(aItem,{"C6_PRUNIT" ,jJsonRecebe["Item"][m]["PrecoUnitario"]                 ,Nil})
+                aadd(aItem,{"C6_UN"     ,cUnidade                 ,Nil})
                 aadd(aItem,{"C6_OPER"   ,"01"                 ,Nil})
-                aadd(aItem,{"C6_TES"    ,"519"                 ,Nil})
+                aadd(aItem,{"C6_TES"    ,SUPERGETMV("IT_TESUNI", "519")                 ,Nil})
                 aadd(aItem,{"C6_LOCAL"  ,"01"                 ,Nil})
                 aadd(aItem,{"C6_ENTREG" ,dDataBase                 ,Nil})
                 aadd(aItem,{"C6_NUMPCOM " ,(cAliasTmp)->NUMERO                 ,Nil})
                 aadd(aItem,{"C6_ITEMPC " ,StrZero(cSequencial,5)+"0"           ,Nil})
-                aadd(aItem,{"C6_SERVIC" ,"051",Nil})
-                aadd(aItem,{"C6_ENDPAD" ,"DOCSEP",Nil})
-                aadd(aItem,{"C6_TPESTR" ,"000004",Nil})
+                aadd(aItem,{"C6_SERVIC" ,SUPERGETMV("IT_SERUNI", "051"),Nil})
+                aadd(aItem,{"C6_ENDPAD" ,SUPERGETMV("IT_ENDUNI", "DOCSEP"),Nil})
+                aadd(aItem,{"C6_TPESTR" ,SUPERGETMV("IT_ESTUNI", "000004"),Nil})
                 aadd(aItem,{"C6_TPOP" ,"F",Nil})
-                aadd(aItem,{"C6_CF" ,"5101",Nil})
+                aadd(aItem,{"C6_CF"     ,SUPERGETMV("IT_CFOUNI", "5101"),Nil})
                 aadd(aItem,{"C6_ZOPER" ,"01",Nil})
 
 
@@ -534,8 +555,8 @@ Static Function fProcessa()
 Return
 
 Static Function fPopula()
-    Local cUrlLista := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/lista/"
-    Local cUrlRecebe := "https://api-tst.unicasolucoes.com.br/_portal/api/arquivos/recebe/"
+    Local cUrlLista := SUPERGETMV("IT_URLUNI","https://api-tst.unicasolucoes.com.br/")+"_portal/api/arquivos/lista/"
+    Local cUrlRecebe := SUPERGETMV("IT_URLUNI","https://api-tst.unicasolucoes.com.br/")+"_portal/api/arquivos/recebe/"
     Local nTimeOut := 120
     Local aHeadOut := {}
     Local cHeadRet := ""
@@ -551,7 +572,7 @@ Static Function fPopula()
 
    
 
-    cLista := '{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"}'
+    cLista := '{"strLogin":"api_itacorda_qa","strCNPJUsuario": "'+SUPERGETMV("IT_USRUNI","80646755000105")+'","txtSenha": "'+SUPERGETMV("IT_USRPAS","UniItacorda0604!#")+'"}'
     Aadd(aHeadOut,'User-Agent: Mozilla/4.0 (compatible; Protheus '+GetBuild()+')')
     Aadd(aHeadOut,'Accept: */*') 
     Aadd(aHeadOut,'Content-Type: application/json')
@@ -565,7 +586,7 @@ Static Function fPopula()
         FOR n := 1 TO LEN(jJsonLista["dados"])
             cFileName := jJsonLista["dados"][n]["filename"]
             aItens    := array(0)
-            cRecebe := '{"Usuario":{"strLogin":"api_itacorda_qa","strCNPJUsuario": "80646755000105","txtSenha": "UniItacorda0604!#"},"filename":"'+cFileName+'"} '
+            cRecebe := '{"Usuario":{"strLogin":"api_itacorda_qa","strCNPJUsuario": "'+SUPERGETMV("IT_USRUNI","80646755000105")+'","txtSenha": "'+SUPERGETMV("IT_USRPAS","UniItacorda0604!#")+'"},"filename":"'+cFileName+'"} '
             cRecebe := EncodeUTF8(cRecebe)
             cJsonRecebe := HttpPost(cUrlRecebe,"",cRecebe,nTimeOut,aHeadOut,@cHeadRet)
             IF !empty(cJsonRecebe)

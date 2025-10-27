@@ -139,7 +139,7 @@ oPrint:lPDFasPNG		:= .F.
         //cEmail    := "jaderberto@gmail.com;alexandre.braga.gussem.ext@inetum.com" //Alltrim(SA1->A1_EMAIL)
         cEmail := GetMv("MV_XMAILCN")
         U_SNDMail(cEmail,"","","Conciliação Automática - "+cNomFile,"",cMsg,.F., aArqMod)
-
+        
 
 
 Return
