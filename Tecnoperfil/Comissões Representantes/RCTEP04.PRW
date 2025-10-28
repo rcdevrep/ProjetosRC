@@ -99,6 +99,8 @@ Return
 
 static function fCalcula
 
+	Local aVend := {}
+
 	cQueryTab := "  "
 	cQueryTab += "SELECT C5_FILIAL FILIAL, C5_EMISSAO EMISSAO, C5_VEND2 VEND2,SA3.A3_NOME PRINCIPAL, C5_VEND3 VEND3, NVL(SA32.A3_NOME,' ') SECUNDARIO, C5_NUM PEDIDO,A1_NOME NOME,   "
 	cQueryTab += "A1_COD CLIENTE, A1_LOJA LOJA, "
@@ -197,16 +199,39 @@ static function fCalcula
 		ZP3_TAB->(DBSKIP())
 	END
 
-
 	//FAZER UM SELECT DA ZP1 COM O RESULTADO
+
+	cQry1 := " "
+	cQry1 += "SELECT ZP1_CODSA3 CODIGO, ZP1_META META, ZP1_VALOR VALOR FROM"+RETSQLNAME("ZP1")+" "
+	cQry1 += "WHERE ZP1_ANO = "+Year2Str(_dDtFec)+" "
+	cQry1 += "AND ZP1_MES = "+Month2Str(_dDtFec)+" "
+	cQry1 += "AND D_E_L_E_T_ <> '*' "
+	cQry1 += "ORDER BY ZP1_CODSA3 "
+
+	TCQuery cQry1 New Alias 'ZPRC1'
 
 	//IF BATEU A META (VALOR > META)
 
+	WHILE !(ZPRC1)->(EOF())
+		IF (ZPRC1_VALOR > ZPRC1_META)
+			aadd(aVend,ZPRC1_CODIGO,ZPRC1_VALOR)
+		ENDIF
+
+	ENDDO
+
 	//FAZER SELECT DA SE3 COM AS COMISSÕES GERADAS DO MÊS
+
+	cQry2 := " "
+	cQry2 += "SELECT SUM(E3_COMIS) AS VALOR FROM "+RETSQLNAME("SE3")+" "
+	cQry2 += "WHERE E3_VEND = '9928' "
+	cQry2 += "AND E3_EMISSAO BETWEEN '20251001' AND '20251030' "
+	cQry2 += ""
+
+	TCQuery cQry2 New Alias 'ZPRC2'
 
 	//ATUALIZAR PEDIDO, NF E TITULO DAS COMISSÕES DA SE3
 	
-	
+	 //VARRE O ARRAY
 
 		/*
 		update SD2010 set D2_COMIS2 = 7
