@@ -111,12 +111,12 @@ static function fCalcula
 	cQueryTab += "LEFT JOIN "+RETSQLNAME("SA3")+" SA32 on SA32.A3_COD = C5_VEND3 AND SA32.D_E_L_E_T_ <> '*' "
 	cQueryTab += "INNER JOIN "+RETSQLNAME("SA1")+" SA1 on A1_COD = C5_CLIENTE AND A1_LOJA = C5_LOJACLI AND SA1.D_E_L_E_T_ <> '*' "
 	cQueryTab += "WHERE C5_EMISSAO > '"+DTOS(_dFecMes)+"' AND C5_EMISSAO <= '"+DTOS(_dDtFec)+"' AND SC5.D_E_L_E_T_ <> '*' "
-	cQueryTab += "	AND C5_VEND1 <> ' ' "
+	cQueryTab += "AND C5_VEND1 <> ' ' "
 	cQueryTab += "AND C5_VEND2 NOT IN ('113396','110641', '6001') "
-	cQueryTab += "AND C5_VEND2 = '30771' "
+	//cQueryTab += "AND C5_VEND2 = '30771' "
 	cQueryTab += "AND A1_NREDUZ <> 'MRV' " 
 	cQueryTab += "AND C6_NOTA <> ' ' "
-	cQueryTab += "AND C6_NUM IN (select E3_PEDIDO from SE3010 where E3_VEND = '30771' AND E3_EMISSAO >= '20251001') "
+	//cQueryTab += "AND C6_NUM IN (select E3_PEDIDO from SE3010 where E3_VEND = '30771' AND E3_EMISSAO >= '20251001') "
 	cQueryTab += "AND C6_TES <> '598' AND C6_TES <> '905' AND C6_TES <> '921' AND C5_NUM <> '004298'  "
 	cQueryTab += "AND C5_VEND2 <> ' ' "
 	cQueryTab += "GROUP BY C5_FILIAL, C5_EMISSAO, C5_VEND2, C5_VEND3, C5_NUM,A1_NOME, A1_COD, A1_LOJA, SA3.A3_NOME, SA32.A3_NOME  "
@@ -194,9 +194,59 @@ static function fCalcula
 		ZP1_BONUS := 0
 
 		MSUNLOCK()
-
-	ZP3_TAB->(DBSKIP())
+		ZP3_TAB->(DBSKIP())
 	END
+
+
+	//FAZER UM SELECT DA ZP1 COM O RESULTADO
+
+	//IF BATEU A META (VALOR > META)
+
+	//FAZER SELECT DA SE3 COM AS COMISSÕES GERADAS DO MÊS
+
+	//ATUALIZAR PEDIDO, NF E TITULO DAS COMISSÕES DA SE3
+	
+	
+
+		/*
+		update SD2010 set D2_COMIS2 = 7
+		where D2_EMISSAO >= '20190101' 
+
+		//filtro pela ZP1
+		AND D2_VEND2 = ZP3_TAB->ZP3_VEND1
+		AND D2_SERIE = 
+		AND D2_DOC = 
+		AND D2_EMISSAO = 		
+
+		AND D_E_L_E_T_ <> '*' AND D2_COMIS2 = 5;
+
+		update SE1010 set E1_COMIS2 = 7
+		where E1_EMISSAO >= '20190101' 
+
+		//filtro pela ZP1
+		AND E1_VEND2 = ZP3_TAB->ZP3_VEND1
+		AND E1_SERIE = 
+		AND E1_NUM = 
+		AND E1_EMISSAO = 		
+
+		AND D_E_L_E_T_ <> '*' AND E1_COMIS2 = 5;
+
+		update SC6010 set C6_COMIS2 = 7
+		where C6_ENTREG >= '20190101'
+
+		//filtro pela ZP1
+		AND C5_VEND2 = ZP3_TAB->ZP3_VEND1
+		AND C6_SERIE = 
+		AND C6_NOTA = 
+		AND C6_EMISSAO = 		
+
+		AND D_E_L_E_T_ <> '*' AND C6_COMIS2 = 5 ;
+		*/
+
+
+
+
+
 
 
 return

@@ -1036,11 +1036,11 @@ Private cHistBaixa := ""
         FT_FSKIP()
     EndDo
 
-    If lAuto
+    //If lAuto
         If !Empty(cBanco)
             U_RELCONC()
         EndIf
-    EndIf
+   // EndIf
 
 
 

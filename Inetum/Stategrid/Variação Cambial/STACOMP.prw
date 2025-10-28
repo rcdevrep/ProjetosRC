@@ -45,7 +45,8 @@ User Function STACOMP()
         Else     
             fMontaTela(cDescContr)
         EndIf 
-
+        
+        
     EndIf
 
 Return
