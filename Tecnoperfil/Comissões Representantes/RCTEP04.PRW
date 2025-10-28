@@ -100,6 +100,7 @@ Return
 static function fCalcula
 
 	Local aVend := {}
+	Local n
 
 	cQueryTab := "  "
 	cQueryTab += "SELECT C5_FILIAL FILIAL, C5_EMISSAO EMISSAO, C5_VEND2 VEND2,SA3.A3_NOME PRINCIPAL, C5_VEND3 VEND3, NVL(SA32.A3_NOME,' ') SECUNDARIO, C5_NUM PEDIDO,A1_NOME NOME,   "
@@ -199,8 +200,6 @@ static function fCalcula
 		ZP3_TAB->(DBSKIP())
 	END
 
-	//FAZER UM SELECT DA ZP1 COM O RESULTADO
-
 	cQry1 := " "
 	cQry1 += "SELECT ZP1_CODSA3 CODIGO, ZP1_META META, ZP1_VALOR VALOR FROM"+RETSQLNAME("ZP1")+" "
 	cQry1 += "WHERE ZP1_ANO = "+Year2Str(_dDtFec)+" "
@@ -210,75 +209,87 @@ static function fCalcula
 
 	TCQuery cQry1 New Alias 'ZPRC1'
 
-	//IF BATEU A META (VALOR > META)
-
+	//VERIFICA QUAIS VENDEDORES ALCANCARAM A META
 	WHILE !(ZPRC1)->(EOF())
 		IF (ZPRC1_VALOR > ZPRC1_META)
 			aadd(aVend,ZPRC1_CODIGO)
 		ENDIF
 
 	ENDDO
-
 	
+	 //VARRE O ARRAY DE VENDEDORES QUE ALCANCARAM A META
+	FOR n := 1 TO Len(aVend)
 
-	//ATUALIZAR PEDIDO, NF E TITULO DAS COMISSÕES DA SE3
-	
-	 //VARRE O ARRAY
-	for n...
-		//FAZER SELECT DA SE3 COM AS COMISSÕES GERADAS DO MÊS
-
-
-
-
-		/*
-		update SD2010 set D2_COMIS2 = 7
-		where D2_EMISSAO >= '20190101' 
-
-		AND D2_VEND2 = ZP3_TAB->ZP3_VEND1
-		AND D2_SERIE = 
-		AND D2_DOC = 
-		AND D2_EMISSAO = 		
-
-		AND D_E_L_E_T_ <> '*' AND D2_COMIS2 = 5;
-
-		update SE1010 set E1_COMIS2 = 7
-		where E1_EMISSAO >= '20190101' 
-
-		AND E1_VEND2 = ZP3_TAB->ZP3_VEND1
-		AND E1_SERIE = 
-		AND E1_NUM = 
-		AND E1_EMISSAO = 		
-
-		AND D_E_L_E_T_ <> '*' AND E1_COMIS2 = 5;
-
-		update SC6010 set C6_COMIS2 = 7
-		where C6_ENTREG >= '20190101'
-
-		AND C5_VEND2 = ZP3_TAB->ZP3_VEND1
-		AND C6_SERIE = 
-		AND C6_NOTA = 
-		AND C6_EMISSAO = 		
-
-		AND D_E_L_E_T_ <> '*' AND C6_COMIS2 = 5 ;
-
-
-
+		//ATUALIZA O VALOR DAS COMISSOES E PORCENTAGENS
 		cQry2 := " "
 		cQry2 += "UPDATE "+RETSQLNAME("SE3")+" SET E3_COMIS = (E3_BASE * 7)/100, E3_PORC = 7 "
 		cQry2 += "WHERE E3_VEND = '"+aVend[n]+"' "
-		cQry2 += "AND SUSBTR(E3_EMISSAO,1,6) = '"+Year2Str(_dDtFec)+Month2Str(_dDtFec)+"' "
-		cQry2 += ""
+		cQry2 += "AND SUBSTR(E3_EMISSAO,1,6) = '"+Year2Str(_dDtFec)+Month2Str(_dDtFec)+"' "
 
 		If (TCSQLExec(cQry2) < 0)
 			Return MsgStop("TCSQLError() " + TCSQLError())
 		EndIf
 
-		*/
+		//FAZER SELECT DA SE3 COM AS COMISSÕES GERADAS DO MÊS
+		cQry3 := " "
+		cQry3 += "SELECT E3_FILIAL FILIAL, E3_VEND VENDEDOR, E3_EMISSAO EMISSAO ,E3_NUM DOC, E3_SERIE SERIE E3_CODCLI CLIENTE FROM "+RETSQLNAME("SE3")+" "
+		cQry3 += "WHERE E3_VEND = '"+aVend[n]+"' "
+		cQry3 += "AND SUBSTR(E3_EMISSAO,1,6) = '"+Year2Str(_dDtFec)+Month2Str(_dDtFec)+"' "
 
+		TCQuery cQry3 New Alias 'ZPRC3'
 
+			WHILE !(ZPRC3)->(EOF())
 
+				cQry4 := " "
+				cQry4 += "UPDATE "+RETSQLNAME("SD2")+"SET D2_COMIS2 = 7 "
+				cQry4 += "WHERE D2_FILIAL = "+ZPRC3_FILIAL+" "
+				cQry4 += "D2_EMISSAO = "+ZPRC3_EMISSAO+" "
+				cQry4 += "AND D2_DOC = "+ZPRC3_DOC+" "
+				cQry4 += "AND D2_SERIE = "+ZPRC3_SERIE+" "
+				cQry4 += "AND D2_CLIENTE = "+ZPRC3_CODCLI+" "
+				cQry4 += "AND D2_LOJA = "+ZPRC3_LOJA+" "
+				cQry4 += "AND D2_COMIS2 = 5 "
+				cQry4 += "AND D_E_L_E_T_ <> '*' "
 
+				IF (TCSQLExec(cQry4) < 0)
+					RETURN MsgStop("TCSQLError() " + TCSQLError())
+				ENDIF
 
+				cQry5 := " "
+				cQry5 += "UPDATE "+RETSQLNAME("SE1")+"SET E1_COMIS2 = 7 "
+				cQry5 += "WHERE E1_FILIAL = "+ZPRC3_FILIAL+" "
+				//cQry5 += "AND E1_EMISSAO = "+ZPRC3_EMISSAO+" "
+				cQry5 += "AND E1_NUM = "+ZPRC3_DOC+" "
+				cQry5 += "AND E1_PREFIXO = "+ZPRC3_SERIE+" "
+				cQry5 += "AND E1_CLIENTE ="+ZPRC3_CODCLI+" "
+				cQry5 += "AND E1_LOJA = "+ZPRC3_LOJA+" "
+				cQry5 += "AND E1_COMIS2 = 5 "
+				cQry5 += "AND D_E_L_E_T_ <> '*' "
 
+				IF (TCSQLExec(cQry5) < 0)
+					RETURN MsgStop("TCSQLError() " + TCSQLError())
+				ENDIF
 
-return
+				cQry6 := " "
+				cQry6 += "UPDATE "+RETSQLNAME("SC6")+"SET C6_COMIS2 = 7 "
+				cQry6 += "WHERE C6_FILIAL = "+ZPRC3_FILIAL+" "
+				//cQry6 += "AND E1_EMISSAO = "+ZPRC3_EMISSAO+" "
+				cQry6 += "AND C6_NOTA = "+ZPRC3_DOC+" "
+				cQry6 += "AND C6_SERIE = "+ZPRC3_SERIE+" "
+				cQry6 += "AND C6_CLI ="+ZPRC3_CODCLI+" "
+				cQry6 += "AND C6_COMIS2 = 5 "
+				cQry6 += "AND D_E_L_E_T_ <> '*' "
+
+				IF (TCSQLExec(cQry6) < 0)
+					RETURN MsgStop("TCSQLError() " + TCSQLError())
+				ENDIF
+
+				ZPRC3->(DBSKIP())
+
+			ENDDO
+
+			ZPRC3->(DBCLOSEAREA())
+
+	NEXT n
+
+RETURN
