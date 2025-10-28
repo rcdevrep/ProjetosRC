@@ -4,9 +4,7 @@
 #Include "RESTFul.ch"
 #Include "TopConn.ch"
 
-/*/{Protheus.doc} User Function RCTEP01
-Metas Individuais
-@author Evandro Burlin
+/*/{Protheus.doc} User Function RCTEP04
 admin
 @SenhaSegura9&@
 @since 03/02/2025
@@ -17,7 +15,7 @@ admin
 Static cTitulo := "Calculo de Comissões"
 Static cAliasMVC := "ZP0"
 
-User Function RCTEP01()
+User Function RCTEP04()
 	Private _oProc		:= MsNewProcess():New({ || fCalcula() },"Processando","Aguarde...",.F.)
 	Private _dFecAno	:= SuperGetMV("FL_FECANO",,STOD("20241231")) //TROCAR
 	Private _dFecMes	:= SuperGetMV("FL_FECMES",,STOD("20250131")) //TROCAR
