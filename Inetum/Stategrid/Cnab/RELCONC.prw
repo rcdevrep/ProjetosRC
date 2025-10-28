@@ -185,11 +185,6 @@ Local cCredDeb
 
 	nLinha += 80
 
-    DbSelectArea("ZX6")
-    ZX6->(DbSetOrder(1))
-    ZX6->(DbSeek(xFilial("ZX6") + Alltrim(cFileArq)))
-
-
 	// TÍTULO
 	oPrint:Box(nLinha,0100,nLinha+80,2900)
 	oBrush	:= TBrush():New(,CLR_CYAN)
@@ -262,55 +257,63 @@ Local cCredDeb
 
 	nLinha+=80
 
-    //Linhas do arquivo
-    While ZX6->(!EOF()) .AND. ZX6->ZX6_FILIAL == xFilial("ZX6") .AND. ZX6->ZX6_ARQUIV == cFileArq
 
-        if ZX6->ZX6_STATUS == "0" 
+
+    cQueryZX6 := " SELECT * FROM ZX6010 ZX6 "	
+	cQueryZX6 += "WHERE ZX6_ARQUIV == '"+cFileArq+"' AND ZX6.D_E_L_E_T_ <> '*' "	
+
+	TCQuery cQueryZX6 New Alias 'ZX62'
+
+
+    //Linhas do arquivo
+    While ZX62->(!EOF()) 
+
+        if ZX62->ZX6_STATUS == "0" 
             cStatus := "Não Processado"
-        Elseif ZX6->ZX6_STATUS == "1"       
+        Elseif ZX62->ZX6_STATUS == "1"       
             cStatus := "Sucesso Total"
-        Elseif ZX6->ZX6_STATUS == "2"
+        Elseif ZX62->ZX6_STATUS == "2"
             cStatus := "Sucesso Parcial"
-        elseif ZX6->ZX6_STATUS == "3"
+        elseif ZX62->ZX6_STATUS == "3"
             cStatus := "Erros nos Movtos."    
         EndIf
 
 
-        cCredDeb := Alltrim(ZX6->ZX6_TIPLAN)
+        cCredDeb := Alltrim(ZX62->ZX6_TIPLAN)
 
 
         oPrint:Box(nLinha,0100,nLinha+80,2900)
 
         nCol := 120
-        oPrint:Say(nLinha+50 , nCol, ZX6->ZX6_NUM , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_NUM , oFont14) 
         nCol+= 100
-        oPrint:Say(nLinha+50 , nCol, DTOC(ZX6->ZX6_BAIXA) , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, DTOC(ZX62->ZX6_BAIXA) , oFont14) 
         nCol+= 180
-        oPrint:Say(nLinha+50 , nCol, Alltrim(TRANSFORM(ZX6->ZX6_VLPAGO,  "@E 999,999,999.99")) , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, Alltrim(TRANSFORM(ZX62->ZX6_VLPAGO,  "@E 999,999,999.99")) , oFont14) 
         nCol+= 250
-        oPrint:Say(nLinha+50 , nCol, DTOC(ZX6->ZX6_DTIMP) , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, DTOC(ZX62->ZX6_DTIMP) , oFont14) 
         nCol+= 170
-        oPrint:Say(nLinha+50 , nCol, ZX6->ZX6_HRIMP , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_HRIMP , oFont14) 
         nCol+= 170
-        //oPrint:Say(nLinha+50 , nCol, ZX6->ZX6_SEQ , oFont14) 
+        //oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_SEQ , oFont14) 
         //nCol+= 150
-        oPrint:Say(nLinha+50 , nCol, ZX6->ZX6_AGENCI+Alltrim(ZX6->ZX6_DIGAGE) , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_AGENCI+Alltrim(ZX62->ZX6_DIGAGE) , oFont14) 
         nCol+= 150
-        oPrint:Say(nLinha+50 , nCol, ZX6->ZX6_CCORRE , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_CCORRE , oFont14) 
         nCol+= 270
-        //oPrint:Say(nLinha+50 , nCol, ZX6->ZX6_NUNLAN , oFont14) 
+        //oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_NUNLAN , oFont14) 
         //nCol+= 140
-        oPrint:Say(nLinha+50 , nCol, ZX6->ZX6_DESLAN , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_DESLAN , oFont14) 
         nCol+= 520
-        //oPrint:Say(nLinha+50 , nCol, ZX6->ZX6_TIPLAN , oFont14) 
+        //oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_TIPLAN , oFont14) 
         //nCol+= 100
         oPrint:Say(nLinha+50 , nCol, cCredDeb , oFont14) 
         nCol+= 300
-        oPrint:Say(nLinha+50 , nCol, Alltrim(ZX6->ZX6_INDCLI) , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, Alltrim(ZX62->ZX6_INDCLI) , oFont14) 
         nCol+= 270
         oPrint:Say(nLinha+50 , nCol, cStatus, oFont14) 
         nCol+= 270
-        oPrint:Say(nLinha+50 , nCol, ZX6->ZX6_FILPRC, oFont14) 
+        oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_FILPRC, oFont14) 
 
         If nLinha >= 2200
 
@@ -322,7 +325,7 @@ Local cCredDeb
 
         nLinha+=80
     
-    ZX6->(DbSkip())
+    ZX62->(DbSkip())
     End
 
 

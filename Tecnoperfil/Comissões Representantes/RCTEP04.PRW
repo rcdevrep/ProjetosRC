@@ -214,24 +214,21 @@ static function fCalcula
 
 	WHILE !(ZPRC1)->(EOF())
 		IF (ZPRC1_VALOR > ZPRC1_META)
-			aadd(aVend,ZPRC1_CODIGO,ZPRC1_VALOR)
+			aadd(aVend,ZPRC1_CODIGO)
 		ENDIF
 
 	ENDDO
 
-	//FAZER SELECT DA SE3 COM AS COMISSÕES GERADAS DO MÊS
-
-	cQry2 := " "
-	cQry2 += "SELECT SUM(E3_COMIS) AS VALOR FROM "+RETSQLNAME("SE3")+" "
-	cQry2 += "WHERE E3_VEND = '9928' "
-	cQry2 += "AND E3_EMISSAO BETWEEN '20251001' AND '20251030' "
-	cQry2 += ""
-
-	TCQuery cQry2 New Alias 'ZPRC2'
+	
 
 	//ATUALIZAR PEDIDO, NF E TITULO DAS COMISSÕES DA SE3
 	
 	 //VARRE O ARRAY
+	for n...
+		//FAZER SELECT DA SE3 COM AS COMISSÕES GERADAS DO MÊS
+
+
+
 
 		/*
 		update SD2010 set D2_COMIS2 = 7
@@ -263,6 +260,19 @@ static function fCalcula
 		AND C6_EMISSAO = 		
 
 		AND D_E_L_E_T_ <> '*' AND C6_COMIS2 = 5 ;
+
+
+
+		cQry2 := " "
+		cQry2 += "UPDATE "+RETSQLNAME("SE3")+" SET E3_COMIS = (E3_BASE * 7)/100, E3_PORC = 7 "
+		cQry2 += "WHERE E3_VEND = '"+aVend[n]+"' "
+		cQry2 += "AND SUSBTR(E3_EMISSAO,1,6) = '"+Year2Str(_dDtFec)+Month2Str(_dDtFec)+"' "
+		cQry2 += ""
+
+		If (TCSQLExec(cQry2) < 0)
+			Return MsgStop("TCSQLError() " + TCSQLError())
+		EndIf
+
 		*/
 
 
