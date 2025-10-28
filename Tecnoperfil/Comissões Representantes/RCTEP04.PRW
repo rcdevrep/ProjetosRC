@@ -212,7 +212,6 @@ static function fCalcula
 		update SD2010 set D2_COMIS2 = 7
 		where D2_EMISSAO >= '20190101' 
 
-		//filtro pela ZP1
 		AND D2_VEND2 = ZP3_TAB->ZP3_VEND1
 		AND D2_SERIE = 
 		AND D2_DOC = 
@@ -223,7 +222,6 @@ static function fCalcula
 		update SE1010 set E1_COMIS2 = 7
 		where E1_EMISSAO >= '20190101' 
 
-		//filtro pela ZP1
 		AND E1_VEND2 = ZP3_TAB->ZP3_VEND1
 		AND E1_SERIE = 
 		AND E1_NUM = 
@@ -234,7 +232,6 @@ static function fCalcula
 		update SC6010 set C6_COMIS2 = 7
 		where C6_ENTREG >= '20190101'
 
-		//filtro pela ZP1
 		AND C5_VEND2 = ZP3_TAB->ZP3_VEND1
 		AND C6_SERIE = 
 		AND C6_NOTA = 
