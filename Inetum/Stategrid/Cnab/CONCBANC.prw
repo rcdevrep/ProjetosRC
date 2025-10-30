@@ -637,7 +637,9 @@ Private cHistBaixa := ""
                                                     {"DDATACRED"         ,DataValida(ZX6->ZX6_BAIXA)          ,Nil}}
 
                                 ENDIF
-     
+
+                                AcessaPerg("FINA100", .F.)   
+
                                 MSExecAuto({|x,y,z| FinA100(x,y,z)},0,aFINA100,7)
 
                                 PUTMV("MV_TRANAUT",cNumero)

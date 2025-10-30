@@ -260,7 +260,7 @@ Local cCredDeb
 
 
     cQueryZX6 := " SELECT * FROM ZX6010 ZX6 "	
-	cQueryZX6 += "WHERE ZX6_ARQUIV == '"+cFileArq+"' AND ZX6.D_E_L_E_T_ <> '*' "	
+	cQueryZX6 += "WHERE ZX6_ARQUIV = '"+cFileArq+"' AND ZX6.D_E_L_E_T_ <> '*' "	
 
 	TCQuery cQueryZX6 New Alias 'ZX62'
 
@@ -287,11 +287,11 @@ Local cCredDeb
         nCol := 120
         oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_NUM , oFont14) 
         nCol+= 100
-        oPrint:Say(nLinha+50 , nCol, DTOC(ZX62->ZX6_BAIXA) , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, DTOC(STOD(ZX62->ZX6_BAIXA)) , oFont14) 
         nCol+= 180
         oPrint:Say(nLinha+50 , nCol, Alltrim(TRANSFORM(ZX62->ZX6_VLPAGO,  "@E 999,999,999.99")) , oFont14) 
         nCol+= 250
-        oPrint:Say(nLinha+50 , nCol, DTOC(ZX62->ZX6_DTIMP) , oFont14) 
+        oPrint:Say(nLinha+50 , nCol, DTOC(STOD(ZX62->ZX6_DTIMP)) , oFont14) 
         nCol+= 170
         oPrint:Say(nLinha+50 , nCol, ZX62->ZX6_HRIMP , oFont14) 
         nCol+= 170
